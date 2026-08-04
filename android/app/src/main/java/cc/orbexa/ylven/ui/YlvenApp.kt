@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WorkOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -51,6 +52,7 @@ enum class MainTab(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun YlvenApp() {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME.name) }
     val tab = MainTab.valueOf(selectedTab)
