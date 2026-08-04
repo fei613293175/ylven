@@ -106,3 +106,4 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 仓库公开是项目所有者确认的合法事实；缺少 `.git`、远程为空或没有默认分支由 Bootstrap 自动修复，不再视为业务阻塞。
 - 本机为轻量控制端，只要求 Git、PowerShell、uv、Spec Kit、OpenSSH，以及发布时使用的 GitHub CLI；Java、Go、Gradle、ADB、Android SDK、Docker、Node 和系统 Python均不是本机启动门槛。
 - GitHub Actions承担构建、模拟器与视觉回归；线上服务器承担 Docker、数据库及 staging 集成。
+- GitHub 推送备用路径：如果本机 `git push` 失败，保持同一 Commit SHA、阶段分支和 `origin` 不变，通过已验证的 SSH/SFTP 将完整 Git Bundle 上传到服务器，校验 SHA-256 与 `git bundle verify` 后由服务器推送 GitHub；不得把 Token、密钥或 Secret 写入仓库、Bundle、命令行或日志，并在推送后回读 GitHub 分支 SHA。

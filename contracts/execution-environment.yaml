@@ -56,3 +56,4 @@ routing_rules:
 - Run lightweight contract and state checks locally through uv-managed Python.
 - Run build and test workloads in GitHub Actions; run staging integration on the connected online server.
 - A missing remote credential blocks only push/download operations, not local coding or contract work.
+- If a local `git push` fails, keep the commit SHA, phase branch and `origin` unchanged, transfer a complete Git bundle over a verified SSH/SFTP path to the online server, verify SHA-256 and `git bundle verify`, and push from that server to `origin`; never expose tokens, keys or secrets in the repository, bundle, command line or logs.

@@ -27,6 +27,7 @@ rules:
 - Each Work Packet closes through the state controller and records an immutable commit in WORK_PACKET_HISTORY.jsonl.
 - Each owner-facing version closes through the release controller and records commit, tag, CI run, artifact and APK hash in RELEASE_LEDGER.jsonl.
 - No force push, no rewriting delivered tags, and no secrets, private keys, signing material or one-time administrator passwords in Git.
+- If a local `git push` fails, preserve the same commit SHA, phase branch and `origin`; transfer a complete Git bundle through a verified SSH/SFTP server path, verify SHA-256 and `git bundle verify`, then push from the server to `origin`. Never place tokens, keys or secrets in the repository, bundle, command line or logs, and read back the GitHub branch SHA after the push.
 - The phase tag ylven-v<version_name>, CI Artifact, desktop APK and release ledger must reference the same commit SHA.
 required_status_checks:
 - contracts-and-schema

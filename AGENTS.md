@@ -58,4 +58,5 @@
 - 仓库公开是项目所有者确认的事实。不得要求改为 Private；必须在提交、推送和发布前通过公开仓库安全门禁，且不得提交任何 Secret、服务器详情、签名材料或一次性管理员凭据。
 - 缺少 `.git`、远端为空或无默认分支时运行 `.\ylven.ps1 bootstrap`；这属于正常初始化，不是业务阻塞。
 - 本机是轻量控制端，不因缺少 Java、Go、Gradle、ADB、Android SDK、Docker、Node 或系统 Python而停止。使用 uv 执行仓库脚本，GitHub Actions承担构建/模拟器/视觉回归，线上服务器承担 staging 与集成。
+- 本机 `git push` 失败时的固定备用路径：保持同一 Commit SHA、阶段分支和 `origin` 不变，通过已验证的 SSH/SFTP 将完整 Git Bundle 传到服务器，校验 SHA-256 与 `git bundle verify` 后由服务器推送 GitHub；不得把 Token、密钥或任何 Secret 放进仓库、Bundle、命令行或日志，推送后必须回读 GitHub 分支 SHA。
 - 一次必要预检后直接实现；输入未变化时不得重复全仓库审计。真实代码、测试和运行结果优先于长篇检查报告。

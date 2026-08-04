@@ -343,5 +343,6 @@
 7. **仓库公开是项目事实，不是阻塞。** 当前仓库由项目所有者确认为 Public。每次提交、推送和发布前必须运行公开仓库 Secret 门禁；服务器地址、SSH 信息、密钥、签名材料、管理员一次性密码、Cloudflare/数据库/API 凭据只能放在本地忽略目录、GitHub Environment 或服务器秘密存储中。
 8. **首次空仓库是正常初始化场景。** 缺少 `.git`、远端为空、没有默认分支时运行 `.\ylven.ps1 bootstrap`；Bootstrap 自动初始化 `main`、绑定唯一 `origin`、完成安全扫描并尝试首次推送。推送鉴权失败只阻塞远程 CI，不阻塞本地合同和代码工作。
 9. **本机是轻量控制端。** 本机只要求 PowerShell、Git、uv、Spec Kit、OpenSSH，发布下载时使用 GitHub CLI；缺少 Java、Go、Gradle、ADB、Android SDK、Docker、Node 或系统 Python不得列为业务阻塞。构建、模拟器和视觉回归在 GitHub Actions；Docker、数据库和 staging 集成在已连接线上服务器执行。
+10. **本机 Git 推送失败时的固定备用路径。** 保持同一 Commit SHA、阶段分支和 `origin` 不变，通过已验证的 SSH/SFTP 将完整 Git Bundle 传到服务器，校验 SHA-256 与 `git bundle verify` 后由服务器推送 GitHub；不得把 Token、密钥或 Secret 放入仓库、Bundle、命令行或日志，推送后必须回读 GitHub 分支 SHA。
 10. **快速执行优先。** 每个工作包只做一次必要预检，随后直接编码并运行受影响测试；输入未变化时禁止重复全仓库审计。产出优先级固定为：可运行代码 → 自动测试 → 必需合同 → 必需说明。
 11. **每版交付必须可追溯。** 桌面交付只能来自通过 CI 的精确 Artifact，并包含计划功能、完成功能、自动测试、项目所有者测试清单、截图索引、视觉差异、端点与 DNS 状态、Build Info、CI Provenance、已知问题和 SHA-256。
