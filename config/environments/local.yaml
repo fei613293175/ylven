@@ -1,0 +1,11 @@
+schema_version: '1.0'
+environment: local
+extends: ../base.yaml
+public:
+  api:
+    base_url: http://127.0.0.1:8080
+    timeout_ms: 30000
+  observability:
+    log_level: debug
+features:
+  external_integrations: false

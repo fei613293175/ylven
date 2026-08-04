@@ -1,0 +1,24 @@
+schema_version: '1.0'
+project: YLVEN
+environment: base
+public:
+  primary_domain: orbexa.cc
+  android:
+    application_id: cc.orbexa.ylven
+    version_name: 1.0.0
+    version_code: 1000000
+  api:
+    timeout_ms: 15000
+    connect_timeout_ms: 5000
+  observability:
+    log_level: info
+    otel_enabled: true
+features:
+  android_shell: true
+  four_tab_navigation: true
+  external_integrations: false
+  official_provider_channels: false
+secret_refs:
+  database_url: secret://ylven/${YLVEN_ENV}/database-url
+  turnstile_secret: secret://ylven/${YLVEN_ENV}/turnstile
+  sub2api_admin: secret://ylven/${YLVEN_ENV}/sub2api/admin

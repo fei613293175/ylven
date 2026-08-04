@@ -1,8 +1,9 @@
 schema_version: '1.0'
 phase_id: P00
 work_packet_id: P00-W01
-status: TODO
-started_at: null
-started_commit: null
+status: DOING
+started_at: '2026-08-05T06:17:58+08:00'
+started_commit: df9584dd3400ce17e4ac2b87fc254eaa864dbf30
 last_closed_work_packet: null
-updated_at: '2026-08-05T06:07:15+08:00'
+updated_at: '2026-08-05T06:17:58+08:00'
+blocked_reason: null

@@ -55,7 +55,6 @@ jobs:
 
   android-emulator-acceptance:
     needs: contracts-and-schema
-    if: ${{ hashFiles('gradlew') != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -67,6 +66,8 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
       - name: Build, unit test and lint
         run: ./gradlew --no-daemon clean testDebugUnitTest lintDebug assembleDebug
       - name: Run fixed Android emulator acceptance

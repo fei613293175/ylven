@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P00
 phase_title: 工程基座、部署骨架与上游能力证明
-overall_status: TODO
-updated_at: '2026-08-04T00:00:00+08:00'
+overall_status: IN_PROGRESS
+updated_at: '2026-08-05T07:12:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -15,25 +15,45 @@ release_final_statuses:
 - BLOCKED_EXTERNAL
 features:
 - feature_id: P00-001
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - repository/modules.yaml
+  - repository/README.md
+  - tests/p00_w01_contract_test.py::test_repository_module_boundaries_are_unique_and_packet_aligned
 - feature_id: P00-002
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - config/schema.yaml
+  - config/base.yaml
+  - config/environments/local.yaml
+  - config/environments/staging.yaml
+  - config/environments/production.yaml
+  - tests/p00_w01_contract_test.py::test_every_environment_layer_resolves_against_schema_without_plaintext_secrets
 - feature_id: P00-003
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - android/app/src/main/AndroidManifest.xml
+  - android/app/src/main/java/cc/orbexa/ylven/MainActivity.kt
+  - android/app/src/androidTest/java/cc/orbexa/ylven/AppShellTest.kt::shellExposesContractTagsAndEveryTabIsReachable
 - feature_id: P00-004
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - android/app/src/main/java/cc/orbexa/ylven/ui/theme/Color.kt
+  - android/app/src/main/java/cc/orbexa/ylven/ui/theme/Dimensions.kt
+  - android/app/src/main/java/cc/orbexa/ylven/ui/theme/Theme.kt
+  - android/app/src/main/java/cc/orbexa/ylven/ui/theme/Type.kt
+  - android/app/src/test/java/cc/orbexa/ylven/AppStateTest.kt::shellDimensionsMatchYlDs120
 - feature_id: P00-005
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt
+  - android/app/src/test/java/cc/orbexa/ylven/AppStateTest.kt::mainNavigationHasTheContractedOrderAndStableTags
+  - android/app/src/androidTest/java/cc/orbexa/ylven/AppShellTest.kt::selectedTabSurvivesStateRestoration
 - feature_id: P00-006
   status: PLANNED
   reason: ''

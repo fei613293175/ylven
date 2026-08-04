@@ -1,0 +1,49 @@
+package cc.orbexa.ylven.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+object YlvenLightColors {
+    val Primary = Color(0xFF5B61F6)
+    val PrimaryHover = Color(0xFF4E54E8)
+    val PrimaryPressed = Color(0xFF4147D8)
+    val Secondary = Color(0xFF2F80ED)
+    val Tertiary = Color(0xFF8B5CF6)
+    val Background = Color(0xFFF6F7FB)
+    val Surface = Color(0xFFFFFFFF)
+    val SurfaceSubtle = Color(0xFFF9FAFB)
+    val SurfaceBrandSoft = Color(0xFFF0F1FF)
+    val TextPrimary = Color(0xFF101828)
+    val TextSecondary = Color(0xFF475467)
+    val TextTertiary = Color(0xFF667085)
+    val TextDisabled = Color(0xFF98A2B3)
+    val Border = Color(0xFFE4E7EC)
+    val BorderStrong = Color(0xFFD0D5DD)
+    val Divider = Color(0xFFEAECF0)
+    val Success = Color(0xFF12A66A)
+    val Warning = Color(0xFFF79009)
+    val Error = Color(0xFFD92D20)
+    val Info = Color(0xFF2F80ED)
+}
+
+object YlvenDarkColors {
+    val Primary = Color(0xFF7C82FF)
+    val PrimaryHover = Color(0xFF8D92FF)
+    val PrimaryPressed = Color(0xFF686FF2)
+    val Secondary = Color(0xFF55A0FF)
+    val Tertiary = Color(0xFFA78BFA)
+    val Background = Color(0xFF0B0D12)
+    val Surface = Color(0xFF141821)
+    val SurfaceSubtle = Color(0xFF1A1F2B)
+    val SurfaceBrandSoft = Color(0xFF242752)
+    val TextPrimary = Color(0xFFF2F4F7)
+    val TextSecondary = Color(0xFFD0D5DD)
+    val TextTertiary = Color(0xFF98A2B3)
+    val TextDisabled = Color(0xFF667085)
+    val Border = Color(0xFF2D3442)
+    val BorderStrong = Color(0xFF3B4557)
+    val Divider = Color(0xFF242B38)
+    val Success = Color(0xFF32D583)
+    val Warning = Color(0xFFFDB022)
+    val Error = Color(0xFFF97066)
+    val Info = Color(0xFF53B1FD)
+}

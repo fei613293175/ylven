@@ -1,0 +1,31 @@
+schema_version: '1.0'
+merge_strategy: recursive_map_override
+required_paths:
+  - project
+  - environment
+  - public.primary_domain
+  - public.android.application_id
+  - public.android.version_name
+  - public.android.version_code
+  - public.api.base_url
+  - public.api.timeout_ms
+  - public.api.connect_timeout_ms
+  - public.observability.log_level
+  - public.observability.otel_enabled
+  - features.android_shell
+  - features.four_tab_navigation
+  - features.external_integrations
+  - features.official_provider_channels
+  - secret_refs.database_url
+  - secret_refs.turnstile_secret
+  - secret_refs.sub2api_admin
+environment_layers:
+  - local
+  - staging
+  - production
+secret_reference_prefix: secret://
+forbidden_value_patterns:
+  - '(?i)sk-[A-Za-z0-9]+'
+  - '(?i)password\s*:'
+  - '(?i)private[_-]?key\s*:'
+  - '(?i)BEGIN (RSA|OPENSSH|EC) PRIVATE KEY'

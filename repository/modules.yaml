@@ -1,0 +1,55 @@
+schema_version: '1.0'
+authority: contracts/repository-policy.yaml
+repository_name: YLVEN
+modules:
+  - id: android-app
+    path: android/app
+    runtime: Android
+    owner: mobile
+    status: active_in_P00-W01
+    public_boundary: YLVEN Core API only
+  - id: core-api
+    path: backend/cmd/core-api
+    runtime: Go
+    owner: platform
+    status: planned_for_P00-W02
+  - id: ai-runtime
+    path: backend/cmd/ai-runtime
+    runtime: Go
+    owner: ai-platform
+    status: planned_for_P00-W02
+  - id: developer-gateway
+    path: backend/cmd/developer-gateway
+    runtime: Go
+    owner: developer-platform
+    status: planned_for_P00-W02
+  - id: worker
+    path: backend/cmd/worker
+    runtime: Go
+    owner: jobs
+    status: planned_for_P00-W02
+  - id: scheduler
+    path: backend/cmd/scheduler
+    runtime: Go
+    owner: operations
+    status: planned_for_P00-W02
+  - id: admin-web
+    path: web/admin
+    runtime: Vue 3
+    owner: admin
+    status: planned_for_P00-W05
+  - id: developer-web
+    path: web/developer
+    runtime: Vue 3
+    owner: developer-platform
+    status: planned_for_P00-W05
+  - id: infrastructure
+    path: deployment
+    runtime: Docker Compose
+    owner: operations
+    status: contract_only
+shared_contracts:
+  - contracts/feature-map.yaml
+  - contracts/openapi-skeleton.yaml
+  - contracts/database-entity-catalog.yaml
+  - contracts/ui-design-tokens.yaml

@@ -1,0 +1,9 @@
+schema_version: '1.0'
+environment: staging
+extends: ../base.yaml
+public:
+  api:
+    base_url: https://api.orbexa.cc
+features:
+  external_integrations: true
+  official_provider_channels: false
