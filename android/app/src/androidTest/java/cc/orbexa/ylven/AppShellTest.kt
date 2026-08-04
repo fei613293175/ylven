@@ -1,6 +1,5 @@
 package cc.orbexa.ylven
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
