@@ -1,0 +1,168 @@
+schema_version: '1.4'
+page_id: YL-M-090
+name: 项目与知识库/项目详情
+surface: ADMIN
+route: /admin/090
+primary_phase: P06
+phases:
+- P06
+work_packets:
+- P06-W01
+- P06-W02
+feature_ids:
+- P06-003
+- P06-004
+- P06-007
+- P06-009
+layout_profile: admin_detail
+resolved_layout:
+  surface: ADMIN
+  shell: admin
+  sidebar_width_px: 248
+  topbar_height_px: 64
+  content_padding_px: 24
+  detail_grid_columns: minmax(0,1fr) 360px
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: admin_detail
+  title: 项目详情
+  subtitle: 项目与知识库
+  required_elements:
+  - 查看项目详情和聚合内容
+  - 编辑项目名称、描述和默认模型
+  - 将会话移入或移出项目
+  - 将作品关联到项目
+  screen_signature: e8778cca85d89221
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-M-090-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-M-090-S01_LOADING
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 765fcaf3c3355b453281fb3094a3227b74ea9e121fccef839a85503dcde4ba99
+- state_id: YL-M-090-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-M-090-S02_POPULATED
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 46c134dbf6102c6c48eebf8b72ef24065e368cdf48d8cd22fdbeb4a0e42929d9
+- state_id: YL-M-090-S03_NOT_FOUND
+  code: NOT_FOUND
+  name: 内容不存在
+  description: 资源不存在、已删除或不可访问。
+  recovery: back
+  mockup_id: YL-M-090-S03_NOT_FOUND
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S03_NOT_FOUND.png
+  mockup_status: APPROVED
+  mockup_sha256: 0519f8fd3622e15b3b634f4cd765a5a07479196344d0021225dcde89ae71badb
+- state_id: YL-M-090-S04_EDIT_MODE
+  code: EDIT_MODE
+  name: 编辑状态
+  description: 可编辑字段与只读字段明显区分。
+  recovery: save_or_cancel
+  mockup_id: YL-M-090-S04_EDIT_MODE
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S04_EDIT_MODE.png
+  mockup_status: APPROVED
+  mockup_sha256: 2c09bd7630cfa7f6f86c05818764c5108dc7c2110ed423387d19ea85a5c370a8
+- state_id: YL-M-090-S05_DIRTY
+  code: DIRTY
+  name: 存在未保存修改
+  description: 离开或关闭前必须确认。
+  recovery: save_or_discard
+  mockup_id: YL-M-090-S05_DIRTY
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S05_DIRTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 48323f7261d08652e3854059d97bf0c076e1f9ee15e60eb34d7b75972ee428a9
+- state_id: YL-M-090-S06_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-M-090-S06_SUBMITTING
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S06_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: ab4a54ae93fa42c80ad091eafc034efab4e8c5790b7aeced824b15e37a6f5cc6
+- state_id: YL-M-090-S07_SAVE_SUCCESS
+  code: SAVE_SUCCESS
+  name: 保存成功
+  description: 保存结果明确且数据回读一致。
+  recovery: continue
+  mockup_id: YL-M-090-S07_SAVE_SUCCESS
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S07_SAVE_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: d6d50d9bec7469b410246aecacfd5ae4ff5d411b7229c832989d875f5fe96771
+- state_id: YL-M-090-S08_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-M-090-S08_VALIDATION_ERROR
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S08_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: e860e9ee635fadd2324fd56c04f288d9ab84ba743f03011c5c80330a7933e1ab
+- state_id: YL-M-090-S09_VERSION_CONFLICT
+  code: VERSION_CONFLICT
+  name: 版本冲突
+  description: 显示当前版本与服务器版本，禁止静默覆盖。
+  recovery: reload_compare_or_force_with_permission
+  mockup_id: YL-M-090-S09_VERSION_CONFLICT
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S09_VERSION_CONFLICT.png
+  mockup_status: APPROVED
+  mockup_sha256: 5735e63a9181bdfbeb678fad2f837eef8578c7cdbe11113c83ccd7837296d106
+- state_id: YL-M-090-S10_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-M-090-S10_PERMISSION_DENIED
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S10_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 79e04d3352f72d2554e881815fb526e9e3b92bcae224075fbbe02056261d16f4
+- state_id: YL-M-090-S11_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-M-090-S11_SERVER_ERROR
+  mockup_path: ui/mockups/admin/YL-M-090/YL-M-090-S11_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: a6dbcdbe304343c536acdde18ef31221a50a38e476bbacc0dc0efef74db5bf17
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

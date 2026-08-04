@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.orbexa.cc/ylven/ui-contract.schema.json",
+  "title": "YLVEN Page Visual Contract",
+  "type": "object",
+  "required": [
+    "page_id",
+    "surface",
+    "feature_ids",
+    "layout_profile",
+    "resolved_layout",
+    "states",
+    "binding_rules"
+  ],
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "pattern": "^YL-(A|M|D|W|DS)-[0-9]{3}$"
+    },
+    "surface": {
+      "enum": [
+        "ANDROID",
+        "ADMIN",
+        "DEVELOPER",
+        "WEB",
+        "DESIGN_SYSTEM"
+      ]
+    },
+    "feature_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^P[0-9]{2}-[0-9]{3}$"
+      }
+    },
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "state_id",
+          "mockup_path",
+          "mockup_status"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

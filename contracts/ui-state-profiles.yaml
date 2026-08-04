@@ -1,0 +1,623 @@
+schema_version: '1.0'
+design_system_version: YL-DS-1.2.0
+definitions:
+  DEFAULT:
+    name: 默认/可操作
+    description: 数据与控件处于正常可操作状态。
+    recovery: none
+  LAUNCH:
+    name: 启动品牌态
+    description: 展示品牌标识和启动背景，不显示伪进度。
+    recovery: automatic
+  FIRST_RUN:
+    name: 首次运行
+    description: 首次安装且无本地会话。
+    recovery: continue_to_auth
+  RESTORING:
+    name: 恢复会话
+    description: 读取本地凭据并验证远端会话。
+    recovery: automatic
+  LOADING:
+    name: 加载中
+    description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+    recovery: automatic_or_retry
+  POPULATED:
+    name: 有数据
+    description: 真实结构化数据已加载。
+    recovery: none
+  EMPTY:
+    name: 空数据
+    description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+    recovery: primary_action_or_refresh
+  REFRESHING:
+    name: 刷新中
+    description: 保留已有内容并显示局部刷新，不清空整页。
+    recovery: automatic
+  FILTER_ACTIVE:
+    name: 筛选生效
+    description: 清晰展示筛选条件和结果数量。
+    recovery: clear_filter
+  INPUT_FOCUSED:
+    name: 输入聚焦
+    description: 键盘弹出、焦点环和辅助文案布局稳定。
+    recovery: none
+  VALIDATION_ERROR:
+    name: 表单校验失败
+    description: 字段级错误紧邻字段，首个错误获得焦点。
+    recovery: correct_input
+  SUBMITTING:
+    name: 提交中
+    description: 主按钮保留尺寸并显示进度，禁止重复提交。
+    recovery: wait_or_cancel_if_supported
+  SUCCESS:
+    name: 操作成功
+    description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+    recovery: continue
+  SAVE_SUCCESS:
+    name: 保存成功
+    description: 保存结果明确且数据回读一致。
+    recovery: continue
+  SAVE_ERROR:
+    name: 保存失败
+    description: 保留用户输入，显示稳定错误码和重试动作。
+    recovery: retry
+  OFFLINE:
+    name: 离线
+    description: 说明当前离线；有缓存时显示缓存来源与时间。
+    recovery: retry_when_online
+  OFFLINE_CACHE:
+    name: 离线缓存
+    description: 展示可用缓存并明确其不是最新数据。
+    recovery: refresh_when_online
+  NETWORK_ERROR:
+    name: 网络连接失败
+    description: 网络不可达或 DNS/TLS 失败，提供重试。
+    recovery: retry
+  TIMEOUT:
+    name: 请求超时
+    description: 请求超过规定时限，保留上下文并允许重试。
+    recovery: retry
+  SERVER_ERROR:
+    name: 服务异常
+    description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+    recovery: retry_or_status
+  PROVIDER_ERROR:
+    name: 上游模型失败
+    description: 说明当前模型/通道失败，并提供透明切换选项。
+    recovery: retry_or_choose_model
+  PERMISSION_DENIED:
+    name: 权限不足
+    description: 不泄露资源存在性，说明所需权限或返回。
+    recovery: back_or_request_access
+  UNAUTHORIZED:
+    name: 登录失效
+    description: 会话失效，保存本地草稿并引导重新登录。
+    recovery: sign_in
+  NOT_FOUND:
+    name: 内容不存在
+    description: 资源不存在、已删除或不可访问。
+    recovery: back
+  RATE_LIMITED:
+    name: 请求过于频繁
+    description: 展示可再次尝试时间，不自动猛烈重试。
+    recovery: retry_after
+  DISABLED:
+    name: 不可用
+    description: 控件不可用并提供原因，不仅降低透明度。
+    recovery: resolve_prerequisite
+  SECURITY_CHALLENGE:
+    name: 安全验证
+    description: 受控安全验证弹层或 WebView 已打开。
+    recovery: complete_or_cancel
+  CODE_SENT:
+    name: 验证码已发送
+    description: 显示脱敏邮箱、倒计时和重新发送规则。
+    recovery: enter_code
+  INVALID_CODE:
+    name: 验证码错误
+    description: 输入格保持，显示剩余尝试或稳定提示。
+    recovery: retry_input
+  CODE_EXPIRED:
+    name: 验证码过期
+    description: 明确过期并允许在规则允许时重新发送。
+    recovery: resend
+  LOCKED:
+    name: 暂时锁定
+    description: 达到风控阈值，展示解锁时间或支持入口。
+    recovery: wait_or_support
+  UPLOADING:
+    name: 上传中
+    description: 显示文件名、进度、取消和后台继续策略。
+    recovery: cancel_or_wait
+  UPLOAD_FAILED:
+    name: 上传失败
+    description: 保留文件选择并显示可重试原因。
+    recovery: retry
+  CONNECTING:
+    name: 建立连接
+    description: 正在连接流式端点，输入内容保持。
+    recovery: cancel_or_wait
+  STREAMING:
+    name: 流式生成
+    description: 内容逐步出现，停止按钮可用，滚动行为稳定。
+    recovery: stop
+  TOOL_RUNNING:
+    name: 工具执行中
+    description: 展示工具名称、阶段、可取消性和安全说明。
+    recovery: wait_or_cancel
+  COMPLETED:
+    name: 生成完成
+    description: 完整内容、来源、模型标签和操作栏可见。
+    recovery: continue
+  STOPPED:
+    name: 已停止生成
+    description: 保留已生成内容并提供继续或重答。
+    recovery: continue_or_regenerate
+  RECONNECTING:
+    name: 断线重连
+    description: 展示重连状态和事件游标，不重复消息。
+    recovery: automatic_or_cancel
+  CONTENT_BLOCKED:
+    name: 内容被安全策略阻止
+    description: 使用中性说明和允许的替代操作。
+    recovery: edit_request
+  QUEUED:
+    name: 已排队
+    description: 显示队列状态与提交时间，不伪造精确预计时间。
+    recovery: cancel
+  PREPARING:
+    name: 准备任务
+    description: 正在验证额度、文件和参数。
+    recovery: cancel_if_supported
+  RUNNING:
+    name: 任务执行中
+    description: 显示真实阶段和进度来源。
+    recovery: cancel_if_supported
+  CANCEL_CONFIRM:
+    name: 确认取消
+    description: 说明取消后的计费和产物处理。
+    recovery: confirm_or_back
+  CANCELLED:
+    name: 任务已取消
+    description: 显示已结算/解冻结果与重试入口。
+    recovery: restart
+  FAILED:
+    name: 任务失败
+    description: 显示可理解原因、错误码和可重试条件。
+    recovery: retry_or_edit
+  RETRYING:
+    name: 任务重试中
+    description: 显示尝试次数和上限，禁止无限重试。
+    recovery: cancel
+  EDIT_MODE:
+    name: 编辑状态
+    description: 可编辑字段与只读字段明显区分。
+    recovery: save_or_cancel
+  DIRTY:
+    name: 存在未保存修改
+    description: 离开或关闭前必须确认。
+    recovery: save_or_discard
+  VERSION_CONFLICT:
+    name: 版本冲突
+    description: 显示当前版本与服务器版本，禁止静默覆盖。
+    recovery: reload_compare_or_force_with_permission
+  ROLLBACK_CONFIRM:
+    name: 确认回滚
+    description: 列出目标版本、影响和审计原因。
+    recovery: confirm_or_cancel
+  BULK_SELECTED:
+    name: 批量选择
+    description: 显示已选数量和允许的批量动作。
+    recovery: clear_selection
+  PARTIAL_DATA:
+    name: 部分数据
+    description: 明确哪些数据源不可用以及统计截止时间。
+    recovery: retry_source
+  CREATED_ONCE:
+    name: 密钥仅展示一次
+    description: 完整 API Key 仅本次可见，包含复制和安全提醒。
+    recovery: copy_then_close
+  BUDGET_EXHAUSTED:
+    name: 预算耗尽
+    description: 停止收费调用并给出充值或调整预算入口。
+    recovery: recharge_or_adjust
+  PAYMENT_PENDING:
+    name: 支付待确认
+    description: 订单已创建或支付结果回调中，禁止重复付款。
+    recovery: refresh_status
+  CREDIT_PENDING:
+    name: 到账同步中
+    description: 支付成功但额度投影尚未完成，自动重试。
+    recovery: automatic_or_support
+  REFUND_PENDING:
+    name: 退款处理中
+    description: 展示退款阶段、金额和预计规则，不伪造到账时间。
+    recovery: refresh_status
+  SERVICE_DEGRADED:
+    name: 服务降级
+    description: 展示受影响能力、替代通道和状态页入口。
+    recovery: choose_alternative_or_retry
+  UPDATE_AVAILABLE:
+    name: 发现新版本
+    description: 展示版本号、大小、更新内容和是否强制。
+    recovery: download_or_later
+  DOWNLOADING:
+    name: 下载更新
+    description: 显示真实进度、网络策略和取消规则。
+    recovery: cancel_or_wait
+  UPDATE_REQUIRED:
+    name: 必须更新
+    description: 阻止进入不兼容功能并提供下载入口。
+    recovery: update
+  MAINTENANCE:
+    name: 维护中
+    description: 展示维护范围、开始时间与状态页，不伪造结束时间。
+    recovery: status_or_retry
+profiles:
+  splash:
+  - LAUNCH
+  - RESTORING
+  - FIRST_RUN
+  - UPDATE_REQUIRED
+  - OFFLINE
+  - SERVER_ERROR
+  auth:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - VALIDATION_ERROR
+  - SECURITY_CHALLENGE
+  - SUBMITTING
+  - CODE_SENT
+  - SUCCESS
+  - INVALID_CODE
+  - CODE_EXPIRED
+  - RATE_LIMITED
+  - LOCKED
+  - OFFLINE
+  - SERVER_ERROR
+  main_tab:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - REFRESHING
+  - OFFLINE_CACHE
+  - NETWORK_ERROR
+  - SERVICE_DEGRADED
+  chat:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - UPLOADING
+  - CONNECTING
+  - STREAMING
+  - TOOL_RUNNING
+  - COMPLETED
+  - STOPPED
+  - RECONNECTING
+  - OFFLINE
+  - RATE_LIMITED
+  - PROVIDER_ERROR
+  - CONTENT_BLOCKED
+  list:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - REFRESHING
+  - FILTER_ACTIVE
+  - OFFLINE_CACHE
+  - NETWORK_ERROR
+  - SERVER_ERROR
+  - PERMISSION_DENIED
+  detail:
+  - LOADING
+  - POPULATED
+  - NOT_FOUND
+  - EDIT_MODE
+  - DIRTY
+  - SAVE_SUCCESS
+  - SAVE_ERROR
+  - OFFLINE
+  - PERMISSION_DENIED
+  form:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - VALIDATION_ERROR
+  - SUBMITTING
+  - SUCCESS
+  - SAVE_ERROR
+  - OFFLINE
+  - DISABLED
+  selector:
+  - DEFAULT
+  - POPULATED
+  - FILTER_ACTIVE
+  - EMPTY
+  - DISABLED
+  - SERVICE_DEGRADED
+  - SERVER_ERROR
+  dialog:
+  - DEFAULT
+  - SUBMITTING
+  - SUCCESS
+  - SAVE_ERROR
+  - DISABLED
+  wizard:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - VALIDATION_ERROR
+  - PREPARING
+  - RUNNING
+  - SUCCESS
+  - FAILED
+  - OFFLINE
+  job:
+  - QUEUED
+  - PREPARING
+  - RUNNING
+  - CANCEL_CONFIRM
+  - CANCELLED
+  - SUCCESS
+  - FAILED
+  - RETRYING
+  - OFFLINE
+  preview:
+  - LOADING
+  - POPULATED
+  - EDIT_MODE
+  - DOWNLOADING
+  - SUCCESS
+  - SERVER_ERROR
+  - OFFLINE
+  settings:
+  - LOADING
+  - POPULATED
+  - EDIT_MODE
+  - DIRTY
+  - SUBMITTING
+  - SAVE_SUCCESS
+  - SAVE_ERROR
+  - OFFLINE
+  admin_dashboard:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - FILTER_ACTIVE
+  - PARTIAL_DATA
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  admin_list:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - FILTER_ACTIVE
+  - BULK_SELECTED
+  - PERMISSION_DENIED
+  - NETWORK_ERROR
+  - SERVER_ERROR
+  admin_detail:
+  - LOADING
+  - POPULATED
+  - NOT_FOUND
+  - EDIT_MODE
+  - DIRTY
+  - SUBMITTING
+  - SAVE_SUCCESS
+  - VALIDATION_ERROR
+  - VERSION_CONFLICT
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  admin_config:
+  - LOADING
+  - POPULATED
+  - EDIT_MODE
+  - VALIDATION_ERROR
+  - DIRTY
+  - SUBMITTING
+  - SAVE_SUCCESS
+  - VERSION_CONFLICT
+  - ROLLBACK_CONFIRM
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  admin_approval:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - BULK_SELECTED
+  - SUBMITTING
+  - SUCCESS
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  developer_dashboard:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - PARTIAL_DATA
+  - BUDGET_EXHAUSTED
+  - SERVICE_DEGRADED
+  - SERVER_ERROR
+  developer_list:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - FILTER_ACTIVE
+  - BULK_SELECTED
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  developer_detail:
+  - LOADING
+  - POPULATED
+  - EDIT_MODE
+  - DIRTY
+  - VALIDATION_ERROR
+  - SUBMITTING
+  - SAVE_SUCCESS
+  - VERSION_CONFLICT
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  developer_key:
+  - LOADING
+  - POPULATED
+  - CREATED_ONCE
+  - DIRTY
+  - VALIDATION_ERROR
+  - SUBMITTING
+  - SAVE_SUCCESS
+  - BUDGET_EXHAUSTED
+  - PERMISSION_DENIED
+  - SERVER_ERROR
+  developer_docs:
+  - LOADING
+  - POPULATED
+  - FILTER_ACTIVE
+  - NOT_FOUND
+  - SERVICE_DEGRADED
+  - SERVER_ERROR
+  finance:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - PAYMENT_PENDING
+  - CREDIT_PENDING
+  - REFUND_PENDING
+  - BUDGET_EXHAUSTED
+  - SUCCESS
+  - SERVER_ERROR
+  - OFFLINE
+  public_web:
+  - LOADING
+  - POPULATED
+  - SUCCESS
+  - VALIDATION_ERROR
+  - MAINTENANCE
+  - NETWORK_ERROR
+  - SERVER_ERROR
+  design_board:
+  - DEFAULT
+  component_shell:
+  - DEFAULT
+  component_navigation:
+  - DEFAULT
+  auth_login:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - VALIDATION_ERROR
+  - SUBMITTING
+  - RATE_LIMITED
+  - OFFLINE
+  - SERVER_ERROR
+  auth_security_overlay:
+  - DEFAULT
+  - SECURITY_CHALLENGE
+  - SUBMITTING
+  - SUCCESS
+  - SAVE_ERROR
+  - RATE_LIMITED
+  - OFFLINE
+  - SERVER_ERROR
+  auth_turnstile:
+  - LOADING
+  - SECURITY_CHALLENGE
+  - SUCCESS
+  - VALIDATION_ERROR
+  - CODE_EXPIRED
+  - OFFLINE
+  - SERVER_ERROR
+  auth_otp:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - CODE_SENT
+  - SUBMITTING
+  - SUCCESS
+  - INVALID_CODE
+  - CODE_EXPIRED
+  - RATE_LIMITED
+  - LOCKED
+  - OFFLINE
+  - SERVER_ERROR
+  auth_success:
+  - SUCCESS
+  - SAVE_ERROR
+  - OFFLINE
+  auth_register:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - VALIDATION_ERROR
+  - SUBMITTING
+  - DISABLED
+  - OFFLINE
+  - SERVER_ERROR
+  system_session:
+  - RESTORING
+  - SUCCESS
+  - UNAUTHORIZED
+  - OFFLINE
+  - SERVER_ERROR
+  logout_dialog:
+  - DEFAULT
+  - SUBMITTING
+  - SUCCESS
+  - SAVE_ERROR
+  device_list:
+  - LOADING
+  - POPULATED
+  - EMPTY
+  - REFRESHING
+  - UNAUTHORIZED
+  - OFFLINE
+  - SERVER_ERROR
+  auth_resilience_board:
+  - DEFAULT
+  - OFFLINE
+  - NETWORK_ERROR
+  - TIMEOUT
+  - SERVICE_DEGRADED
+  component_composer:
+  - DEFAULT
+  - INPUT_FOCUSED
+  - UPLOADING
+  - DISABLED
+  - OFFLINE
+  offline_cache_only:
+  - OFFLINE_CACHE
+  - REFRESHING
+  - NETWORK_ERROR
+  component_response:
+  - CONNECTING
+  - STREAMING
+  - TOOL_RUNNING
+  - COMPLETED
+  - STOPPED
+  - PROVIDER_ERROR
+  - CONTENT_BLOCKED
+  component_code:
+  - DEFAULT
+  - COMPLETED
+  - CONTENT_BLOCKED
+  component_table:
+  - DEFAULT
+  - COMPLETED
+  - OFFLINE
+  component_citation:
+  - DEFAULT
+  - COMPLETED
+  - NOT_FOUND
+  - OFFLINE
+  component_actionbar:
+  - DEFAULT
+  - DISABLED
+  - SUCCESS
+  component_model_strip:
+  - DEFAULT
+  - SERVICE_DEGRADED
+  - DISABLED
+  component_attachment:
+  - DEFAULT
+  - UPLOADING
+  - UPLOAD_FAILED
+  - SUCCESS
+  selector_content:
+  - POPULATED
+  - FILTER_ACTIVE
+  - EMPTY
+  - DISABLED
+  - SERVICE_DEGRADED
+  - SERVER_ERROR

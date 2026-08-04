@@ -1,0 +1,146 @@
+schema_version: '1.4'
+page_id: YL-A-082
+name: 发现/分类
+surface: ANDROID
+route: android://082
+primary_phase: P09
+phases:
+- P09
+work_packets:
+- P09-W02
+feature_ids:
+- P09-007
+layout_profile: android_list
+resolved_layout:
+  surface: ANDROID
+  top_bar: standard
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  list_gap_dp: 8
+  section_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: YL-A-081
+visual_identity:
+  template: discover_category
+  title: 全部服务
+  subtitle: 按分类浏览可用 AI 能力
+  required_elements:
+  - 效率工具
+  - 内容创作
+  - 开发工具
+  - 连接器
+  screen_signature: 26a0905ff1c79e02
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-082-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-A-082-S01_LOADING
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 3c6582a850bd68ba58fcf00b2efbd5c7e815b7f37a702066858dab5787e55421
+- state_id: YL-A-082-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-A-082-S02_POPULATED
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: f9beab0a778a4cb59db050972f6989a9f9be1e2b30c95ffdcd549b88fefc52f3
+- state_id: YL-A-082-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-A-082-S03_EMPTY
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 57b122e5652a5aed230e7948a8e683144a0809905373f29bfc02fb703933595c
+- state_id: YL-A-082-S04_REFRESHING
+  code: REFRESHING
+  name: 刷新中
+  description: 保留已有内容并显示局部刷新，不清空整页。
+  recovery: automatic
+  mockup_id: YL-A-082-S04_REFRESHING
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S04_REFRESHING.png
+  mockup_status: APPROVED
+  mockup_sha256: 8acb6245ed265d23c3ff5f355a854e007c3cc8e4c439f9f99307a7d756aafa4b
+- state_id: YL-A-082-S05_FILTER_ACTIVE
+  code: FILTER_ACTIVE
+  name: 筛选生效
+  description: 清晰展示筛选条件和结果数量。
+  recovery: clear_filter
+  mockup_id: YL-A-082-S05_FILTER_ACTIVE
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S05_FILTER_ACTIVE.png
+  mockup_status: APPROVED
+  mockup_sha256: 62f644a9075bd29cb4adbe87a4c0c3721679e253dd495c0f17efbac0201332a0
+- state_id: YL-A-082-S06_OFFLINE_CACHE
+  code: OFFLINE_CACHE
+  name: 离线缓存
+  description: 展示可用缓存并明确其不是最新数据。
+  recovery: refresh_when_online
+  mockup_id: YL-A-082-S06_OFFLINE_CACHE
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S06_OFFLINE_CACHE.png
+  mockup_status: APPROVED
+  mockup_sha256: 14429669df629677c79c6180d82b240bf479dbec8a291a87d88209124e05459b
+- state_id: YL-A-082-S07_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-A-082-S07_NETWORK_ERROR
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S07_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 69acafb876602a9e8d640d9e45834876fd2ad4e6d0669640972e0afa16f9a533
+- state_id: YL-A-082-S08_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-A-082-S08_SERVER_ERROR
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S08_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 67923531e02303362c54d9343b067f76c375fd9c15af32f0339b0474dd6ea288
+- state_id: YL-A-082-S09_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-A-082-S09_PERMISSION_DENIED
+  mockup_path: ui/mockups/android/YL-A-082/YL-A-082-S09_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 95420171f2b8774eee110eeef2066fa1581b4afe6cf22249368436e85201fc06
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

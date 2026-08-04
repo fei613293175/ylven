@@ -1,0 +1,91 @@
+schema_version: '1.4'
+page_id: YL-A-037
+name: 输入区模型状态条
+surface: ANDROID
+route: android://037
+primary_phase: P04
+phases:
+- P04
+work_packets:
+- P04-W02
+feature_ids:
+- P04-009
+layout_profile: android_chat
+resolved_layout:
+  surface: ANDROID
+  top_bar: chat
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  content_bottom_anchor: composer
+  message_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: COMPONENT_BOARD
+parent_page_id: YL-A-024
+visual_identity:
+  template: model_strip
+  title: 输入区模型条
+  subtitle: 模型、推理、联网和临时切换提示
+  required_elements:
+  - GPT-5.6 Sol
+  - 深度推理
+  - 联网
+  screen_signature: 01f8b173edd965d9
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-037-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-037-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-037/YL-A-037-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: df8970f6758c2df13d654dc952c2da2a29f3cafd634848588a36027842827178
+- state_id: YL-A-037-S02_SERVICE_DEGRADED
+  code: SERVICE_DEGRADED
+  name: 服务降级
+  description: 展示受影响能力、替代通道和状态页入口。
+  recovery: choose_alternative_or_retry
+  mockup_id: YL-A-037-S02_SERVICE_DEGRADED
+  mockup_path: ui/mockups/android/YL-A-037/YL-A-037-S02_SERVICE_DEGRADED.png
+  mockup_status: APPROVED
+  mockup_sha256: 656fc2d5afc7fd6109e272e4600b874f5de03dc3cee88cb61b6d674436dccd4e
+- state_id: YL-A-037-S03_DISABLED
+  code: DISABLED
+  name: 不可用
+  description: 控件不可用并提供原因，不仅降低透明度。
+  recovery: resolve_prerequisite
+  mockup_id: YL-A-037-S03_DISABLED
+  mockup_path: ui/mockups/android/YL-A-037/YL-A-037-S03_DISABLED.png
+  mockup_status: APPROVED
+  mockup_sha256: fff544594b6691655aeef951d713b7aaeca6731f94ea949947dbc32e2a459929
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

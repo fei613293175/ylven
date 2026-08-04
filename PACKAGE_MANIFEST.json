@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.6.0",
+  "package_name": "YLVEN_AI_Development_Package_V1.6.0_20260805",
+  "package_version": "1.6.0",
+  "built_at_utc": "2026-08-04T21:08:48Z",
+  "purpose": "YLVEN Android AI commercial platform plan, visual contracts, mockups and Codex bootstrap package",
+  "payload_file_count": 3438,
+  "payload_total_bytes": 299001890,
+  "feature_count": 362,
+  "test_count": 1086,
+  "database_entity_count": 201,
+  "openapi_operation_count": 225,
+  "ui_page_count": 332,
+  "ui_state_count": 2671,
+  "bundled_mockup_png_count": 2671,
+  "review_board_count": 135,
+  "mockup_status_counts": {
+    "APPROVED": 2671
+  },
+  "visual_duplicate_audit_result": "PASS",
+  "invalid_duplicate_count": 0,
+  "work_packet_count": 64,
+  "phase_count": 14,
+  "spec_kit_pinned_version": "v0.15.2",
+  "real_application_apk_included": false,
+  "owner_mockup_approval_claimed": true,
+  "notes": [
+    "The canonical mockup manifest is authoritative; all bundled V1.6 visual baselines are APPROVED, while runtime screenshots and owner APK acceptance remain mandatory.",
+    "The package contains no font files; rendering uses system-installed CJK fonts.",
+    "V1.6 adds deterministic work-packet/release closure, public-repository bootstrap and lightweight local execution while retaining all product/UI contracts."
+  ]
+}

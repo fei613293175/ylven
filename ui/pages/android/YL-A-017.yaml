@@ -1,0 +1,112 @@
+schema_version: '1.4'
+page_id: YL-A-017
+name: 登录与注册
+surface: ANDROID
+route: android://017
+primary_phase: P02
+phases:
+- P02
+work_packets:
+- P02-W05
+feature_ids:
+- P02-023
+- P02-025
+layout_profile: android_auth
+resolved_layout:
+  surface: ANDROID
+  top_bar: optional_back
+  bottom_navigation: false
+  horizontal_padding_dp: 24
+  top_content_gap_dp: 32
+  field_gap_dp: 16
+  action_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: SYSTEM_STATE_BOARD
+parent_page_id: null
+visual_identity:
+  template: auth_resilience
+  title: 认证适配与异常状态
+  subtitle: 弱网、离线、小屏和字体缩放统一规范
+  required_elements:
+  - 弱网重试
+  - 离线提示
+  - 320dp 小屏
+  - 大字体与无障碍
+  screen_signature: 6f747fa19d195336
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-017-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-017-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-017/YL-A-017-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: d9b5d721e3bed957e9fbdf75cb925d4366766ca9fd7721dc9b94bffc41702be3
+- state_id: YL-A-017-S02_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-017-S02_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-017/YL-A-017-S02_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: a7f67fccd0561b263a7a50d9ea733915f8b5c4131c33ac109d7c9475a5eb88c1
+- state_id: YL-A-017-S03_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-A-017-S03_NETWORK_ERROR
+  mockup_path: ui/mockups/android/YL-A-017/YL-A-017-S03_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 2078da5d57a4192082821a3d8a3ce59be1339f58612b6d1d9295f9cb08939376
+- state_id: YL-A-017-S04_TIMEOUT
+  code: TIMEOUT
+  name: 请求超时
+  description: 请求超过规定时限，保留上下文并允许重试。
+  recovery: retry
+  mockup_id: YL-A-017-S04_TIMEOUT
+  mockup_path: ui/mockups/android/YL-A-017/YL-A-017-S04_TIMEOUT.png
+  mockup_status: APPROVED
+  mockup_sha256: 9eaf89e0bb42d7cce048f50b26b3a9c1817b8c2c31601788c0543dcabaa47357
+- state_id: YL-A-017-S05_SERVICE_DEGRADED
+  code: SERVICE_DEGRADED
+  name: 服务降级
+  description: 展示受影响能力、替代通道和状态页入口。
+  recovery: choose_alternative_or_retry
+  mockup_id: YL-A-017-S05_SERVICE_DEGRADED
+  mockup_path: ui/mockups/android/YL-A-017/YL-A-017-S05_SERVICE_DEGRADED.png
+  mockup_status: APPROVED
+  mockup_sha256: 0f5064a917903fd1f125e06f837960b94565a744de27445003b3e7b6e2844d2e
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

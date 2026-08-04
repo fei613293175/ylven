@@ -1,0 +1,189 @@
+schema_version: '1.4'
+page_id: YL-A-023
+name: 会话页
+surface: ANDROID
+route: android://023
+primary_phase: P03
+phases:
+- P03
+work_packets:
+- P03-W02
+- P03-W03
+- P03-W04
+feature_ids:
+- P03-009
+- P03-010
+- P03-012
+- P03-013
+- P03-017
+- P03-027
+layout_profile: android_chat
+resolved_layout:
+  surface: ANDROID
+  top_bar: chat
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  content_bottom_anchor: composer
+  message_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: chat
+  title: YLVEN App 架构讨论
+  subtitle: GPT-5.6 Sol · 深度推理
+  required_elements:
+  - 用户消息
+  - AI 回复
+  - 模型标签
+  - 输入区
+  screen_signature: 75edd175b81c0189
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-023-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-023-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 453a28b77532da226149b8860e7ef2e10f4373fbf65c9e1e1f7585e8529d036f
+- state_id: YL-A-023-S02_INPUT_FOCUSED
+  code: INPUT_FOCUSED
+  name: 输入聚焦
+  description: 键盘弹出、焦点环和辅助文案布局稳定。
+  recovery: none
+  mockup_id: YL-A-023-S02_INPUT_FOCUSED
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S02_INPUT_FOCUSED.png
+  mockup_status: APPROVED
+  mockup_sha256: a825d473fae3f513138f67e55e0a24b5e697d96d5b07f993dfea8fcaeb391d13
+- state_id: YL-A-023-S03_UPLOADING
+  code: UPLOADING
+  name: 上传中
+  description: 显示文件名、进度、取消和后台继续策略。
+  recovery: cancel_or_wait
+  mockup_id: YL-A-023-S03_UPLOADING
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S03_UPLOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 3affcdfee2888ad2c1dbcbde8821fa7833617c873b9bdbd8bf2d86c455b4496a
+- state_id: YL-A-023-S04_CONNECTING
+  code: CONNECTING
+  name: 建立连接
+  description: 正在连接流式端点，输入内容保持。
+  recovery: cancel_or_wait
+  mockup_id: YL-A-023-S04_CONNECTING
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S04_CONNECTING.png
+  mockup_status: APPROVED
+  mockup_sha256: 539fe9df1182d42a18b2fd1d9c50c9471ad4d68637eb70a18c2cc6b0b5925437
+- state_id: YL-A-023-S05_STREAMING
+  code: STREAMING
+  name: 流式生成
+  description: 内容逐步出现，停止按钮可用，滚动行为稳定。
+  recovery: stop
+  mockup_id: YL-A-023-S05_STREAMING
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S05_STREAMING.png
+  mockup_status: APPROVED
+  mockup_sha256: 19f0ce4c4051f63309664b4e5511590dcbc8c53c24050fcbb14ec00704296632
+- state_id: YL-A-023-S06_TOOL_RUNNING
+  code: TOOL_RUNNING
+  name: 工具执行中
+  description: 展示工具名称、阶段、可取消性和安全说明。
+  recovery: wait_or_cancel
+  mockup_id: YL-A-023-S06_TOOL_RUNNING
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S06_TOOL_RUNNING.png
+  mockup_status: APPROVED
+  mockup_sha256: a0e496681e9a954b1c5f4750d2c8672067482a018489d2738d6f1698f1dd9b05
+- state_id: YL-A-023-S07_COMPLETED
+  code: COMPLETED
+  name: 生成完成
+  description: 完整内容、来源、模型标签和操作栏可见。
+  recovery: continue
+  mockup_id: YL-A-023-S07_COMPLETED
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S07_COMPLETED.png
+  mockup_status: APPROVED
+  mockup_sha256: fa810325851180a918439b3a8f09fc0a5a551d58a3a59a23687cc57478d74ee8
+- state_id: YL-A-023-S08_STOPPED
+  code: STOPPED
+  name: 已停止生成
+  description: 保留已生成内容并提供继续或重答。
+  recovery: continue_or_regenerate
+  mockup_id: YL-A-023-S08_STOPPED
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S08_STOPPED.png
+  mockup_status: APPROVED
+  mockup_sha256: 00b7b593f1f4c9fb84301eb66aeef0396c695099e52e103d552e99f6db2fdcf6
+- state_id: YL-A-023-S09_RECONNECTING
+  code: RECONNECTING
+  name: 断线重连
+  description: 展示重连状态和事件游标，不重复消息。
+  recovery: automatic_or_cancel
+  mockup_id: YL-A-023-S09_RECONNECTING
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S09_RECONNECTING.png
+  mockup_status: APPROVED
+  mockup_sha256: 0dc9e7f3a75496530bbd339785c285773d7291301ffb89163f3074692f530d61
+- state_id: YL-A-023-S10_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-023-S10_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S10_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: fba74904af547eb33306b54ee0b7b93b7ed357280259ac34ce5f162dd5733172
+- state_id: YL-A-023-S11_RATE_LIMITED
+  code: RATE_LIMITED
+  name: 请求过于频繁
+  description: 展示可再次尝试时间，不自动猛烈重试。
+  recovery: retry_after
+  mockup_id: YL-A-023-S11_RATE_LIMITED
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S11_RATE_LIMITED.png
+  mockup_status: APPROVED
+  mockup_sha256: 87568c78a6337c5f264daa241586d01f6ab874c9b50b49d0d9133211862fb053
+- state_id: YL-A-023-S12_PROVIDER_ERROR
+  code: PROVIDER_ERROR
+  name: 上游模型失败
+  description: 说明当前模型/通道失败，并提供透明切换选项。
+  recovery: retry_or_choose_model
+  mockup_id: YL-A-023-S12_PROVIDER_ERROR
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S12_PROVIDER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: e9e545e037483f8f6e5d8b19eda98b7b45ea01c721ecefa704abf4c3c8762c7f
+- state_id: YL-A-023-S13_CONTENT_BLOCKED
+  code: CONTENT_BLOCKED
+  name: 内容被安全策略阻止
+  description: 使用中性说明和允许的替代操作。
+  recovery: edit_request
+  mockup_id: YL-A-023-S13_CONTENT_BLOCKED
+  mockup_path: ui/mockups/android/YL-A-023/YL-A-023-S13_CONTENT_BLOCKED.png
+  mockup_status: APPROVED
+  mockup_sha256: f1c579d795ce0373a38b62868e080795e4262c198cfe52d79941594d85258caa
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

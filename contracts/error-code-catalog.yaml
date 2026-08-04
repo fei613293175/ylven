@@ -1,0 +1,134 @@
+version: 1.2.0
+envelope:
+  path: error
+  required:
+  - code
+  - message
+  - request_id
+  - retryable
+codes:
+- code: AUTH_INVALID_EMAIL
+  http_status: 400
+  retryable: false
+  scope: identity
+  meaning: 邮箱格式或标准化结果无效。
+- code: AUTH_CHALLENGE_REQUIRED
+  http_status: 400
+  retryable: true
+  scope: identity
+  meaning: 请求验证码前必须完成有效安全验证挑战。
+- code: AUTH_CHALLENGE_FAILED
+  http_status: 403
+  retryable: true
+  scope: identity
+  meaning: Turnstile 或等价安全验证未通过、已过期或被重复使用。
+- code: AUTH_CODE_INVALID
+  http_status: 400
+  retryable: true
+  scope: identity
+  meaning: 邮箱验证码错误。
+- code: AUTH_CODE_EXPIRED
+  http_status: 400
+  retryable: true
+  scope: identity
+  meaning: 邮箱验证码已过期，需要重新发送。
+- code: AUTH_CODE_RATE_LIMITED
+  http_status: 429
+  retryable: true
+  scope: identity
+  meaning: 邮箱、IP 或设备达到验证码发送频率限制。
+- code: AUTH_EMAIL_ALREADY_REGISTERED
+  http_status: 409
+  retryable: false
+  scope: identity
+  meaning: 邮箱已存在，不能重复注册。
+- code: AUTH_SESSION_EXPIRED
+  http_status: 401
+  retryable: true
+  scope: identity
+  meaning: 访问令牌与刷新会话均不可继续使用。
+- code: PERMISSION_DENIED
+  http_status: 403
+  retryable: false
+  scope: authorization
+  meaning: 当前用户或管理员无对应资源权限。
+- code: RESOURCE_NOT_FOUND
+  http_status: 404
+  retryable: false
+  scope: common
+  meaning: 资源不存在或不可见，不能泄露跨账号资源。
+- code: IDEMPOTENCY_CONFLICT
+  http_status: 409
+  retryable: false
+  scope: write
+  meaning: 同一幂等键被用于不同请求体。
+- code: MODEL_UNAVAILABLE
+  http_status: 503
+  retryable: true
+  scope: ai
+  meaning: 选择模型或其路由当前不可用，不能静默换模型。
+- code: MODEL_CAPABILITY_UNSUPPORTED
+  http_status: 400
+  retryable: false
+  scope: ai
+  meaning: 当前模型不支持请求的图片、文件、工具或推理参数。
+- code: AI_RUN_CANCELLED
+  http_status: 409
+  retryable: false
+  scope: ai
+  meaning: Run 已被用户或系统取消。
+- code: AI_UPSTREAM_TIMEOUT
+  http_status: 504
+  retryable: true
+  scope: ai
+  meaning: 上游模型超时，保留 Run ID 以供恢复或重试。
+- code: FILE_TYPE_UNSUPPORTED
+  http_status: 415
+  retryable: false
+  scope: file
+  meaning: 文件 MIME、扩展名或解析能力不受支持。
+- code: FILE_TOO_LARGE
+  http_status: 413
+  retryable: false
+  scope: file
+  meaning: 文件超过用户权益或系统限制。
+- code: FILE_QUARANTINED
+  http_status: 422
+  retryable: false
+  scope: file
+  meaning: 文件被安全扫描隔离。
+- code: JOB_NOT_CANCELLABLE
+  http_status: 409
+  retryable: false
+  scope: job
+  meaning: 任务已经完成、失败或进入不可取消阶段。
+- code: INSUFFICIENT_CREDIT
+  http_status: 402
+  retryable: false
+  scope: billing
+  meaning: 可用额度不足，不能开始收费任务。
+- code: BUDGET_EXCEEDED
+  http_status: 429
+  retryable: false
+  scope: billing
+  meaning: 账号、API 或单 Key 预算已达到上限。
+- code: PAYMENT_ALREADY_PROCESSED
+  http_status: 200
+  retryable: false
+  scope: billing
+  meaning: 重复支付回调已幂等处理，不重复入账。
+- code: GATEWAY_SYNC_PENDING
+  http_status: 202
+  retryable: true
+  scope: gateway
+  meaning: YLVEN 账本已生效，Sub2API 执行投影正在重试。
+- code: RATE_LIMITED
+  http_status: 429
+  retryable: true
+  scope: common
+  meaning: 达到用户、设备、IP、API Key 或供应商限流。
+- code: INTERNAL_ERROR
+  http_status: 500
+  retryable: true
+  scope: common
+  meaning: 未分类服务异常；响应必须带 request_id，日志不得泄露 Secret。

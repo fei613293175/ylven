@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.orbexa.cc/contracts/feature-map.schema.json",
+  "title": "YLVEN Feature Map",
+  "type": "object",
+  "required": [
+    "version",
+    "features"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "phase",
+          "feature_id",
+          "name",
+          "surface",
+          "screen_or_menu",
+          "user_action",
+          "ui_states",
+          "http_method",
+          "endpoint_or_event",
+          "backend_service",
+          "data_entities",
+          "admin_control",
+          "permission",
+          "billing_rule",
+          "async_job",
+          "acceptance_criteria",
+          "test_ids",
+          "implementation_notes",
+          "status"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "pattern": "^P(0[0-9]|1[0-3])$"
+          },
+          "feature_id": {
+            "type": "string",
+            "pattern": "^P(0[0-9]|1[0-3])-[0-9]{3}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "screen_or_menu": {
+            "type": "string"
+          },
+          "user_action": {
+            "type": "string"
+          },
+          "ui_states": {
+            "type": "string"
+          },
+          "http_method": {
+            "type": "string"
+          },
+          "endpoint_or_event": {
+            "type": "string"
+          },
+          "backend_service": {
+            "type": "string"
+          },
+          "data_entities": {
+            "type": "string"
+          },
+          "admin_control": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "billing_rule": {
+            "type": "string"
+          },
+          "async_job": {
+            "type": "string"
+          },
+          "acceptance_criteria": {
+            "type": "string"
+          },
+          "test_ids": {
+            "type": "string"
+          },
+          "implementation_notes": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,141 @@
+schema_version: '1.0'
+design_system_version: YL-DS-1.2.0
+components:
+- component_id: YL-C-A-001
+  name: YlvenScaffold
+  platform: ANDROID
+  token_path: android_components
+  mandatory_states: default|loading|offline|error
+  rules: 统一安全区、背景、TopBar、BottomNavigation 与 Snackbar Host；页面不得自行实现第二套 Scaffold。
+- component_id: YL-C-A-002
+  name: YlvenTopBar
+  platform: ANDROID
+  token_path: android_components.top_app_bar
+  mandatory_states: default|scrolled|action_disabled
+  rules: 高度 56dp；标题和返回区位置固定；图标触控区 48dp。
+- component_id: YL-C-A-003
+  name: YlvenBottomNavigation
+  platform: ANDROID
+  token_path: android_components.bottom_navigation
+  mandatory_states: default|selected|badge
+  rules: 内容高度 64dp；固定四栏：首页、工作、发现、我的。
+- component_id: YL-C-A-004
+  name: YlvenPrimaryButton
+  platform: ANDROID
+  token_path: android_components.primary_button
+  mandatory_states: enabled|pressed|loading|disabled
+  rules: 高度 52dp、圆角 14dp；加载时保持原宽度，不允许布局跳动。
+- component_id: YL-C-A-005
+  name: YlvenTextField
+  platform: ANDROID
+  token_path: android_components.text_field
+  mandatory_states: empty|focused|filled|error|disabled
+  rules: 最小高度 52dp、圆角 14dp；标签、辅助文案和错误文案不得相互挤压。
+- component_id: YL-C-A-006
+  name: YlvenCard
+  platform: ANDROID
+  token_path: android_components.card
+  mandatory_states: default|pressed|selected|disabled
+  rules: 圆角 16dp、内边距 16dp、边框 1dp；禁止页面私自改成 8dp 或 24dp。
+- component_id: YL-C-A-007
+  name: YlvenStateLayout
+  platform: ANDROID
+  token_path: android_components.state_panel
+  mandatory_states: loading|empty|offline|timeout|error|permission
+  rules: 统一图标、标题、说明和恢复按钮，不允许各页自由发挥错误页。
+- component_id: YL-C-A-008
+  name: YlvenBottomSheet
+  platform: ANDROID
+  token_path: android_components.bottom_sheet
+  mandatory_states: open|loading|error|disabled
+  rules: 顶部圆角 28dp；拖拽条 36×4dp；内容左右 20dp。
+- component_id: YL-C-A-009
+  name: YlvenDialog
+  platform: ANDROID
+  token_path: android_components.dialog
+  mandatory_states: open|processing|success|error
+  rules: 最大宽度 312dp；圆角 20dp；内边距 24dp。
+- component_id: YL-C-A-010
+  name: YlvenChatComposer
+  platform: ANDROID
+  token_path: chat_components.composer
+  mandatory_states: empty|typing|attachments|uploading|sending|stopped|offline
+  rules: 高度 52–148dp，圆角 24dp；附件、语音、发送均有固定触控区。
+- component_id: YL-C-A-011
+  name: YlvenUserBubble
+  platform: ANDROID
+  token_path: chat_components.user_bubble
+  mandatory_states: default|selected|failed
+  rules: 最大宽度 84%；圆角 18dp；用户消息靠右。
+- component_id: YL-C-A-012
+  name: YlvenAssistantMessage
+  platform: ANDROID
+  token_path: chat_components.assistant_message
+  mandatory_states: streaming|completed|tool_running|error
+  rules: AI 内容全宽、无大气泡；块间距 12dp；模型标签必须可见。
+- component_id: YL-C-A-013
+  name: YlvenAttachmentCard
+  platform: ANDROID
+  token_path: chat_components.attachment_preview
+  mandatory_states: uploading|ready|failed|deleted
+  rules: 高度 64dp、圆角 12dp；显示类型、名称、大小和状态。
+- component_id: YL-C-A-014
+  name: YlvenJobCard
+  platform: ANDROID
+  token_path: studio_components.job_progress_card
+  mandatory_states: queued|running|success|failed|cancelled
+  rules: 任务状态、进度、模型、开始时间和可恢复动作位置固定。
+- component_id: YL-C-A-015
+  name: YlvenPptThumbnail
+  platform: ANDROID
+  token_path: studio_components.ppt_thumbnail
+  mandatory_states: loading|ready|selected|error
+  rules: 固定 16:9；圆角 12dp；页码与状态覆盖层位置固定。
+- component_id: YL-C-M-001
+  name: AdminShell
+  platform: WEB
+  token_path: platforms.admin_web
+  mandatory_states: expanded|collapsed|mobile_blocked
+  rules: 侧栏 248px、顶栏 64px、内容 24px；1280px 以下不得破坏数据表。
+- component_id: YL-C-M-002
+  name: AdminDataTable
+  platform: WEB
+  token_path: web_components
+  mandatory_states: loading|populated|empty|filtered|selected|error
+  rules: 表头 44px、数据行 48px、单元格左右 16px；批量操作仅在选中后出现。
+- component_id: YL-C-M-003
+  name: AdminFilterBar
+  platform: WEB
+  token_path: web_components
+  mandatory_states: default|active|loading
+  rules: 最小高度 56px；筛选项、搜索、刷新和导出位置固定。
+- component_id: YL-C-M-004
+  name: AdminFormDrawer
+  platform: WEB
+  token_path: web_components
+  mandatory_states: clean|dirty|validation_error|saving|conflict
+  rules: 抽屉宽 520px；关闭脏表单必须确认；配置保存必须显示版本冲突。
+- component_id: YL-C-M-005
+  name: AdminMetricCard
+  platform: WEB
+  token_path: web_components
+  mandatory_states: loading|ready|partial|error
+  rules: 最小高度 112px；主数值、趋势、时间范围位置固定。
+- component_id: YL-C-D-001
+  name: DeveloperShell
+  platform: WEB
+  token_path: platforms.developer_web
+  mandatory_states: default|service_degraded
+  rules: 侧栏 240px、顶栏 64px、内容 32px。
+- component_id: YL-C-D-002
+  name: ApiKeyReveal
+  platform: WEB
+  token_path: web_components
+  mandatory_states: created_once|copied|dismissed
+  rules: 完整 Key 仅创建后展示一次；关闭后永不重新显示。
+- component_id: YL-C-D-003
+  name: CodeExample
+  platform: WEB
+  token_path: web_components
+  mandatory_states: language_selected|copied|wrapped
+  rules: 代码字号 13px/20px、圆角 10px、内边距 16px。

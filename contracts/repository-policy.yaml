@@ -1,0 +1,41 @@
+schema_version: 1.6.0
+authority: CANONICAL
+repository_url: https://github.com/fei613293175/ylven.git
+expected_visibility: public
+visibility_decision: OWNER_CONFIRMED_PUBLIC
+public_repository_is_allowed: true
+remote: origin
+default_branch: main
+initialization:
+  initialize_git_when_dot_git_missing: true
+  add_origin_when_missing: true
+  allow_empty_remote_without_default_branch: true
+  first_push_creates_main: true
+  initial_push_allowed: true
+public_safety_gate:
+  required_before_commit: true
+  required_before_push: true
+  required_before_release: true
+  forbid_real_secrets: true
+  forbid_private_keys_and_signing_material: true
+  forbid_local_server_inventory: true
+  allow_example_environment_files: true
+rules:
+- Codex verifies origin exactly once per session; a missing .git directory is repaired by bootstrap instead of treated as a project blocker.
+- An empty public remote with no default branch is valid. Bootstrap creates main and performs the first push after safety validation.
+- Each owner-facing phase uses phase/Pxx-*; do not push feature work directly to main.
+- Each Work Packet closes through the state controller and records an immutable commit in WORK_PACKET_HISTORY.jsonl.
+- Each owner-facing version closes through the release controller and records commit, tag, CI run, artifact and APK hash in RELEASE_LEDGER.jsonl.
+- No force push, no rewriting delivered tags, and no secrets, private keys, signing material or one-time administrator passwords in Git.
+- The phase tag ylven-v<version_name>, CI Artifact, desktop APK and release ledger must reference the same commit SHA.
+required_status_checks:
+- contracts-and-schema
+- secret-scan
+- backend-tests
+- web-tests
+- android-build
+- android-emulator-acceptance
+- visual-regression
+- state-continuity
+- release-contract
+artifact_retention_days: 30

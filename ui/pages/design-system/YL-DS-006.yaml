@@ -1,0 +1,69 @@
+schema_version: '1.4'
+page_id: YL-DS-006
+name: 顶部栏、底部导航、侧栏和标签页基准板
+surface: DESIGN_SYSTEM
+route: design://board/006
+primary_phase: P00
+phases:
+- P00
+work_packets:
+- P00-W01
+feature_ids:
+- P00-004
+layout_profile: design_board
+resolved_layout:
+  surface: DESIGN_SYSTEM
+  canonical_canvas_px: 1440x1200
+  grid_px: 8
+  section_gap_px: 32
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: design_board
+  title: 顶部栏、底部导航、侧栏和标签页基准板
+  subtitle: YLVEN
+  required_elements:
+  - 建立 YLVEN 浅色与深色主题 Token
+  screen_signature: b6dec54ccb7ee846
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-DS-006-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-DS-006-S01_DEFAULT
+  mockup_path: ui/mockups/design-system/YL-DS-006/YL-DS-006-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: bc0f15d53626cf0c0dbd9a88154034d676a6de2972a02bacc6a683f3be479d9c
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

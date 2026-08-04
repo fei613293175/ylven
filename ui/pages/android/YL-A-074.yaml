@@ -1,0 +1,128 @@
+schema_version: '1.4'
+page_id: YL-A-074
+name: PPT 预览编辑
+surface: ANDROID
+route: android://074
+primary_phase: P08
+phases:
+- P08
+work_packets:
+- P08-W03
+feature_ids:
+- P08-014
+- P08-015
+layout_profile: android_preview
+resolved_layout:
+  surface: ANDROID
+  top_bar: overlay_or_standard
+  bottom_navigation: false
+  horizontal_padding_dp: 12
+  canvas_background_token: surface_subtle
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: YL-A-073
+visual_identity:
+  template: ppt_preview
+  title: PPT 预览
+  subtitle: YLVEN 商业 AI 平台 · 12 页
+  required_elements:
+  - 页面缩略图
+  - 当前页面
+  - 播放预览
+  - 编辑
+  screen_signature: c09f40dc11767d15
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-074-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-A-074-S01_LOADING
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 012a159b53d835ccf16efb08210e4ba25aec6eee2acbe54ff29e7b489a8b697f
+- state_id: YL-A-074-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-A-074-S02_POPULATED
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: f4292e3f3e34e7ee20c4458a26be66421a8245d8705fda58fd9cc10cfbea6a06
+- state_id: YL-A-074-S03_EDIT_MODE
+  code: EDIT_MODE
+  name: 编辑状态
+  description: 可编辑字段与只读字段明显区分。
+  recovery: save_or_cancel
+  mockup_id: YL-A-074-S03_EDIT_MODE
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S03_EDIT_MODE.png
+  mockup_status: APPROVED
+  mockup_sha256: 9a4389fa7d24d256ad8d7d283b87d7b951ca41002e97431042ff0e93cd701bdf
+- state_id: YL-A-074-S04_DOWNLOADING
+  code: DOWNLOADING
+  name: 下载更新
+  description: 显示真实进度、网络策略和取消规则。
+  recovery: cancel_or_wait
+  mockup_id: YL-A-074-S04_DOWNLOADING
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S04_DOWNLOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 7b8ed91d649b1d720e5f6e53d8c1709b34b98de7f383ab7b8f396b9b671b721e
+- state_id: YL-A-074-S05_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-A-074-S05_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S05_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: e76cf4ea65bf98ff9b0469c16406e52e424f5430b517e960232bbb1c1c05c52d
+- state_id: YL-A-074-S06_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-A-074-S06_SERVER_ERROR
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S06_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: e566e9509d530dc74659d299bbd11cb5566c85f9945bdf2058f3dd93dc3692de
+- state_id: YL-A-074-S07_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-074-S07_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-074/YL-A-074-S07_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: 001c50cced402ca83de4037ed89d412484ca025070a76901eae54b43cface388
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://admin.orbexa.cc", "https://developer.orbexa.cc"],
+    "AllowedMethods": ["GET", "HEAD", "PUT"],
+    "AllowedHeaders": ["content-type", "content-length", "x-amz-checksum-sha256", "x-amz-meta-*"],
+    "ExposeHeaders": ["etag", "x-amz-version-id"],
+    "MaxAgeSeconds": 3600
+  }
+]

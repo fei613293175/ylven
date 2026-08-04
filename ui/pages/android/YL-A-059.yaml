@@ -1,0 +1,112 @@
+schema_version: '1.4'
+page_id: YL-A-059
+name: 作品菜单
+surface: ANDROID
+route: android://059
+primary_phase: P06
+phases:
+- P06
+- P09
+work_packets:
+- P06-W02
+- P09-W01
+feature_ids:
+- P06-009
+- P09-004
+layout_profile: android_sheet
+resolved_layout:
+  surface: ANDROID
+  container: bottom_sheet
+  horizontal_padding_dp: 20
+  section_gap_dp: 20
+  row_min_height_dp: 52
+design_system_version: YL-DS-1.2.0
+visual_kind: OVERLAY
+parent_page_id: YL-A-079
+visual_identity:
+  template: artifact_menu
+  title: 作品操作
+  subtitle: 下载、移入项目、版本和删除
+  required_elements:
+  - 下载
+  - 移入项目
+  - 查看版本
+  - 删除
+  screen_signature: c805ff553084f209
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-059-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-059-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-059/YL-A-059-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 577d3b9d7e1ad7214cd1e139aaf1f3d2d7498081d44a6240a28cfabbdd545144
+- state_id: YL-A-059-S02_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-A-059-S02_SUBMITTING
+  mockup_path: ui/mockups/android/YL-A-059/YL-A-059-S02_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: 6fe1a9527a3f3ef944f522b8831a2c357867d9031f76c8b932d59e0992aa5f53
+- state_id: YL-A-059-S03_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-A-059-S03_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-059/YL-A-059-S03_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 502b36816946acb6d6f0d89d9e449728333e26e2bd947f73a9da64f2267e8c0e
+- state_id: YL-A-059-S04_SAVE_ERROR
+  code: SAVE_ERROR
+  name: 保存失败
+  description: 保留用户输入，显示稳定错误码和重试动作。
+  recovery: retry
+  mockup_id: YL-A-059-S04_SAVE_ERROR
+  mockup_path: ui/mockups/android/YL-A-059/YL-A-059-S04_SAVE_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: b6c1a9b78950bb1289cc72e73864357bed963325ce2f5ef3b66743681d48e9c3
+- state_id: YL-A-059-S05_DISABLED
+  code: DISABLED
+  name: 不可用
+  description: 控件不可用并提供原因，不仅降低透明度。
+  recovery: resolve_prerequisite
+  mockup_id: YL-A-059-S05_DISABLED
+  mockup_path: ui/mockups/android/YL-A-059/YL-A-059-S05_DISABLED.png
+  mockup_status: APPROVED
+  mockup_sha256: b0337cabb73af05d7d7df4bfcc21a60d48f72cf3a6e6c8b8263267fee6e705a4
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

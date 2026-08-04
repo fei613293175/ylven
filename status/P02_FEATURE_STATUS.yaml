@@ -1,0 +1,120 @@
+schema_version: 1.2.0
+phase: P02
+phase_title: Android 注册登录与账号安全体验
+overall_status: TODO
+updated_at: '2026-08-04T00:00:00+08:00'
+allowed_feature_statuses_during_development:
+- PLANNED
+- IN_PROGRESS
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+release_final_statuses:
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+features:
+- feature_id: P02-001
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-002
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-003
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-004
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-005
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-006
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-007
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-008
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-009
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-010
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-011
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-012
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-013
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-014
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-015
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-016
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-017
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-018
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-019
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-020
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-021
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-022
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-023
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-024
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-025
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P02-026
+  status: PLANNED
+  reason: ''
+  evidence: []

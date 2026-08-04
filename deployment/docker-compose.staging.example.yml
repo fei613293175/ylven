@@ -1,0 +1,79 @@
+name: ylven-staging
+services:
+  core-api:
+    build: { context: ../services/core-api }
+    env_file: [env/.env.staging]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    expose: ['8080']
+    restart: unless-stopped
+    healthcheck: { test: ['CMD','/app/healthcheck'], interval: 15s, timeout: 5s, retries: 5 }
+    networks: [edge, private]
+  ai-runtime:
+    build: { context: ../services/ai-runtime }
+    env_file: [env/.env.staging]
+    expose: ['8081']
+    restart: unless-stopped
+    deploy: { replicas: 2 }
+    networks: [edge, private]
+  developer-gateway:
+    build: { context: ../services/developer-gateway }
+    env_file: [env/.env.staging]
+    expose: ['8082']
+    restart: unless-stopped
+    networks: [edge, private]
+  worker:
+    build: { context: ../services/worker }
+    env_file: [env/.env.staging]
+    restart: unless-stopped
+    deploy: { replicas: 2 }
+    networks: [private]
+  scheduler:
+    build: { context: ../services/scheduler }
+    env_file: [env/.env.staging]
+    restart: unless-stopped
+    networks: [private]
+  admin-web:
+    build: { context: ../web/admin }
+    expose: ['80']
+    restart: unless-stopped
+    networks: [edge]
+  developer-web:
+    build: { context: ../web/developer }
+    expose: ['80']
+    restart: unless-stopped
+    networks: [edge]
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ylven
+      POSTGRES_USER: ylven
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: { test: ['CMD-SHELL','pg_isready -U ylven -d ylven'], interval: 10s, timeout: 5s, retries: 10 }
+    networks: [private]
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server','--appendonly','yes','--requirepass','${REDIS_PASSWORD}']
+    volumes: [redis_data:/data]
+    healthcheck: { test: ['CMD-SHELL','redis-cli -a "$${REDIS_PASSWORD}" ping | grep PONG'], interval: 10s, timeout: 5s, retries: 10 }
+    networks: [private]
+  nats:
+    image: nats:2-alpine
+    command: ['-js','-sd','/data','--user','${NATS_USER}','--pass','${NATS_PASSWORD}']
+    volumes: [nats_data:/data]
+    healthcheck: { test: ['CMD','wget','-qO-','http://localhost:8222/healthz'], interval: 10s, timeout: 5s, retries: 10 }
+    networks: [private]
+networks:
+  edge: {}
+  private: { internal: true }
+volumes:
+  postgres_data: {}
+  redis_data: {}
+  nats_data: {}
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt

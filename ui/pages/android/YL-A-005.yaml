@@ -1,0 +1,130 @@
+schema_version: '1.4'
+page_id: YL-A-005
+name: 登录页
+surface: ANDROID
+route: android://005
+primary_phase: P02
+phases:
+- P02
+work_packets:
+- P02-W01
+feature_ids:
+- P02-002
+- P02-003
+- P02-006
+layout_profile: android_auth
+resolved_layout:
+  surface: ANDROID
+  top_bar: optional_back
+  bottom_navigation: false
+  horizontal_padding_dp: 24
+  top_content_gap_dp: 32
+  field_gap_dp: 16
+  action_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: login
+  title: 登录 YLVEN
+  subtitle: 使用邮箱验证码安全登录
+  required_elements:
+  - 邮箱地址
+  - 获取验证码
+  - 创建账户
+  screen_signature: 9b39cb44f315e276
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-005-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-005-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 890839541dcc076f0d30e5034fba2ff972e461dc1f511d01531b4c64d4723d35
+- state_id: YL-A-005-S02_INPUT_FOCUSED
+  code: INPUT_FOCUSED
+  name: 输入聚焦
+  description: 键盘弹出、焦点环和辅助文案布局稳定。
+  recovery: none
+  mockup_id: YL-A-005-S02_INPUT_FOCUSED
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S02_INPUT_FOCUSED.png
+  mockup_status: APPROVED
+  mockup_sha256: 8e9b23a7f227846aa137a58400144ce02f1fb953bf1b3016d8f468031125c810
+- state_id: YL-A-005-S03_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-A-005-S03_VALIDATION_ERROR
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S03_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: b67aff0a9dad84b3073915918c3b452d9fd1a3ed669cf386acae1d5ccdbf44d0
+- state_id: YL-A-005-S04_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-A-005-S04_SUBMITTING
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S04_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: edf91b965bcd82dab53212f2eb887f48d264b2bbb3449c8462a77a581920d39d
+- state_id: YL-A-005-S05_RATE_LIMITED
+  code: RATE_LIMITED
+  name: 请求过于频繁
+  description: 展示可再次尝试时间，不自动猛烈重试。
+  recovery: retry_after
+  mockup_id: YL-A-005-S05_RATE_LIMITED
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S05_RATE_LIMITED.png
+  mockup_status: APPROVED
+  mockup_sha256: 945e9b06fee48621f454acfc292c29497236b0ed635f14e10f5999e40ed35413
+- state_id: YL-A-005-S06_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-005-S06_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S06_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: 7366fada1239c3e6c301825d9ec0a8ca75792013d594eea680531616a1c8539a
+- state_id: YL-A-005-S07_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-A-005-S07_SERVER_ERROR
+  mockup_path: ui/mockups/android/YL-A-005/YL-A-005-S07_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 5f5154aed7d69ae9986a589d28c3f8c23f96c1c2d1da074d83db09212faff19e
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

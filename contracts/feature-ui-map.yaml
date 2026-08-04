@@ -1,0 +1,4195 @@
+schema_version: '1.4'
+features:
+- feature_id: P00-001
+  name: 建立仓库目录与模块边界
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-001
+    surface: ADMIN
+    page_name: 系统设置/工程信息
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-002
+  name: 建立环境配置分层
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-002
+    surface: ADMIN
+    page_name: 系统设置/环境配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-003
+  name: 建立 Android Compose 应用壳
+  phase: P00
+  ui_bindings:
+  - page_id: YL-A-001
+    surface: ANDROID
+    page_name: App Shell
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: null
+  - page_id: YL-M-003
+    surface: ADMIN
+    page_name: App发布/构建记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-004
+  name: 建立 YLVEN 浅色与深色主题 Token
+  phase: P00
+  ui_bindings:
+  - page_id: YL-A-002
+    surface: ANDROID
+    page_name: Design System
+    visual_kind: DESIGN_BOARD
+    parent_page_id: null
+  - page_id: YL-M-004
+    surface: ADMIN
+    page_name: 内容运营/设计配置
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-001
+    surface: DESIGN_SYSTEM
+    page_name: 颜色、主题与对比度基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-002
+    surface: DESIGN_SYSTEM
+    page_name: 字体、字号、行高与字重基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-003
+    surface: DESIGN_SYSTEM
+    page_name: 间距、网格、圆角、边框与阴影基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-004
+    surface: DESIGN_SYSTEM
+    page_name: 按钮、图标、Chip 与分段控件基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-005
+    surface: DESIGN_SYSTEM
+    page_name: 输入框、验证码、搜索和表单基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-006
+    surface: DESIGN_SYSTEM
+    page_name: 顶部栏、底部导航、侧栏和标签页基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-007
+    surface: DESIGN_SYSTEM
+    page_name: 卡片、列表、表格、筛选和分页基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-008
+    surface: DESIGN_SYSTEM
+    page_name: Dialog、Bottom Sheet、Snackbar 与菜单基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-009
+    surface: DESIGN_SYSTEM
+    page_name: Loading、Skeleton、Empty、Offline 与 Error 基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-010
+    surface: DESIGN_SYSTEM
+    page_name: 聊天消息、模型标签、代码、表格和引用基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-011
+    surface: DESIGN_SYSTEM
+    page_name: 文件、附件、上传、解析和资料库基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-012
+    surface: DESIGN_SYSTEM
+    page_name: 图片工作台、任务、结果和编辑基准板
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-DS-013
+    surface: DESIGN_SYSTEM
+    page_name: PPT 工作台、缩略图、预览和后台/开发者组件基准板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-005
+  name: 建立四栏导航与占位态
+  phase: P00
+  ui_bindings:
+  - page_id: YL-A-003
+    surface: ANDROID
+    page_name: 首页/工作/发现/我的
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-001
+  - page_id: YL-M-005
+    surface: ADMIN
+    page_name: 发现与首页/导航配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-006
+  name: 建立 Core API 服务壳
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-006
+    surface: ADMIN
+    page_name: 运维/服务健康
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-007
+  name: 建立 AI Runtime 服务壳
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-006
+    surface: ADMIN
+    page_name: 运维/服务健康
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-008
+  name: 建立 Developer Gateway 服务壳
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-006
+    surface: ADMIN
+    page_name: 运维/服务健康
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-009
+  name: 建立 Worker 与队列消费框架
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-007
+    surface: ADMIN
+    page_name: 运维/任务队列
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-010
+  name: 建立 Scheduler 与分布式锁
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-008
+    surface: ADMIN
+    page_name: 运维/定时任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-011
+  name: 建立 PostgreSQL 迁移体系
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-009
+    surface: ADMIN
+    page_name: 运维/数据库迁移
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-012
+  name: 建立 Redis 缓存与限流连接
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-010
+    surface: ADMIN
+    page_name: 运维/Redis
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-013
+  name: 建立 NATS JetStream 事件总线
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-011
+    surface: ADMIN
+    page_name: 运维/事件流
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-014
+  name: 建立 Cloudflare R2 存储适配器
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-012
+    surface: ADMIN
+    page_name: 文件与存储/存储配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-015
+  name: 建立 OpenAPI 合同与代码生成
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-013
+    surface: ADMIN
+    page_name: 系统设置/API版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-016
+  name: 建立 Feature Map 机器校验
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-014
+    surface: ADMIN
+    page_name: 系统设置/功能追踪
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-017
+  name: 建立结构化日志、指标与追踪
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-015
+    surface: ADMIN
+    page_name: 可观测性/总览
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-018
+  name: 建立 GitHub Actions 基础 CI
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-016
+    surface: ADMIN
+    page_name: 运维/构建记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-019
+  name: 建立阶段发布与桌面交付脚本
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-017
+    surface: ADMIN
+    page_name: App发布/阶段交付
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-020
+  name: 探测 Sub2API 文本与流式能力
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-018
+    surface: ADMIN
+    page_name: 模型与供应商/能力探测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-021
+  name: 探测 Sub2API 视觉、文件与图片能力
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-018
+    surface: ADMIN
+    page_name: 模型与供应商/能力探测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-022
+  name: 建立秘密管理与示例环境文件
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-019
+    surface: ADMIN
+    page_name: 安全与审计/秘密状态
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-023
+  name: 建立后台 Vue 应用壳和 RBAC 路由
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-020
+    surface: ADMIN
+    page_name: 管理员与权限/菜单
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P00-024
+  name: 建立开发者门户应用壳
+  phase: P00
+  ui_bindings:
+  - page_id: YL-M-021
+    surface: ADMIN
+    page_name: 开发者平台/门户配置
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-001
+    surface: DEVELOPER
+    page_name: 开发者中心
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-001
+  name: 标准化邮箱地址并校验格式
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-022
+    surface: ADMIN
+    page_name: 认证与用户/认证策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-002
+  name: 创建注册安全验证挑战
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-023
+    surface: ADMIN
+    page_name: 认证与用户/安全验证
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-003
+  name: 服务端校验 Turnstile 一次性令牌
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-024
+    surface: ADMIN
+    page_name: 认证与用户/Turnstile配置
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-001
+    surface: WEB
+    page_name: 安全验证承载页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-004
+  name: 发送注册邮箱验证码
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-025
+    surface: ADMIN
+    page_name: 认证与用户/邮件配置
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-002
+    surface: WEB
+    page_name: 邮箱验证状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-005
+  name: 验证注册邮箱验证码
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-002
+    surface: WEB
+    page_name: 邮箱验证状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-006
+  name: 创建用户并安全哈希密码
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-027
+    surface: ADMIN
+    page_name: 认证与用户/用户列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-007
+  name: 防止邮箱重复注册和竞态
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-028
+    surface: ADMIN
+    page_name: 认证与用户/异常注册
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-008
+  name: 创建登录安全验证挑战
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-023
+    surface: ADMIN
+    page_name: 认证与用户/安全验证
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-009
+  name: 发送登录邮箱验证码并防账号枚举
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-010
+  name: 验证登录邮箱验证码
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-029
+    surface: ADMIN
+    page_name: 认证与用户/登录日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-011
+  name: 签发访问令牌和轮换刷新令牌
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-012
+  name: 刷新登录会话
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-013
+  name: 退出当前设备
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-014
+  name: 退出全部设备
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-031
+    surface: ADMIN
+    page_name: 认证与用户/设备管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-015
+  name: 查询用户设备和会话
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-031
+    surface: ADMIN
+    page_name: 认证与用户/设备管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-016
+  name: 撤销指定设备会话
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-031
+    surface: ADMIN
+    page_name: 认证与用户/设备管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-017
+  name: 执行认证频率限制与冷却
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-032
+    surface: ADMIN
+    page_name: 安全与审计/风控规则
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-018
+  name: 记录认证审计和风险事件
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-033
+    surface: ADMIN
+    page_name: 安全与审计/认证事件
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-019
+  name: 管理邮件服务商和发件人
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-034
+    surface: ADMIN
+    page_name: 系统设置/邮件服务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-020
+  name: 管理 Turnstile 站点与密钥引用
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-035
+    surface: ADMIN
+    page_name: 系统设置/Turnstile
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-021
+  name: 管理验证码时效和发送频率
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-022
+  name: 查询用户列表和状态
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-027
+    surface: ADMIN
+    page_name: 认证与用户/用户列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-023
+  name: 查询用户详情、身份与设备
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-036
+    surface: ADMIN
+    page_name: 认证与用户/用户详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-024
+  name: 禁用或恢复用户账号
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-027
+    surface: ADMIN
+    page_name: 认证与用户/用户列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-025
+  name: 建立管理员角色和细粒度权限
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-037
+    surface: ADMIN
+    page_name: 管理员与权限/角色
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-026
+  name: 建立后台登录和管理员会话
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-038
+    surface: ADMIN
+    page_name: 管理员与权限/管理员
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-027
+  name: 建立高风险配置二次确认
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-039
+    surface: ADMIN
+    page_name: 安全与审计/高风险操作
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P01-028
+  name: 建立邮箱模板和发送记录
+  phase: P01
+  ui_bindings:
+  - page_id: YL-M-040
+    surface: ADMIN
+    page_name: 通知中心/邮件模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-001
+  name: 启动页恢复本地登录状态
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-004
+    surface: ANDROID
+    page_name: 启动页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-002
+  name: 展示邮箱验证码登录页
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-005
+    surface: ANDROID
+    page_name: 登录页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-041
+    surface: ADMIN
+    page_name: 认证与用户/登录配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-003
+  name: 校验登录邮箱输入
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-005
+    surface: ANDROID
+    page_name: 登录页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-004
+  name: 弹出登录安全验证对话框
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-006
+    surface: ANDROID
+    page_name: 登录页/安全验证
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-005
+  - page_id: YL-M-023
+    surface: ADMIN
+    page_name: 认证与用户/安全验证
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-005
+  name: 在受控 WebView 完成 Turnstile
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-007
+    surface: ANDROID
+    page_name: 安全验证 WebView
+    visual_kind: PAGE
+    parent_page_id: YL-A-005
+  - page_id: YL-M-024
+    surface: ADMIN
+    page_name: 认证与用户/Turnstile配置
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-001
+    surface: WEB
+    page_name: 安全验证承载页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-006
+  name: 安全验证后请求登录验证码
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-005
+    surface: ANDROID
+    page_name: 登录页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-007
+  name: 输入六位登录验证码
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-008
+    surface: ANDROID
+    page_name: 验证码页
+    visual_kind: PAGE
+    parent_page_id: YL-A-005
+  - page_id: YL-M-029
+    surface: ADMIN
+    page_name: 认证与用户/登录日志
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-002
+    surface: WEB
+    page_name: 邮箱验证状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-008
+  name: 显示验证码倒计时和重新发送
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-008
+    surface: ANDROID
+    page_name: 验证码页
+    visual_kind: PAGE
+    parent_page_id: YL-A-005
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-009
+  name: 登录成功安全保存令牌
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-009
+    surface: ANDROID
+    page_name: 登录完成
+    visual_kind: PAGE
+    parent_page_id: YL-A-008
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-010
+  name: 展示邮箱密码注册页
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-010
+    surface: ANDROID
+    page_name: 注册页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-042
+    surface: ADMIN
+    page_name: 认证与用户/注册配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-011
+  name: 实时展示密码强度和规则
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-010
+    surface: ANDROID
+    page_name: 注册页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-043
+    surface: ADMIN
+    page_name: 认证与用户/密码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-012
+  name: 校验确认密码一致
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-010
+    surface: ANDROID
+    page_name: 注册页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-013
+  name: 弹出注册安全验证对话框
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-011
+    surface: ANDROID
+    page_name: 注册页/安全验证
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-010
+  - page_id: YL-M-023
+    surface: ADMIN
+    page_name: 认证与用户/安全验证
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-014
+  name: 安全验证后请求注册验证码
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-010
+    surface: ANDROID
+    page_name: 注册页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-026
+    surface: ADMIN
+    page_name: 认证与用户/验证码策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-015
+  name: 验证注册验证码并创建账号
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-012
+    surface: ANDROID
+    page_name: 注册验证码页
+    visual_kind: PAGE
+    parent_page_id: YL-A-010
+  - page_id: YL-M-027
+    surface: ADMIN
+    page_name: 认证与用户/用户列表
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-002
+    surface: WEB
+    page_name: 邮箱验证状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-016
+  name: 注册成功自动登录并初始化个人工作区
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-013
+    surface: ANDROID
+    page_name: 注册完成
+    visual_kind: PAGE
+    parent_page_id: YL-A-012
+  - page_id: YL-M-036
+    surface: ADMIN
+    page_name: 认证与用户/用户详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-017
+  name: 令牌过期时自动刷新一次
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-014
+    surface: ANDROID
+    page_name: 全局会话
+    visual_kind: SYSTEM_OVERLAY
+    parent_page_id: YL-A-001
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-018
+  name: 刷新失败返回登录并保留安全导航
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-014
+    surface: ANDROID
+    page_name: 全局会话
+    visual_kind: SYSTEM_OVERLAY
+    parent_page_id: YL-A-001
+- feature_id: P02-019
+  name: 执行退出登录并清理敏感缓存
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-015
+    surface: ANDROID
+    page_name: 我的/退出登录
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-086
+  - page_id: YL-M-030
+    surface: ADMIN
+    page_name: 认证与用户/会话管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-020
+  name: 展示当前账号登录设备
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-016
+    surface: ANDROID
+    page_name: 我的/登录设备
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-031
+    surface: ADMIN
+    page_name: 认证与用户/设备管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-021
+  name: 远程撤销指定设备
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-016
+    surface: ANDROID
+    page_name: 我的/登录设备
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-031
+    surface: ADMIN
+    page_name: 认证与用户/设备管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-022
+  name: 处理安全验证取消、过期和重复令牌
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-007
+    surface: ANDROID
+    page_name: 安全验证 WebView
+    visual_kind: PAGE
+    parent_page_id: YL-A-005
+  - page_id: YL-M-023
+    surface: ADMIN
+    page_name: 认证与用户/安全验证
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-001
+    surface: WEB
+    page_name: 安全验证承载页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P02-023
+  name: 处理弱网、离线和请求重试
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-017
+    surface: ANDROID
+    page_name: 登录与注册
+    visual_kind: SYSTEM_STATE_BOARD
+    parent_page_id: null
+- feature_id: P02-024
+  name: 适配验证码键盘、粘贴和自动填充
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-008
+    surface: ANDROID
+    page_name: 验证码页
+    visual_kind: PAGE
+    parent_page_id: YL-A-005
+- feature_id: P02-025
+  name: 完成认证页面无障碍和小屏适配
+  phase: P02
+  ui_bindings:
+  - page_id: YL-A-017
+    surface: ANDROID
+    page_name: 登录与注册
+    visual_kind: SYSTEM_STATE_BOARD
+    parent_page_id: null
+- feature_id: P02-026
+  name: 限制 WebView 导航和 JavaScript 桥接面
+  phase: P02
+  ui_bindings:
+  - page_id: YL-M-044
+    surface: ADMIN
+    page_name: 安全与审计/移动端安全
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-001
+  name: 加载 AI 首页聚合数据
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-018
+    surface: ANDROID
+    page_name: 首页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-045
+    surface: ADMIN
+    page_name: 内容运营/首页配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-002
+  name: 新建独立会话 ID
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-019
+    surface: ANDROID
+    page_name: 首页/新对话
+    visual_kind: PAGE
+    parent_page_id: YL-A-018
+  - page_id: YL-M-046
+    surface: ADMIN
+    page_name: 对话与内容/会话列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-003
+  name: 分页加载会话历史
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-020
+    surface: ANDROID
+    page_name: 会话抽屉
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-018
+  - page_id: YL-M-046
+    surface: ADMIN
+    page_name: 对话与内容/会话列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-004
+  name: 搜索会话标题和消息正文
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-021
+    surface: ANDROID
+    page_name: 会话搜索
+    visual_kind: PAGE
+    parent_page_id: YL-A-020
+  - page_id: YL-M-047
+    surface: ADMIN
+    page_name: 对话与内容/搜索配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-005
+  name: 重命名会话
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-022
+    surface: ANDROID
+    page_name: 会话菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-048
+    surface: ADMIN
+    page_name: 对话与内容/会话详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-006
+  name: 归档会话
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-022
+    surface: ANDROID
+    page_name: 会话菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-046
+    surface: ADMIN
+    page_name: 对话与内容/会话列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-007
+  name: 删除会话并进入回收策略
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-022
+    surface: ANDROID
+    page_name: 会话菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-049
+    surface: ADMIN
+    page_name: 对话与内容/删除策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-008
+  name: 自动生成会话标题
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-050
+    surface: ADMIN
+    page_name: 对话与内容/标题模型
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-009
+  name: 发送用户文本消息
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-051
+    surface: ADMIN
+    page_name: 模型与供应商/模型目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-010
+  name: 通过 SSE 流式接收回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-052
+    surface: ADMIN
+    page_name: 运维/流式连接
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-011
+  name: 停止正在生成的回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-024
+    surface: ANDROID
+    page_name: 会话输入区
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-023
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-012
+  name: SSE 断线后按游标恢复
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-052
+    surface: ADMIN
+    page_name: 运维/流式连接
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-013
+  name: 恢复 App 后台期间的生成状态
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-014
+  name: 持久化用户和 AI 消息部件
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-054
+    surface: ADMIN
+    page_name: 对话与内容/消息查询
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-015
+  name: 保存每次模型运行元数据
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-016
+  name: 本地 Room 缓存会话和消息
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-025
+    surface: ANDROID
+    page_name: 离线缓存
+    visual_kind: SYSTEM_STATE_BOARD
+    parent_page_id: YL-A-023
+- feature_id: P03-017
+  name: 协调本地乐观消息与服务端状态
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-018
+  name: 渲染 Markdown 富文本
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-026
+    surface: ANDROID
+    page_name: AI 回复
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-023
+- feature_id: P03-019
+  name: 渲染代码块并复制代码
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-027
+    surface: ANDROID
+    page_name: AI 回复/代码块
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+- feature_id: P03-020
+  name: 渲染表格并横向滚动
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-028
+    surface: ANDROID
+    page_name: AI 回复/表格
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+- feature_id: P03-021
+  name: 渲染引用和来源卡片
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-029
+    surface: ANDROID
+    page_name: AI 回复/引用
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-055
+    surface: ADMIN
+    page_name: 对话与内容/引用记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-022
+  name: 复制整条回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+- feature_id: P03-023
+  name: 分享或导出单条回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-056
+    surface: ADMIN
+    page_name: 对话与内容/导出记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-024
+  name: 重新生成当前回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-006
+    surface: WEB
+    page_name: 会话或作品安全分享页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-025
+  name: 提交回答点赞或点踩
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-057
+    surface: ADMIN
+    page_name: 对话与内容/用户反馈
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-026
+  name: 显示生成中、完成、取消和失败状态
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-026
+    surface: ANDROID
+    page_name: AI 回复
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-023
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-027
+  name: 显示稳定错误信息和重试入口
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-023
+    surface: ANDROID
+    page_name: 会话页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-028
+  name: 创建临时不长期保留的会话
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-031
+    surface: ANDROID
+    page_name: 新建对话
+    visual_kind: PAGE
+    parent_page_id: YL-A-018
+  - page_id: YL-M-058
+    surface: ADMIN
+    page_name: 对话与内容/保留策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-029
+  name: 导出完整会话为 Markdown
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-022
+    surface: ANDROID
+    page_name: 会话菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-056
+    surface: ADMIN
+    page_name: 对话与内容/导出记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-030
+  name: 朗读 AI 回答
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-059
+    surface: ADMIN
+    page_name: AI工具/语音配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-031
+  name: 使用系统语音输入并编辑转写文本
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-032
+    surface: ANDROID
+    page_name: 输入框
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-024
+- feature_id: P03-032
+  name: 保存和恢复未发送草稿
+  phase: P03
+  ui_bindings:
+  - page_id: YL-A-032
+    surface: ANDROID
+    page_name: 输入框
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-024
+- feature_id: P03-033
+  name: 按用户权限校验会话所有权
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-060
+    surface: ADMIN
+    page_name: 安全与审计/访问拒绝
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-034
+  name: 记录聊天链路延迟和错误指标
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-061
+    surface: ADMIN
+    page_name: 可观测性/AI运行
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P03-035
+  name: 后台查询会话、消息和运行记录
+  phase: P03
+  ui_bindings:
+  - page_id: YL-M-046
+    surface: ADMIN
+    page_name: 对话与内容/会话列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-001
+  name: 从后台动态加载可用模型目录
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-033
+    surface: ANDROID
+    page_name: 模型选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-051
+    surface: ADMIN
+    page_name: 模型与供应商/模型目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-002
+  name: 按供应商分组展示模型
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-033
+    surface: ANDROID
+    page_name: 模型选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-062
+    surface: ADMIN
+    page_name: 模型与供应商/供应商
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-003
+  name: 展示模型用途、速度和能力标签
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-033
+    surface: ANDROID
+    page_name: 模型选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-051
+    surface: ADMIN
+    page_name: 模型与供应商/模型目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-004
+  name: 只展示实际探测通过的能力
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-018
+    surface: ADMIN
+    page_name: 模型与供应商/能力探测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-005
+  name: 加载模型支持的推理档位
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-034
+    surface: ANDROID
+    page_name: 推理选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-063
+    surface: ADMIN
+    page_name: 模型与供应商/推理映射
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-006
+  name: 将用户推理档位映射为上游参数
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-063
+    surface: ADMIN
+    page_name: 模型与供应商/推理映射
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-007
+  name: 设置全局默认模型和推理档位
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-035
+    surface: ANDROID
+    page_name: 我的/AI设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-064
+    surface: ADMIN
+    page_name: 模型与供应商/默认配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-008
+  name: 设置当前会话默认模型
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-036
+    surface: ANDROID
+    page_name: 会话设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-023
+  - page_id: YL-M-048
+    surface: ADMIN
+    page_name: 对话与内容/会话详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-009
+  name: 仅为本次消息临时切换模型
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-037
+    surface: ANDROID
+    page_name: 输入区模型条
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-024
+  - page_id: YL-M-051
+    surface: ADMIN
+    page_name: 模型与供应商/模型目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-010
+  name: 每条回答显示真实模型和推理档位
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-038
+    surface: ANDROID
+    page_name: AI 回复标签
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-053
+    surface: ADMIN
+    page_name: 对话与内容/运行记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-011
+  name: 使用其他模型重新回答且保留旧答案
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-030
+    surface: ANDROID
+    page_name: 消息操作栏
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-065
+    surface: ADMIN
+    page_name: 对话与内容/分支
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-012
+  name: 创建会话回答分支
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-065
+    surface: ADMIN
+    page_name: 对话与内容/分支
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-013
+  name: 选择并切换当前会话分支
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-039
+    surface: ANDROID
+    page_name: 会话分支切换
+    visual_kind: PAGE
+    parent_page_id: YL-A-023
+  - page_id: YL-M-065
+    surface: ADMIN
+    page_name: 对话与内容/分支
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-014
+  name: 同时请求多个模型进行回答对比
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-040
+    surface: ANDROID
+    page_name: 多模型对比
+    visual_kind: PAGE
+    parent_page_id: YL-A-023
+  - page_id: YL-M-066
+    surface: ADMIN
+    page_name: AI工具/多模型对比
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-015
+  name: 标签页切换不同模型对比结果
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-041
+    surface: ANDROID
+    page_name: 对比结果
+    visual_kind: PAGE
+    parent_page_id: YL-A-040
+  - page_id: YL-M-066
+    surface: ADMIN
+    page_name: AI工具/多模型对比
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-016
+  name: 采用一个候选回答继续会话
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-041
+    surface: ANDROID
+    page_name: 对比结果
+    visual_kind: PAGE
+    parent_page_id: YL-A-040
+  - page_id: YL-M-066
+    surface: ADMIN
+    page_name: AI工具/多模型对比
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-017
+  name: 综合多个模型回答
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-041
+    surface: ANDROID
+    page_name: 对比结果
+    visual_kind: PAGE
+    parent_page_id: YL-A-040
+  - page_id: YL-M-066
+    surface: ADMIN
+    page_name: AI工具/多模型对比
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-018
+  name: 透明提示模型不可用并请求用户选择回退
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-042
+    surface: ANDROID
+    page_name: 模型错误弹层
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-067
+    surface: ADMIN
+    page_name: 模型与供应商/服务状态
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-019
+  name: 按会话授权自动回退模型
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-068
+    surface: ADMIN
+    page_name: 模型与供应商/路由策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-020
+  name: 配置供应商通道和凭据引用
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-069
+    surface: ADMIN
+    page_name: 模型与供应商/通道
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-021
+  name: 配置模型别名、排序和上下架
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-051
+    surface: ADMIN
+    page_name: 模型与供应商/模型目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-022
+  name: 配置模型能力与上下文限制
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-070
+    surface: ADMIN
+    page_name: 模型与供应商/能力
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-023
+  name: 配置推理档位映射
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-063
+    surface: ADMIN
+    page_name: 模型与供应商/推理映射
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-024
+  name: 配置模型路由优先级和主备线路
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-068
+    surface: ADMIN
+    page_name: 模型与供应商/路由策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-025
+  name: 执行模型健康探测
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-071
+    surface: ADMIN
+    page_name: 模型与供应商/健康探测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-026
+  name: 执行文本、流式、视觉和工具能力探测
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-018
+    surface: ADMIN
+    page_name: 模型与供应商/能力探测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-027
+  name: 按供应商设置独立并发、超时和熔断
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-072
+    surface: ADMIN
+    page_name: 模型与供应商/运行策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-028
+  name: 记录输入、输出和推理 Token
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-073
+    surface: ADMIN
+    page_name: 商业化/用量记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-029
+  name: 记录模型价格版本快照
+  phase: P04
+  ui_bindings:
+  - page_id: YL-M-074
+    surface: ADMIN
+    page_name: 商业化/模型价格
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P04-030
+  name: 显示模型服务简化状态
+  phase: P04
+  ui_bindings:
+  - page_id: YL-A-043
+    surface: ANDROID
+    page_name: 我的/服务状态
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-075
+    surface: ADMIN
+    page_name: 运维/事故管理
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-005
+    surface: WEB
+    page_name: 公开服务状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-001
+  name: 请求 R2 预签名上传凭据
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-044
+    surface: ANDROID
+    page_name: 附件选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-024
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-002
+  name: 直传文件并显示进度
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-045
+    surface: ANDROID
+    page_name: 上传进度
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-077
+    surface: ADMIN
+    page_name: 文件与存储/上传记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-003
+  name: 完成上传并校验对象元数据
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-004
+  name: 校验 MIME、扩展名、大小和哈希
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-078
+    surface: ADMIN
+    page_name: 文件与存储/安全策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-005
+  name: 执行恶意文件扫描和隔离
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-079
+    surface: ADMIN
+    page_name: 文件与存储/隔离区
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-006
+  name: 生成图片缩略图和基本元数据
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-080
+    surface: ADMIN
+    page_name: 文件与存储/处理任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-007
+  name: 将图片作为视觉输入发送给模型
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-046
+    surface: ANDROID
+    page_name: 会话/图片附件
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-023
+  - page_id: YL-M-070
+    surface: ADMIN
+    page_name: 模型与供应商/能力
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-008
+  name: 解析 PDF 文本、页面和预览
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-009
+  name: 解析 DOCX 文本和结构
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-010
+  name: 解析 PPTX 页面文本和预览
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-011
+  name: 解析 XLSX 工作表和单元格结构
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-012
+  name: 解析纯文本、Markdown和代码文件
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-013
+  name: 展示附件上传、扫描、解析和失败状态
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-047
+    surface: ANDROID
+    page_name: 附件卡片
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-023
+  - page_id: YL-M-082
+    surface: ADMIN
+    page_name: 文件与存储/文件详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-014
+  name: 将资料库文件添加到消息
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-048
+    surface: ANDROID
+    page_name: 资料库选择器
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-044
+  - page_id: YL-M-083
+    surface: ADMIN
+    page_name: 对话与内容/附件
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-015
+  name: 分页展示个人文件资料库
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-049
+    surface: ANDROID
+    page_name: 工作/文件
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-016
+  name: 按名称、类型和时间搜索文件
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-050
+    surface: ANDROID
+    page_name: 文件搜索
+    visual_kind: PAGE
+    parent_page_id: YL-A-049
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-017
+  name: 重命名文件
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-051
+    surface: ANDROID
+    page_name: 文件菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-052
+  - page_id: YL-M-082
+    surface: ADMIN
+    page_name: 文件与存储/文件详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-018
+  name: 下载原始文件或派生文件
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-052
+    surface: ANDROID
+    page_name: 文件详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-049
+  - page_id: YL-M-084
+    surface: ADMIN
+    page_name: 文件与存储/下载记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-019
+  name: 删除文件并处理引用关系
+  phase: P05
+  ui_bindings:
+  - page_id: YL-A-051
+    surface: ANDROID
+    page_name: 文件菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-052
+  - page_id: YL-M-085
+    surface: ADMIN
+    page_name: 文件与存储/删除策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-020
+  name: 按套餐执行文件大小和空间配额
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-086
+    surface: ADMIN
+    page_name: 商业化/权益配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-021
+  name: 生成过期上传会话和孤儿对象清理任务
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-087
+    surface: ADMIN
+    page_name: 文件与存储/清理任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-022
+  name: 后台查询文件、归属和处理状态
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-023
+  name: 后台重试文件解析任务
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-081
+    surface: ADMIN
+    page_name: 文件与存储/解析任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-024
+  name: 为模型生成短期安全下载地址
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-088
+    surface: ADMIN
+    page_name: 文件与存储/供应商引用
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P05-025
+  name: 清理过期上游文件引用
+  phase: P05
+  ui_bindings:
+  - page_id: YL-M-087
+    surface: ADMIN
+    page_name: 文件与存储/清理任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-001
+  name: 分页展示项目列表
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-053
+    surface: ANDROID
+    page_name: 工作/项目
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-089
+    surface: ADMIN
+    page_name: 项目与知识库/项目列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-002
+  name: 创建项目和默认工作区关系
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-054
+    surface: ANDROID
+    page_name: 新建项目
+    visual_kind: PAGE
+    parent_page_id: YL-A-053
+  - page_id: YL-M-089
+    surface: ADMIN
+    page_name: 项目与知识库/项目列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-003
+  name: 查看项目详情和聚合内容
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-055
+    surface: ANDROID
+    page_name: 项目详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-053
+  - page_id: YL-M-090
+    surface: ADMIN
+    page_name: 项目与知识库/项目详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-004
+  name: 编辑项目名称、描述和默认模型
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-056
+    surface: ANDROID
+    page_name: 项目设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-090
+    surface: ADMIN
+    page_name: 项目与知识库/项目详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-005
+  name: 归档或删除项目
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-056
+    surface: ANDROID
+    page_name: 项目设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-089
+    surface: ADMIN
+    page_name: 项目与知识库/项目列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-006
+  name: 设置项目专属系统指令
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-057
+    surface: ANDROID
+    page_name: 项目设置/指令
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-091
+    surface: ADMIN
+    page_name: 项目与知识库/项目指令
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-007
+  name: 将会话移入或移出项目
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-022
+    surface: ANDROID
+    page_name: 会话菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-023
+  - page_id: YL-M-090
+    surface: ADMIN
+    page_name: 项目与知识库/项目详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-008
+  name: 将文件加入项目知识库
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-058
+    surface: ANDROID
+    page_name: 项目/资料
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-092
+    surface: ADMIN
+    page_name: 项目与知识库/文件
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-009
+  name: 将作品关联到项目
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-059
+    surface: ANDROID
+    page_name: 作品菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-079
+  - page_id: YL-M-090
+    surface: ADMIN
+    page_name: 项目与知识库/项目详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-010
+  name: 对项目文件进行分块和索引
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-093
+    surface: ADMIN
+    page_name: 项目与知识库/索引任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-011
+  name: 生成向量并保存到 pgvector
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-093
+    surface: ADMIN
+    page_name: 项目与知识库/索引任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-012
+  name: 基于项目资料执行混合检索
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-094
+    surface: ADMIN
+    page_name: 项目与知识库/检索诊断
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-013
+  name: 把检索结果编译进模型上下文
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-095
+    surface: ADMIN
+    page_name: 项目与知识库/上下文策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-014
+  name: 在回答中显示项目文件引用
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-060
+    surface: ANDROID
+    page_name: AI回复/引用
+    visual_kind: COMPONENT_BOARD
+    parent_page_id: YL-A-026
+  - page_id: YL-M-096
+    surface: ADMIN
+    page_name: 项目与知识库/引用
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-015
+  name: 显示知识文件索引状态和失败原因
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-058
+    surface: ANDROID
+    page_name: 项目/资料
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-093
+    surface: ADMIN
+    page_name: 项目与知识库/索引任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-016
+  name: 手动重建单个文件索引
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-058
+    surface: ANDROID
+    page_name: 项目/资料
+    visual_kind: PAGE
+    parent_page_id: YL-A-055
+  - page_id: YL-M-093
+    surface: ADMIN
+    page_name: 项目与知识库/索引任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-017
+  name: 搜索项目、会话、文件和作品
+  phase: P06
+  ui_bindings:
+  - page_id: YL-A-061
+    surface: ANDROID
+    page_name: 工作/搜索
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-097
+    surface: ADMIN
+    page_name: 项目与知识库/搜索
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-018
+  name: 按套餐限制项目数量和索引容量
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-086
+    surface: ADMIN
+    page_name: 商业化/权益配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-019
+  name: 后台查询项目和知识索引健康
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-098
+    surface: ADMIN
+    page_name: 项目与知识库/诊断
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P06-020
+  name: 后台执行检索测试和结果解释
+  phase: P06
+  ui_bindings:
+  - page_id: YL-M-099
+    surface: ADMIN
+    page_name: 项目与知识库/检索测试
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-001
+  name: 展示图片工作台首页
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-062
+    surface: ANDROID
+    page_name: 工作/图片
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-100
+    surface: ADMIN
+    page_name: AI工具/图片配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-002
+  name: 选择图片生成或编辑模式
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-100
+    surface: ADMIN
+    page_name: AI工具/图片配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-003
+  name: 输入和保存图片提示词
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+- feature_id: P07-004
+  name: 选择图片模型
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-101
+    surface: ADMIN
+    page_name: AI工具/图片模型
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-005
+  name: 选择比例、数量、质量和风格
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-100
+    surface: ADMIN
+    page_name: AI工具/图片配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-006
+  name: 上传参考图或待编辑图片
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-076
+    surface: ADMIN
+    page_name: 文件与存储/文件列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-007
+  name: 提交异步图片生成任务
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-008
+  name: 提交异步图片编辑任务
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-063
+    surface: ANDROID
+    page_name: 图片工作台
+    visual_kind: PAGE
+    parent_page_id: YL-A-062
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-009
+  name: 预检额度并冻结预计费用
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-103
+    surface: ADMIN
+    page_name: 商业化/冻结记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-010
+  name: 轮询或订阅图片任务进度
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-064
+    surface: ANDROID
+    page_name: 任务详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-063
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-011
+  name: 取消等待或运行中的图片任务
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-064
+    surface: ANDROID
+    page_name: 任务详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-063
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-012
+  name: 重试可恢复的失败图片任务
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-064
+    surface: ANDROID
+    page_name: 任务详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-063
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-013
+  name: 任务完成后生成系统通知
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-104
+    surface: ADMIN
+    page_name: 通知中心/模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-014
+  name: 将生成结果保存为图片作品
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-105
+    surface: ADMIN
+    page_name: 作品中心/图片作品
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-015
+  name: 显示生成图片网格和详情
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-065
+    surface: ANDROID
+    page_name: 图片结果
+    visual_kind: PAGE
+    parent_page_id: YL-A-064
+  - page_id: YL-M-106
+    surface: ADMIN
+    page_name: 作品中心/作品详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-016
+  name: 下载或分享生成图片
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-066
+    surface: ANDROID
+    page_name: 图片详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-065
+  - page_id: YL-M-107
+    surface: ADMIN
+    page_name: 作品中心/下载记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-017
+  name: 基于作品继续编辑并创建新版本
+  phase: P07
+  ui_bindings:
+  - page_id: YL-A-066
+    surface: ANDROID
+    page_name: 图片详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-065
+  - page_id: YL-M-108
+    surface: ADMIN
+    page_name: 作品中心/作品版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-018
+  name: 对输入和输出执行内容安全检查
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-109
+    surface: ADMIN
+    page_name: 安全与审计/内容安全
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-019
+  name: 按实际结果结算或释放冻结额度
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-110
+    surface: ADMIN
+    page_name: 商业化/账本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-020
+  name: 后台查询图片任务和供应商响应
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-021
+  name: 后台配置图片模型、参数和定价
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-100
+    surface: ADMIN
+    page_name: AI工具/图片配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P07-022
+  name: 后台人工重试或终止异常图片任务
+  phase: P07
+  ui_bindings:
+  - page_id: YL-M-102
+    surface: ADMIN
+    page_name: AI工具/图片任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-001
+  name: 创建 PPT 项目并保存草稿
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-067
+    surface: ANDROID
+    page_name: 工作/PPT向导
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-002
+  name: 填写主题、用途、受众、语言和页数
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-068
+    surface: ANDROID
+    page_name: PPT向导/基本信息
+    visual_kind: PAGE
+    parent_page_id: YL-A-067
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-003
+  name: 添加 PDF、Word、Excel 或已有 PPT 资料
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-069
+    surface: ANDROID
+    page_name: PPT向导/资料
+    visual_kind: PAGE
+    parent_page_id: YL-A-067
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-004
+  name: 选择 PPT 风格和模板
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-070
+    surface: ANDROID
+    page_name: PPT向导/模板
+    visual_kind: PAGE
+    parent_page_id: YL-A-067
+  - page_id: YL-M-112
+    surface: ADMIN
+    page_name: AI工具/PPT模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-005
+  name: 生成结构化 PPT 大纲
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-071
+    surface: ANDROID
+    page_name: PPT向导/大纲
+    visual_kind: PAGE
+    parent_page_id: YL-A-067
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-006
+  name: 编辑章节、页面标题和核心内容
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-072
+    surface: ANDROID
+    page_name: PPT大纲编辑
+    visual_kind: PAGE
+    parent_page_id: YL-A-071
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-007
+  name: 确认大纲后锁定渲染输入版本
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-072
+    surface: ANDROID
+    page_name: PPT大纲编辑
+    visual_kind: PAGE
+    parent_page_id: YL-A-071
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-008
+  name: 生成符合 Schema 的 Deck JSON
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-009
+  name: 校验 Deck JSON 结构和文本溢出风险
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-114
+    surface: ADMIN
+    page_name: AI工具/PPT诊断
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-010
+  name: 确定性渲染中文文本和版式
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-011
+  name: 生成 PPTX 文件
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-115
+    surface: ADMIN
+    page_name: 作品中心/PPT作品
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-012
+  name: 生成 PDF 和每页预览图
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-013
+  name: 显示异步生成进度和阶段
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-073
+    surface: ANDROID
+    page_name: PPT任务详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-072
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-014
+  name: 预览和横向浏览每页幻灯片
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-074
+    surface: ANDROID
+    page_name: PPT预览
+    visual_kind: PAGE
+    parent_page_id: YL-A-073
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-015
+  name: 拖动调整页面顺序
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-074
+    surface: ANDROID
+    page_name: PPT预览
+    visual_kind: PAGE
+    parent_page_id: YL-A-073
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-016
+  name: 重新生成单页内容
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-075
+    surface: ANDROID
+    page_name: PPT单页编辑
+    visual_kind: PAGE
+    parent_page_id: YL-A-074
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-017
+  name: 更换单页版式
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-075
+    surface: ANDROID
+    page_name: PPT单页编辑
+    visual_kind: PAGE
+    parent_page_id: YL-A-074
+  - page_id: YL-M-112
+    surface: ADMIN
+    page_name: AI工具/PPT模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-018
+  name: 替换单页图片或图表数据
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-075
+    surface: ANDROID
+    page_name: PPT单页编辑
+    visual_kind: PAGE
+    parent_page_id: YL-A-074
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-019
+  name: 为每次修改创建作品版本
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-108
+    surface: ADMIN
+    page_name: 作品中心/作品版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-020
+  name: 下载 PPTX 或 PDF
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-076
+    surface: ANDROID
+    page_name: PPT详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-074
+  - page_id: YL-M-107
+    surface: ADMIN
+    page_name: 作品中心/下载记录
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-006
+    surface: WEB
+    page_name: 会话或作品安全分享页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-021
+  name: 复制 PPT 项目继续创作
+  phase: P08
+  ui_bindings:
+  - page_id: YL-A-076
+    surface: ANDROID
+    page_name: PPT详情
+    visual_kind: PAGE
+    parent_page_id: YL-A-074
+  - page_id: YL-M-111
+    surface: ADMIN
+    page_name: AI工具/PPT项目
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-022
+  name: 后台管理 PPT 模板、母版和品牌包
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-112
+    surface: ADMIN
+    page_name: AI工具/PPT模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-023
+  name: 后台诊断文字溢出、字体和渲染失败
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-114
+    surface: ADMIN
+    page_name: AI工具/PPT诊断
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-024
+  name: 后台重试或取消 PPT 渲染任务
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-113
+    surface: ADMIN
+    page_name: AI工具/PPT任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P08-025
+  name: 按大纲、模型、图片和渲染成本结算
+  phase: P08
+  ui_bindings:
+  - page_id: YL-M-110
+    surface: ADMIN
+    page_name: 商业化/账本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-001
+  name: 工作页聚合工具、项目、作品和任务
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-077
+    surface: ANDROID
+    page_name: 工作
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-116
+    surface: ADMIN
+    page_name: 内容运营/工作页配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-002
+  name: 按工具分类展示 AI 能力入口
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-078
+    surface: ANDROID
+    page_name: 工作/工具
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-117
+    surface: ADMIN
+    page_name: AI工具/工具目录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-003
+  name: 按类型和时间展示作品库
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-079
+    surface: ANDROID
+    page_name: 工作/作品
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-118
+    surface: ADMIN
+    page_name: 作品中心/作品列表
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-004
+  name: 收藏、重命名、移动和删除作品
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-059
+    surface: ANDROID
+    page_name: 作品菜单
+    visual_kind: OVERLAY
+    parent_page_id: YL-A-079
+  - page_id: YL-M-106
+    surface: ADMIN
+    page_name: 作品中心/作品详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-005
+  name: 统一展示全部异步任务
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-080
+    surface: ANDROID
+    page_name: 工作/任务
+    visual_kind: PAGE
+    parent_page_id: YL-A-077
+  - page_id: YL-M-007
+    surface: ADMIN
+    page_name: 运维/任务队列
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-006
+  name: 加载后台动态配置的发现页
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-081
+    surface: ANDROID
+    page_name: 发现
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-119
+    surface: ADMIN
+    page_name: 内容运营/发现页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-007
+  name: 按分类筛选发现服务
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-082
+    surface: ANDROID
+    page_name: 发现/分类
+    visual_kind: PAGE
+    parent_page_id: YL-A-081
+  - page_id: YL-M-119
+    surface: ADMIN
+    page_name: 内容运营/发现页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-008
+  name: 展示 Prompt 模板并带变量启动任务
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-083
+    surface: ANDROID
+    page_name: 发现/Prompt模板
+    visual_kind: PAGE
+    parent_page_id: YL-A-081
+  - page_id: YL-M-120
+    surface: ADMIN
+    page_name: 内容运营/Prompt模板
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-009
+  name: 展示模型实验室和能力说明
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-084
+    surface: ANDROID
+    page_name: 发现/模型实验室
+    visual_kind: PAGE
+    parent_page_id: YL-A-081
+  - page_id: YL-M-121
+    surface: ADMIN
+    page_name: 模型与供应商/模型展示
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-010
+  name: 展示公告、活动和即将上线能力
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-085
+    surface: ANDROID
+    page_name: 发现/公告
+    visual_kind: PAGE
+    parent_page_id: YL-A-081
+  - page_id: YL-M-122
+    surface: ADMIN
+    page_name: 内容运营/公告
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-011
+  name: 后台创建、排序、灰度和下架发现卡片
+  phase: P09
+  ui_bindings:
+  - page_id: YL-M-119
+    surface: ADMIN
+    page_name: 内容运营/发现页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-012
+  name: 展示个人资料卡、头像、用户名和 UID
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-086
+    surface: ANDROID
+    page_name: 我的
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-M-036
+    surface: ADMIN
+    page_name: 认证与用户/用户详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-013
+  name: 编辑头像和用户名
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-087
+    surface: ANDROID
+    page_name: 我的/个人资料
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-036
+    surface: ADMIN
+    page_name: 认证与用户/用户详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-014
+  name: 快捷进入我的项目、文件和作品
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-086
+    surface: ANDROID
+    page_name: 我的
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-015
+  name: 查看和管理收藏
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-088
+    surface: ANDROID
+    page_name: 我的/收藏
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-123
+    surface: ADMIN
+    page_name: 内容运营/收藏统计
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-016
+  name: 设置默认模型、推理和回答风格
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-035
+    surface: ANDROID
+    page_name: 我的/AI设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-064
+    surface: ADMIN
+    page_name: 模型与供应商/默认配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-017
+  name: 设置全局自定义指令
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-089
+    surface: ANDROID
+    page_name: 我的/自定义指令
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-124
+    surface: ADMIN
+    page_name: 对话与内容/指令策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-018
+  name: 开启、查看和删除个人记忆
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-090
+    surface: ANDROID
+    page_name: 我的/个人记忆
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-125
+    surface: ADMIN
+    page_name: 对话与内容/记忆管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-019
+  name: 管理任务完成和安全通知
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-091
+    surface: ANDROID
+    page_name: 我的/通知设置
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-126
+    surface: ADMIN
+    page_name: 通知中心/用户设置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-020
+  name: 设置主题、字体和语言
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-092
+    surface: ANDROID
+    page_name: 我的/外观与语言
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-127
+    surface: ADMIN
+    page_name: 系统设置/默认外观
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-021
+  name: 创建用户数据导出任务
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-093
+    surface: ANDROID
+    page_name: 我的/数据与隐私
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-128
+    surface: ADMIN
+    page_name: 安全与审计/数据导出
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-022
+  name: 申请清空历史或注销账号
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-093
+    surface: ANDROID
+    page_name: 我的/数据与隐私
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-129
+    surface: ADMIN
+    page_name: 安全与审计/删除请求
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-023
+  name: 检查 APK 更新和强制升级策略
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-094
+    surface: ANDROID
+    page_name: 我的/检查更新
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-130
+    surface: ADMIN
+    page_name: 系统运营/App版本
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-004
+    surface: WEB
+    page_name: APK 下载与更新页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-024
+  name: 提交帮助反馈、截图和诊断信息
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-095
+    surface: ANDROID
+    page_name: 我的/帮助与反馈
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-131
+    surface: ADMIN
+    page_name: 系统运营/反馈工单
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P09-025
+  name: 展示服务状态和已知事故
+  phase: P09
+  ui_bindings:
+  - page_id: YL-A-043
+    surface: ANDROID
+    page_name: 我的/服务状态
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-132
+    surface: ADMIN
+    page_name: 可观测性/事故管理
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-005
+    surface: WEB
+    page_name: 公开服务状态页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-001
+  name: 后台创建产品、套餐和价格版本
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-133
+    surface: ADMIN
+    page_name: 商业化/产品与套餐
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-002
+  name: 展示用户可购买套餐和权益
+  phase: P10
+  ui_bindings:
+  - page_id: YL-A-096
+    surface: ANDROID
+    page_name: 我的/套餐与会员
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-133
+    surface: ADMIN
+    page_name: 商业化/产品与套餐
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-003
+  name: 创建订阅订单
+  phase: P10
+  ui_bindings:
+  - page_id: YL-A-097
+    surface: ANDROID
+    page_name: 套餐确认
+    visual_kind: PAGE
+    parent_page_id: YL-A-096
+  - page_id: YL-M-134
+    surface: ADMIN
+    page_name: 商业化/订单
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-004
+  name: 接收支付回调并幂等入账
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-135
+    surface: ADMIN
+    page_name: 商业化/支付回调
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-005
+  name: 支持管理员测试充值但明确测试来源
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-136
+    surface: ADMIN
+    page_name: 商业化/钱包
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-006
+  name: 建立现金、套餐和赠送额度账户
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-136
+    surface: ADMIN
+    page_name: 商业化/钱包
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-007
+  name: 使用不可变账本记录每次额度变动
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-110
+    surface: ADMIN
+    page_name: 商业化/账本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-008
+  name: 生成可快速读取的余额投影
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-136
+    surface: ADMIN
+    page_name: 商业化/钱包
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-009
+  name: 展示充值、套餐和赠送额度明细
+  phase: P10
+  ui_bindings:
+  - page_id: YL-A-098
+    surface: ANDROID
+    page_name: 我的/钱包
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-136
+    surface: ADMIN
+    page_name: 商业化/钱包
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-010
+  name: 展示不可变账单明细
+  phase: P10
+  ui_bindings:
+  - page_id: YL-A-099
+    surface: ANDROID
+    page_name: 我的/账单
+    visual_kind: PAGE
+    parent_page_id: YL-A-098
+  - page_id: YL-M-110
+    surface: ADMIN
+    page_name: 商业化/账本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-011
+  name: 发放、续期、升级和撤销订阅权益
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-137
+    surface: ADMIN
+    page_name: 商业化/订阅
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-012
+  name: 按权益控制项目、文件、图片和 PPT 配额
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-138
+    surface: ADMIN
+    page_name: 商业化/权益
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-013
+  name: 记录每次 AI、图片、PPT 和 API 用量
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-139
+    surface: ADMIN
+    page_name: 商业化/用量
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-014
+  name: 按价格快照计算最终扣费
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-074
+    surface: ADMIN
+    page_name: 商业化/模型价格
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-015
+  name: 执行额度预检、冻结、结算和释放
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-103
+    surface: ADMIN
+    page_name: 商业化/冻结记录
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-016
+  name: 展示 App、图片、PPT 和 API 分项用量
+  phase: P10
+  ui_bindings:
+  - page_id: YL-A-100
+    surface: ANDROID
+    page_name: 我的/用量中心
+    visual_kind: PAGE
+    parent_page_id: YL-A-086
+  - page_id: YL-M-139
+    surface: ADMIN
+    page_name: 商业化/用量
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-017
+  name: 创建 YLVEN 与 Sub2API 用户映射
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-140
+    surface: ADMIN
+    page_name: Sub2API与通道/用户映射
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-018
+  name: 绑定已有 Sub2API 用户且保留余额和 Key
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-140
+    surface: ADMIN
+    page_name: Sub2API与通道/用户映射
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-002
+    surface: DEVELOPER
+    page_name: 绑定 Sub2API
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-019
+  name: 为 App 后端创建隐藏内部 API Key
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-141
+    surface: ADMIN
+    page_name: Sub2API与通道/API Key映射
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-003
+    surface: WEB
+    page_name: YLVEN OIDC 授权与回调页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-020
+  name: 把充值余额投影到 Sub2API 执行余额
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-142
+    surface: ADMIN
+    page_name: Sub2API与通道/余额同步
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-021
+  name: 把套餐模型权限和限额同步到 Sub2API
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-143
+    surface: ADMIN
+    page_name: Sub2API与通道/套餐同步
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-022
+  name: 从 Sub2API 回流调用用量和成本
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-144
+    surface: ADMIN
+    page_name: Sub2API与通道/用量同步
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-023
+  name: 执行 YLVEN 账本与 Sub2API 执行余额对账
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-145
+    surface: ADMIN
+    page_name: 商业化/对账
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-024
+  name: 隔离同步失败并自动重试
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-146
+    surface: ADMIN
+    page_name: Sub2API与通道/同步任务
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-025
+  name: 后台查询订单、支付、订阅和退款
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-147
+    surface: ADMIN
+    page_name: 商业化/交易管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-026
+  name: 后台查询钱包、账本和冻结记录
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-148
+    surface: ADMIN
+    page_name: 商业化/钱包与账本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-027
+  name: 后台处理退款并撤销对应权益
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-149
+    surface: ADMIN
+    page_name: 商业化/退款
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-028
+  name: 配置消费顺序和额度过期策略
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-150
+    surface: ADMIN
+    page_name: 商业化/额度策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-029
+  name: 配置模型销售价格、倍率和生效时间
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-074
+    surface: ADMIN
+    page_name: 商业化/模型价格
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P10-030
+  name: 标记订阅中转通道为测试环境
+  phase: P10
+  ui_bindings:
+  - page_id: YL-M-151
+    surface: ADMIN
+    page_name: Sub2API与通道/通道配置
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-001
+  name: 展示开发者中心概览
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-152
+    surface: ADMIN
+    page_name: 开发者平台/概览
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-003
+    surface: DEVELOPER
+    page_name: 开发者概览
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-002
+  name: 激活开发者功能并同意 API 条款
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-153
+    surface: ADMIN
+    page_name: 开发者平台/开发者用户
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-004
+    surface: DEVELOPER
+    page_name: 开发者开通
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-003
+  name: 使用 YLVEN OIDC 单点登录 Sub2API
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-154
+    surface: ADMIN
+    page_name: Sub2API与通道/OIDC
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-005
+    surface: DEVELOPER
+    page_name: Sub2API登录
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-003
+    surface: WEB
+    page_name: YLVEN OIDC 授权与回调页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-004
+  name: 创建 YLVEN 开发者 API Key
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-155
+    surface: ADMIN
+    page_name: 开发者平台/API Key
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-006
+    surface: DEVELOPER
+    page_name: API Key
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-005
+  name: 仅创建时显示完整 API Key 一次
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-155
+    surface: ADMIN
+    page_name: 开发者平台/API Key
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-007
+    surface: DEVELOPER
+    page_name: API Key创建结果
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-006
+  name: 分页查询 API Key 和最近使用状态
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-155
+    surface: ADMIN
+    page_name: 开发者平台/API Key
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-006
+    surface: DEVELOPER
+    page_name: API Key
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-007
+  name: 轮换、禁用和删除 API Key
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-155
+    surface: ADMIN
+    page_name: 开发者平台/API Key
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-008
+    surface: DEVELOPER
+    page_name: API Key详情
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-008
+  name: 配置单 Key 总额和月度预算
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-156
+    surface: ADMIN
+    page_name: 开发者平台/预算
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-009
+    surface: DEVELOPER
+    page_name: API Key预算
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-009
+  name: 配置 API 账号总预算
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-156
+    surface: ADMIN
+    page_name: 开发者平台/预算
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-010
+    surface: DEVELOPER
+    page_name: 预算与告警
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-010
+  name: 配置 IP 白名单和模型白名单
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-157
+    surface: ADMIN
+    page_name: 开发者平台/API Key策略
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-011
+    surface: DEVELOPER
+    page_name: API Key安全
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-011
+  name: Developer Gateway 鉴权和密钥哈希查找
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-158
+    surface: ADMIN
+    page_name: 开发者平台/安全事件
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-012
+  name: 执行用户、Key、模型三级限流
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-159
+    surface: ADMIN
+    page_name: 开发者平台/限流策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-013
+  name: 提供 OpenAI 兼容模型列表
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-160
+    surface: ADMIN
+    page_name: 开发者平台/API版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-014
+  name: 提供 OpenAI 兼容 Chat Completions
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-161
+    surface: ADMIN
+    page_name: 开发者平台/API日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-015
+  name: 提供 OpenAI 兼容 Responses API
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-161
+    surface: ADMIN
+    page_name: 开发者平台/API日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-016
+  name: 提供流式公共 API 响应
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-161
+    surface: ADMIN
+    page_name: 开发者平台/API日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-017
+  name: 提供图片生成公共 API
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-161
+    surface: ADMIN
+    page_name: 开发者平台/API日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-018
+  name: 提供 YLVEN 原生会话 API
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-160
+    surface: ADMIN
+    page_name: 开发者平台/API版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-019
+  name: 提供 YLVEN 原生文件和任务 API
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-160
+    surface: ADMIN
+    page_name: 开发者平台/API版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-020
+  name: 使用 YLVEN 稳定模型别名
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-162
+    surface: ADMIN
+    page_name: 开发者平台/模型别名
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-021
+  name: 返回稳定、可文档化的错误码
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-163
+    surface: ADMIN
+    page_name: 开发者平台/错误码
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-022
+  name: 查询按日期、模型、Key和来源的用量
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-164
+    surface: ADMIN
+    page_name: 开发者平台/用量
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-012
+    surface: DEVELOPER
+    page_name: 用量统计
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-023
+  name: 查询逐请求 API 日志
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-161
+    surface: ADMIN
+    page_name: 开发者平台/API日志
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-013
+    surface: DEVELOPER
+    page_name: 调用日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-024
+  name: 在 Playground 测试模型和参数
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-165
+    surface: ADMIN
+    page_name: 开发者平台/Playground
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-014
+    surface: DEVELOPER
+    page_name: API Playground
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-025
+  name: 展示动态模型能力和价格文档
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-074
+    surface: ADMIN
+    page_name: 商业化/模型价格
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-015
+    surface: DEVELOPER
+    page_name: 模型与价格
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-026
+  name: 发布版本化 API 文档和代码示例
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-166
+    surface: ADMIN
+    page_name: 开发者平台/API文档
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-016
+    surface: DEVELOPER
+    page_name: API文档
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-027
+  name: 配置余额和异常用量告警
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-167
+    surface: ADMIN
+    page_name: 开发者平台/告警
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-010
+    surface: DEVELOPER
+    page_name: 预算与告警
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-028
+  name: 注册 Webhook 并验证签名
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-168
+    surface: ADMIN
+    page_name: 开发者平台/Webhook
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-D-017
+    surface: DEVELOPER
+    page_name: Webhook
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-029
+  name: 失败 Webhook 自动重试和死信
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-168
+    surface: ADMIN
+    page_name: 开发者平台/Webhook
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-030
+  name: 分离 App 内部调用 Key 与开发者 Key
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-157
+    surface: ADMIN
+    page_name: 开发者平台/API Key策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-031
+  name: 后台查询开发者、Key、预算和风险
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-153
+    surface: ADMIN
+    page_name: 开发者平台/开发者用户
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P11-032
+  name: 后台配置公共 API 版本和弃用计划
+  phase: P11
+  ui_bindings:
+  - page_id: YL-M-160
+    surface: ADMIN
+    page_name: 开发者平台/API版本
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-001
+  name: 配置 Cloudflare WAF 和速率规则基线
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-169
+    surface: ADMIN
+    page_name: 安全与审计/WAF
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-002
+  name: 执行代码和镜像秘密扫描
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-170
+    surface: ADMIN
+    page_name: 安全与审计/扫描结果
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-003
+  name: 执行依赖漏洞和容器镜像扫描
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-170
+    surface: ADMIN
+    page_name: 安全与审计/扫描结果
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-004
+  name: 加密敏感字段并轮换密钥引用
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-171
+    surface: ADMIN
+    page_name: 安全与审计/密钥管理
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-005
+  name: 记录所有后台敏感操作审计
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-172
+    surface: ADMIN
+    page_name: 安全与审计/操作审计
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-006
+  name: 检测异常登录、消费和 API Key 使用
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-173
+    surface: ADMIN
+    page_name: 安全与审计/风险事件
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-007
+  name: 为高风险财务操作增加审批流
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-174
+    surface: ADMIN
+    page_name: 安全与审计/审批
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-008
+  name: 采集服务、业务和供应商指标
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-175
+    surface: ADMIN
+    page_name: 可观测性/指标
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-009
+  name: 集中查询结构化日志
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-176
+    surface: ADMIN
+    page_name: 可观测性/日志
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-010
+  name: 采集跨服务分布式追踪
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-177
+    surface: ADMIN
+    page_name: 可观测性/链路
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-011
+  name: 配置 SLO、告警和通知路由
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-178
+    surface: ADMIN
+    page_name: 可观测性/告警
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-012
+  name: 创建事故、更新状态和复盘
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-179
+    surface: ADMIN
+    page_name: 可观测性/事故
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-005
+    surface: WEB
+    page_name: 公开服务状态页
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-007
+    surface: WEB
+    page_name: 维护、错误与不兼容提示页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-013
+  name: 执行普通 API 压力测试
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-180
+    surface: ADMIN
+    page_name: 可观测性/压测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-014
+  name: 执行 SSE 长连接容量测试
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-180
+    surface: ADMIN
+    page_name: 可观测性/压测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-015
+  name: 执行异步队列和 Worker 吞吐测试
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-180
+    surface: ADMIN
+    page_name: 可观测性/压测
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-016
+  name: 隔离聊天、支付、图片和 PPT 队列
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-007
+    surface: ADMIN
+    page_name: 运维/任务队列
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-017
+  name: 优化数据库索引、连接池和慢查询
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-181
+    surface: ADMIN
+    page_name: 可观测性/数据库
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-018
+  name: 验证 Redis 故障和缓存降级行为
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-182
+    surface: ADMIN
+    page_name: 可观测性/恢复演练
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-019
+  name: 验证 NATS 消息重投和幂等消费
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-182
+    surface: ADMIN
+    page_name: 可观测性/恢复演练
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-020
+  name: 配置 R2 生命周期和删除证明
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-183
+    surface: ADMIN
+    page_name: 文件与存储/生命周期
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-021
+  name: 自动备份 PostgreSQL 和关键配置
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-184
+    surface: ADMIN
+    page_name: 可观测性/备份
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-022
+  name: 执行数据库和对象恢复演练
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-182
+    surface: ADMIN
+    page_name: 可观测性/恢复演练
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-023
+  name: 执行用户数据导出和删除闭环
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-185
+    surface: ADMIN
+    page_name: 安全与审计/隐私请求
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-024
+  name: 配置日志、会话、文件和账单保留期
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-186
+    surface: ADMIN
+    page_name: 系统设置/数据保留
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P12-025
+  name: 发布管理员和运维运行手册
+  phase: P12
+  ui_bindings:
+  - page_id: YL-M-187
+    surface: ADMIN
+    page_name: 可观测性/运行手册
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-001
+  name: 执行 Android 全功能自动回归
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-188
+    surface: ADMIN
+    page_name: 质量与发布/测试
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-002
+  name: 执行多尺寸真机验收矩阵
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-189
+    surface: ADMIN
+    page_name: 质量与发布/真机验收
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-003
+  name: 执行后台菜单、权限和审计回归
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-190
+    surface: ADMIN
+    page_name: 管理员与权限/审计
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-004
+  name: 执行数据库升级和回滚演练
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-009
+    surface: ADMIN
+    page_name: 运维/数据库迁移
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-005
+  name: 执行完整灾难恢复演练
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-182
+    surface: ADMIN
+    page_name: 可观测性/恢复演练
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-006
+  name: 接入或模拟官方 OpenAI Adapter 切换
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-069
+    surface: ADMIN
+    page_name: 模型与供应商/通道
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-007
+  name: 接入或模拟官方 Anthropic Adapter 切换
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-069
+    surface: ADMIN
+    page_name: 模型与供应商/通道
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-008
+  name: 接入或模拟官方 xAI Adapter 切换
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-069
+    surface: ADMIN
+    page_name: 模型与供应商/通道
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-009
+  name: 验证订阅测试通道到官方通道无客户端升级切换
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-068
+    surface: ADMIN
+    page_name: 模型与供应商/路由策略
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-010
+  name: 验证供应商失败时透明降级和恢复
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-191
+    surface: ADMIN
+    page_name: 模型与供应商/故障切换
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-011
+  name: 输出容量、成本和扩容阈值报告
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-192
+    surface: ADMIN
+    page_name: 可观测性/容量规划
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-012
+  name: 输出已知限制和商业开放前待办
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-193
+    surface: ADMIN
+    page_name: 质量与发布/商业就绪
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-013
+  name: 验证安装、升级、回滚和强制更新
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-130
+    surface: ADMIN
+    page_name: 系统运营/App版本
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-004
+    surface: WEB
+    page_name: APK 下载与更新页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-014
+  name: 生成最终 APK 和完整交付包
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-194
+    surface: ADMIN
+    page_name: 质量与发布/最终交付
+    visual_kind: PAGE
+    parent_page_id: null
+  - page_id: YL-W-007
+    surface: WEB
+    page_name: 维护、错误与不兼容提示页
+    visual_kind: PAGE
+    parent_page_id: null
+- feature_id: P13-015
+  name: 项目所有者完成 APK 和后台最终验收
+  phase: P13
+  ui_bindings:
+  - page_id: YL-M-195
+    surface: ADMIN
+    page_name: 质量与发布/最终验收
+    visual_kind: PAGE
+    parent_page_id: null

@@ -1,0 +1,171 @@
+schema_version: '1.0'
+design_system_version: YL-DS-1.2.0
+profiles:
+  android_splash:
+    surface: ANDROID
+    top_bar: none
+    bottom_navigation: false
+    horizontal_padding_dp: 24
+    vertical_alignment: center
+    background_token: background
+  android_auth:
+    surface: ANDROID
+    top_bar: optional_back
+    bottom_navigation: false
+    horizontal_padding_dp: 24
+    top_content_gap_dp: 32
+    field_gap_dp: 16
+    action_gap_dp: 20
+  android_main_tab:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: true
+    horizontal_padding_dp: 16
+    section_gap_dp: 24
+    card_gap_dp: 12
+  android_chat:
+    surface: ANDROID
+    top_bar: chat
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    content_bottom_anchor: composer
+    message_gap_dp: 20
+  android_list:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    list_gap_dp: 8
+    section_gap_dp: 20
+  android_detail:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    section_gap_dp: 24
+    card_gap_dp: 12
+  android_form:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    field_gap_dp: 16
+    sticky_action_height_dp: 72
+  android_settings:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    group_gap_dp: 24
+    row_min_height_dp: 56
+  android_sheet:
+    surface: ANDROID
+    container: bottom_sheet
+    horizontal_padding_dp: 20
+    section_gap_dp: 20
+    row_min_height_dp: 52
+  android_dialog:
+    surface: ANDROID
+    container: dialog
+    max_width_dp: 312
+    padding_dp: 24
+  android_wizard:
+    surface: ANDROID
+    top_bar: wizard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    progress_height_dp: 4
+    sticky_action_height_dp: 72
+  android_job:
+    surface: ANDROID
+    top_bar: standard
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    status_card_min_height_dp: 120
+  android_preview:
+    surface: ANDROID
+    top_bar: overlay_or_standard
+    bottom_navigation: false
+    horizontal_padding_dp: 12
+    canvas_background_token: surface_subtle
+  android_component_board:
+    surface: ANDROID
+    top_bar: none
+    bottom_navigation: false
+    horizontal_padding_dp: 16
+    section_gap_dp: 24
+  admin_dashboard:
+    surface: ADMIN
+    shell: admin
+    sidebar_width_px: 248
+    topbar_height_px: 64
+    content_padding_px: 24
+    grid_gap_px: 16
+  admin_list:
+    surface: ADMIN
+    shell: admin
+    sidebar_width_px: 248
+    topbar_height_px: 64
+    content_padding_px: 24
+    filter_bar_min_height_px: 56
+    table_row_height_px: 48
+  admin_detail:
+    surface: ADMIN
+    shell: admin
+    sidebar_width_px: 248
+    topbar_height_px: 64
+    content_padding_px: 24
+    detail_grid_columns: minmax(0,1fr) 360px
+  admin_config:
+    surface: ADMIN
+    shell: admin
+    sidebar_width_px: 248
+    topbar_height_px: 64
+    content_padding_px: 24
+    form_max_width_px: 960
+    field_gap_px: 20
+  admin_approval:
+    surface: ADMIN
+    shell: admin
+    sidebar_width_px: 248
+    topbar_height_px: 64
+    content_padding_px: 24
+    evidence_panel_width_px: 420
+  developer_dashboard:
+    surface: DEVELOPER
+    shell: developer
+    sidebar_width_px: 240
+    topbar_height_px: 64
+    content_padding_px: 32
+    grid_gap_px: 16
+  developer_list:
+    surface: DEVELOPER
+    shell: developer
+    sidebar_width_px: 240
+    topbar_height_px: 64
+    content_padding_px: 32
+    table_row_height_px: 48
+  developer_detail:
+    surface: DEVELOPER
+    shell: developer
+    sidebar_width_px: 240
+    topbar_height_px: 64
+    content_padding_px: 32
+    content_max_width_px: 1120
+  developer_docs:
+    surface: DEVELOPER
+    shell: developer_docs
+    nav_width_px: 240
+    toc_width_px: 220
+    content_width_px: 760
+    topbar_height_px: 64
+  public_web:
+    surface: WEB
+    mobile_padding_px: 20
+    desktop_max_width_px: 1120
+    card_radius_px: 16
+  design_board:
+    surface: DESIGN_SYSTEM
+    canonical_canvas_px: 1440x1200
+    grid_px: 8
+    section_gap_px: 32

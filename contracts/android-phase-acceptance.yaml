@@ -1,0 +1,57 @@
+schema_version: '1.0'
+authority: CANONICAL
+workflow: .github/workflows/android-phase-acceptance.yml
+emulator:
+  api_level: 35
+  target: google_apis
+  arch: x86_64
+  profile: pixel_6
+  orientation: portrait
+  screenshot_canvas_px: 1080x2400
+required_stages:
+- id: build
+  requirements:
+  - 固定 applicationId
+  - 固定签名证书
+  - versionName/versionCode 与 release-version-matrix 一致
+  - assemble、unit test、lint 通过
+- id: upgrade_install
+  requirements:
+  - P01 以后先安装上一 owner release，再使用 adb install -r 安装本版
+  - 不得清除应用数据
+  - 数据库迁移和登录态恢复测试通过
+- id: interaction_coverage
+  requirements:
+  - 所有已发布且可交互的 Interaction ID 必须绑定 Compose testTag/semantics
+  - 每个 Interaction ID 至少有一个自动测试
+  - 遍历点击不得出现崩溃、死链或未定义行为
+- id: current_phase_visual
+  requirements:
+  - 本阶段全部 Page State ID 在固定模拟器生成截图
+  - 逐状态与已批准效果图比较
+  - 动态数据区域使用合同定义的 mask
+  - 未解释差异阻断发布
+- id: released_golden_regression
+  requirements:
+  - 旧阶段每个主要页面至少回归 POPULATED/DEFAULT、ERROR、EMPTY 中适用的 Golden 状态
+  - 不在每版机械重跑所有历史边缘状态
+- id: functional_flows
+  requirements:
+  - 运行本阶段用户旅程、网络失败、操作失败、操作成功、权限和额度等流程
+  - 后端、数据库和后台证据完整
+- id: artifact
+  requirements:
+  - 只允许交付当前 commit SHA 对应的 GitHub Actions Artifact
+  - 禁止 CI 通过后在本地重新构建另一个 APK
+  - Artifact 附带测试、截图、视觉差异和 SHA-256
+visual_thresholds:
+  ssim_min: 0.985
+  pixel_mismatch_ratio_max: 0.005
+  manual_review_required_for_mask_change: true
+release_blockers:
+- 任何 required check 失败
+- Interaction ID 无测试
+- 当前阶段状态截图缺失
+- 视觉差异未解释
+- APK 版本或签名不匹配
+- 升级覆盖安装失败

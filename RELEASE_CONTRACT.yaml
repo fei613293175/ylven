@@ -1,0 +1,31 @@
+schema_version: 1.2.0
+required_outputs:
+- YLVEN-{phase}-test.apk
+- FEATURES.md
+- TESTS.md
+- CHANGELOG.md
+- DEPLOYMENT.md
+- OWNER_ACTIONS.md
+- OWNER_ACCEPTANCE.md
+- BUILD_INFO.json
+- SHA256SUMS.txt
+- UI_SCREENSHOT_INDEX.csv
+- VISUAL_DIFF_REPORT.md
+- UI_CONTRACT_REPORT.json
+apk_rules:
+  minimum_bytes: 1048576
+  must_be_gradle_output: true
+  must_contain:
+  - AndroidManifest.xml
+  self_test_fixture_forbidden_in_real_release: true
+completion_rules:
+- All current-phase Feature IDs have a final status.
+- IMPLEMENTED items include code/test evidence.
+- DEFERRED_WITH_REASON and BLOCKED_EXTERNAL include a concrete reason.
+- Tests and build commands are captured in TESTS.md.
+- SHA256SUMS.txt validates every immutable release file.
+ui_rules:
+  design_system_version: YL-DS-1.2.0
+  approved_mockups_required: true
+  all_bound_states_screenshot_required: true
+  unexplained_visual_diff_forbidden: true

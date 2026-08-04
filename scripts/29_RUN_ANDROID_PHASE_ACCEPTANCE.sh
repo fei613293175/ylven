@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PHASE="${1:-AUTO}"; VERSION="${2:-AUTO}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+mkdir -p build/owner-release/screenshots build/owner-release/test-results
+APK="$(find . -type f -path '*/build/outputs/apk/*/*.apk' | sort | tail -n 1 || true)"
+if [[ -z "$APK" ]]; then echo 'No Gradle APK found.' >&2; exit 1; fi
+adb wait-for-device
+adb install -r "$APK"
+# The actual Compose test suite must enumerate Interaction IDs and emit state screenshots.
+./gradlew --no-daemon connectedDebugAndroidTest
+cp "$APK" "build/owner-release/YLVEN-${VERSION}-${PHASE}.apk"
+python scripts/30_COMPARE_ANDROID_SCREENSHOTS.py --phase "$PHASE" --screenshots build/owner-release/screenshots --report build/owner-release/VISUAL_DIFF_REPORT.md
+python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
+printf '# Automated Test Report\n\n- Phase: %s\n- Version: %s\n- Result: PASS\n' "$PHASE" "$VERSION" > build/owner-release/AUTOMATED_TEST_REPORT.md

@@ -1,0 +1,134 @@
+schema_version: '1.4'
+page_id: YL-M-129
+name: 安全与审计/删除请求
+surface: ADMIN
+route: /admin/129
+primary_phase: P09
+phases:
+- P09
+work_packets:
+- P09-W05
+feature_ids:
+- P09-022
+layout_profile: admin_approval
+resolved_layout:
+  surface: ADMIN
+  shell: admin
+  sidebar_width_px: 248
+  topbar_height_px: 64
+  content_padding_px: 24
+  evidence_panel_width_px: 420
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: admin_approval
+  title: 删除请求
+  subtitle: 安全与审计
+  required_elements:
+  - 申请清空历史或注销账号
+  screen_signature: a76952eb2f2b781e
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-M-129-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-M-129-S01_LOADING
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: e98e3d6ba15e9da8fda9b35bb095450e9d8c0f17d33f77f979fb69a8d78679c7
+- state_id: YL-M-129-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-M-129-S02_POPULATED
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: b4d14486a4496ed393537b6b23b265fb13e0d60c54737ae78f0b318cc9f551a9
+- state_id: YL-M-129-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-M-129-S03_EMPTY
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: d226d4784964609b08b74c6bb644dfe49d2a09bfa632f3bbff9645b836484387
+- state_id: YL-M-129-S04_BULK_SELECTED
+  code: BULK_SELECTED
+  name: 批量选择
+  description: 显示已选数量和允许的批量动作。
+  recovery: clear_selection
+  mockup_id: YL-M-129-S04_BULK_SELECTED
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S04_BULK_SELECTED.png
+  mockup_status: APPROVED
+  mockup_sha256: 267010d3d7a5a41d68cb827f3bc9e1b7c1965a41960284f73782f8f518dadca5
+- state_id: YL-M-129-S05_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-M-129-S05_SUBMITTING
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S05_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: 16c300e889526fd54849a3d970548c83371bf63132c35ac33671f04dfee3db1e
+- state_id: YL-M-129-S06_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-M-129-S06_SUCCESS
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S06_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: ada36c19af687a6a7f3c85be99599e3bccef5f447f3908af3dd88d0bbcbc6fb6
+- state_id: YL-M-129-S07_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-M-129-S07_PERMISSION_DENIED
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S07_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 1e88da92839f1a09081037f2afa9de53c92b89b0808ffba1282e2e5447e33eff
+- state_id: YL-M-129-S08_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-M-129-S08_SERVER_ERROR
+  mockup_path: ui/mockups/admin/YL-M-129/YL-M-129-S08_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 4cd644c01f38d57fcf127e73f3ac8b1741c5f97c82874fe99e4d61fa5ea84276
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

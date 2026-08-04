@@ -1,0 +1,100 @@
+schema_version: '1.4'
+page_id: YL-A-029
+name: 通用来源引用组件
+surface: ANDROID
+route: android://029
+primary_phase: P03
+phases:
+- P03
+work_packets:
+- P03-W03
+feature_ids:
+- P03-021
+layout_profile: android_chat
+resolved_layout:
+  surface: ANDROID
+  top_bar: chat
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  content_bottom_anchor: composer
+  message_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: COMPONENT_BOARD
+parent_page_id: YL-A-026
+visual_identity:
+  template: citation_block
+  title: 引用组件
+  subtitle: 来源标题、域名、序号与不可用状态
+  required_elements:
+  - 引用 1
+  - 来源域名
+  - 打开来源
+  screen_signature: c14bbf0ef3c28977
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-029-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-029-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 69907b3ad9fb6c7ec410cad3dc27fdca0113512c272e8d68cc2984e39fa535cd
+- state_id: YL-A-029-S02_COMPLETED
+  code: COMPLETED
+  name: 生成完成
+  description: 完整内容、来源、模型标签和操作栏可见。
+  recovery: continue
+  mockup_id: YL-A-029-S02_COMPLETED
+  mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S02_COMPLETED.png
+  mockup_status: APPROVED
+  mockup_sha256: 53bf8c719e1eb0bdd65043d635d1fac5e85275174da97f988cd47ae2176ffaf8
+- state_id: YL-A-029-S03_NOT_FOUND
+  code: NOT_FOUND
+  name: 内容不存在
+  description: 资源不存在、已删除或不可访问。
+  recovery: back
+  mockup_id: YL-A-029-S03_NOT_FOUND
+  mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S03_NOT_FOUND.png
+  mockup_status: APPROVED
+  mockup_sha256: bcc9225fc7a71f82e97456410242c66a92fb537f56c9e6fd8409d018e8a8652b
+- state_id: YL-A-029-S04_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-029-S04_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S04_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: 57fcf4c05f37d714547b353a7cf8ed269f3c305361ef6787d0f0eaf52ac89397
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

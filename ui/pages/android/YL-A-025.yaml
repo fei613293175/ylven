@@ -1,0 +1,91 @@
+schema_version: '1.4'
+page_id: YL-A-025
+name: 离线缓存
+surface: ANDROID
+route: android://025
+primary_phase: P03
+phases:
+- P03
+work_packets:
+- P03-W03
+feature_ids:
+- P03-016
+layout_profile: android_detail
+resolved_layout:
+  surface: ANDROID
+  top_bar: standard
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  section_gap_dp: 24
+  card_gap_dp: 12
+design_system_version: YL-DS-1.2.0
+visual_kind: SYSTEM_STATE_BOARD
+parent_page_id: YL-A-023
+visual_identity:
+  template: offline_cache
+  title: 离线缓存
+  subtitle: 保留最近会话并明确缓存时间
+  required_elements:
+  - 缓存时间
+  - 只读内容
+  - 联网重试
+  screen_signature: 83cf22f6dacc6b3b
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-025-S01_OFFLINE_CACHE
+  code: OFFLINE_CACHE
+  name: 离线缓存
+  description: 展示可用缓存并明确其不是最新数据。
+  recovery: refresh_when_online
+  mockup_id: YL-A-025-S01_OFFLINE_CACHE
+  mockup_path: ui/mockups/android/YL-A-025/YL-A-025-S01_OFFLINE_CACHE.png
+  mockup_status: APPROVED
+  mockup_sha256: ae96a589a1ef5963d1b1712d8c051bbf77b5c760fb04f31f2a913cfbc95ac6c3
+- state_id: YL-A-025-S02_REFRESHING
+  code: REFRESHING
+  name: 刷新中
+  description: 保留已有内容并显示局部刷新，不清空整页。
+  recovery: automatic
+  mockup_id: YL-A-025-S02_REFRESHING
+  mockup_path: ui/mockups/android/YL-A-025/YL-A-025-S02_REFRESHING.png
+  mockup_status: APPROVED
+  mockup_sha256: 352e38a4abcfa511c4eca9c874a43c563e102c19b3184f611095a9e66be6f25e
+- state_id: YL-A-025-S03_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-A-025-S03_NETWORK_ERROR
+  mockup_path: ui/mockups/android/YL-A-025/YL-A-025-S03_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: a6184a991b4034a840423e1c759f939d5aacec9c8469fb826c9c5e9e771a7d86
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

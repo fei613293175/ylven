@@ -1,0 +1,29 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.24.x' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'pnpm' }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install pnpm
+        run: corepack enable
+      - name: Go tests
+        run: |
+          set -e
+          while IFS= read -r mod; do (cd "$(dirname "$mod")" && go test ./...); done < <(find . -name go.mod -not -path './vendor/*' -not -path './.git/*')
+      - name: Web tests and builds
+        run: |
+          if [ -f pnpm-workspace.yaml ] || [ -f package.json ]; then pnpm -r --if-present test && pnpm -r --if-present build; fi
+      - name: Android checks
+        run: |
+          if [ -x android/gradlew ]; then (cd android && ./gradlew test lint assembleStaging --stacktrace); elif [ -x ./gradlew ]; then ./gradlew test lint assembleStaging --stacktrace; fi

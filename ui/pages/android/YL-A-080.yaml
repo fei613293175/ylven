@@ -1,0 +1,145 @@
+schema_version: '1.4'
+page_id: YL-A-080
+name: 工作/任务
+surface: ANDROID
+route: android://080
+primary_phase: P09
+phases:
+- P09
+work_packets:
+- P09-W01
+feature_ids:
+- P09-005
+layout_profile: android_job
+resolved_layout:
+  surface: ANDROID
+  top_bar: standard
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  status_card_min_height_dp: 120
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: YL-A-077
+visual_identity:
+  template: job_center
+  title: 任务中心
+  subtitle: 查看排队、进行中、完成和失败任务
+  required_elements:
+  - 进行中
+  - 已完成
+  - 失败
+  - 已取消
+  screen_signature: 0298a10efbea93ef
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-080-S01_QUEUED
+  code: QUEUED
+  name: 已排队
+  description: 显示队列状态与提交时间，不伪造精确预计时间。
+  recovery: cancel
+  mockup_id: YL-A-080-S01_QUEUED
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S01_QUEUED.png
+  mockup_status: APPROVED
+  mockup_sha256: 8f8ef470f3d09beb94c4414c813a3e963f752dcedff58316300a5a6fe8349b94
+- state_id: YL-A-080-S02_PREPARING
+  code: PREPARING
+  name: 准备任务
+  description: 正在验证额度、文件和参数。
+  recovery: cancel_if_supported
+  mockup_id: YL-A-080-S02_PREPARING
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S02_PREPARING.png
+  mockup_status: APPROVED
+  mockup_sha256: 50881ea770b489031bf991ae7d059847230f2e29cf2d96d93035917541bd3861
+- state_id: YL-A-080-S03_RUNNING
+  code: RUNNING
+  name: 任务执行中
+  description: 显示真实阶段和进度来源。
+  recovery: cancel_if_supported
+  mockup_id: YL-A-080-S03_RUNNING
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S03_RUNNING.png
+  mockup_status: APPROVED
+  mockup_sha256: 1f6c1d5b6ba2b884b3488c0cbfff6b5324455f22b904f159dbc8899aa6992ddf
+- state_id: YL-A-080-S04_CANCEL_CONFIRM
+  code: CANCEL_CONFIRM
+  name: 确认取消
+  description: 说明取消后的计费和产物处理。
+  recovery: confirm_or_back
+  mockup_id: YL-A-080-S04_CANCEL_CONFIRM
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S04_CANCEL_CONFIRM.png
+  mockup_status: APPROVED
+  mockup_sha256: 31efcb2cbadd7b6a2f885ccabb3bd605c5b44ee619dd1be19f439aa875de1960
+- state_id: YL-A-080-S05_CANCELLED
+  code: CANCELLED
+  name: 任务已取消
+  description: 显示已结算/解冻结果与重试入口。
+  recovery: restart
+  mockup_id: YL-A-080-S05_CANCELLED
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S05_CANCELLED.png
+  mockup_status: APPROVED
+  mockup_sha256: 2d7f651957da362ea615d0b9e38ff136f5966f1a7d136ebec905e55eb3b17e69
+- state_id: YL-A-080-S06_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-A-080-S06_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S06_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: edaa75dcad6f71ae97636d16509146075eef316553c483806abb96e8c2b801a1
+- state_id: YL-A-080-S07_FAILED
+  code: FAILED
+  name: 任务失败
+  description: 显示可理解原因、错误码和可重试条件。
+  recovery: retry_or_edit
+  mockup_id: YL-A-080-S07_FAILED
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S07_FAILED.png
+  mockup_status: APPROVED
+  mockup_sha256: c4a9ce432b5de7e383b59740047edb54e8de4b40d164304d8b07fd9334af765d
+- state_id: YL-A-080-S08_RETRYING
+  code: RETRYING
+  name: 任务重试中
+  description: 显示尝试次数和上限，禁止无限重试。
+  recovery: cancel
+  mockup_id: YL-A-080-S08_RETRYING
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S08_RETRYING.png
+  mockup_status: APPROVED
+  mockup_sha256: ec27e4ab4acc174df11ad86df1e6211b0dc6276fb3cbf8a1654ee3187b32a6ad
+- state_id: YL-A-080-S09_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-080-S09_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-080/YL-A-080-S09_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: 13e74440c82e47b6c27706da259f6a690142187c954566959389c65e308536f5
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

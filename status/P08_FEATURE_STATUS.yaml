@@ -1,0 +1,116 @@
+schema_version: 1.2.0
+phase: P08
+phase_title: PPT 大纲、模板、确定性渲染与版本编辑
+overall_status: TODO
+updated_at: '2026-08-04T00:00:00+08:00'
+allowed_feature_statuses_during_development:
+- PLANNED
+- IN_PROGRESS
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+release_final_statuses:
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+features:
+- feature_id: P08-001
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-002
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-003
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-004
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-005
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-006
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-007
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-008
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-009
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-010
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-011
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-012
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-013
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-014
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-015
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-016
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-017
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-018
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-019
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-020
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-021
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-022
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-023
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-024
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P08-025
+  status: PLANNED
+  reason: ''
+  evidence: []

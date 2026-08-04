@@ -1,0 +1,526 @@
+schema_version: '1.0'
+design_system_version: YL-DS-1.2.0
+status: LOCKED_FOR_MOCKUP_GENERATION
+authority: This file is the numeric visual source of truth. Mockups illustrate it; mockups do not override it unless this
+  contract is versioned.
+platforms:
+  android:
+    canonical_viewport_dp:
+      width: 360
+      height: 800
+    canonical_mockup_px:
+      width: 1080
+      height: 2400
+      density: 3
+    secondary_test_widths_dp:
+    - 320
+    - 384
+    - 411
+    edge_to_edge: true
+    system_status_bar_reference_dp: 24
+    gesture_navigation_inset_reference_dp: 24
+    orientation: portrait
+    phone_frame_in_mockup: false
+  admin_web:
+    canonical_viewport_px:
+      width: 1440
+      height: 1000
+    minimum_supported_width_px: 1280
+    sidebar_width_px: 248
+    collapsed_sidebar_width_px: 72
+    topbar_height_px: 64
+    content_padding_px: 24
+    content_max_width_px: 1600
+  developer_web:
+    canonical_viewport_px:
+      width: 1440
+      height: 1000
+    minimum_supported_width_px: 1024
+    sidebar_width_px: 240
+    topbar_height_px: 64
+    content_padding_px: 32
+    content_max_width_px: 1440
+  public_web_mobile:
+    canonical_viewport_px:
+      width: 390
+      height: 844
+    desktop_reference_px:
+      width: 1440
+      height: 1000
+    mobile_content_padding_px: 20
+    desktop_content_max_width_px: 1120
+colors:
+  light:
+    brand_primary: '#5B61F6'
+    brand_primary_hover: '#4E54E8'
+    brand_primary_pressed: '#4147D8'
+    brand_secondary: '#2F80ED'
+    brand_tertiary: '#8B5CF6'
+    brand_gradient_start: '#5B61F6'
+    brand_gradient_end: '#2F80ED'
+    background: '#F6F7FB'
+    surface: '#FFFFFF'
+    surface_subtle: '#F9FAFB'
+    surface_brand_soft: '#F0F1FF'
+    surface_blue_soft: '#EEF6FF'
+    text_primary: '#101828'
+    text_secondary: '#475467'
+    text_tertiary: '#667085'
+    text_disabled: '#98A2B3'
+    text_on_brand: '#FFFFFF'
+    border_default: '#E4E7EC'
+    border_strong: '#D0D5DD'
+    divider: '#EAECF0'
+    icon_primary: '#344054'
+    icon_secondary: '#667085'
+    icon_disabled: '#98A2B3'
+    success: '#12A66A'
+    success_soft: '#ECFDF3'
+    warning: '#F79009'
+    warning_soft: '#FFFAEB'
+    error: '#D92D20'
+    error_soft: '#FEF3F2'
+    info: '#2F80ED'
+    info_soft: '#EFF8FF'
+    overlay: '#10182899'
+    scrim: '#10182866'
+    skeleton_base: '#EAECF0'
+    skeleton_highlight: '#F9FAFB'
+    code_background: '#111827'
+    code_text: '#E5E7EB'
+    selection: '#DDE0FF'
+  dark:
+    brand_primary: '#7C82FF'
+    brand_primary_hover: '#8D92FF'
+    brand_primary_pressed: '#686FF2'
+    brand_secondary: '#55A0FF'
+    brand_tertiary: '#A78BFA'
+    brand_gradient_start: '#7C82FF'
+    brand_gradient_end: '#55A0FF'
+    background: '#0B0D12'
+    surface: '#141821'
+    surface_subtle: '#1A1F2B'
+    surface_brand_soft: '#242752'
+    surface_blue_soft: '#13263D'
+    text_primary: '#F2F4F7'
+    text_secondary: '#D0D5DD'
+    text_tertiary: '#98A2B3'
+    text_disabled: '#667085'
+    text_on_brand: '#FFFFFF'
+    border_default: '#2D3442'
+    border_strong: '#3B4557'
+    divider: '#242B38'
+    icon_primary: '#EAECF0'
+    icon_secondary: '#98A2B3'
+    icon_disabled: '#667085'
+    success: '#32D583'
+    success_soft: '#123526'
+    warning: '#FDB022'
+    warning_soft: '#3A2B0D'
+    error: '#F97066'
+    error_soft: '#3B1715'
+    info: '#53B1FD'
+    info_soft: '#102A43'
+    overlay: '#000000B3'
+    scrim: '#00000080'
+    skeleton_base: '#242B38'
+    skeleton_highlight: '#303949'
+    code_background: '#080A0F'
+    code_text: '#E5E7EB'
+    selection: '#343868'
+typography:
+  font_families:
+    android_primary: Roboto, Noto Sans CJK SC, system sans-serif
+    web_primary: Inter, Noto Sans SC, system-ui, sans-serif
+    monospace: JetBrains Mono, SFMono-Regular, Consolas, monospace
+    font_file_policy: Use installed/system fonts; do not commit or distribute font files without an explicit license.
+  android_sp:
+    display_large:
+      size: 32
+      line_height: 40
+      weight: 700
+      letter_spacing: -0.4
+    display_medium:
+      size: 28
+      line_height: 36
+      weight: 700
+      letter_spacing: -0.2
+    page_title:
+      size: 24
+      line_height: 32
+      weight: 700
+      letter_spacing: 0
+    section_title:
+      size: 20
+      line_height: 28
+      weight: 700
+      letter_spacing: 0
+    card_title:
+      size: 17
+      line_height: 24
+      weight: 600
+      letter_spacing: 0
+    body_large:
+      size: 16
+      line_height: 24
+      weight: 400
+      letter_spacing: 0
+    body_medium:
+      size: 15
+      line_height: 22
+      weight: 400
+      letter_spacing: 0
+    body_small:
+      size: 14
+      line_height: 20
+      weight: 400
+      letter_spacing: 0
+    label_large:
+      size: 14
+      line_height: 20
+      weight: 600
+      letter_spacing: 0.1
+    label_medium:
+      size: 13
+      line_height: 18
+      weight: 500
+      letter_spacing: 0.1
+    caption:
+      size: 12
+      line_height: 16
+      weight: 400
+      letter_spacing: 0.2
+    micro:
+      size: 11
+      line_height: 14
+      weight: 500
+      letter_spacing: 0.2
+    code:
+      size: 13
+      line_height: 20
+      weight: 400
+      letter_spacing: 0
+  web_px:
+    page_title:
+      size: 24
+      line_height: 32
+      weight: 700
+    section_title:
+      size: 18
+      line_height: 26
+      weight: 600
+    card_title:
+      size: 16
+      line_height: 24
+      weight: 600
+    body:
+      size: 14
+      line_height: 22
+      weight: 400
+    label:
+      size: 13
+      line_height: 20
+      weight: 500
+    caption:
+      size: 12
+      line_height: 18
+      weight: 400
+    code:
+      size: 13
+      line_height: 20
+      weight: 400
+spacing:
+  unit: dp_android_px_web
+  scale:
+    '0': 0
+    '1': 2
+    '2': 4
+    '3': 6
+    '4': 8
+    '5': 10
+    '6': 12
+    '7': 14
+    '8': 16
+    '10': 20
+    '12': 24
+    '14': 28
+    '16': 32
+    '20': 40
+    '24': 48
+    '32': 64
+  android_page_horizontal: 16
+  android_auth_horizontal: 24
+  android_page_top: 12
+  android_section_gap: 24
+  android_card_gap: 12
+  android_inline_gap: 8
+  web_section_gap: 24
+  web_card_gap: 16
+  web_inline_gap: 8
+radii:
+  xs: 4
+  sm: 8
+  md: 12
+  field: 14
+  card: 16
+  large_card: 20
+  chat_bubble: 18
+  composer: 24
+  dialog: 20
+  bottom_sheet: 28
+  full: 999
+borders:
+  hairline_dp: 1
+  focus_ring_dp: 2
+  selected_ring_dp: 2
+  default_color_token: border_default
+  focus_color_token: brand_primary
+  error_color_token: error
+elevation:
+  level_0:
+    elevation_dp: 0
+    shadow: none
+  level_1:
+    elevation_dp: 1
+    shadow: 0 1 3 rgba(16,24,40,0.08)
+  level_2:
+    elevation_dp: 4
+    shadow: 0 4 12 rgba(16,24,40,0.10)
+  level_3:
+    elevation_dp: 8
+    shadow: 0 8 24 rgba(16,24,40,0.14)
+  policy: Prefer tonal surfaces and 1dp borders. Level 2+ is reserved for floating controls, dialogs and sheets.
+motion:
+  instant_ms: 100
+  fast_ms: 160
+  standard_ms: 240
+  emphasis_ms: 320
+  progress_indeterminate_period_ms: 1200
+  skeleton_shimmer_period_ms: 1400
+  easing_standard: cubic-bezier(0.2,0,0,1)
+  easing_emphasis: cubic-bezier(0.2,0,0,1.2)
+  reduce_motion_policy: Disable non-essential transforms; keep opacity changes <=160ms.
+android_components:
+  top_app_bar:
+    height_dp: 56
+    horizontal_padding_dp: 16
+    title_style: card_title
+    icon_dp: 24
+    action_touch_dp: 48
+  large_top_app_bar:
+    collapsed_height_dp: 56
+    expanded_height_dp: 96
+    horizontal_padding_dp: 16
+  bottom_navigation:
+    content_height_dp: 64
+    item_min_width_dp: 64
+    icon_dp: 24
+    label_style: caption
+    top_border_dp: 1
+  primary_button:
+    height_dp: 52
+    radius_dp: 14
+    horizontal_padding_dp: 20
+    label_style: label_large
+    icon_dp: 20
+  secondary_button:
+    height_dp: 48
+    radius_dp: 14
+    horizontal_padding_dp: 18
+    label_style: label_large
+  compact_button:
+    height_dp: 36
+    radius_dp: 10
+    horizontal_padding_dp: 14
+    label_style: label_medium
+  text_field:
+    min_height_dp: 52
+    radius_dp: 14
+    horizontal_padding_dp: 16
+    vertical_padding_dp: 14
+    text_style: body_large
+    supporting_text_style: caption
+  otp_cell:
+    width_dp: 44
+    height_dp: 54
+    radius_dp: 12
+    gap_dp: 8
+    text_style: section_title
+  card:
+    radius_dp: 16
+    padding_dp: 16
+    border_dp: 1
+    content_gap_dp: 12
+  list_row:
+    min_height_dp: 56
+    horizontal_padding_dp: 16
+    vertical_padding_dp: 10
+    leading_dp: 40
+    trailing_touch_dp: 48
+  list_row_large:
+    min_height_dp: 72
+    horizontal_padding_dp: 16
+    vertical_padding_dp: 12
+    leading_dp: 48
+  chip:
+    height_dp: 32
+    radius_dp: 16
+    horizontal_padding_dp: 12
+    gap_dp: 6
+    label_style: label_medium
+  segmented_control:
+    height_dp: 40
+    radius_dp: 12
+    inner_padding_dp: 4
+    item_radius_dp: 9
+  dialog:
+    max_width_dp: 312
+    radius_dp: 20
+    padding_dp: 24
+    action_gap_dp: 12
+  bottom_sheet:
+    top_radius_dp: 28
+    horizontal_padding_dp: 20
+    top_padding_dp: 12
+    handle_width_dp: 36
+    handle_height_dp: 4
+  snackbar:
+    min_height_dp: 48
+    radius_dp: 12
+    horizontal_margin_dp: 16
+    bottom_gap_dp: 12
+  state_panel:
+    icon_dp: 72
+    title_style: section_title
+    body_style: body_small
+    max_width_dp: 280
+    action_height_dp: 44
+    vertical_gap_dp: 12
+  avatar:
+    small_dp: 32
+    medium_dp: 40
+    large_dp: 56
+    profile_dp: 72
+  thumbnail:
+    small_dp: 48
+    medium_dp: 72
+    large_dp: 96
+    radius_dp: 12
+  minimum_touch_target_dp: 48
+chat_components:
+  composer:
+    min_height_dp: 52
+    max_height_dp: 148
+    radius_dp: 24
+    horizontal_padding_dp: 12
+    vertical_padding_dp: 8
+    attachment_touch_dp: 44
+    send_touch_dp: 44
+  user_bubble:
+    max_width_percent: 84
+    radius_dp: 18
+    tail_corner_dp: 6
+    horizontal_padding_dp: 14
+    vertical_padding_dp: 10
+    text_style: body_large
+  assistant_message:
+    width_percent: 100
+    horizontal_padding_dp: 0
+    block_gap_dp: 12
+    text_style: body_large
+  message_vertical_gap_dp: 20
+  message_action:
+    touch_dp: 40
+    icon_dp: 20
+    gap_dp: 4
+  model_badge:
+    height_dp: 24
+    radius_dp: 12
+    horizontal_padding_dp: 8
+    label_style: micro
+  attachment_preview:
+    height_dp: 64
+    radius_dp: 12
+    padding_dp: 8
+    gap_dp: 8
+  code_block:
+    radius_dp: 12
+    padding_dp: 12
+    header_height_dp: 36
+    text_style: code
+  table:
+    header_min_height_dp: 44
+    row_min_height_dp: 44
+    cell_padding_dp: 10
+    radius_dp: 12
+  citation_card:
+    radius_dp: 12
+    padding_dp: 12
+    gap_dp: 8
+studio_components:
+  tool_card:
+    min_height_dp: 112
+    radius_dp: 18
+    padding_dp: 16
+    icon_container_dp: 44
+  image_grid:
+    columns_phone: 2
+    gap_dp: 12
+    item_radius_dp: 16
+    default_aspect_ratio: '1:1'
+  image_prompt_field:
+    min_height_dp: 112
+    radius_dp: 16
+    padding_dp: 16
+  ppt_thumbnail:
+    aspect_ratio: '16:9'
+    radius_dp: 12
+    border_dp: 1
+  ppt_outline_row:
+    min_height_dp: 72
+    radius_dp: 14
+    padding_dp: 14
+    drag_handle_dp: 24
+  job_progress_card:
+    min_height_dp: 104
+    radius_dp: 16
+    padding_dp: 16
+    progress_height_dp: 6
+web_components:
+  control_height_px: 40
+  large_control_height_px: 44
+  compact_control_height_px: 32
+  control_radius_px: 8
+  card_radius_px: 12
+  dialog_radius_px: 16
+  drawer_width_px: 520
+  table_header_height_px: 44
+  table_row_height_px: 48
+  table_cell_horizontal_padding_px: 16
+  filter_bar_min_height_px: 56
+  metric_card_min_height_px: 112
+  chart_panel_min_height_px: 320
+  button_horizontal_padding_px: 16
+  form_label_gap_px: 8
+  form_field_gap_px: 20
+  code_block_radius_px: 10
+  code_block_padding_px: 16
+accessibility:
+  minimum_touch_target_dp: 48
+  minimum_body_contrast_ratio: 4.5
+  minimum_large_text_contrast_ratio: 3.0
+  android_font_scale_test_values:
+  - 1.0
+  - 1.15
+  - 1.3
+  screen_reader_required: true
+  focus_order_required: true
+  color_only_status_forbidden: true
+content_and_function_policy:
+- Visual mockups define layout, styling, hierarchy and visible states only.
+- Functional behavior, permissions, billing, data and navigation come only from Feature IDs and development contracts.
+- Sample names, amounts, dates, models, files and messages in mockups are non-production sample data.
+- A visible control without an Interaction ID is decorative or disabled; Codex must not invent a click action.
+- A required Feature ID not visible in the current mockup still must be implemented; request a visual-contract update instead
+  of omitting it.
+- No screen may introduce an uncontracted feature because it appears in a mockup.

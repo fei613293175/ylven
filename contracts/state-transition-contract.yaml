@@ -1,0 +1,54 @@
+schema_version: 1.6.0
+authority: CANONICAL
+single_authority:
+  phase_pointer: CURRENT_PHASE.yaml
+  work_packet_pointer: CURRENT_WORK_PACKET.yaml
+  planning_scope: contracts/work-packet-map.yaml
+  runtime_packet_lifecycle: status/WORK_PACKET_STATUS.yaml
+  packet_history: status/WORK_PACKET_HISTORY.jsonl
+  release_ledger: status/RELEASE_LEDGER.jsonl
+  human_summary: status/PROJECT_STATE_SUMMARY.md
+statuses:
+  work_packet_open:
+  - PLANNED
+  - TODO
+  - DOING
+  - BLOCKED
+  work_packet_final:
+  - CLOSED
+  - DEFERRED_WITH_REASON
+  phase:
+  - TODO
+  - DOING
+  - BLOCKED
+  - READY_FOR_RELEASE
+  - DONE
+  release_final: CLOSED
+commands:
+  new_conversation: .\ylven.ps1 resume
+  start_packet: .\ylven.ps1 start-packet -Packet <Pxx-Wyy>
+  close_packet: .\ylven.ps1 close-packet -Packet <Pxx-Wyy>
+  defer_packet: .\ylven.ps1 defer-packet -Packet <Pxx-Wyy> -Reason <reason>
+  dispatch_release: .\ylven.ps1 release -Phase <Pxx>
+  close_release: .\ylven.ps1 close-release -Phase <Pxx>
+work_packet_close_gate:
+- The packet is the mechanically selected current packet.
+- All bound Feature IDs are final and contain evidence.
+- Implementation, tests and evidence are committed; the Git worktree is clean.
+- The controller appends one hash-chained final history row, updates runtime state, selects the next unfinished packet, creates a state commit and attempts to push it.
+release_close_gate:
+- All packets in the phase are CLOSED or DEFERRED_WITH_REASON.
+- GitHub Actions acceptance passed for the exact release commit.
+- The exact CI Artifact was delivered and OWNER_ACCEPTANCE.md contains APPROVED.
+- The controller validates commit/version/provenance, creates or verifies an immutable version tag, appends the hash-chained release ledger, advances to the next phase, creates a state
+  commit and attempts to push it.
+new_conversation_recovery:
+- Run resume before planning or editing.
+- Never infer next work from chat wording or memory.
+- If a packet is open, continue it. If phase is READY_FOR_RELEASE, do not start the next phase. If release ledger closed the phase, continue the first packet of the advanced phase.
+forbidden_duplicates:
+- contracts/CURRENT_PHASE.yaml mirror
+- contracts/CURRENT_WORK_PACKET.yaml mirror
+- second packet-status table
+- second phase history
+- second release ledger

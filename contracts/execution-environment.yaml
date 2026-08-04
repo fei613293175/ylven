@@ -1,0 +1,58 @@
+schema_version: '1.0'
+authority: CANONICAL
+profile: THIN_LOCAL_REMOTE_HEAVY
+local_machine:
+  purpose:
+  - repository control
+  - Spec Kit
+  - Codex interaction
+  - state transitions
+  - CI dispatch
+  - artifact download
+  - desktop delivery
+  required:
+  - PowerShell 5.1+
+  - Git
+  - uv
+  - Spec Kit v0.15.2
+  - OpenSSH
+  - GitHub CLI
+  not_required:
+  - system Python
+  - Java
+  - Go
+  - Gradle
+  - ADB
+  - Android SDK
+  - Docker
+  - Node.js
+  - database services
+  python: uv downloads and caches Python 3.12 for repository scripts; do not install a system Python solely for this project
+github_actions:
+  purpose:
+  - Android build
+  - emulator tests
+  - visual comparison
+  - backend tests
+  - web tests
+  - contract validation
+  - release artifact creation
+  source_of_owner_apk: the exact tested CI artifact only
+online_server:
+  purpose:
+  - staging containers
+  - database/cache/queue
+  - integration testing
+  - service health checks
+  access: existing SSH profile in Codex; target is stored only in .ylven-local or environment variables
+  first_action: read-only inventory
+  prohibited:
+  - editing uncommitted source on server
+  - blind host upgrades
+  - overwriting unknown containers
+  - committing inventory or secrets
+routing_rules:
+- Never block implementation because Java, Go, Gradle, ADB or Docker are absent on the owner computer.
+- Run lightweight contract and state checks locally through uv-managed Python.
+- Run build and test workloads in GitHub Actions; run staging integration on the connected online server.
+- A missing remote credential blocks only push/download operations, not local coding or contract work.

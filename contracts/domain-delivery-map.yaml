@@ -1,0 +1,126 @@
+schema_version: '1.0'
+authority: CANONICAL
+root_domain: orbexa.cc
+dns_provider: Cloudflare
+secrets_forbidden: true
+domains:
+- host: api.orbexa.cc
+  required_by_phase: P00
+  required_by_version: 1.0.0
+  purpose: Core API / Mobile BFF
+  record_strategy: A/AAAA or Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health/ready
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P00/DOMAIN_DNS_STATUS.md
+- host: auth.orbexa.cc
+  required_by_phase: P01
+  required_by_version: 1.1.0
+  purpose: 邮箱身份认证、OIDC 与安全验证
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health/ready
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P01/DOMAIN_DNS_STATUS.md
+- host: admin.orbexa.cc
+  required_by_phase: P01
+  required_by_version: 1.1.0
+  purpose: 专业管理后台
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P01/DOMAIN_DNS_STATUS.md
+- host: assets.orbexa.cc
+  required_by_phase: P02
+  required_by_version: 1.2.0
+  purpose: App 静态资源与版本资源
+  record_strategy: R2 custom domain
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P02/DOMAIN_DNS_STATUS.md
+- host: download.orbexa.cc
+  required_by_phase: P02
+  required_by_version: 1.2.0
+  purpose: APK 下载与更新清单
+  record_strategy: CNAME/R2 custom domain
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P02/DOMAIN_DNS_STATUS.md
+- host: files.orbexa.cc
+  required_by_phase: P05
+  required_by_version: 1.5.0
+  purpose: 用户文件、作品与受控 CDN
+  record_strategy: R2 custom domain
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P05/DOMAIN_DNS_STATUS.md
+- host: sub2api.orbexa.cc
+  required_by_phase: P00
+  required_by_version: 1.0.0
+  purpose: Sub2API 用户入口/兼容网关（受控暴露）
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P00/DOMAIN_DNS_STATUS.md
+- host: sub2api-admin.orbexa.cc
+  required_by_phase: P00
+  required_by_version: 1.0.0
+  purpose: Sub2API 管理入口，仅管理员/IP/Zero Trust
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied_restricted
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P00/DOMAIN_DNS_STATUS.md
+- host: developer.orbexa.cc
+  required_by_phase: P11
+  required_by_version: 1.11.0
+  purpose: YLVEN 开发者中心
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P11/DOMAIN_DNS_STATUS.md
+- host: docs.orbexa.cc
+  required_by_phase: P11
+  required_by_version: 1.11.0
+  purpose: 公共 API 文档与 SDK 文档
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P11/DOMAIN_DNS_STATUS.md
+- host: gateway.orbexa.cc
+  required_by_phase: P11
+  required_by_version: 1.11.0
+  purpose: YLVEN 公共 API Gateway
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /v1/models
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P11/DOMAIN_DNS_STATUS.md
+- host: status.orbexa.cc
+  required_by_phase: P12
+  required_by_version: 1.12.0
+  purpose: 服务状态与事故公告
+  record_strategy: CNAME/Tunnel
+  cloudflare_proxy: proxied
+  tls: Full (strict)
+  health_check: /health
+  owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
+  evidence: dist/releases/P12/DOMAIN_DNS_STATUS.md

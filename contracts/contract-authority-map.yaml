@@ -1,0 +1,53 @@
+schema_version: 1.6.0
+package_version: 1.6.0
+authority: CANONICAL
+purpose: 每类事实只有一个机器权威来源；解释性文档只能引用，不得创建第二份运行事实。
+authorities:
+  project_facts: PROJECT_CONTEXT.yaml
+  current_phase: CURRENT_PHASE.yaml
+  current_work_packet: CURRENT_WORK_PACKET.yaml
+  work_packet_definitions: contracts/work-packet-map.yaml
+  work_packet_runtime: status/WORK_PACKET_STATUS.yaml
+  work_packet_history: status/WORK_PACKET_HISTORY.jsonl
+  release_ledger: status/RELEASE_LEDGER.jsonl
+  state_summary: status/PROJECT_STATE_SUMMARY.md
+  state_transitions: contracts/state-transition-contract.yaml
+  execution_environment: contracts/execution-environment.yaml
+  feature_scope: contracts/feature-map.yaml
+  feature_human_index: contracts/FEATURE_MATRIX.md
+  ui_values: contracts/ui-design-tokens.yaml
+  pages: ui/pages/**
+  ui_states: contracts/ui-state-catalog.csv
+  interactions: contracts/ui-interaction-map.csv
+  mockups: contracts/mockup-manifest.csv
+  api: contracts/openapi-skeleton.yaml + contracts/api-inventory.csv
+  data: contracts/database-entity-catalog.yaml
+  admin_menu: contracts/admin-menu-map.yaml
+  tests: contracts/test-catalog.csv
+  release_versions: contracts/release-version-matrix.yaml
+  domains: contracts/domain-delivery-map.yaml
+  repository: contracts/repository-policy.yaml
+  android_acceptance: contracts/android-phase-acceptance.yaml
+  execution_speed: contracts/execution-mode.yaml
+  owner_delivery: contracts/owner-delivery-contract.yaml
+  current_work_document: work-packets/<CURRENT_WORK_PACKET.work_packet_id>.md
+precedence:
+- machine-readable canonical contract
+- current phase and Work Packet state
+- phase and Work Packet implementation contract
+- master development plan
+- chat text
+rules:
+- contracts/work-packet-map.yaml defines immutable scope only; status/WORK_PACKET_STATUS.yaml is the only mutable packet lifecycle table.
+- Only scripts/37_PROJECT_STATE.py may close Work Packets, append history, close releases or select the next packet.
+- Generated files must declare their source and be rebuilt deterministically.
+forbidden_parallel_sources:
+- contracts/CURRENT_PHASE.yaml
+- contracts/CURRENT_WORK_PACKET.yaml
+- second Work Packet status file
+- second phase history
+- second release ledger
+- second version matrix
+- second domain table
+- second repository policy
+- second release process

@@ -1,0 +1,34 @@
+# Local and secret material
+.env
+.env.*
+!.env.example
+.ylven-local/
+.ylven-bootstrap-backup/
+.venv-tools/
+*.pem
+*.key
+*.p12
+*.jks
+local.properties
+
+# Build outputs
+.gradle/
+**/build/
+dist/
+node_modules/
+coverage/
+__pycache__/
+.pytest_cache/
+
+# Spec Kit runtime output (generated after bootstrap)
+.specify/
+.agents/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.keystore
+*.pfx
+.android/

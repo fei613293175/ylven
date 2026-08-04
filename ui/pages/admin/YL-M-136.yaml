@@ -1,0 +1,142 @@
+schema_version: '1.4'
+page_id: YL-M-136
+name: 商业化/钱包
+surface: ADMIN
+route: /admin/136
+primary_phase: P10
+phases:
+- P10
+work_packets:
+- P10-W01
+- P10-W02
+feature_ids:
+- P10-005
+- P10-006
+- P10-008
+- P10-009
+layout_profile: admin_list
+resolved_layout:
+  surface: ADMIN
+  shell: admin
+  sidebar_width_px: 248
+  topbar_height_px: 64
+  content_padding_px: 24
+  filter_bar_min_height_px: 56
+  table_row_height_px: 48
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: admin_list
+  title: 钱包
+  subtitle: 商业化
+  required_elements:
+  - 支持管理员测试充值但明确测试来源
+  - 建立现金、套餐和赠送额度账户
+  - 生成可快速读取的余额投影
+  - 展示充值、套餐和赠送额度明细
+  screen_signature: db049f8c428761e8
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-M-136-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-M-136-S01_LOADING
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 94f5a2bca9034c04b413051bde1f66171d48c0a14a822a2ab01e787992a7ce24
+- state_id: YL-M-136-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-M-136-S02_POPULATED
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: d0959428baf2faa6ab450a70383c94f8fe3cc9a8509113f1c4ca19dc23d6fc51
+- state_id: YL-M-136-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-M-136-S03_EMPTY
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 15a1e0cd583830fc51b05763232683e02b7ebeeeaca78540ddc9c713a1935f2e
+- state_id: YL-M-136-S04_FILTER_ACTIVE
+  code: FILTER_ACTIVE
+  name: 筛选生效
+  description: 清晰展示筛选条件和结果数量。
+  recovery: clear_filter
+  mockup_id: YL-M-136-S04_FILTER_ACTIVE
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S04_FILTER_ACTIVE.png
+  mockup_status: APPROVED
+  mockup_sha256: 93028afe42c128567e2b15a597da72e2ba687ee70dfce7621508d7facfad2e60
+- state_id: YL-M-136-S05_BULK_SELECTED
+  code: BULK_SELECTED
+  name: 批量选择
+  description: 显示已选数量和允许的批量动作。
+  recovery: clear_selection
+  mockup_id: YL-M-136-S05_BULK_SELECTED
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S05_BULK_SELECTED.png
+  mockup_status: APPROVED
+  mockup_sha256: d4f06de96517aa3109236921178b3c372609c377b02a46f285051a1686b1c407
+- state_id: YL-M-136-S06_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-M-136-S06_PERMISSION_DENIED
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S06_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 0c15cececdedf8310e89198be51364d0b26e94962d36804f31d3ff5d4eb6dfe4
+- state_id: YL-M-136-S07_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-M-136-S07_NETWORK_ERROR
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S07_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: a189a1a3d3accfc177e4a8b288cc7930dd8c48ca6d19f9a02ee96d7619e58b4c
+- state_id: YL-M-136-S08_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-M-136-S08_SERVER_ERROR
+  mockup_path: ui/mockups/admin/YL-M-136/YL-M-136-S08_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: dda61f75fd63ab8a3e5d3af96f62846f0d005b8d513351f26ea0098ecb3f813e
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

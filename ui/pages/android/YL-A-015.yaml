@@ -1,0 +1,100 @@
+schema_version: '1.4'
+page_id: YL-A-015
+name: 我的/退出登录
+surface: ANDROID
+route: android://015
+primary_phase: P02
+phases:
+- P02
+work_packets:
+- P02-W04
+feature_ids:
+- P02-019
+layout_profile: android_auth
+resolved_layout:
+  surface: ANDROID
+  top_bar: optional_back
+  bottom_navigation: false
+  horizontal_padding_dp: 24
+  top_content_gap_dp: 32
+  field_gap_dp: 16
+  action_gap_dp: 20
+design_system_version: YL-DS-1.2.0
+visual_kind: OVERLAY
+parent_page_id: YL-A-086
+visual_identity:
+  template: logout_modal
+  title: 退出登录
+  subtitle: 确认后将清理本机敏感缓存
+  required_elements:
+  - 取消
+  - 确认退出
+  screen_signature: 243e4e4daa461751
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-015-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-015-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-015/YL-A-015-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 3882757eb3b8fd396f2f7a1ad367252f4340eaf878b3f11fd3eb0133bc4aeebb
+- state_id: YL-A-015-S02_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-A-015-S02_SUBMITTING
+  mockup_path: ui/mockups/android/YL-A-015/YL-A-015-S02_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: 6cabba2963a92c2f6217141eaf50b7cd5eefcd490fdaa602851658c9a49fc978
+- state_id: YL-A-015-S03_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-A-015-S03_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-015/YL-A-015-S03_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 63313a26e0cda3b6a6ce1227ca3b6583b561d755369729b2ba2da6c25ef2c823
+- state_id: YL-A-015-S04_SAVE_ERROR
+  code: SAVE_ERROR
+  name: 保存失败
+  description: 保留用户输入，显示稳定错误码和重试动作。
+  recovery: retry
+  mockup_id: YL-A-015-S04_SAVE_ERROR
+  mockup_path: ui/mockups/android/YL-A-015/YL-A-015-S04_SAVE_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: bee4d6854169d774914d530f1a1b9681bf2d44ab6bd48925a663a4a38a433471
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

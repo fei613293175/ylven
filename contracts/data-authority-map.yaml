@@ -1,0 +1,26 @@
+version: 1.2.0
+domains:
+- domain: identity
+  authority: YLVEN
+  sub2api_role: OIDC relying party / user projection
+  forbidden: shared password tables
+- domain: orders_payments_refunds
+  authority: YLVEN
+  sub2api_role: none
+  forbidden: independent competing payment ledger
+- domain: wallet_ledger_entitlements
+  authority: YLVEN
+  sub2api_role: execution balance and group projection
+  forbidden: bidirectional field overwrite
+- domain: api_keys_and_realtime_usage
+  authority: Sub2API execution plus YLVEN developer metadata
+  sub2api_role: key enforcement, metering, routing
+  forbidden: APK exposure of user/admin keys
+- domain: conversations_files_artifacts_projects
+  authority: YLVEN
+  sub2api_role: temporary provider references only
+  forbidden: provider IDs as primary keys
+- domain: model_routes
+  authority: YLVEN control plane
+  sub2api_role: current subscription gateway target
+  forbidden: hard-coded APK model list

@@ -1,0 +1,130 @@
+schema_version: '1.4'
+page_id: YL-W-001
+name: 安全验证承载页
+surface: WEB
+route: https://auth.orbexa.cc/security/turnstile
+primary_phase: P01
+phases:
+- P01
+- P02
+work_packets:
+- P01-W01
+- P02-W01
+- P02-W05
+feature_ids:
+- P01-003
+- P02-005
+- P02-022
+layout_profile: public_web
+resolved_layout:
+  surface: WEB
+  mobile_padding_px: 20
+  desktop_max_width_px: 1120
+  card_radius_px: 16
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: public_web
+  title: 安全验证承载页
+  subtitle: YLVEN
+  required_elements:
+  - 服务端校验 Turnstile 一次性令牌
+  - 在受控 WebView 完成 Turnstile
+  - 处理安全验证取消、过期和重复令牌
+  screen_signature: c93e3b7c596793f8
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-W-001-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-W-001-S01_LOADING
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 00976e5903e33624bd3c121fbe280b77da1192b64e79b9020e23cd8c5f4ab6f3
+- state_id: YL-W-001-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-W-001-S02_POPULATED
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: c1b85097b1556503bb5e0bfb1b62aa368a300259dd7015351af8d758141630e6
+- state_id: YL-W-001-S03_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-W-001-S03_SUCCESS
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S03_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 2194b897b769cdb96cd31064d6d8dd69b5e414f4cacc34125fdfffd59ac44735
+- state_id: YL-W-001-S04_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-W-001-S04_VALIDATION_ERROR
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S04_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: caf4a92b32ba6da427ef28580107101b99e8eb25264722148dc5cc8678fcb34d
+- state_id: YL-W-001-S05_MAINTENANCE
+  code: MAINTENANCE
+  name: 维护中
+  description: 展示维护范围、开始时间与状态页，不伪造结束时间。
+  recovery: status_or_retry
+  mockup_id: YL-W-001-S05_MAINTENANCE
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S05_MAINTENANCE.png
+  mockup_status: APPROVED
+  mockup_sha256: 210ad503df280811bbb833ecdb72df6ea285ac5c5fab4549c9b44a807170ccf7
+- state_id: YL-W-001-S06_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-W-001-S06_NETWORK_ERROR
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S06_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 883c5bfeeb93338a913e114bb7c09a3d9240c4facd6a9fe0300f643f1e48a3e4
+- state_id: YL-W-001-S07_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-W-001-S07_SERVER_ERROR
+  mockup_path: ui/mockups/web/YL-W-001/YL-W-001-S07_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 052b6dea2ac38020d00e7057a1cd69f1537c1759156f200d444c17e43d8d6f79
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

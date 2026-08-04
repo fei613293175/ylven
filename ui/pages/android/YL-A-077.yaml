@@ -1,0 +1,128 @@
+schema_version: '1.4'
+page_id: YL-A-077
+name: 工作首页
+surface: ANDROID
+route: android://077
+primary_phase: P09
+phases:
+- P09
+work_packets:
+- P09-W01
+feature_ids:
+- P09-001
+layout_profile: android_main_tab
+resolved_layout:
+  surface: ANDROID
+  top_bar: standard
+  bottom_navigation: true
+  horizontal_padding_dp: 16
+  section_gap_dp: 24
+  card_gap_dp: 12
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: work_home
+  title: 工作
+  subtitle: 工具、项目、作品和任务统一工作台
+  required_elements:
+  - 工具
+  - 项目
+  - 作品
+  - 任务
+  screen_signature: cdc63752f83f1c3a
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-077-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-A-077-S01_LOADING
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 209be9809bbfb11ea6964dcb08dd4f4bfc7488ff5c3daa34b96f393b3294d3bf
+- state_id: YL-A-077-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-A-077-S02_POPULATED
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 4580c6219ac2851573ac23431bf8a4f59c963645463b78599af822c7c4230aad
+- state_id: YL-A-077-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-A-077-S03_EMPTY
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 25a01f1b99a2c8be7fd6f055f07c1243c8d903fa8c7e394d36618989927247f1
+- state_id: YL-A-077-S04_REFRESHING
+  code: REFRESHING
+  name: 刷新中
+  description: 保留已有内容并显示局部刷新，不清空整页。
+  recovery: automatic
+  mockup_id: YL-A-077-S04_REFRESHING
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S04_REFRESHING.png
+  mockup_status: APPROVED
+  mockup_sha256: 49ccda45fafdce0345994d4f8773c0f43fbee7f884492de780b30771472c888d
+- state_id: YL-A-077-S05_OFFLINE_CACHE
+  code: OFFLINE_CACHE
+  name: 离线缓存
+  description: 展示可用缓存并明确其不是最新数据。
+  recovery: refresh_when_online
+  mockup_id: YL-A-077-S05_OFFLINE_CACHE
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S05_OFFLINE_CACHE.png
+  mockup_status: APPROVED
+  mockup_sha256: 01c6cf64151e8e147d3606e404517efbc9603202e73c656873ff53f58726f6f5
+- state_id: YL-A-077-S06_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-A-077-S06_NETWORK_ERROR
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S06_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: aa7f5b1300c5136c46b8e22cc7ad1a4ca9d17c45017e9a8f3b28e7e23824d7d4
+- state_id: YL-A-077-S07_SERVICE_DEGRADED
+  code: SERVICE_DEGRADED
+  name: 服务降级
+  description: 展示受影响能力、替代通道和状态页入口。
+  recovery: choose_alternative_or_retry
+  mockup_id: YL-A-077-S07_SERVICE_DEGRADED
+  mockup_path: ui/mockups/android/YL-A-077/YL-A-077-S07_SERVICE_DEGRADED.png
+  mockup_status: APPROVED
+  mockup_sha256: 88e5bcc6a92665c49b841d33982e462676806e82b1ea9feeb437ba5cb714d011
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.4",
+  "package_version": "1.4.0",
+  "design_system_version": "YL-DS-1.2.0",
+  "page_count": 332,
+  "state_count": 2671,
+  "mockup_count": 2671,
+  "surface_page_counts": {
+    "ANDROID": 100,
+    "ADMIN": 195,
+    "DEVELOPER": 17,
+    "WEB": 7,
+    "DESIGN_SYSTEM": 13
+  },
+  "surface_state_counts": {
+    "ANDROID": 719,
+    "ADMIN": 1736,
+    "DEVELOPER": 154,
+    "WEB": 49,
+    "DESIGN_SYSTEM": 13
+  },
+  "visual_kind_counts": {
+    "COMPONENT_BOARD": 14,
+    "DESIGN_BOARD": 1,
+    "PAGE": 301,
+    "OVERLAY": 13,
+    "SYSTEM_OVERLAY": 1,
+    "SYSTEM_STATE_BOARD": 2
+  },
+  "correction": "V1.4 rebuilds page identity, overlay/component bindings and state profiles to remove false duplicates."
+}

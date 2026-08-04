@@ -1,0 +1,127 @@
+schema_version: '1.4'
+page_id: YL-W-003
+name: YLVEN OIDC 授权与回调页
+surface: WEB
+route: https://auth.orbexa.cc/oauth/authorize
+primary_phase: P10
+phases:
+- P10
+- P11
+work_packets:
+- P10-W04
+- P11-W01
+feature_ids:
+- P10-019
+- P11-003
+layout_profile: public_web
+resolved_layout:
+  surface: WEB
+  mobile_padding_px: 20
+  desktop_max_width_px: 1120
+  card_radius_px: 16
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: public_web
+  title: YLVEN OIDC 授权与回调页
+  subtitle: YLVEN
+  required_elements:
+  - 为 App 后端创建隐藏内部 API Key
+  - 使用 YLVEN OIDC 单点登录 Sub2API
+  screen_signature: 4a4d3bdfd9da3682
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-W-003-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-W-003-S01_LOADING
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: efcc784f34764a65a599e5b500a7f01d4e9926971d290459c839d8f5f6d23bc2
+- state_id: YL-W-003-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-W-003-S02_POPULATED
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 083ca574fb34ce6071f8920ff30b06e60e8646a8baa7abcf31442a6e6bc4a65c
+- state_id: YL-W-003-S03_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-W-003-S03_SUCCESS
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S03_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 39266473194827ef47c9112afa8446989e562ef9b6d885180ad65bf1ab39ad76
+- state_id: YL-W-003-S04_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-W-003-S04_VALIDATION_ERROR
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S04_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 386c78bb7e4f05981ef6a03d852b1adc6eeca74d1d601b5b85b9f3b2378e7954
+- state_id: YL-W-003-S05_MAINTENANCE
+  code: MAINTENANCE
+  name: 维护中
+  description: 展示维护范围、开始时间与状态页，不伪造结束时间。
+  recovery: status_or_retry
+  mockup_id: YL-W-003-S05_MAINTENANCE
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S05_MAINTENANCE.png
+  mockup_status: APPROVED
+  mockup_sha256: 99bc3c1ff249f5660774ce28ece59f4301500f324eb8d751595aabb05559eb9f
+- state_id: YL-W-003-S06_NETWORK_ERROR
+  code: NETWORK_ERROR
+  name: 网络连接失败
+  description: 网络不可达或 DNS/TLS 失败，提供重试。
+  recovery: retry
+  mockup_id: YL-W-003-S06_NETWORK_ERROR
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S06_NETWORK_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 7d9b9283c81aaef2bd25f792c8e71f71254520ee3adec7cf5b885f64bbb62f05
+- state_id: YL-W-003-S07_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-W-003-S07_SERVER_ERROR
+  mockup_path: ui/mockups/web/YL-W-003/YL-W-003-S07_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 0a0d09215b07eed45bc49d9554f880cf5b1ed17c5fe77c8ae6e48730d585bfae
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

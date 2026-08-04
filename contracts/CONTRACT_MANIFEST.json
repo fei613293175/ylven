@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.4.0",
+  "generated_at": "SOURCE_DERIVED",
+  "source_of_truth": "feature-map.yaml",
+  "feature_count": 362,
+  "api_inventory_row_count": 235,
+  "api_feature_mapping_count": 248,
+  "openapi_operation_count": 225,
+  "database_entity_count": 201,
+  "admin_menu_count": 195,
+  "test_count": 1086,
+  "ui_page_count": 332,
+  "ui_state_count": 2671,
+  "ui_mockup_count": 2671,
+  "work_packet_count": 64,
+  "files": [
+    {
+      "path": "admin-menu-map.yaml",
+      "size": 5735,
+      "sha256": "9d458786e5ee298754fa8a64fc5c8c41fcb82c1dd43487b42e58d3fa8391592b"
+    },
+    {
+      "path": "android-phase-acceptance.yaml",
+      "size": 2037,
+      "sha256": "8537b7a1adcd68d94da7483de85b7b50f4dfed00cf7518bd3a6ad225154db74f"
+    },
+    {
+      "path": "api-inventory.csv",
+      "size": 37012,
+      "sha256": "66c5251961c02fd07f3399b818512cc440038373e8b6a96592d1388ef5612c16"
+    },
+    {
+      "path": "contract-authority-map.yaml",
+      "size": 2385,
+      "sha256": "c43080dc45337db092b8caa26794259a8de9452e0c621c34392560f7f2c54ce2"
+    },
+    {
+      "path": "data-authority-map.yaml",
+      "size": 932,
+      "sha256": "6ef61c1b78b2e9735a462eed5f3953a4339ec1ef9096d01af01c246852923dbf"
+    },
+    {
+      "path": "database-entity-catalog.yaml",
+      "size": 31573,
+      "sha256": "f5cb41bfa7900ed90ee0c1b5e2580153b388ee5a738392a8dbca2937bd640386"
+    },
+    {
+      "path": "domain-delivery-map.yaml",
+      "size": 5684,
+      "sha256": "576a5dc9c3ca24294144fb68a68afa4943c1116e46bfb6fc0fa6a3804a5f3b04"
+    },
+    {
+      "path": "entitlement-catalog.yaml",
+      "size": 1564,
+      "sha256": "1397879f61634d3b47e6329d243e38a395b61c412f4f2d52ffc15f8bcf833812"
+    },
+    {
+      "path": "error-code-catalog.yaml",
+      "size": 3749,
+      "sha256": "a20cba3ffc07408e63ceb70c2b2d1f34ed2c8a5e8fab71c2a99ccbcf99e5ac67"
+    },
+    {
+      "path": "execution-environment.yaml",
+      "size": 1640,
+      "sha256": "07251b9ca41a57ed48225fc42bb059e3bee683d620a036e5e251b351640b9f3b"
+    },
+    {
+      "path": "execution-mode.yaml",
+      "size": 1095,
+      "sha256": "917854e4b6ee29b246101bf9e314a2231debb34bc4b383eaead4bdc23043a479"
+    },
+    {
+      "path": "feature-map.csv",
+      "size": 248621,
+      "sha256": "540bc0e1174e75a02d93c60fbf194ba90cb9c97cf626b239bea2017ff50f0dec"
+    },
+    {
+      "path": "feature-map.schema.json",
+      "size": 2560,
+      "sha256": "0fcc68bd41e4ccc33808f907be8fea036a26ec4e1d54e8d052f79b292bc2e78b"
+    },
+    {
+      "path": "feature-map.yaml",
+      "size": 353590,
+      "sha256": "24a0d595657ce5d560e29da3d80e77092934cbbb5bbcd27db5f876e22665ee55"
+    },
+    {
+      "path": "feature-ui-map.yaml",
+      "size": 104783,
+      "sha256": "02248b66880e9637a168bd7c6d212fbbecd0606799f40151cf214f4c0fa5c2cd"
+    },
+    {
+      "path": "FEATURE_MATRIX.md",
+      "size": 86688,
+      "sha256": "ae6e9b258dcbaaf8a8047cea40bfb4329469dabb7634ae425f788c2fad513663"
+    },
+    {
+      "path": "interaction-test-bindings.csv",
+      "size": 46704,
+      "sha256": "781c439cea4481ac6f437dca9535af65d50289a8afa062f4f69a8c498d7c2692"
+    },
+    {
+      "path": "mockup-batches.yaml",
+      "size": 91751,
+      "sha256": "ad255e817432f6f3820196d5b3773e55595934fbe1a852940a8496407e32865d"
+    },
+    {
+      "path": "mockup-manifest.csv",
+      "size": 1382707,
+      "sha256": "b479c9717fc8da3af269c59514266e21414236b3eb4f4ea40a472cf50a646e61"
+    },
+    {
+      "path": "openapi-skeleton.yaml",
+      "size": 221190,
+      "sha256": "ab0f8a96ba1d7460afbcff8d7a976fd6296be9c9129b13e16d6afee0a3e14a6c"
+    },
+    {
+      "path": "release-contract.yaml",
+      "size": 899,
+      "sha256": "96e5823bf27b88966cd097468f6321edf5c0fd0889938d8e2092c0bb4ce03a8f"
+    },
+    {
+      "path": "release-version-matrix.yaml",
+      "size": 7806,
+      "sha256": "6db76f5c7fba4356e4bd59aec831e031ec4f2416abb362046111688a7874d683"
+    },
+    {
+      "path": "repository-policy.yaml",
+      "size": 1823,
+      "sha256": "f1df2f6d8551df9086e9d13b5a0fbdbb27efb3ac67ddeab63d674954a8be1563"
+    },
+    {
+      "path": "state-transition-contract.yaml",
+      "size": 2291,
+      "sha256": "5847aaddfcc2ecf7bf2b7abfbe8be8197817525c25f363ada10bd09c95c8a2a7"
+    },
+    {
+      "path": "test-catalog.csv",
+      "size": 131095,
+      "sha256": "d08b89febf65c8c8561b34c47c74973c65bc47a9020b13bade4c5106ee8f4224"
+    },
+    {
+      "path": "ui-component-catalog.yaml",
+      "size": 5746,
+      "sha256": "bb5281f6509d4262bbf20c4de9c6b2b4fb015eb38053c7dfd03772be24c0a576"
+    },
+    {
+      "path": "ui-contract.schema.json",
+      "size": 1001,
+      "sha256": "ab4c75f82e05334333c8de5735aa6159cc36a5590a4855e33cff27f5b0172b62"
+    },
+    {
+      "path": "ui-design-tokens.yaml",
+      "size": 12465,
+      "sha256": "45cd76697f300fdc4283f5452d343057435ff63e731578341f6d109063232400"
+    },
+    {
+      "path": "ui-interaction-map.csv",
+      "size": 120558,
+      "sha256": "76239998a41730e134a0669eb83fee62e28bba51bc76486f13d4f2cf3a6af358"
+    },
+    {
+      "path": "ui-layout-profiles.yaml",
+      "size": 4094,
+      "sha256": "50c83b979d25b4b6af6606260022cd6eb7d306f2e9558a714268a6b06f8357f6"
+    },
+    {
+      "path": "ui-page-catalog.yaml",
+      "size": 571448,
+      "sha256": "c7f7fdb743f69f4821ff115dc09ecec0c78f365fa9a523caebc22b4405e026e7"
+    },
+    {
+      "path": "ui-page-resolved.csv",
+      "size": 75102,
+      "sha256": "97b08ff2365e525db0a198f8f6207e46719d9d0bd25024a30afd0877df19810f"
+    },
+    {
+      "path": "ui-phase-binding.yaml",
+      "size": 5798,
+      "sha256": "bed1a7a624df3d53389f6fdf2259aab78b681f327fe356b13f1a6e78566f7713"
+    },
+    {
+      "path": "ui-state-catalog.csv",
+      "size": 783373,
+      "sha256": "e83bf6417e6b10ed32edb302f2f961b8f160ea4ca730564cf0a62f85c02ac065"
+    },
+    {
+      "path": "ui-state-profiles.yaml",
+      "size": 14442,
+      "sha256": "314e0821ee991fbdf6a68cb743e65954ace49b0aa349032dec9451dfce194fa1"
+    },
+    {
+      "path": "work-packet-map.yaml",
+      "size": 224758,
+      "sha256": "941d46c99e59bcb8ac109636d380f7313c9d9f68b5f8227167c9256591e6359e"
+    }
+  ]
+}

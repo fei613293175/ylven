@@ -1,0 +1,147 @@
+schema_version: '1.4'
+page_id: YL-A-019
+name: 首页/新对话
+surface: ANDROID
+route: android://019
+primary_phase: P03
+phases:
+- P03
+work_packets:
+- P03-W01
+feature_ids:
+- P03-002
+layout_profile: android_detail
+resolved_layout:
+  surface: ANDROID
+  top_bar: standard
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  section_gap_dp: 24
+  card_gap_dp: 12
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: YL-A-018
+visual_identity:
+  template: new_chat_landing
+  title: 开始新对话
+  subtitle: 选择模型后输入你的问题
+  required_elements:
+  - 智能推荐
+  - GPT
+  - Claude
+  - Grok
+  - 输入问题
+  screen_signature: 9fc267b163daa39f
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-019-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-A-019-S01_LOADING
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 87d47e23180c3f4b7485ee60432956c137eebfa88cf0faa464f1f853aed9c0be
+- state_id: YL-A-019-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-A-019-S02_POPULATED
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: a344ff9edf7eac33f7f609d35fd407b737e561290723e97731a1990fdfa0675e
+- state_id: YL-A-019-S03_NOT_FOUND
+  code: NOT_FOUND
+  name: 内容不存在
+  description: 资源不存在、已删除或不可访问。
+  recovery: back
+  mockup_id: YL-A-019-S03_NOT_FOUND
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S03_NOT_FOUND.png
+  mockup_status: APPROVED
+  mockup_sha256: f486d6bfcd8da84f047e952d50f426f0314c0e8edc4c6e8663fe87789028f387
+- state_id: YL-A-019-S04_EDIT_MODE
+  code: EDIT_MODE
+  name: 编辑状态
+  description: 可编辑字段与只读字段明显区分。
+  recovery: save_or_cancel
+  mockup_id: YL-A-019-S04_EDIT_MODE
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S04_EDIT_MODE.png
+  mockup_status: APPROVED
+  mockup_sha256: 35e343668eec09c6809fab899ca68fb3d79585e013a7e6f0a183e45d42b3f238
+- state_id: YL-A-019-S05_DIRTY
+  code: DIRTY
+  name: 存在未保存修改
+  description: 离开或关闭前必须确认。
+  recovery: save_or_discard
+  mockup_id: YL-A-019-S05_DIRTY
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S05_DIRTY.png
+  mockup_status: APPROVED
+  mockup_sha256: f1791631357bd6ac33bec2f0379e9ba7608a913b4b8354b554015ee7f10bb997
+- state_id: YL-A-019-S06_SAVE_SUCCESS
+  code: SAVE_SUCCESS
+  name: 保存成功
+  description: 保存结果明确且数据回读一致。
+  recovery: continue
+  mockup_id: YL-A-019-S06_SAVE_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S06_SAVE_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: ce36a7a7f9c0887dd7d8815dc5a4588caaaa9d0fda9bc1160a417826e30ec94b
+- state_id: YL-A-019-S07_SAVE_ERROR
+  code: SAVE_ERROR
+  name: 保存失败
+  description: 保留用户输入，显示稳定错误码和重试动作。
+  recovery: retry
+  mockup_id: YL-A-019-S07_SAVE_ERROR
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S07_SAVE_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 59a94f883b15e262e46c34cd339acd89cb699ba2835af1953a610110610d4b1b
+- state_id: YL-A-019-S08_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-019-S08_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S08_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: a555cf386749413d65b97f42c8c60c1e6092f70c369c68cecb72131a42601b71
+- state_id: YL-A-019-S09_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-A-019-S09_PERMISSION_DENIED
+  mockup_path: ui/mockups/android/YL-A-019/YL-A-019-S09_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 53f06ee1a2dab6bb25ef9fa0c0a681b0aa3a3b7d071d865fb05b96915132ed50
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

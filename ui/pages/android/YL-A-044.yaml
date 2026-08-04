@@ -1,0 +1,118 @@
+schema_version: '1.4'
+page_id: YL-A-044
+name: 附件选择器
+surface: ANDROID
+route: android://044
+primary_phase: P05
+phases:
+- P05
+work_packets:
+- P05-W01
+feature_ids:
+- P05-001
+layout_profile: android_sheet
+resolved_layout:
+  surface: ANDROID
+  container: bottom_sheet
+  horizontal_padding_dp: 20
+  section_gap_dp: 20
+  row_min_height_dp: 52
+design_system_version: YL-DS-1.2.0
+visual_kind: OVERLAY
+parent_page_id: YL-A-024
+visual_identity:
+  template: attachment_selector
+  title: 添加内容
+  subtitle: 选择相机、相册、文件或资料库
+  required_elements:
+  - 相机
+  - 相册
+  - 文件
+  - 资料库
+  screen_signature: cfc99913267440cc
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-044-S01_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-A-044-S01_POPULATED
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S01_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 2b42fc374ce0faa07f9c3aa405d32f0867032e3d095a5d3bfa4c471ebecba4a5
+- state_id: YL-A-044-S02_FILTER_ACTIVE
+  code: FILTER_ACTIVE
+  name: 筛选生效
+  description: 清晰展示筛选条件和结果数量。
+  recovery: clear_filter
+  mockup_id: YL-A-044-S02_FILTER_ACTIVE
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S02_FILTER_ACTIVE.png
+  mockup_status: APPROVED
+  mockup_sha256: 7a09864b7476495f667772fd0f281b3608fa4263ea2513fff9db8be683e43649
+- state_id: YL-A-044-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-A-044-S03_EMPTY
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: b69f0ff81235fe5349c11bd725c53eefc62224bd305f4e431ce26d5743ec3075
+- state_id: YL-A-044-S04_DISABLED
+  code: DISABLED
+  name: 不可用
+  description: 控件不可用并提供原因，不仅降低透明度。
+  recovery: resolve_prerequisite
+  mockup_id: YL-A-044-S04_DISABLED
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S04_DISABLED.png
+  mockup_status: APPROVED
+  mockup_sha256: dfda4fbcc20f71eb718893d57938fc9cd90af4aff6d7ab3c14a2418b3d62841f
+- state_id: YL-A-044-S05_SERVICE_DEGRADED
+  code: SERVICE_DEGRADED
+  name: 服务降级
+  description: 展示受影响能力、替代通道和状态页入口。
+  recovery: choose_alternative_or_retry
+  mockup_id: YL-A-044-S05_SERVICE_DEGRADED
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S05_SERVICE_DEGRADED.png
+  mockup_status: APPROVED
+  mockup_sha256: 0831f1cd05d3667ba6bb73119d330d6f57ee5c8570f93b5ec5307e9aa2a0d17c
+- state_id: YL-A-044-S06_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-A-044-S06_SERVER_ERROR
+  mockup_path: ui/mockups/android/YL-A-044/YL-A-044-S06_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 93c45f2a478afeb9d4e5348cfdccfa6428f6456caf9acfd3fbc183dff91cb96f
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

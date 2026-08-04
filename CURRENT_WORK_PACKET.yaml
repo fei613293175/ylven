@@ -1,0 +1,8 @@
+schema_version: '1.0'
+phase_id: P00
+work_packet_id: P00-W01
+status: TODO
+started_at: null
+started_commit: null
+last_closed_work_packet: null
+updated_at: '2026-08-05T06:07:15+08:00'

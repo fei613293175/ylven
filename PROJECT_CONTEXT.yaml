@@ -1,0 +1,61 @@
+schema_version: 1.6.0
+package_version: 1.6.0
+project:
+  name: YLVEN
+  product_type: commercial_multi_model_ai_platform
+  repository:
+    provider: github
+    url: https://github.com/fei613293175/ylven.git
+    remote_name: origin
+    default_branch: main
+    visibility: public
+    visibility_decision: OWNER_CONFIRMED_PUBLIC
+    bootstrap_if_git_metadata_missing: true
+    initial_push_allowed_when_remote_empty: true
+    public_repository_is_not_a_blocker: true
+  primary_domain: orbexa.cc
+execution_environment:
+  local_machine_profile: THIN_CONTROL_CLIENT
+  local_required_tools:
+  - PowerShell 5.1+
+  - Git
+  - uv
+  - Spec Kit
+  - OpenSSH
+  - GitHub CLI for CI artifact retrieval
+  system_python_required: false
+  python_runtime: uv-managed Python 3.12; no global Python installation required
+  local_heavy_toolchains_not_required:
+  - Java 21
+  - Go
+  - Gradle
+  - ADB
+  - Android SDK
+  - Docker
+  - Node.js
+  - PostgreSQL
+  - Redis
+  - NATS
+  android_build_and_emulator: GitHub Actions hosted runners
+  backend_and_web_builds: GitHub Actions hosted runners
+  staging_runtime_and_integration: existing online server through the Codex SSH profile
+  server_source_editing: forbidden; deploy only committed source, tagged images or CI artifacts
+infrastructure_facts:
+  online_server_exists: true
+  docker_environment_installed: true
+  android_build_environment_installed: true
+  codex_client_has_existing_ssh_connection: true
+  ssh_connection_policy: reuse existing Codex SSH profile; never commit host, user, key or password
+  initial_environment_role: staging
+  production_deployment_enabled: false
+external_services:
+  object_storage: Cloudflare R2
+  cdn_and_dns: Cloudflare
+  current_ai_gateway: Sub2API subscription-backed test channel
+  future_ai_channels: official OpenAI/Anthropic/xAI API adapters
+  account_identifier: email
+secret_policy:
+- The repository is public by owner decision; every committed file must be safe for public disclosure.
+- Never commit server IP, SSH user, passwords, private keys, API keys, Cloudflare tokens, signing keys, administrator bootstrap passwords or database credentials.
+- Use .ylven-local, GitHub Environment secrets and server-side secret stores. Commit only examples and secret references.
+- Run the public-repository safety gate before every push and every release.

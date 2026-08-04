@@ -1,0 +1,155 @@
+schema_version: '1.4'
+page_id: YL-D-010
+name: 预算与告警
+surface: DEVELOPER
+route: /developer/010
+primary_phase: P11
+phases:
+- P11
+work_packets:
+- P11-W02
+- P11-W05
+feature_ids:
+- P11-009
+- P11-027
+layout_profile: developer_list
+resolved_layout:
+  surface: DEVELOPER
+  shell: developer
+  sidebar_width_px: 240
+  topbar_height_px: 64
+  content_padding_px: 32
+  table_row_height_px: 48
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: developer_list
+  title: 预算与告警
+  subtitle: YLVEN
+  required_elements:
+  - 配置 API 账号总预算
+  - 配置余额和异常用量告警
+  screen_signature: b4eeeff99e57ec84
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-D-010-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-D-010-S01_LOADING
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 93024bea382a51907e3ef6fcccee465e797edec1c092d50e25acc0ccb4d5f633
+- state_id: YL-D-010-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-D-010-S02_POPULATED
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 928588629c6e492e9f509233d87551d415a2cca4f00b33584776582e364927dc
+- state_id: YL-D-010-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-D-010-S03_EMPTY
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: a99e41cd8b621bb755b3ab5f314d12fdece7db58ee829a8eeee9c4efb70b061e
+- state_id: YL-D-010-S04_PAYMENT_PENDING
+  code: PAYMENT_PENDING
+  name: 支付待确认
+  description: 订单已创建或支付结果回调中，禁止重复付款。
+  recovery: refresh_status
+  mockup_id: YL-D-010-S04_PAYMENT_PENDING
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S04_PAYMENT_PENDING.png
+  mockup_status: APPROVED
+  mockup_sha256: 8643d7e8b1511feb3156d9f58293eec5ce3052e05e6aada3c43935bd937b3ae0
+- state_id: YL-D-010-S05_CREDIT_PENDING
+  code: CREDIT_PENDING
+  name: 到账同步中
+  description: 支付成功但额度投影尚未完成，自动重试。
+  recovery: automatic_or_support
+  mockup_id: YL-D-010-S05_CREDIT_PENDING
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S05_CREDIT_PENDING.png
+  mockup_status: APPROVED
+  mockup_sha256: 0a6c871ce15145395cc0d1397ee02fa678ce3e6ed069e16aee901cc82c2bb3d5
+- state_id: YL-D-010-S06_REFUND_PENDING
+  code: REFUND_PENDING
+  name: 退款处理中
+  description: 展示退款阶段、金额和预计规则，不伪造到账时间。
+  recovery: refresh_status
+  mockup_id: YL-D-010-S06_REFUND_PENDING
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S06_REFUND_PENDING.png
+  mockup_status: APPROVED
+  mockup_sha256: b2122d79757004c8d8d96aef406f01f06aa4a822e8ab153d270c8844304694b7
+- state_id: YL-D-010-S07_BUDGET_EXHAUSTED
+  code: BUDGET_EXHAUSTED
+  name: 预算耗尽
+  description: 停止收费调用并给出充值或调整预算入口。
+  recovery: recharge_or_adjust
+  mockup_id: YL-D-010-S07_BUDGET_EXHAUSTED
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S07_BUDGET_EXHAUSTED.png
+  mockup_status: APPROVED
+  mockup_sha256: 63477b9a5f530d7f754d084d8e402b0f10a0391f862763ffdb5a18466360e546
+- state_id: YL-D-010-S08_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-D-010-S08_SUCCESS
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S08_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 338832c701f6f71bb6d4315d0100a6e2f084d5453aca209452aa422a9c9264e3
+- state_id: YL-D-010-S09_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-D-010-S09_SERVER_ERROR
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S09_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 33e15baa06379d2e4d60050c30195007b0c1324c7547096e8d95d6e248a0edb0
+- state_id: YL-D-010-S10_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-D-010-S10_OFFLINE
+  mockup_path: ui/mockups/developer/YL-D-010/YL-D-010-S10_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: b8b6474433e41d2b7c60d5f9551dcd2bdb5096939bfe89d8ebc4e46fa5821842
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

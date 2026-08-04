@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.5.0",
+  "result": "PASS",
+  "generated_at_utc": "2026-08-04T21:06:03Z",
+  "pinned_spec_kit": "v0.15.2",
+  "codex_integration": {
+    "key": "codex",
+    "skill_directory": ".agents/skills",
+    "invocation": "$speckit-<command>"
+  },
+  "actual_network_install_in_packaging_sandbox": false,
+  "actual_target_installation": "performed by scripts/00_BOOTSTRAP_REPOSITORY.ps1 -> scripts/01_INSTALL_SPECKIT_WINDOWS.ps1, then checked by scripts/03_VERIFY_SPECKIT.ps1",
+  "validation_scope": "pinned command contract, target verification contract, local uv flag parsing, Lite templates, custom skills and official source register",
+  "checks": [
+    {
+      "check": "pinned_version",
+      "result": "PASS",
+      "evidence": "expected=v0.15.2; actual=v0.15.2"
+    },
+    {
+      "check": "windows_bootstrap_contract",
+      "result": "PASS",
+      "evidence": "all required pinned commands present"
+    },
+    {
+      "check": "linux_bootstrap_contract",
+      "result": "PASS",
+      "evidence": "all required pinned commands present"
+    },
+    {
+      "check": "target_runtime_verification",
+      "result": "PASS",
+      "evidence": "version, integration state, core skill and overrides are verified after installation"
+    },
+    {
+      "check": "codex_invocation_contract",
+      "result": "PASS",
+      "evidence": "uses $speckit-* and rejects legacy /speckit.*"
+    },
+    {
+      "check": "ylven_custom_skills",
+      "result": "PASS",
+      "evidence": "speckit/ylven-skills/ylven-phase-delivery/SKILL.md, speckit/ylven-skills/ylven-contract-traceability/SKILL.md"
+    },
+    {
+      "check": "ylven_lite_overrides",
+      "result": "PASS",
+      "evidence": "constitution-template.md, spec-template.md, plan-template.md, tasks-template.md"
+    },
+    {
+      "check": "local_uv_cli_flag_parser",
+      "result": "PASS",
+      "evidence": "uv=/opt/pyvenv/bin/uv; offline help exposes tool-install --force and tool-run/uvx --from"
+    },
+    {
+      "check": "official_source_register",
+      "result": "PASS",
+      "evidence": "official release, CLI, integration and Codex Skills references recorded"
+    }
+  ],
+  "errors": []
+}

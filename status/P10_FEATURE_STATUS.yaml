@@ -1,0 +1,136 @@
+schema_version: 1.2.0
+phase: P10
+phase_title: 产品套餐、钱包账本、权益与 Sub2API 投影
+overall_status: TODO
+updated_at: '2026-08-04T00:00:00+08:00'
+allowed_feature_statuses_during_development:
+- PLANNED
+- IN_PROGRESS
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+release_final_statuses:
+- IMPLEMENTED
+- DEFERRED_WITH_REASON
+- BLOCKED_EXTERNAL
+features:
+- feature_id: P10-001
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-002
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-003
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-004
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-005
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-006
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-007
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-008
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-009
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-010
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-011
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-012
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-013
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-014
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-015
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-016
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-017
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-018
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-019
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-020
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-021
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-022
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-023
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-024
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-025
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-026
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-027
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-028
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-029
+  status: PLANNED
+  reason: ''
+  evidence: []
+- feature_id: P10-030
+  status: PLANNED
+  reason: ''
+  evidence: []

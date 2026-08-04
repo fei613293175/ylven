@@ -1,0 +1,152 @@
+schema_version: '1.4'
+page_id: YL-D-014
+name: API Playground
+surface: DEVELOPER
+route: /developer/014
+primary_phase: P11
+phases:
+- P11
+work_packets:
+- P11-W04
+feature_ids:
+- P11-024
+layout_profile: developer_detail
+resolved_layout:
+  surface: DEVELOPER
+  shell: developer
+  sidebar_width_px: 240
+  topbar_height_px: 64
+  content_padding_px: 32
+  content_max_width_px: 1120
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: developer_detail
+  title: API Playground
+  subtitle: YLVEN
+  required_elements:
+  - 在 Playground 测试模型和参数
+  screen_signature: c75d08a41d0be5b9
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-D-014-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-D-014-S01_LOADING
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: d9d8cb4e70e906e7415f69e838ef948a74911cd16aae3415ec3c987ac512d547
+- state_id: YL-D-014-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-D-014-S02_POPULATED
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: ab084d75481977c4df35ff68637921267747c353a33502f7feb119a522c5a8d9
+- state_id: YL-D-014-S03_EDIT_MODE
+  code: EDIT_MODE
+  name: 编辑状态
+  description: 可编辑字段与只读字段明显区分。
+  recovery: save_or_cancel
+  mockup_id: YL-D-014-S03_EDIT_MODE
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S03_EDIT_MODE.png
+  mockup_status: APPROVED
+  mockup_sha256: 94a6a1bde3a0ff6b1ae1f80067156a53bf87ad1ec9dffa2c55574fae74286534
+- state_id: YL-D-014-S04_DIRTY
+  code: DIRTY
+  name: 存在未保存修改
+  description: 离开或关闭前必须确认。
+  recovery: save_or_discard
+  mockup_id: YL-D-014-S04_DIRTY
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S04_DIRTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 0878235de24f2002d7716a3c5a6941abaf181c13d722a34fe2e1cf914f841b1f
+- state_id: YL-D-014-S05_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-D-014-S05_VALIDATION_ERROR
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S05_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: d9e879b66e00d219714f9c352644a9bab27b1d56dd7d1df602cbd901fdf27156
+- state_id: YL-D-014-S06_SUBMITTING
+  code: SUBMITTING
+  name: 提交中
+  description: 主按钮保留尺寸并显示进度，禁止重复提交。
+  recovery: wait_or_cancel_if_supported
+  mockup_id: YL-D-014-S06_SUBMITTING
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S06_SUBMITTING.png
+  mockup_status: APPROVED
+  mockup_sha256: a603347450d5335028cc8c27bba4731da44e95f87cbf7fb1a2afbeec634b580b
+- state_id: YL-D-014-S07_SAVE_SUCCESS
+  code: SAVE_SUCCESS
+  name: 保存成功
+  description: 保存结果明确且数据回读一致。
+  recovery: continue
+  mockup_id: YL-D-014-S07_SAVE_SUCCESS
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S07_SAVE_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: 7067ac300f0e10d66c74a3066ce51a4613c104c9d12107df7f92a14a22645b3e
+- state_id: YL-D-014-S08_VERSION_CONFLICT
+  code: VERSION_CONFLICT
+  name: 版本冲突
+  description: 显示当前版本与服务器版本，禁止静默覆盖。
+  recovery: reload_compare_or_force_with_permission
+  mockup_id: YL-D-014-S08_VERSION_CONFLICT
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S08_VERSION_CONFLICT.png
+  mockup_status: APPROVED
+  mockup_sha256: 88d52fac493f7ab60e53eccae0919f9e2c679568bcf098cfa4c2e60fd29138a3
+- state_id: YL-D-014-S09_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-D-014-S09_PERMISSION_DENIED
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S09_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: a57710c2f925bb8d79fc72addb8841627e5f78c1708358a97d20fbade383ec56
+- state_id: YL-D-014-S10_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-D-014-S10_SERVER_ERROR
+  mockup_path: ui/mockups/developer/YL-D-014/YL-D-014-S10_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 060ef7ba171e6dd7129a0d1a9d5c455e165fb93f227dcaed8c97fc4bc98f5af4
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

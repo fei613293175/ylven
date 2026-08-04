@@ -1,0 +1,2068 @@
+version: 1.4.0
+generated_at: SOURCE_DERIVED
+entities:
+- entity: admin_routes
+  phases:
+  - P00
+  services:
+  - Admin Web
+  feature_ids:
+  - P00-023
+- entity: admin_sessions
+  phases:
+  - P01
+  services:
+  - Admin Identity Service
+  feature_ids:
+  - P01-026
+- entity: admin_step_up_challenges
+  phases:
+  - P01
+  services:
+  - Admin Identity Service
+  feature_ids:
+  - P01-027
+- entity: admin_users
+  phases:
+  - P01
+  services:
+  - Admin Identity Service
+  feature_ids:
+  - P01-026
+- entity: alert_events
+  phases:
+  - P12
+  services:
+  - Alert Service
+  feature_ids:
+  - P12-011
+- entity: alert_rules
+  phases:
+  - P11
+  - P12
+  services:
+  - Alert Service
+  feature_ids:
+  - P11-027
+  - P12-011
+- entity: announcements
+  phases:
+  - P09
+  services:
+  - CMS Service
+  feature_ids:
+  - P09-010
+- entity: api_contracts
+  phases:
+  - P00
+  services:
+  - Contract Tooling
+  feature_ids:
+  - P00-015
+- entity: api_key_policies
+  phases:
+  - P11
+  services:
+  - API Key Service
+  - Quota Service
+  feature_ids:
+  - P11-004
+  - P11-008
+  - P11-010
+- entity: api_keys
+  phases:
+  - P11
+  services:
+  - API Key Service
+  - Developer Gateway
+  - Developer Service
+  feature_ids:
+  - P11-001
+  - P11-004
+  - P11-005
+  - P11-006
+  - P11-007
+  - P11-011
+  - P11-030
+  - P11-031
+- entity: api_request_logs
+  phases:
+  - P11
+  services:
+  - API Key Service
+  - Developer Gateway
+  - Developer Log Service
+  feature_ids:
+  - P11-006
+  - P11-014
+  - P11-015
+  - P11-016
+  - P11-017
+  - P11-023
+  - P11-024
+- entity: api_versions
+  phases:
+  - P11
+  services:
+  - API Lifecycle Service
+  - Documentation Service
+  feature_ids:
+  - P11-026
+  - P11-032
+- entity: app_builds
+  phases:
+  - P00
+  services:
+  - Android App
+  feature_ids:
+  - P00-003
+- entity: app_versions
+  phases:
+  - P09
+  - P13
+  services:
+  - QA
+  - Release Service
+  feature_ids:
+  - P09-023
+  - P13-013
+- entity: approval_requests
+  phases:
+  - P12
+  services:
+  - Approval Service
+  feature_ids:
+  - P12-007
+- entity: artifact_assets
+  phases:
+  - P05
+  - P07
+  - P08
+  services:
+  - Artifact Service
+  - Download Service
+  - File Worker
+  - Presentation Service
+  - Presentation Worker
+  feature_ids:
+  - P05-006
+  - P07-014
+  - P07-015
+  - P08-010
+  - P08-011
+  - P08-012
+  - P08-014
+  - P08-018
+  - P08-020
+- entity: artifact_versions
+  phases:
+  - P07
+  - P08
+  - P09
+  services:
+  - Artifact Service
+  - Presentation Worker
+  feature_ids:
+  - P07-014
+  - P07-017
+  - P08-011
+  - P08-019
+  - P09-003
+- entity: artifacts
+  phases:
+  - P03
+  - P06
+  - P07
+  - P08
+  - P09
+  services:
+  - Artifact Service
+  - Export Service
+  - Mobile BFF
+  - Project Service
+  - Search Service
+  - Voice Service
+  feature_ids:
+  - P03-029
+  - P03-030
+  - P06-003
+  - P06-009
+  - P06-017
+  - P07-001
+  - P07-014
+  - P07-015
+  - P08-019
+  - P09-001
+  - P09-003
+  - P09-004
+  - P09-014
+- entity: attachment_provider_refs
+  phases:
+  - P05
+  services:
+  - File Service
+  - File Worker
+  feature_ids:
+  - P05-024
+  - P05-025
+- entity: attachments
+  phases:
+  - P05
+  - P06
+  - P07
+  - P08
+  - P09
+  - P11
+  services:
+  - AI Runtime
+  - Conversation Service
+  - Developer Gateway
+  - Download Service
+  - File Security
+  - File Service
+  - File Worker
+  - Mobile BFF
+  - Presentation Service
+  - R2
+  - Search Service
+  - Support Service
+  feature_ids:
+  - P05-001
+  - P05-002
+  - P05-003
+  - P05-004
+  - P05-007
+  - P05-013
+  - P05-014
+  - P05-015
+  - P05-016
+  - P05-017
+  - P05-018
+  - P05-019
+  - P05-021
+  - P05-022
+  - P06-017
+  - P07-006
+  - P08-003
+  - P09-014
+  - P09-024
+  - P11-019
+- entity: audit_logs
+  phases:
+  - P00
+  - P01
+  - P07
+  - P08
+  - P11
+  - P12
+  services:
+  - API Key Service
+  - Audit Service
+  - Job Service
+  - Observability
+  - User Service
+  feature_ids:
+  - P00-017
+  - P01-018
+  - P01-024
+  - P07-022
+  - P08-024
+  - P11-007
+  - P12-005
+- entity: auth_attempts
+  phases:
+  - P01
+  - P02
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-010
+  - P02-007
+- entity: auth_challenges
+  phases:
+  - P01
+  - P02
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-001
+  - P01-002
+  - P01-005
+  - P01-008
+  - P02-004
+  - P02-013
+- entity: auth_identities
+  phases:
+  - P01
+  - P02
+  services:
+  - Identity Service
+  - User Service
+  feature_ids:
+  - P01-006
+  - P01-007
+  - P01-023
+  - P02-015
+- entity: backup_runs
+  phases:
+  - P12
+  services:
+  - Backup Service
+  feature_ids:
+  - P12-021
+- entity: balance_projections
+  phases:
+  - P10
+  - P11
+  services:
+  - Developer Service
+  - Wallet Service
+  feature_ids:
+  - P10-008
+  - P11-001
+- entity: billing_policies
+  phases:
+  - P10
+  services:
+  - Billing Service
+  feature_ids:
+  - P10-028
+- entity: brand_kits
+  phases:
+  - P08
+  services:
+  - Template Service
+  feature_ids:
+  - P08-022
+- entity: cache_namespaces
+  phases:
+  - P00
+  services:
+  - Data Platform
+  feature_ids:
+  - P00-012
+- entity: capability_probe_results
+  phases:
+  - P00
+  - P04
+  services:
+  - Capability Probe
+  - Capability Registry
+  feature_ids:
+  - P00-021
+  - P04-004
+  - P04-026
+- entity: capability_probe_runs
+  phases:
+  - P00
+  - P04
+  services:
+  - Capability Probe
+  feature_ids:
+  - P00-020
+  - P04-026
+- entity: capacity_reports
+  phases:
+  - P13
+  services:
+  - Capacity Planning
+  feature_ids:
+  - P13-011
+- entity: ci_runs
+  phases:
+  - P00
+  services:
+  - CI Pipeline
+  feature_ids:
+  - P00-018
+- entity: citations
+  phases:
+  - P03
+  - P06
+  services:
+  - Conversation Service
+  feature_ids:
+  - P03-021
+  - P06-014
+- entity: comparison_groups
+  phases:
+  - P04
+  services:
+  - Comparison Orchestrator
+  - Workflow Orchestrator
+  feature_ids:
+  - P04-014
+  - P04-015
+  - P04-017
+- entity: content_safety_events
+  phases:
+  - P07
+  services:
+  - Content Safety Service
+  feature_ids:
+  - P07-018
+- entity: conversation_branches
+  phases:
+  - P04
+  services:
+  - AI Runtime
+  - Conversation Service
+  feature_ids:
+  - P04-011
+  - P04-012
+  - P04-013
+  - P04-016
+- entity: conversations
+  phases:
+  - P03
+  - P04
+  - P06
+  - P11
+  services:
+  - AI Runtime
+  - Authorization Service
+  - Conversation Service
+  - Developer Gateway
+  - Mobile BFF
+  - Project Service
+  - Search Service
+  feature_ids:
+  - P03-001
+  - P03-002
+  - P03-003
+  - P03-004
+  - P03-005
+  - P03-006
+  - P03-007
+  - P03-008
+  - P03-028
+  - P03-033
+  - P03-035
+  - P04-008
+  - P06-003
+  - P06-007
+  - P06-017
+  - P11-018
+- entity: credit_buckets
+  phases:
+  - P10
+  services:
+  - Wallet Service
+  feature_ids:
+  - P10-006
+  - P10-008
+  - P10-009
+- entity: credit_reservations
+  phases:
+  - P07
+  - P10
+  services:
+  - Billing Service
+  - Wallet Service
+  feature_ids:
+  - P07-009
+  - P07-019
+  - P10-015
+  - P10-026
+- entity: db_query_stats
+  phases:
+  - P12
+  services:
+  - Data Platform
+  feature_ids:
+  - P12-017
+- entity: dead_letter_jobs
+  phases:
+  - P10
+  - P11
+  services:
+  - Gateway Sync Worker
+  - Webhook Worker
+  feature_ids:
+  - P10-024
+  - P11-029
+- entity: deletion_requests
+  phases:
+  - P09
+  - P12
+  services:
+  - Privacy Service
+  feature_ids:
+  - P09-022
+  - P12-023
+- entity: design_tokens
+  phases:
+  - P00
+  services:
+  - Android Design System
+  feature_ids:
+  - P00-004
+- entity: developer_budgets
+  phases:
+  - P11
+  services:
+  - Quota Service
+  feature_ids:
+  - P11-009
+- entity: developer_profiles
+  phases:
+  - P11
+  services:
+  - Developer Service
+  feature_ids:
+  - P11-002
+  - P11-031
+- entity: developer_routes
+  phases:
+  - P00
+  services:
+  - Developer Web
+  feature_ids:
+  - P00-024
+- entity: discover_cards
+  phases:
+  - P09
+  services:
+  - CMS Service
+  feature_ids:
+  - P09-006
+  - P09-007
+  - P09-011
+- entity: discover_categories
+  phases:
+  - P09
+  services:
+  - CMS Service
+  feature_ids:
+  - P09-006
+- entity: distributed_locks
+  phases:
+  - P00
+  services:
+  - Scheduler
+  feature_ids:
+  - P00-010
+- entity: document_pages
+  phases:
+  - P05
+  services:
+  - Document Worker
+  feature_ids:
+  - P05-008
+  - P05-010
+- entity: download_events
+  phases:
+  - P05
+  - P07
+  - P08
+  services:
+  - Download Service
+  feature_ids:
+  - P05-018
+  - P07-016
+  - P08-020
+- entity: edge_security_configs
+  phases:
+  - P12
+  services:
+  - Security Operations
+  feature_ids:
+  - P12-001
+- entity: email_otps
+  phases:
+  - P01
+  - P02
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-004
+  - P01-005
+  - P01-009
+  - P01-010
+  - P02-006
+  - P02-007
+  - P02-008
+  - P02-014
+- entity: email_provider_configs
+  phases:
+  - P01
+  services:
+  - Notification Service
+  feature_ids:
+  - P01-019
+- entity: encryption_key_refs
+  phases:
+  - P12
+  services:
+  - Security Service
+  feature_ids:
+  - P12-004
+- entity: entitlement_definitions
+  phases:
+  - P10
+  services:
+  - Catalog Service
+  feature_ids:
+  - P10-002
+- entity: entitlement_grants
+  phases:
+  - P05
+  - P06
+  - P10
+  services:
+  - Entitlement Service
+  - Refund Service
+  - Subscription Service
+  feature_ids:
+  - P05-020
+  - P06-018
+  - P10-011
+  - P10-012
+  - P10-027
+- entity: error_catalog
+  phases:
+  - P11
+  services:
+  - Developer Gateway
+  feature_ids:
+  - P11-021
+- entity: event_streams
+  phases:
+  - P00
+  services:
+  - Event Platform
+  feature_ids:
+  - P00-013
+- entity: export_jobs
+  phases:
+  - P03
+  - P09
+  - P12
+  services:
+  - Export Service
+  - Privacy Service
+  feature_ids:
+  - P03-023
+  - P03-029
+  - P09-021
+  - P12-023
+- entity: failure_drill_runs
+  phases:
+  - P12
+  - P13
+  services:
+  - Data Platform
+  - Event Platform
+  - QA
+  feature_ids:
+  - P12-018
+  - P12-019
+  - P13-010
+- entity: favorites
+  phases:
+  - P09
+  services:
+  - Favorite Service
+  feature_ids:
+  - P09-015
+- entity: feature_contracts
+  phases:
+  - P00
+  services:
+  - Contract Tooling
+  feature_ids:
+  - P00-016
+- entity: feature_flags
+  phases:
+  - P00
+  - P09
+  services:
+  - Android App
+  - CMS Service
+  feature_ids:
+  - P00-005
+  - P09-010
+  - P09-011
+- entity: file_extractions
+  phases:
+  - P05
+  services:
+  - Document Worker
+  - File Worker
+  feature_ids:
+  - P05-006
+  - P05-008
+  - P05-009
+  - P05-010
+  - P05-011
+  - P05-012
+- entity: file_scan_results
+  phases:
+  - P05
+  services:
+  - File Worker
+  feature_ids:
+  - P05-005
+- entity: file_versions
+  phases:
+  - P05
+  services:
+  - File Service
+  feature_ids:
+  - P05-003
+  - P05-015
+- entity: gateway_api_key_links
+  phases:
+  - P10
+  - P11
+  services:
+  - API Key Service
+  - Sub2API Adapter
+  feature_ids:
+  - P10-019
+  - P11-030
+- entity: gateway_balance_snapshots
+  phases:
+  - P10
+  services:
+  - Gateway Sync Worker
+  feature_ids:
+  - P10-020
+- entity: gateway_entitlement_snapshots
+  phases:
+  - P10
+  services:
+  - Gateway Sync Worker
+  feature_ids:
+  - P10-021
+- entity: gateway_sync_jobs
+  phases:
+  - P10
+  services:
+  - Gateway Sync Worker
+  feature_ids:
+  - P10-020
+  - P10-021
+  - P10-024
+- entity: gateway_usage_cursors
+  phases:
+  - P10
+  services:
+  - Gateway Sync Worker
+  feature_ids:
+  - P10-022
+- entity: gateway_user_links
+  phases:
+  - P10
+  - P11
+  services:
+  - OIDC Provider
+  - Sub2API Adapter
+  feature_ids:
+  - P10-017
+  - P10-018
+  - P11-003
+- entity: image_edit_requests
+  phases:
+  - P07
+  services:
+  - Image Job Service
+  feature_ids:
+  - P07-008
+- entity: image_generation_requests
+  phases:
+  - P07
+  services:
+  - Image Job Service
+  feature_ids:
+  - P07-007
+- entity: incident_updates
+  phases:
+  - P12
+  services:
+  - Incident Service
+  feature_ids:
+  - P12-012
+- entity: incidents
+  phases:
+  - P04
+  - P09
+  - P12
+  services:
+  - Incident Service
+  feature_ids:
+  - P04-030
+  - P09-025
+  - P12-012
+- entity: ip_allowlists
+  phases:
+  - P11
+  services:
+  - API Key Service
+  feature_ids:
+  - P11-010
+- entity: job_attempts
+  phases:
+  - P05
+  - P07
+  - P08
+  services:
+  - Image Job Service
+  - Job Service
+  - Presentation Worker
+  feature_ids:
+  - P05-023
+  - P07-012
+  - P07-020
+  - P08-023
+- entity: job_events
+  phases:
+  - P00
+  - P07
+  - P08
+  services:
+  - Job Service
+  - Worker
+  feature_ids:
+  - P00-009
+  - P07-010
+  - P08-013
+- entity: job_queues
+  phases:
+  - P12
+  services:
+  - Job Service
+  feature_ids:
+  - P12-016
+- entity: jobs
+  phases:
+  - P00
+  - P03
+  - P05
+  - P06
+  - P07
+  - P08
+  - P09
+  - P11
+  services:
+  - AI Runtime
+  - Artifact Service
+  - Developer Gateway
+  - File Service
+  - File Worker
+  - Image Job Service
+  - Job Service
+  - Knowledge Service
+  - Mobile BFF
+  - Presentation Job Service
+  - Presentation Worker
+  - Voice Service
+  - Worker
+  feature_ids:
+  - P00-009
+  - P03-008
+  - P03-030
+  - P05-005
+  - P05-013
+  - P05-022
+  - P05-023
+  - P06-015
+  - P06-016
+  - P07-001
+  - P07-007
+  - P07-008
+  - P07-010
+  - P07-011
+  - P07-012
+  - P07-017
+  - P07-020
+  - P07-022
+  - P08-005
+  - P08-008
+  - P08-013
+  - P08-016
+  - P08-024
+  - P09-001
+  - P09-005
+  - P11-017
+  - P11-019
+- entity: knowledge_chunks
+  phases:
+  - P06
+  services:
+  - Conversation Service
+  - Knowledge Worker
+  - Retrieval Service
+  feature_ids:
+  - P06-010
+  - P06-011
+  - P06-012
+  - P06-014
+- entity: knowledge_documents
+  phases:
+  - P06
+  services:
+  - Knowledge Service
+  - Knowledge Worker
+  feature_ids:
+  - P06-008
+  - P06-010
+  - P06-015
+- entity: knowledge_indexes
+  phases:
+  - P06
+  services:
+  - Knowledge Service
+  - Knowledge Worker
+  feature_ids:
+  - P06-010
+  - P06-011
+  - P06-019
+- entity: ledger_entries
+  phases:
+  - P07
+  - P08
+  - P10
+  services:
+  - Billing Service
+  - Ledger Service
+  - Wallet Service
+  feature_ids:
+  - P07-019
+  - P08-025
+  - P10-005
+  - P10-007
+  - P10-010
+  - P10-015
+  - P10-026
+- entity: ledger_transactions
+  phases:
+  - P07
+  - P10
+  services:
+  - Billing Service
+  - Ledger Service
+  - Refund Service
+  - Wallet Service
+  feature_ids:
+  - P07-009
+  - P10-005
+  - P10-007
+  - P10-027
+- entity: local_conversations
+  phases:
+  - P03
+  services:
+  - Android Data
+  feature_ids:
+  - P03-016
+- entity: local_drafts
+  phases:
+  - P03
+  - P07
+  services:
+  - Android Data
+  - Android UI
+  - Android Voice
+  feature_ids:
+  - P03-031
+  - P03-032
+  - P07-003
+- entity: local_form_state
+  phases:
+  - P02
+  - P07
+  services:
+  - Android Auth
+  - Android UI
+  feature_ids:
+  - P02-003
+  - P02-010
+  - P02-012
+  - P02-024
+  - P07-002
+- entity: local_messages
+  phases:
+  - P03
+  services:
+  - Android Data
+  feature_ids:
+  - P03-016
+- entity: local_outbox
+  phases:
+  - P03
+  services:
+  - Android Data
+  feature_ids:
+  - P03-017
+- entity: local_retry_state
+  phases:
+  - P02
+  - P03
+  services:
+  - Android Network
+  - Android UI
+  feature_ids:
+  - P02-023
+  - P03-027
+- entity: local_session_state
+  phases:
+  - P02
+  services:
+  - Android App
+  feature_ids:
+  - P02-018
+- entity: log_indexes
+  phases:
+  - P12
+  services:
+  - Observability
+  feature_ids:
+  - P12-009
+- entity: memories
+  phases:
+  - P09
+  services:
+  - Memory Service
+  feature_ids:
+  - P09-018
+- entity: message_feedback
+  phases:
+  - P03
+  services:
+  - Feedback Service
+  feature_ids:
+  - P03-025
+- entity: message_parts
+  phases:
+  - P03
+  - P05
+  services:
+  - AI Runtime
+  - Android UI
+  - Conversation Service
+  - File Service
+  feature_ids:
+  - P03-009
+  - P03-014
+  - P03-018
+  - P03-019
+  - P03-020
+  - P03-022
+  - P05-007
+  - P05-014
+  - P05-019
+- entity: message_runs
+  phases:
+  - P03
+  - P04
+  - P05
+  - P06
+  services:
+  - AI Runtime
+  - Comparison Orchestrator
+  - Context Compiler
+  - Conversation Service
+  - Workflow Orchestrator
+  feature_ids:
+  - P03-009
+  - P03-010
+  - P03-011
+  - P03-013
+  - P03-015
+  - P03-024
+  - P03-026
+  - P03-035
+  - P04-006
+  - P04-009
+  - P04-010
+  - P04-011
+  - P04-014
+  - P04-017
+  - P05-007
+  - P06-013
+- entity: messages
+  phases:
+  - P03
+  - P04
+  - P11
+  services:
+  - AI Runtime
+  - Comparison Orchestrator
+  - Conversation Service
+  - Developer Gateway
+  - Search Service
+  feature_ids:
+  - P03-004
+  - P03-007
+  - P03-009
+  - P03-013
+  - P03-014
+  - P03-024
+  - P03-035
+  - P04-012
+  - P04-015
+  - P04-016
+  - P11-018
+- entity: migration_drill_runs
+  phases:
+  - P13
+  services:
+  - Data Platform
+  feature_ids:
+  - P13-004
+- entity: model_aliases
+  phases:
+  - P04
+  - P11
+  services:
+  - Developer Gateway
+  - Model Catalog Service
+  feature_ids:
+  - P04-021
+  - P11-013
+  - P11-020
+- entity: model_capabilities
+  phases:
+  - P00
+  - P04
+  - P07
+  - P09
+  services:
+  - Capability Probe
+  - Capability Registry
+  - Model Catalog Service
+  feature_ids:
+  - P00-021
+  - P04-001
+  - P04-003
+  - P04-004
+  - P04-022
+  - P07-004
+  - P09-009
+- entity: model_catalog
+  phases:
+  - P03
+  services:
+  - Mobile BFF
+  feature_ids:
+  - P03-001
+- entity: model_health_probes
+  phases:
+  - P04
+  services:
+  - Capability Probe
+  feature_ids:
+  - P04-025
+- entity: model_health_status
+  phases:
+  - P04
+  services:
+  - Incident Service
+  - Model Routing Service
+  feature_ids:
+  - P04-018
+  - P04-030
+- entity: model_price_versions
+  phases:
+  - P04
+  - P07
+  - P10
+  - P11
+  services:
+  - Pricing Service
+  - Tool Configuration Service
+  feature_ids:
+  - P04-029
+  - P07-021
+  - P10-029
+  - P11-025
+- entity: models
+  phases:
+  - P04
+  - P07
+  - P09
+  - P11
+  services:
+  - Developer Gateway
+  - Model Catalog Service
+  - Pricing Service
+  feature_ids:
+  - P04-001
+  - P04-002
+  - P04-003
+  - P04-021
+  - P07-004
+  - P09-009
+  - P11-013
+  - P11-025
+- entity: notification_deliveries
+  phases:
+  - P01
+  - P07
+  services:
+  - Notification Service
+  - Notification Worker
+  feature_ids:
+  - P01-028
+  - P07-013
+- entity: notification_jobs
+  phases:
+  - P01
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-004
+  - P01-009
+- entity: notification_preferences
+  phases:
+  - P09
+  services:
+  - Notification Service
+  feature_ids:
+  - P09-019
+- entity: notification_templates
+  phases:
+  - P01
+  services:
+  - Notification Service
+  feature_ids:
+  - P01-028
+- entity: notifications
+  phases:
+  - P07
+  services:
+  - Notification Worker
+  feature_ids:
+  - P07-013
+- entity: oauth_authorizations
+  phases:
+  - P11
+  services:
+  - OIDC Provider
+  feature_ids:
+  - P11-003
+- entity: oauth_clients
+  phases:
+  - P11
+  services:
+  - OIDC Provider
+  feature_ids:
+  - P11-003
+- entity: order_items
+  phases:
+  - P10
+  services:
+  - Order Service
+  feature_ids:
+  - P10-003
+- entity: orders
+  phases:
+  - P10
+  services:
+  - Commerce Query Service
+  - Order Service
+  - Payment Service
+  feature_ids:
+  - P10-003
+  - P10-004
+  - P10-025
+- entity: otp_policies
+  phases:
+  - P01
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-021
+- entity: owner_acceptance_reports
+  phases:
+  - P13
+  services:
+  - QA
+  - Release Service
+  feature_ids:
+  - P13-002
+  - P13-015
+- entity: password_credentials
+  phases:
+  - P01
+  services:
+  - Identity Service
+  feature_ids:
+  - P01-006
+- entity: password_policies
+  phases:
+  - P02
+  services:
+  - Identity Service
+  feature_ids:
+  - P02-011
+- entity: payments
+  phases:
+  - P10
+  services:
+  - Commerce Query Service
+  - Payment Service
+  feature_ids:
+  - P10-004
+  - P10-025
+- entity: performance_test_runs
+  phases:
+  - P12
+  services:
+  - Performance Test
+  feature_ids:
+  - P12-013
+  - P12-014
+  - P12-015
+- entity: permissions
+  phases:
+  - P01
+  services:
+  - RBAC Service
+  feature_ids:
+  - P01-025
+- entity: plans
+  phases:
+  - P10
+  services:
+  - Catalog Service
+  feature_ids:
+  - P10-001
+  - P10-002
+- entity: presentation_decks
+  phases:
+  - P08
+  services:
+  - Presentation Service
+  - Presentation Worker
+  feature_ids:
+  - P08-008
+  - P08-009
+  - P08-021
+- entity: presentation_outlines
+  phases:
+  - P08
+  services:
+  - Presentation Job Service
+  - Presentation Service
+  feature_ids:
+  - P08-005
+  - P08-006
+  - P08-007
+- entity: presentation_projects
+  phases:
+  - P08
+  services:
+  - Presentation Service
+  feature_ids:
+  - P08-001
+  - P08-002
+  - P08-021
+- entity: presentation_renders
+  phases:
+  - P08
+  services:
+  - Presentation Worker
+  feature_ids:
+  - P08-010
+  - P08-012
+- entity: presentation_slides
+  phases:
+  - P08
+  services:
+  - Presentation Job Service
+  - Presentation Service
+  feature_ids:
+  - P08-014
+  - P08-015
+  - P08-016
+  - P08-017
+  - P08-018
+- entity: presentation_sources
+  phases:
+  - P08
+  services:
+  - Presentation Service
+  feature_ids:
+  - P08-003
+- entity: presentation_templates
+  phases:
+  - P08
+  services:
+  - Template Service
+  feature_ids:
+  - P08-004
+  - P08-022
+- entity: prices
+  phases:
+  - P10
+  services:
+  - Catalog Service
+  feature_ids:
+  - P10-001
+  - P10-002
+- entity: products
+  phases:
+  - P10
+  services:
+  - Catalog Service
+  feature_ids:
+  - P10-001
+- entity: project_files
+  phases:
+  - P05
+  - P06
+  services:
+  - File Service
+  - Knowledge Service
+  - Project Service
+  feature_ids:
+  - P05-019
+  - P06-003
+  - P06-008
+- entity: project_instructions
+  phases:
+  - P06
+  services:
+  - Project Service
+  feature_ids:
+  - P06-006
+- entity: projects
+  phases:
+  - P03
+  - P06
+  - P09
+  services:
+  - Artifact Service
+  - Knowledge Service
+  - Mobile BFF
+  - Project Service
+  - Search Service
+  feature_ids:
+  - P03-001
+  - P06-001
+  - P06-002
+  - P06-003
+  - P06-004
+  - P06-005
+  - P06-007
+  - P06-009
+  - P06-017
+  - P06-019
+  - P09-001
+  - P09-014
+- entity: prompt_templates
+  phases:
+  - P09
+  services:
+  - Template Service
+  feature_ids:
+  - P09-008
+- entity: provider_channels
+  phases:
+  - P00
+  - P04
+  - P10
+  - P13
+  services:
+  - Capability Probe
+  - Provider Service
+  feature_ids:
+  - P00-020
+  - P04-020
+  - P10-030
+  - P13-006
+  - P13-007
+  - P13-008
+- entity: provider_runtime_policies
+  phases:
+  - P04
+  services:
+  - AI Runtime
+  feature_ids:
+  - P04-027
+- entity: providers
+  phases:
+  - P04
+  services:
+  - Model Catalog Service
+  feature_ids:
+  - P04-002
+- entity: quota_counters
+  phases:
+  - P05
+  - P06
+  - P10
+  - P11
+  services:
+  - Developer Gateway
+  - Entitlement Service
+  - Quota Service
+  feature_ids:
+  - P05-020
+  - P06-018
+  - P10-012
+  - P11-008
+  - P11-012
+- entity: rate_limit_counters
+  phases:
+  - P01
+  - P11
+  services:
+  - Developer Gateway
+  - Security Service
+  feature_ids:
+  - P01-017
+  - P11-012
+- entity: readiness_reports
+  phases:
+  - P13
+  services:
+  - Release Service
+  feature_ids:
+  - P13-012
+- entity: reasoning_profiles
+  phases:
+  - P04
+  services:
+  - AI Runtime
+  - Model Catalog Service
+  feature_ids:
+  - P04-005
+  - P04-006
+  - P04-023
+- entity: reconciliation_items
+  phases:
+  - P10
+  services:
+  - Reconciliation Service
+  feature_ids:
+  - P10-023
+- entity: reconciliation_runs
+  phases:
+  - P10
+  services:
+  - Reconciliation Service
+  feature_ids:
+  - P10-023
+- entity: refresh_tokens
+  phases:
+  - P01
+  - P02
+  services:
+  - Session Service
+  feature_ids:
+  - P01-011
+  - P01-012
+  - P01-013
+  - P02-009
+  - P02-017
+- entity: refunds
+  phases:
+  - P10
+  services:
+  - Commerce Query Service
+  - Refund Service
+  feature_ids:
+  - P10-025
+  - P10-027
+- entity: release_manifests
+  phases:
+  - P00
+  - P13
+  services:
+  - Release Tooling
+  feature_ids:
+  - P00-019
+  - P13-014
+- entity: repository_modules
+  phases:
+  - P00
+  services:
+  - Build System
+  feature_ids:
+  - P00-001
+- entity: restore_drill_runs
+  phases:
+  - P12
+  - P13
+  services:
+  - Backup Service
+  feature_ids:
+  - P12-022
+  - P13-005
+- entity: retention_policies
+  phases:
+  - P03
+  - P12
+  services:
+  - Conversation Service
+  - Retention Service
+  feature_ids:
+  - P03-028
+  - P12-024
+- entity: retrieval_runs
+  phases:
+  - P06
+  services:
+  - Context Compiler
+  - Knowledge Service
+  - Retrieval Service
+  feature_ids:
+  - P06-012
+  - P06-013
+  - P06-019
+  - P06-020
+- entity: risk_scores
+  phases:
+  - P12
+  services:
+  - Risk Service
+  feature_ids:
+  - P12-006
+- entity: role_bindings
+  phases:
+  - P01
+  services:
+  - RBAC Service
+  feature_ids:
+  - P01-025
+- entity: roles
+  phases:
+  - P01
+  services:
+  - RBAC Service
+  feature_ids:
+  - P01-025
+- entity: route_targets
+  phases:
+  - P04
+  services:
+  - Model Routing Service
+  feature_ids:
+  - P04-019
+  - P04-024
+- entity: routing_policies
+  phases:
+  - P04
+  - P13
+  services:
+  - Model Routing Service
+  - Provider Service
+  feature_ids:
+  - P04-019
+  - P04-024
+  - P13-006
+  - P13-007
+  - P13-008
+- entity: run_events
+  phases:
+  - P03
+  - P11
+  services:
+  - AI Runtime
+  - Developer Gateway
+  feature_ids:
+  - P03-010
+  - P03-011
+  - P03-012
+  - P11-016
+- entity: runbook_versions
+  phases:
+  - P12
+  services:
+  - Operations
+  feature_ids:
+  - P12-025
+- entity: scheduled_jobs
+  phases:
+  - P00
+  services:
+  - Scheduler
+  feature_ids:
+  - P00-010
+- entity: schema_migrations
+  phases:
+  - P00
+  services:
+  - Data Platform
+  feature_ids:
+  - P00-011
+- entity: sdk_versions
+  phases:
+  - P11
+  services:
+  - Documentation Service
+  feature_ids:
+  - P11-026
+- entity: secret_references
+  phases:
+  - P00
+  - P01
+  - P04
+  services:
+  - Provider Service
+  - Security Service
+  feature_ids:
+  - P00-022
+  - P01-020
+  - P04-020
+- entity: security_challenge_results
+  phases:
+  - P01
+  - P02
+  services:
+  - Security Service
+  - Security Web
+  feature_ids:
+  - P01-003
+  - P02-005
+  - P02-022
+- entity: security_events
+  phases:
+  - P01
+  - P05
+  - P11
+  - P12
+  services:
+  - Audit Service
+  - Developer Service
+  - File Security
+  - Risk Service
+  - Security Service
+  feature_ids:
+  - P01-017
+  - P01-018
+  - P05-004
+  - P11-031
+  - P12-006
+- entity: security_policies
+  phases:
+  - P02
+  services:
+  - Android Security
+  feature_ids:
+  - P02-026
+- entity: security_scan_runs
+  phases:
+  - P12
+  services:
+  - CI Pipeline
+  feature_ids:
+  - P12-002
+  - P12-003
+- entity: service_instances
+  phases:
+  - P00
+  services:
+  - AI Runtime
+  - Core API
+  - Developer Gateway
+  feature_ids:
+  - P00-006
+  - P00-007
+  - P00-008
+- entity: service_metrics
+  phases:
+  - P00
+  - P03
+  - P12
+  services:
+  - Observability
+  feature_ids:
+  - P00-017
+  - P03-034
+  - P12-008
+- entity: sessions
+  phases:
+  - P01
+  - P02
+  services:
+  - Device Service
+  - Session Service
+  - User Service
+  feature_ids:
+  - P01-011
+  - P01-012
+  - P01-013
+  - P01-014
+  - P01-015
+  - P01-016
+  - P01-023
+  - P02-001
+  - P02-009
+  - P02-019
+  - P02-020
+  - P02-021
+- entity: spreadsheet_sheets
+  phases:
+  - P05
+  services:
+  - Document Worker
+  feature_ids:
+  - P05-011
+- entity: storage_buckets
+  phases:
+  - P00
+  services:
+  - File Service
+  feature_ids:
+  - P00-014
+- entity: storage_lifecycle_policies
+  phases:
+  - P12
+  services:
+  - File Service
+  feature_ids:
+  - P12-020
+- entity: subscriptions
+  phases:
+  - P10
+  services:
+  - Commerce Query Service
+  - Subscription Service
+  feature_ids:
+  - P10-011
+  - P10-025
+- entity: support_tickets
+  phases:
+  - P09
+  services:
+  - Support Service
+  feature_ids:
+  - P09-024
+- entity: system_configs
+  phases:
+  - P00
+  services:
+  - Configuration Service
+  feature_ids:
+  - P00-002
+- entity: test_runs
+  phases:
+  - P13
+  services:
+  - QA
+  feature_ids:
+  - P13-001
+  - P13-003
+  - P13-009
+  - P13-013
+- entity: tool_configs
+  phases:
+  - P07
+  - P09
+  services:
+  - Tool Configuration Service
+  feature_ids:
+  - P07-005
+  - P07-021
+  - P09-002
+- entity: traces
+  phases:
+  - P00
+  - P03
+  - P12
+  services:
+  - Observability
+  feature_ids:
+  - P00-017
+  - P03-034
+  - P12-010
+- entity: turnstile_configs
+  phases:
+  - P01
+  services:
+  - Security Service
+  feature_ids:
+  - P01-020
+- entity: ui_accessibility_checks
+  phases:
+  - P02
+  services:
+  - Android UI
+  feature_ids:
+  - P02-025
+- entity: ui_state
+  phases:
+  - P02
+  services:
+  - Android Auth
+  feature_ids:
+  - P02-002
+- entity: upload_sessions
+  phases:
+  - P05
+  services:
+  - File Service
+  - File Worker
+  - R2
+  feature_ids:
+  - P05-001
+  - P05-002
+  - P05-021
+- entity: usage_aggregates
+  phases:
+  - P10
+  - P11
+  services:
+  - Developer Service
+  - Usage Service
+  feature_ids:
+  - P10-016
+  - P11-001
+  - P11-022
+- entity: usage_events
+  phases:
+  - P03
+  - P04
+  - P08
+  - P10
+  - P11
+  services:
+  - AI Runtime
+  - Billing Service
+  - Developer Gateway
+  - Gateway Sync Worker
+  - Usage Service
+  feature_ids:
+  - P03-015
+  - P04-028
+  - P08-025
+  - P10-013
+  - P10-014
+  - P10-022
+  - P11-014
+  - P11-015
+- entity: usage_price_snapshots
+  phases:
+  - P04
+  - P10
+  services:
+  - Billing Service
+  - Pricing Service
+  - Usage Service
+  feature_ids:
+  - P04-029
+  - P10-013
+  - P10-014
+- entity: user_devices
+  phases:
+  - P01
+  - P02
+  services:
+  - Device Service
+  - Session Service
+  - User Service
+  feature_ids:
+  - P01-014
+  - P01-015
+  - P01-016
+  - P01-023
+  - P02-001
+  - P02-020
+- entity: user_instructions
+  phases:
+  - P09
+  services:
+  - Memory Service
+  feature_ids:
+  - P09-017
+- entity: user_preferences
+  phases:
+  - P04
+  - P09
+  services:
+  - Preference Service
+  feature_ids:
+  - P04-007
+  - P09-016
+  - P09-020
+- entity: user_profiles
+  phases:
+  - P01
+  - P02
+  - P09
+  services:
+  - Identity Service
+  - User Service
+  feature_ids:
+  - P01-006
+  - P01-022
+  - P02-015
+  - P09-012
+  - P09-013
+- entity: users
+  phases:
+  - P01
+  - P02
+  - P09
+  services:
+  - Identity Service
+  - User Service
+  feature_ids:
+  - P01-006
+  - P01-007
+  - P01-022
+  - P01-023
+  - P01-024
+  - P02-015
+  - P09-012
+- entity: validation_results
+  phases:
+  - P08
+  services:
+  - Presentation Worker
+  feature_ids:
+  - P08-009
+  - P08-023
+- entity: wallet_accounts
+  phases:
+  - P10
+  services:
+  - Wallet Service
+  feature_ids:
+  - P10-006
+  - P10-026
+- entity: webhook_deliveries
+  phases:
+  - P11
+  services:
+  - Webhook Worker
+  feature_ids:
+  - P11-029
+- entity: webhook_events
+  phases:
+  - P10
+  services:
+  - Payment Service
+  feature_ids:
+  - P10-004
+- entity: webhooks
+  phases:
+  - P11
+  services:
+  - Webhook Service
+  feature_ids:
+  - P11-028
+- entity: workspace_members
+  phases:
+  - P02
+  - P03
+  - P06
+  services:
+  - Authorization Service
+  - Project Service
+  - Workspace Service
+  feature_ids:
+  - P02-016
+  - P03-033
+  - P06-002
+- entity: workspaces
+  phases:
+  - P02
+  services:
+  - Workspace Service
+  feature_ids:
+  - P02-016

@@ -1,0 +1,138 @@
+schema_version: '1.4'
+page_id: YL-A-072
+name: PPT大纲编辑
+surface: ANDROID
+route: android://072
+primary_phase: P08
+phases:
+- P08
+work_packets:
+- P08-W01
+feature_ids:
+- P08-006
+- P08-007
+layout_profile: android_wizard
+resolved_layout:
+  surface: ANDROID
+  top_bar: wizard
+  bottom_navigation: false
+  horizontal_padding_dp: 16
+  progress_height_dp: 4
+  sticky_action_height_dp: 72
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: YL-A-071
+visual_identity:
+  template: ppt_outline_edit
+  title: 编辑大纲
+  subtitle: 拖动排序、增加页面或修改标题
+  required_elements:
+  - 拖动排序
+  - 新增页面
+  - 删除页面
+  - 生成 PPT
+  screen_signature: 6d74db9a0366e2d0
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-A-072-S01_DEFAULT
+  code: DEFAULT
+  name: 默认/可操作
+  description: 数据与控件处于正常可操作状态。
+  recovery: none
+  mockup_id: YL-A-072-S01_DEFAULT
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S01_DEFAULT.png
+  mockup_status: APPROVED
+  mockup_sha256: 5662c926df121cc096ce6a8e6c9b48c37f5deb4f99673e5d3445889f4e47f337
+- state_id: YL-A-072-S02_INPUT_FOCUSED
+  code: INPUT_FOCUSED
+  name: 输入聚焦
+  description: 键盘弹出、焦点环和辅助文案布局稳定。
+  recovery: none
+  mockup_id: YL-A-072-S02_INPUT_FOCUSED
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S02_INPUT_FOCUSED.png
+  mockup_status: APPROVED
+  mockup_sha256: 4ba75adb501dcd17c0d2010d3c91de88c65554e6612a78b498633899c4e0c5cd
+- state_id: YL-A-072-S03_VALIDATION_ERROR
+  code: VALIDATION_ERROR
+  name: 表单校验失败
+  description: 字段级错误紧邻字段，首个错误获得焦点。
+  recovery: correct_input
+  mockup_id: YL-A-072-S03_VALIDATION_ERROR
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S03_VALIDATION_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: 40d3aa66b65e18efae67e0eeb15f42994c3078cd8a0e27b221d7d257be4d09f7
+- state_id: YL-A-072-S04_PREPARING
+  code: PREPARING
+  name: 准备任务
+  description: 正在验证额度、文件和参数。
+  recovery: cancel_if_supported
+  mockup_id: YL-A-072-S04_PREPARING
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S04_PREPARING.png
+  mockup_status: APPROVED
+  mockup_sha256: c33192492f60dc200e74ae9c8434020be6b4613fcc96b57e3a109343aee6992d
+- state_id: YL-A-072-S05_RUNNING
+  code: RUNNING
+  name: 任务执行中
+  description: 显示真实阶段和进度来源。
+  recovery: cancel_if_supported
+  mockup_id: YL-A-072-S05_RUNNING
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S05_RUNNING.png
+  mockup_status: APPROVED
+  mockup_sha256: 680646b585df5e059ba4088920d87e57501b17b7c8a7977629e9db6de482bca1
+- state_id: YL-A-072-S06_SUCCESS
+  code: SUCCESS
+  name: 操作成功
+  description: 使用 Snackbar、结果页或成功卡，按合同给出下一步。
+  recovery: continue
+  mockup_id: YL-A-072-S06_SUCCESS
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S06_SUCCESS.png
+  mockup_status: APPROVED
+  mockup_sha256: ed246e9dde59d77107d3fd4077681063301fdc793db7431dd318f654c6bfbdaf
+- state_id: YL-A-072-S07_FAILED
+  code: FAILED
+  name: 任务失败
+  description: 显示可理解原因、错误码和可重试条件。
+  recovery: retry_or_edit
+  mockup_id: YL-A-072-S07_FAILED
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S07_FAILED.png
+  mockup_status: APPROVED
+  mockup_sha256: 201ed6c684144e67fa9922e53fcd7922048bd479a6cdf2a7d6a4cfeddf8b32de
+- state_id: YL-A-072-S08_OFFLINE
+  code: OFFLINE
+  name: 离线
+  description: 说明当前离线；有缓存时显示缓存来源与时间。
+  recovery: retry_when_online
+  mockup_id: YL-A-072-S08_OFFLINE
+  mockup_path: ui/mockups/android/YL-A-072/YL-A-072-S08_OFFLINE.png
+  mockup_status: APPROVED
+  mockup_sha256: 582cfae5ce8582d94a03d48200f655f68a3fea464b5065bb299ca8533f5075af
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

@@ -1,0 +1,125 @@
+schema_version: '1.4'
+page_id: YL-M-015
+name: 可观测性/总览
+surface: ADMIN
+route: /admin/015
+primary_phase: P00
+phases:
+- P00
+work_packets:
+- P00-W04
+feature_ids:
+- P00-017
+layout_profile: admin_dashboard
+resolved_layout:
+  surface: ADMIN
+  shell: admin
+  sidebar_width_px: 248
+  topbar_height_px: 64
+  content_padding_px: 24
+  grid_gap_px: 16
+design_system_version: YL-DS-1.2.0
+visual_kind: PAGE
+parent_page_id: null
+visual_identity:
+  template: admin_dashboard
+  title: 总览
+  subtitle: 可观测性
+  required_elements:
+  - 建立结构化日志、指标与追踪
+  screen_signature: f3ccd9d5db130a44
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
+    folder.
+critical_token_snapshot:
+  design_system_version: YL-DS-1.2.0
+  android_canvas: 360x800dp / 1080x2400px @3x
+  android_page_horizontal_dp: 16
+  android_auth_horizontal_dp: 24
+  android_top_bar_height_dp: 56
+  android_bottom_navigation_content_height_dp: 64
+  android_primary_button: 52dp height / 14dp radius
+  android_text_field: 52dp min height / 14dp radius
+  android_card: 16dp radius / 16dp padding / 1dp border
+  android_gaps: inline 8dp / card 12dp / section 24dp
+  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
+  android_icon_and_touch: 24dp icon / 48dp minimum touch
+  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
+  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
+    border'
+  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
+  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+states:
+- state_id: YL-M-015-S01_LOADING
+  code: LOADING
+  name: 加载中
+  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
+  recovery: automatic_or_retry
+  mockup_id: YL-M-015-S01_LOADING
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S01_LOADING.png
+  mockup_status: APPROVED
+  mockup_sha256: 09654f9a6b4bfface86a2afc67e1ad50697dcc1cfd4ada081252381c25515e8e
+- state_id: YL-M-015-S02_POPULATED
+  code: POPULATED
+  name: 有数据
+  description: 真实结构化数据已加载。
+  recovery: none
+  mockup_id: YL-M-015-S02_POPULATED
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S02_POPULATED.png
+  mockup_status: APPROVED
+  mockup_sha256: 8fa300eaae72e9bad421616093390f501bba547560eb3e1cc3b804cc839bbe5e
+- state_id: YL-M-015-S03_EMPTY
+  code: EMPTY
+  name: 空数据
+  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
+  recovery: primary_action_or_refresh
+  mockup_id: YL-M-015-S03_EMPTY
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S03_EMPTY.png
+  mockup_status: APPROVED
+  mockup_sha256: 9cc118ededcf0d03b0fff860d4c0bd28123b5fc429b9d683059173c5830bbc96
+- state_id: YL-M-015-S04_FILTER_ACTIVE
+  code: FILTER_ACTIVE
+  name: 筛选生效
+  description: 清晰展示筛选条件和结果数量。
+  recovery: clear_filter
+  mockup_id: YL-M-015-S04_FILTER_ACTIVE
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S04_FILTER_ACTIVE.png
+  mockup_status: APPROVED
+  mockup_sha256: bdf44bf52492784cb17a623930f9808d68df88f460248f80f0f217f111b709c9
+- state_id: YL-M-015-S05_PARTIAL_DATA
+  code: PARTIAL_DATA
+  name: 部分数据
+  description: 明确哪些数据源不可用以及统计截止时间。
+  recovery: retry_source
+  mockup_id: YL-M-015-S05_PARTIAL_DATA
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S05_PARTIAL_DATA.png
+  mockup_status: APPROVED
+  mockup_sha256: ba79b3c09cf61144aabf32bc675f2b0cfa13254787097f20370f9e2c7e0edf48
+- state_id: YL-M-015-S06_PERMISSION_DENIED
+  code: PERMISSION_DENIED
+  name: 权限不足
+  description: 不泄露资源存在性，说明所需权限或返回。
+  recovery: back_or_request_access
+  mockup_id: YL-M-015-S06_PERMISSION_DENIED
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S06_PERMISSION_DENIED.png
+  mockup_status: APPROVED
+  mockup_sha256: 25fefe549f01defb42fe696220a632e0b086283804df43d59d8822df6275fabf
+- state_id: YL-M-015-S07_SERVER_ERROR
+  code: SERVER_ERROR
+  name: 服务异常
+  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
+  recovery: retry_or_status
+  mockup_id: YL-M-015-S07_SERVER_ERROR
+  mockup_path: ui/mockups/admin/YL-M-015/YL-M-015-S07_SERVER_ERROR.png
+  mockup_status: APPROVED
+  mockup_sha256: e1bcd769932f97479cc04543eee4ac4013fc5101e31c0cb6295ddf58ed24dcdc
+binding_rules:
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
+    this page.
+  visual_authority: Approved mockup + this resolved numeric contract.
+  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
+  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
+    surface and reference their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
+    conflicts require an ADR and updated mockup.

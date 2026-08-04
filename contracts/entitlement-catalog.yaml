@@ -1,0 +1,57 @@
+version: 1.2.0
+principles:
+- YLVEN is authoritative for products, plans, orders, ledger entries and entitlement
+  grants.
+- Sub2API receives only the execution projection required for API access, model groups,
+  limits and usable credit.
+- App and external API may share total AI credit while external API has independent
+  budget ceilings.
+entitlements:
+- code: ai.shared_credit
+  type: money_equivalent
+  authority: YLVEN_LEDGER
+  project_to_sub2api: true
+- code: api.access
+  type: boolean
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: true
+- code: api.max_keys
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: true
+- code: api.monthly_budget
+  type: money_equivalent
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: true
+- code: api.concurrency
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: true
+- code: models.allowed_tiers
+  type: set
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: true
+- code: workspace.max_projects
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false
+- code: storage.bytes
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false
+- code: images.monthly_count
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false
+- code: ppt.monthly_count
+  type: integer
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false
+- code: multimodel.comparison
+  type: boolean
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false
+- code: memory.enabled
+  type: boolean
+  authority: YLVEN_ENTITLEMENT
+  project_to_sub2api: false

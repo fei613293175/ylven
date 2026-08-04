@@ -1,0 +1,25 @@
+name: release-contract
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'P00-P13'
+        required: true
+jobs:
+  verify-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyyaml
+      - name: Validate release contracts
+        shell: pwsh
+        run: python scripts/07_VALIDATE_CONTRACTS.py --phase "${{ inputs.phase }}" --release
+      - name: Verify existing release output
+        shell: pwsh
+        run: ./scripts/06_VERIFY_RELEASE.ps1 -Phase "${{ inputs.phase }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YLVEN-${{ inputs.phase }}
+          path: dist/releases/${{ inputs.phase }}/

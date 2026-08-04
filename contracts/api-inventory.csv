@@ -1,0 +1,236 @@
+﻿phase,feature_id,surface,http_method,endpoint_or_event,backend_service,permission,billing_rule,async_job,data_entities,admin_control
+P00,P00-006,Backend,GET,/api/health,Core API,authenticated_user,none,none,service_instances,运维/服务健康
+P00,P00-007,Backend,GET,/runtime/health,AI Runtime,authenticated_user,none,none,service_instances,运维/服务健康
+P00,P00-008,Backend,GET,/developer/health,Developer Gateway,authenticated_user,none,none,service_instances,运维/服务健康
+P00,P00-009,Backend,GET,/worker/health,Worker,authenticated_user,none,none,jobs|job_events,运维/任务队列
+P00,P00-010,Backend,GET,/scheduler/health,Scheduler,authenticated_user,none,none,scheduled_jobs|distributed_locks,运维/定时任务
+P00,P00-017,Operations,GET,/internal/metrics,Observability,authenticated_user,none,none,audit_logs|service_metrics|traces,可观测性/总览
+P00,P00-020,Operations,POST,/admin/v1/probes/sub2api/chat,Capability Probe,authenticated_user,none,none,provider_channels|capability_probe_runs,模型与供应商/能力探测
+P00,P00-021,Operations,POST,/admin/v1/probes/sub2api/multimodal,Capability Probe,authenticated_user,none,none,model_capabilities|capability_probe_results,模型与供应商/能力探测
+P01,P01-001,Backend,POST,/api/v1/auth/email/normalize,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/认证策略
+P01,P01-002,Backend,POST,/api/v1/auth/register/challenge,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
+P01,P01-003,Backend,POST,/internal/v1/security/turnstile/verify,Security Service,authenticated_user,none,none,security_challenge_results,认证与用户/Turnstile配置
+P01,P01-004,Backend,POST,/api/v1/auth/register/otp/send,Identity Service,authenticated_user,none,none,email_otps|notification_jobs,认证与用户/邮件配置
+P01,P01-005,Backend,POST,/api/v1/auth/register/otp/verify,Identity Service,authenticated_user,none,none,email_otps|auth_challenges,认证与用户/验证码策略
+P01,P01-006,Backend,POST,/api/v1/auth/register/complete,Identity Service,authenticated_user,none,none,users|user_profiles|auth_identities|password_credentials,认证与用户/用户列表
+P01,P01-008,Backend,POST,/api/v1/auth/login/challenge,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
+P01,P01-009,Backend,POST,/api/v1/auth/login/otp/send,Identity Service,authenticated_user,none,none,email_otps|notification_jobs,认证与用户/验证码策略
+P01,P01-010,Backend,POST,/api/v1/auth/login/otp/verify,Identity Service,authenticated_user,none,none,email_otps|auth_attempts,认证与用户/登录日志
+P01,P01-011,Backend,POST,/api/v1/auth/sessions,Session Service,authenticated_user,none,none,sessions|refresh_tokens,认证与用户/会话管理
+P01,P01-012,Backend,POST,/api/v1/auth/token/refresh,Session Service,authenticated_user,none,none,sessions|refresh_tokens,认证与用户/会话管理
+P01,P01-013,Backend,POST,/api/v1/auth/logout,Session Service,authenticated_user,none,none,sessions|refresh_tokens,认证与用户/会话管理
+P01,P01-014,Backend,POST,/api/v1/auth/logout-all,Session Service,authenticated_user,none,none,sessions|user_devices,认证与用户/设备管理
+P01,P01-015,Backend,GET,/api/v1/account/devices,Device Service,authenticated_user,none,none,user_devices|sessions,认证与用户/设备管理
+P01,P01-016,Backend,DELETE,/api/v1/account/devices/{deviceId}/sessions,Device Service,authenticated_user,none,none,user_devices|sessions,认证与用户/设备管理
+P01,P01-019,Admin,GET|PUT,/admin/v1/settings/email,Notification Service,authenticated_user,none,none,email_provider_configs,系统设置/邮件服务
+P01,P01-020,Admin,GET|PUT,/admin/v1/settings/turnstile,Security Service,authenticated_user,none,none,turnstile_configs|secret_references,系统设置/Turnstile
+P01,P01-021,Admin,GET|PUT,/admin/v1/settings/otp-policy,Identity Service,authenticated_user,none,none,otp_policies,认证与用户/验证码策略
+P01,P01-022,Admin,GET,/admin/v1/users,User Service,authenticated_user,none,none,users|user_profiles,认证与用户/用户列表
+P01,P01-023,Admin,GET,/admin/v1/users/{userId},User Service,authenticated_user,none,none,users|auth_identities|user_devices|sessions,认证与用户/用户详情
+P01,P01-024,Admin,POST,/admin/v1/users/{userId}/status,User Service,authenticated_user,none,none,users|audit_logs,认证与用户/用户列表
+P01,P01-025,Admin,GET|POST,/admin/v1/rbac/roles,RBAC Service,authenticated_user,none,none,roles|permissions|role_bindings,管理员与权限/角色
+P01,P01-026,Admin,POST,/admin/v1/auth/login,Admin Identity Service,authenticated_user,none,none,admin_users|admin_sessions,管理员与权限/管理员
+P01,P01-027,Admin,POST,/admin/v1/security/step-up,Admin Identity Service,authenticated_user,none,none,admin_step_up_challenges,安全与审计/高风险操作
+P01,P01-028,Admin,GET|PUT,/admin/v1/notifications/email-templates,Notification Service,authenticated_user,none,none,notification_templates|notification_deliveries,通知中心/邮件模板
+P02,P02-001,Android,GET,/api/v1/account/session,Session Service,authenticated_user,none,none,sessions|user_devices,认证与用户/会话管理
+P02,P02-004,Android,POST,/api/v1/auth/login/challenge,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
+P02,P02-006,Android,POST,/api/v1/auth/login/otp/send,Identity Service,authenticated_user,none,none,email_otps,认证与用户/验证码策略
+P02,P02-007,Android,POST,/api/v1/auth/login/otp/verify,Identity Service,authenticated_user,none,none,email_otps|auth_attempts,认证与用户/登录日志
+P02,P02-008,Android,POST,/api/v1/auth/login/otp/send,Identity Service,authenticated_user,none,none,email_otps,认证与用户/验证码策略
+P02,P02-009,Android,POST,/api/v1/auth/sessions,Session Service,authenticated_user,none,none,sessions|refresh_tokens,认证与用户/会话管理
+P02,P02-011,Android,GET,/api/v1/auth/password-policy,Identity Service,authenticated_user,none,none,password_policies,认证与用户/密码策略
+P02,P02-013,Android,POST,/api/v1/auth/register/challenge,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
+P02,P02-014,Android,POST,/api/v1/auth/register/otp/send,Identity Service,authenticated_user,none,none,email_otps,认证与用户/验证码策略
+P02,P02-015,Android,POST,/api/v1/auth/register/complete,Identity Service,authenticated_user,none,none,users|user_profiles|auth_identities,认证与用户/用户列表
+P02,P02-016,Android,POST,/api/v1/onboarding/personal-workspace,Workspace Service,authenticated_user,none,none,workspaces|workspace_members,认证与用户/用户详情
+P02,P02-017,Android,POST,/api/v1/auth/token/refresh,Session Service,authenticated_user,none,none,refresh_tokens,认证与用户/会话管理
+P02,P02-019,Android,POST,/api/v1/auth/logout,Session Service,authenticated_user,none,none,sessions,认证与用户/会话管理
+P02,P02-020,Android,GET,/api/v1/account/devices,Device Service,authenticated_user,none,none,user_devices|sessions,认证与用户/设备管理
+P02,P02-021,Android,DELETE,/api/v1/account/devices/{deviceId}/sessions,Device Service,authenticated_user,none,none,sessions,认证与用户/设备管理
+P02,P02-022,Android,POST,/internal/v1/security/turnstile/verify,Security Service,authenticated_user,none,none,security_challenge_results,认证与用户/安全验证
+P03,P03-001,Android,GET,/api/mobile/v1/home,Mobile BFF,authenticated_user,none,none,conversations|projects|model_catalog,内容运营/首页配置
+P03,P03-002,Android,POST,/api/mobile/v1/conversations,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话列表
+P03,P03-003,Android,GET,/api/mobile/v1/conversations,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话列表
+P03,P03-004,Android,GET,/api/mobile/v1/conversations/search,Search Service,authenticated_user,none,none,conversations|messages,对话与内容/搜索配置
+P03,P03-005,Android,PATCH,/api/mobile/v1/conversations/{conversationId},Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话详情
+P03,P03-006,Android,POST,/api/mobile/v1/conversations/{conversationId}/archive,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话列表
+P03,P03-007,Android,DELETE,/api/mobile/v1/conversations/{conversationId},Conversation Service,authenticated_user,none,none,conversations|messages,对话与内容/删除策略
+P03,P03-008,Backend,POST,/internal/v1/conversations/{conversationId}/title,AI Runtime,authenticated_user,none,none,conversations|jobs,对话与内容/标题模型
+P03,P03-009,Android,POST,/api/mobile/v1/conversations/{conversationId}/runs,AI Runtime,authenticated_user,none,none,messages|message_parts|message_runs,模型与供应商/模型目录
+P03,P03-010,Android,GET,/api/mobile/v1/runs/{runId}/events,AI Runtime,authenticated_user,none,none,run_events|message_runs,运维/流式连接
+P03,P03-011,Android,POST,/api/mobile/v1/runs/{runId}/cancel,AI Runtime,authenticated_user,none,none,message_runs|run_events,对话与内容/运行记录
+P03,P03-012,Android,GET,/api/mobile/v1/runs/{runId}/events?after={eventId},AI Runtime,authenticated_user,none,none,run_events,运维/流式连接
+P03,P03-013,Android,GET,/api/mobile/v1/runs/{runId},AI Runtime,authenticated_user,none,none,message_runs|messages,对话与内容/运行记录
+P03,P03-021,Android,GET,/api/mobile/v1/messages/{messageId}/citations,Conversation Service,authenticated_user,none,none,citations,对话与内容/引用记录
+P03,P03-023,Android,POST,/api/mobile/v1/messages/{messageId}/exports,Export Service,authenticated_user,none,none,export_jobs,对话与内容/导出记录
+P03,P03-024,Android,POST,/api/mobile/v1/messages/{messageId}/regenerate,AI Runtime,authenticated_user,none,none,message_runs|messages,对话与内容/运行记录
+P03,P03-025,Android,POST,/api/mobile/v1/messages/{messageId}/feedback,Feedback Service,authenticated_user,none,none,message_feedback,对话与内容/用户反馈
+P03,P03-026,Android,GET,/api/mobile/v1/runs/{runId},AI Runtime,authenticated_user,none,none,message_runs,对话与内容/运行记录
+P03,P03-028,Android,POST,/api/mobile/v1/conversations?temporary=true,Conversation Service,authenticated_user,none,none,conversations|retention_policies,对话与内容/保留策略
+P03,P03-029,Android,POST,/api/mobile/v1/conversations/{conversationId}/exports,Export Service,authenticated_user,none,none,export_jobs|artifacts,对话与内容/导出记录
+P03,P03-030,Android,POST,/api/mobile/v1/messages/{messageId}/speech,Voice Service,authenticated_user,none,none,jobs|artifacts,AI工具/语音配置
+P03,P03-034,Operations,GET,/internal/metrics/chat,Observability,authenticated_user,none,none,service_metrics|traces,可观测性/AI运行
+P03,P03-035,Admin,GET,/admin/v1/conversations/{conversationId},Conversation Service,authenticated_user,none,none,conversations|messages|message_runs,对话与内容/会话列表
+P04,P04-001,Android,GET,/api/mobile/v1/models,Model Catalog Service,authenticated_user,none,none,models|model_capabilities,模型与供应商/模型目录
+P04,P04-002,Android,GET,/api/mobile/v1/models?group=provider,Model Catalog Service,authenticated_user,none,none,providers|models,模型与供应商/供应商
+P04,P04-003,Android,GET,/api/mobile/v1/models/{modelId},Model Catalog Service,authenticated_user,none,none,models|model_capabilities,模型与供应商/模型目录
+P04,P04-005,Android,GET,/api/mobile/v1/models/{modelId}/reasoning-profiles,Model Catalog Service,authenticated_user,none,none,reasoning_profiles,模型与供应商/推理映射
+P04,P04-007,Android,PUT,/api/mobile/v1/preferences/ai,Preference Service,authenticated_user,none,none,user_preferences,模型与供应商/默认配置
+P04,P04-008,Android,PATCH,/api/mobile/v1/conversations/{conversationId}/settings,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话详情
+P04,P04-009,Android,POST,/api/mobile/v1/conversations/{conversationId}/runs,AI Runtime,authenticated_user,none,none,message_runs,模型与供应商/模型目录
+P04,P04-010,Android,GET,/api/mobile/v1/messages/{messageId}/run-metadata,Conversation Service,authenticated_user,none,none,message_runs,对话与内容/运行记录
+P04,P04-011,Android,POST,/api/mobile/v1/messages/{messageId}/rerun,AI Runtime,authenticated_user,none,none,conversation_branches|message_runs,对话与内容/分支
+P04,P04-012,Backend,POST,/api/mobile/v1/conversations/{conversationId}/branches,Conversation Service,authenticated_user,none,none,conversation_branches|messages,对话与内容/分支
+P04,P04-013,Android,GET,/api/mobile/v1/conversations/{conversationId}/branches,Conversation Service,authenticated_user,none,none,conversation_branches,对话与内容/分支
+P04,P04-014,Android,POST,/api/mobile/v1/comparisons,Comparison Orchestrator,authenticated_user,usage_metered,comparison_run,comparison_groups|message_runs,AI工具/多模型对比
+P04,P04-015,Android,GET,/api/mobile/v1/comparisons/{comparisonId},Comparison Orchestrator,authenticated_user,none,none,comparison_groups|messages,AI工具/多模型对比
+P04,P04-016,Android,POST,/api/mobile/v1/comparisons/{comparisonId}/adopt,Conversation Service,authenticated_user,none,none,conversation_branches|messages,AI工具/多模型对比
+P04,P04-017,Android,POST,/api/mobile/v1/comparisons/{comparisonId}/synthesize,Workflow Orchestrator,authenticated_user,usage_metered,synthesis_run,comparison_groups|message_runs,AI工具/多模型对比
+P04,P04-018,Android,GET,/api/mobile/v1/models/{modelId}/availability,Model Routing Service,authenticated_user,none,none,model_health_status,模型与供应商/服务状态
+P04,P04-020,Admin,GET|POST,/admin/v1/provider-channels,Provider Service,authenticated_user,none,none,provider_channels|secret_references,模型与供应商/通道
+P04,P04-021,Admin,GET|PUT,/admin/v1/models/{modelId},Model Catalog Service,authenticated_user,none,none,models|model_aliases,模型与供应商/模型目录
+P04,P04-022,Admin,PUT,/admin/v1/models/{modelId}/capabilities,Capability Registry,authenticated_user,none,none,model_capabilities,模型与供应商/能力
+P04,P04-023,Admin,PUT,/admin/v1/models/{modelId}/reasoning-profiles,Model Catalog Service,authenticated_user,none,none,reasoning_profiles,模型与供应商/推理映射
+P04,P04-024,Admin,PUT,/admin/v1/routing-policies/{policyId},Model Routing Service,authenticated_user,none,none,routing_policies|route_targets,模型与供应商/路由策略
+P04,P04-025,Operations,POST,/admin/v1/models/{modelId}/health-probe,Capability Probe,authenticated_user,none,none,model_health_probes,模型与供应商/健康探测
+P04,P04-026,Operations,POST,/admin/v1/models/{modelId}/capability-probe,Capability Probe,authenticated_user,none,none,capability_probe_runs|capability_probe_results,模型与供应商/能力探测
+P04,P04-030,Android,GET,/api/mobile/v1/service-status/models,Incident Service,authenticated_user,none,none,model_health_status|incidents,运维/事故管理
+P05,P05-001,Android,POST,/api/mobile/v1/files/uploads,File Service,authenticated_user,none,none,attachments|upload_sessions,文件与存储/文件列表
+P05,P05-003,Backend,POST,/api/mobile/v1/files/uploads/{uploadId}/complete,File Service,authenticated_user,none,none,attachments|file_versions,文件与存储/文件列表
+P05,P05-007,Android,POST,/api/mobile/v1/conversations/{conversationId}/runs,AI Runtime,authenticated_user,usage_metered,none,attachments|message_parts|message_runs,模型与供应商/能力
+P05,P05-013,Android,GET,/api/mobile/v1/files/{fileId},File Service,authenticated_user,none,none,attachments|jobs,文件与存储/文件详情
+P05,P05-014,Android,POST,/api/mobile/v1/conversations/{conversationId}/attachments,Conversation Service,authenticated_user,none,none,message_parts|attachments,对话与内容/附件
+P05,P05-015,Android,GET,/api/mobile/v1/files,File Service,authenticated_user,none,none,attachments|file_versions,文件与存储/文件列表
+P05,P05-016,Android,GET,/api/mobile/v1/files/search,Search Service,authenticated_user,none,none,attachments,文件与存储/文件列表
+P05,P05-017,Android,PATCH,/api/mobile/v1/files/{fileId},File Service,authenticated_user,none,none,attachments,文件与存储/文件详情
+P05,P05-018,Android,GET,/api/mobile/v1/files/{fileId}/download,Download Service,authenticated_user,none,none,attachments|download_events,文件与存储/下载记录
+P05,P05-019,Android,DELETE,/api/mobile/v1/files/{fileId},File Service,authenticated_user,none,none,attachments|message_parts|project_files,文件与存储/删除策略
+P05,P05-022,Admin,GET,/admin/v1/files,File Service,authenticated_user,none,none,attachments|jobs,文件与存储/文件列表
+P05,P05-023,Admin,POST,/admin/v1/files/{fileId}/reprocess,Job Service,admin,none,document_reprocess,jobs|job_attempts,文件与存储/解析任务
+P05,P05-024,Backend,POST,/internal/v1/files/{fileId}/provider-access,File Service,authenticated_user,none,none,attachment_provider_refs,文件与存储/供应商引用
+P06,P06-001,Android,GET,/api/mobile/v1/projects,Project Service,authenticated_user,none,none,projects,项目与知识库/项目列表
+P06,P06-002,Android,POST,/api/mobile/v1/projects,Project Service,authenticated_user,none,none,projects|workspace_members,项目与知识库/项目列表
+P06,P06-003,Android,GET,/api/mobile/v1/projects/{projectId},Project Service,authenticated_user,none,none,projects|project_files|artifacts|conversations,项目与知识库/项目详情
+P06,P06-004,Android,PATCH,/api/mobile/v1/projects/{projectId},Project Service,authenticated_user,none,none,projects,项目与知识库/项目详情
+P06,P06-005,Android,DELETE,/api/mobile/v1/projects/{projectId},Project Service,authenticated_user,none,none,projects,项目与知识库/项目列表
+P06,P06-006,Android,PUT,/api/mobile/v1/projects/{projectId}/instructions,Project Service,authenticated_user,none,none,project_instructions,项目与知识库/项目指令
+P06,P06-007,Android,PUT,/api/mobile/v1/conversations/{conversationId}/project,Project Service,authenticated_user,none,none,conversations|projects,项目与知识库/项目详情
+P06,P06-008,Android,POST,/api/mobile/v1/projects/{projectId}/files,Knowledge Service,authenticated_user,none,none,project_files|knowledge_documents,项目与知识库/文件
+P06,P06-009,Android,POST,/api/mobile/v1/projects/{projectId}/artifacts,Artifact Service,authenticated_user,none,none,artifacts|projects,项目与知识库/项目详情
+P06,P06-012,Backend,POST,/internal/v1/projects/{projectId}/retrieve,Retrieval Service,authenticated_user,none,none,knowledge_chunks|retrieval_runs,项目与知识库/检索诊断
+P06,P06-014,Android,GET,/api/mobile/v1/messages/{messageId}/citations,Conversation Service,authenticated_user,none,none,citations|knowledge_chunks,项目与知识库/引用
+P06,P06-015,Android,GET,/api/mobile/v1/projects/{projectId}/files,Knowledge Service,authenticated_user,none,none,knowledge_documents|jobs,项目与知识库/索引任务
+P06,P06-016,Android,POST,/api/mobile/v1/projects/{projectId}/files/{fileId}/reindex,Knowledge Service,authenticated_user,none,knowledge_reindex,jobs,项目与知识库/索引任务
+P06,P06-017,Android,GET,/api/mobile/v1/workspace/search,Search Service,authenticated_user,none,none,projects|conversations|attachments|artifacts,项目与知识库/搜索
+P06,P06-019,Admin,GET,/admin/v1/projects/{projectId}/diagnostics,Knowledge Service,authenticated_user,none,none,projects|knowledge_indexes|retrieval_runs,项目与知识库/诊断
+P06,P06-020,Admin,POST,/admin/v1/projects/{projectId}/retrieval-test,Retrieval Service,authenticated_user,none,none,retrieval_runs,项目与知识库/检索测试
+P07,P07-001,Android,GET,/api/mobile/v1/image-workspace,Mobile BFF,authenticated_user,none,none,artifacts|jobs,AI工具/图片配置
+P07,P07-004,Android,GET,/api/mobile/v1/models?capability=image_generation,Model Catalog Service,authenticated_user,none,none,models|model_capabilities,AI工具/图片模型
+P07,P07-005,Android,GET,/api/mobile/v1/tools/image/options,Tool Configuration Service,authenticated_user,none,none,tool_configs,AI工具/图片配置
+P07,P07-006,Android,POST,/api/mobile/v1/files/uploads,File Service,authenticated_user,none,none,attachments,文件与存储/文件列表
+P07,P07-007,Android,POST,/api/mobile/v1/images/generations,Image Job Service,authenticated_user,usage_metered,image_generation,jobs|image_generation_requests,AI工具/图片任务
+P07,P07-008,Android,POST,/api/mobile/v1/images/edits,Image Job Service,authenticated_user,usage_metered,image_edit,jobs|image_edit_requests,AI工具/图片任务
+P07,P07-010,Android,GET,/api/mobile/v1/jobs/{jobId}/events,Job Service,authenticated_user,none,none,jobs|job_events,AI工具/图片任务
+P07,P07-011,Android,POST,/api/mobile/v1/jobs/{jobId}/cancel,Job Service,authenticated_user,none,none,jobs,AI工具/图片任务
+P07,P07-012,Android,POST,/api/mobile/v1/jobs/{jobId}/retry,Job Service,authenticated_user,usage_metered,image_retry,jobs|job_attempts,AI工具/图片任务
+P07,P07-015,Android,GET,/api/mobile/v1/artifacts/{artifactId},Artifact Service,authenticated_user,none,none,artifacts|artifact_assets,作品中心/作品详情
+P07,P07-016,Android,GET,/api/mobile/v1/artifacts/{artifactId}/download,Download Service,authenticated_user,none,none,download_events,作品中心/下载记录
+P07,P07-017,Android,POST,/api/mobile/v1/artifacts/{artifactId}/versions,Artifact Service,authenticated_user,usage_metered,image_edit,artifact_versions|jobs,作品中心/作品版本
+P07,P07-020,Admin,GET,/admin/v1/image-jobs,Image Job Service,authenticated_user,none,none,jobs|job_attempts,AI工具/图片任务
+P07,P07-021,Admin,PUT,/admin/v1/tools/image/config,Tool Configuration Service,authenticated_user,none,none,tool_configs|model_price_versions,AI工具/图片配置
+P07,P07-022,Admin,POST,/admin/v1/jobs/{jobId}/action,Job Service,admin,none,image_admin_action,jobs|audit_logs,AI工具/图片任务
+P08,P08-001,Android,POST,/api/mobile/v1/presentations,Presentation Service,authenticated_user,none,none,presentation_projects,AI工具/PPT项目
+P08,P08-002,Android,PATCH,/api/mobile/v1/presentations/{presentationId},Presentation Service,authenticated_user,none,none,presentation_projects,AI工具/PPT项目
+P08,P08-003,Android,POST,/api/mobile/v1/presentations/{presentationId}/sources,Presentation Service,authenticated_user,none,none,presentation_sources|attachments,AI工具/PPT项目
+P08,P08-004,Android,GET,/api/mobile/v1/presentation-templates,Template Service,authenticated_user,none,none,presentation_templates,AI工具/PPT模板
+P08,P08-005,Android,POST,/api/mobile/v1/presentations/{presentationId}/outline,Presentation Job Service,authenticated_user,usage_metered,ppt_outline_generation,jobs|presentation_outlines,AI工具/PPT任务
+P08,P08-006,Android,PUT,/api/mobile/v1/presentations/{presentationId}/outline,Presentation Service,authenticated_user,none,none,presentation_outlines,AI工具/PPT项目
+P08,P08-007,Android,POST,/api/mobile/v1/presentations/{presentationId}/outline/approve,Presentation Service,authenticated_user,none,none,presentation_outlines,AI工具/PPT项目
+P08,P08-013,Android,GET,/api/mobile/v1/jobs/{jobId}/events,Job Service,authenticated_user,none,none,jobs|job_events,AI工具/PPT任务
+P08,P08-014,Android,GET,/api/mobile/v1/presentations/{presentationId}/slides,Presentation Service,authenticated_user,none,none,presentation_slides|artifact_assets,AI工具/PPT项目
+P08,P08-015,Android,PUT,/api/mobile/v1/presentations/{presentationId}/slide-order,Presentation Service,authenticated_user,none,none,presentation_slides,AI工具/PPT项目
+P08,P08-016,Android,POST,/api/mobile/v1/presentations/{presentationId}/slides/{slideId}/regenerate,Presentation Job Service,authenticated_user,usage_metered,ppt_slide_regenerate,jobs|presentation_slides,AI工具/PPT任务
+P08,P08-017,Android,PUT,/api/mobile/v1/presentations/{presentationId}/slides/{slideId}/layout,Presentation Service,authenticated_user,none,none,presentation_slides,AI工具/PPT模板
+P08,P08-018,Android,PUT,/api/mobile/v1/presentations/{presentationId}/slides/{slideId}/assets,Presentation Service,authenticated_user,none,none,presentation_slides|artifact_assets,AI工具/PPT项目
+P08,P08-019,Backend,POST,/api/mobile/v1/presentations/{presentationId}/versions,Artifact Service,authenticated_user,none,none,artifacts|artifact_versions,作品中心/作品版本
+P08,P08-020,Android,GET,/api/mobile/v1/presentations/{presentationId}/download?format={format},Download Service,authenticated_user,none,none,artifact_assets|download_events,作品中心/下载记录
+P08,P08-021,Android,POST,/api/mobile/v1/presentations/{presentationId}/duplicate,Presentation Service,authenticated_user,none,none,presentation_projects|presentation_decks,AI工具/PPT项目
+P08,P08-022,Admin,GET|POST,/admin/v1/presentation-templates,Template Service,authenticated_user,none,none,presentation_templates|brand_kits,AI工具/PPT模板
+P08,P08-023,Admin,GET,/admin/v1/presentation-renders/{renderId}/diagnostics,Presentation Worker,authenticated_user,none,none,validation_results|job_attempts,AI工具/PPT诊断
+P08,P08-024,Admin,POST,/admin/v1/jobs/{jobId}/action,Job Service,admin,none,ppt_admin_action,jobs|audit_logs,AI工具/PPT任务
+P09,P09-001,Android,GET,/api/mobile/v1/work,Mobile BFF,authenticated_user,none,none,projects|artifacts|jobs,内容运营/工作页配置
+P09,P09-002,Android,GET,/api/mobile/v1/tools,Tool Configuration Service,authenticated_user,none,none,tool_configs,AI工具/工具目录
+P09,P09-003,Android,GET,/api/mobile/v1/artifacts,Artifact Service,authenticated_user,none,none,artifacts|artifact_versions,作品中心/作品列表
+P09,P09-004,Android,PATCH,/api/mobile/v1/artifacts/{artifactId},Artifact Service,authenticated_user,none,none,artifacts,作品中心/作品详情
+P09,P09-005,Android,GET,/api/mobile/v1/jobs,Job Service,authenticated_user,none,none,jobs,运维/任务队列
+P09,P09-006,Android,GET,/api/mobile/v1/discover,CMS Service,authenticated_user,none,none,discover_cards|discover_categories,内容运营/发现页
+P09,P09-007,Android,GET,/api/mobile/v1/discover/categories/{categoryId},CMS Service,authenticated_user,none,none,discover_cards,内容运营/发现页
+P09,P09-008,Android,GET,/api/mobile/v1/prompt-templates,Template Service,authenticated_user,none,none,prompt_templates,内容运营/Prompt模板
+P09,P09-009,Android,GET,/api/mobile/v1/model-lab,Model Catalog Service,authenticated_user,none,none,models|model_capabilities,模型与供应商/模型展示
+P09,P09-010,Android,GET,/api/mobile/v1/announcements,CMS Service,authenticated_user,none,none,announcements|feature_flags,内容运营/公告
+P09,P09-011,Admin,GET|POST,/admin/v1/discover/cards,CMS Service,authenticated_user,none,none,discover_cards|feature_flags,内容运营/发现页
+P09,P09-012,Android,GET,/api/mobile/v1/account/profile,User Service,authenticated_user,none,none,users|user_profiles,认证与用户/用户详情
+P09,P09-013,Android,PATCH,/api/mobile/v1/account/profile,User Service,authenticated_user,none,none,user_profiles,认证与用户/用户详情
+P09,P09-014,Android,GET,/api/mobile/v1/account/content-summary,Mobile BFF,authenticated_user,none,none,projects|attachments|artifacts,—
+P09,P09-015,Android,GET,/api/mobile/v1/favorites,Favorite Service,authenticated_user,none,none,favorites,内容运营/收藏统计
+P09,P09-016,Android,PUT,/api/mobile/v1/preferences/ai,Preference Service,authenticated_user,none,none,user_preferences,模型与供应商/默认配置
+P09,P09-017,Android,PUT,/api/mobile/v1/preferences/instructions,Memory Service,authenticated_user,none,none,user_instructions,对话与内容/指令策略
+P09,P09-018,Android,GET|DELETE,/api/mobile/v1/memories,Memory Service,authenticated_user,none,none,memories,对话与内容/记忆管理
+P09,P09-019,Android,PUT,/api/mobile/v1/preferences/notifications,Notification Service,authenticated_user,none,none,notification_preferences,通知中心/用户设置
+P09,P09-020,Android,PUT,/api/mobile/v1/preferences/display,Preference Service,authenticated_user,none,none,user_preferences,系统设置/默认外观
+P09,P09-021,Android,POST,/api/mobile/v1/privacy/exports,Privacy Service,authenticated_user,none,privacy_export,export_jobs,安全与审计/数据导出
+P09,P09-022,Android,POST,/api/mobile/v1/privacy/deletion-requests,Privacy Service,authenticated_user,none,privacy_delete,deletion_requests,安全与审计/删除请求
+P09,P09-023,Android,GET,/api/mobile/v1/app/releases/latest,Release Service,authenticated_user,none,none,app_versions,系统运营/App版本
+P09,P09-024,Android,POST,/api/mobile/v1/support/tickets,Support Service,authenticated_user,none,none,support_tickets|attachments,系统运营/反馈工单
+P09,P09-025,Android,GET,/api/mobile/v1/service-status,Incident Service,authenticated_user,none,none,incidents,可观测性/事故管理
+P10,P10-001,Admin,GET|POST,/admin/v1/products,Catalog Service,authenticated_user,none,none,products|plans|prices,商业化/产品与套餐
+P10,P10-002,Android,GET,/api/mobile/v1/catalog/plans,Catalog Service,authenticated_user,none,none,plans|prices|entitlement_definitions,商业化/产品与套餐
+P10,P10-003,Android,POST,/api/mobile/v1/orders,Order Service,authenticated_user,none,none,orders|order_items,商业化/订单
+P10,P10-004,Backend,POST,/api/v1/payments/{provider}/webhook,Payment Service,system,payment,payment_webhook,payments|orders|webhook_events,商业化/支付回调
+P10,P10-005,Admin,POST,/admin/v1/users/{userId}/test-credit,Wallet Service,admin,payment,none,ledger_transactions|ledger_entries,商业化/钱包
+P10,P10-008,Backend,GET,/api/mobile/v1/wallet/balance,Wallet Service,authenticated_user,none,none,balance_projections|credit_buckets,商业化/钱包
+P10,P10-009,Android,GET,/api/mobile/v1/wallet/buckets,Wallet Service,authenticated_user,none,none,credit_buckets,商业化/钱包
+P10,P10-010,Android,GET,/api/mobile/v1/wallet/ledger,Ledger Service,authenticated_user,none,none,ledger_entries,商业化/账本
+P10,P10-012,Backend,POST,/internal/v1/entitlements/check,Entitlement Service,authenticated_user,none,none,entitlement_grants|quota_counters,商业化/权益
+P10,P10-016,Android,GET,/api/mobile/v1/usage/summary,Usage Service,authenticated_user,none,none,usage_aggregates,商业化/用量
+P10,P10-017,Backend,POST,/internal/v1/gateways/sub2api/users/ensure,Sub2API Adapter,authenticated_user,none,none,gateway_user_links,Sub2API与通道/用户映射
+P10,P10-018,Developer Web,POST,/api/developer/v1/sub2api/link,Sub2API Adapter,authenticated_user,none,none,gateway_user_links,Sub2API与通道/用户映射
+P10,P10-019,Backend,POST,/internal/v1/gateways/sub2api/app-keys,Sub2API Adapter,authenticated_user,none,none,gateway_api_key_links,Sub2API与通道/API Key映射
+P10,P10-025,Admin,GET,/admin/v1/commerce/transactions,Commerce Query Service,authenticated_user,none,none,orders|payments|subscriptions|refunds,商业化/交易管理
+P10,P10-026,Admin,GET,/admin/v1/users/{userId}/wallet,Wallet Service,authenticated_user,none,none,wallet_accounts|ledger_entries|credit_reservations,商业化/钱包与账本
+P10,P10-027,Admin,POST,/admin/v1/refunds,Refund Service,admin,payment,refund_process,refunds|ledger_transactions|entitlement_grants,商业化/退款
+P10,P10-028,Admin,PUT,/admin/v1/billing/credit-policy,Billing Service,authenticated_user,none,none,billing_policies,商业化/额度策略
+P10,P10-029,Admin,POST,/admin/v1/pricing/model-versions,Pricing Service,authenticated_user,none,none,model_price_versions,商业化/模型价格
+P11,P11-001,Developer Web,GET,/api/developer/v1/overview,Developer Service,authenticated_user,none,none,api_keys|usage_aggregates|balance_projections,开发者平台/概览
+P11,P11-002,Developer Web,POST,/api/developer/v1/enrollment,Developer Service,authenticated_user,none,none,developer_profiles,开发者平台/开发者用户
+P11,P11-003,Developer Web,GET,/oauth2/authorize,OIDC Provider,authenticated_user,none,none,oauth_clients|oauth_authorizations|gateway_user_links,Sub2API与通道/OIDC
+P11,P11-004,Developer Web,POST,/api/developer/v1/api-keys,API Key Service,authenticated_user,none,none,api_keys|api_key_policies,开发者平台/API Key
+P11,P11-006,Developer Web,GET,/api/developer/v1/api-keys,API Key Service,authenticated_user,none,none,api_keys|api_request_logs,开发者平台/API Key
+P11,P11-007,Developer Web,POST,/api/developer/v1/api-keys/{keyId}/actions,API Key Service,authenticated_user,none,none,api_keys|audit_logs,开发者平台/API Key
+P11,P11-008,Developer Web,PUT,/api/developer/v1/api-keys/{keyId}/budget,Quota Service,authenticated_user,none,none,api_key_policies|quota_counters,开发者平台/预算
+P11,P11-009,Developer Web,PUT,/api/developer/v1/budget,Quota Service,authenticated_user,none,none,developer_budgets,开发者平台/预算
+P11,P11-010,Developer Web,PUT,/api/developer/v1/api-keys/{keyId}/policy,API Key Service,authenticated_user,none,none,api_key_policies|ip_allowlists,开发者平台/API Key策略
+P11,P11-013,Public API,GET,/v1/models,Developer Gateway,authenticated_user,none,none,models|model_aliases,开发者平台/API版本
+P11,P11-014,Public API,POST,/v1/chat/completions,Developer Gateway,developer_api_key,usage_metered,none,api_request_logs|usage_events,开发者平台/API日志
+P11,P11-015,Public API,POST,/v1/responses,Developer Gateway,developer_api_key,usage_metered,none,api_request_logs|usage_events,开发者平台/API日志
+P11,P11-016,Public API,POST,/v1/responses?stream=true,Developer Gateway,developer_api_key,usage_metered,none,api_request_logs|run_events,开发者平台/API日志
+P11,P11-017,Public API,POST,/v1/images/generations,Developer Gateway,developer_api_key,usage_metered,image_generation,jobs|api_request_logs,开发者平台/API日志
+P11,P11-018,Public API,POST,/ylven/v1/conversations,Developer Gateway,developer_api_key,usage_metered,none,conversations|messages,开发者平台/API版本
+P11,P11-019,Public API,POST,/ylven/v1/files,Developer Gateway,developer_api_key,usage_metered,none,attachments|jobs,开发者平台/API版本
+P11,P11-020,Public API,GET,/v1/models,Model Catalog Service,authenticated_user,none,none,model_aliases,开发者平台/模型别名
+P11,P11-022,Developer Web,GET,/api/developer/v1/usage,Usage Service,authenticated_user,none,none,usage_aggregates,开发者平台/用量
+P11,P11-023,Developer Web,GET,/api/developer/v1/request-logs,Developer Log Service,authenticated_user,none,none,api_request_logs,开发者平台/API日志
+P11,P11-024,Developer Web,POST,/api/developer/v1/playground/run,Developer Gateway,authenticated_user,usage_metered,none,api_request_logs,开发者平台/Playground
+P11,P11-025,Developer Web,GET,/api/developer/v1/models,Pricing Service,authenticated_user,none,none,models|model_price_versions,商业化/模型价格
+P11,P11-026,Developer Web,GET,/docs/api/{version},Documentation Service,authenticated_user,none,none,api_versions|sdk_versions,开发者平台/API文档
+P11,P11-027,Developer Web,PUT,/api/developer/v1/alerts,Alert Service,authenticated_user,none,none,alert_rules,开发者平台/告警
+P11,P11-028,Developer Web,POST,/api/developer/v1/webhooks,Webhook Service,authenticated_user,none,none,webhooks,开发者平台/Webhook
+P11,P11-031,Admin,GET,/admin/v1/developers/{developerId},Developer Service,authenticated_user,none,none,developer_profiles|api_keys|security_events,开发者平台/开发者用户
+P11,P11-032,Admin,POST,/admin/v1/api-versions,API Lifecycle Service,authenticated_user,none,none,api_versions,开发者平台/API版本
+P12,P12-007,Admin,POST,/admin/v1/approvals,Approval Service,authenticated_user,none,none,approval_requests,安全与审计/审批
+P12,P12-008,Operations,GET,/internal/metrics,Observability,authenticated_user,none,none,service_metrics,可观测性/指标
+P12,P12-009,Admin,GET,/admin/v1/observability/logs,Observability,authenticated_user,none,none,log_indexes,可观测性/日志
+P12,P12-011,Admin,GET|POST,/admin/v1/alerts,Alert Service,authenticated_user,none,none,alert_rules|alert_events,可观测性/告警
+P12,P12-012,Admin,GET|POST,/admin/v1/incidents,Incident Service,authenticated_user,none,none,incidents|incident_updates,可观测性/事故
+P12,P12-024,Admin,PUT,/admin/v1/settings/retention,Retention Service,authenticated_user,none,none,retention_policies,系统设置/数据保留
+P13,P13-015,Owner/QA,POST,/admin/v1/releases/P13/owner-acceptance,Release Service,authenticated_user,none,none,owner_acceptance_reports,质量与发布/最终验收
