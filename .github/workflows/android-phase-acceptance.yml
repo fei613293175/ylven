@@ -70,6 +70,8 @@ jobs:
           gradle-version: "8.9"
       - name: Build, unit test and lint
         run: ./gradlew --no-daemon clean testDebugUnitTest lintDebug assembleDebug
+      - name: Grant Android emulator access to KVM
+        run: sudo chmod 666 /dev/kvm
       - name: Run fixed Android emulator acceptance
         uses: reactivecircus/android-emulator-runner@v2
         with:
