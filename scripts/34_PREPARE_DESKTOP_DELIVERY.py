@@ -23,6 +23,8 @@ def main()->int:
  for path in sorted((root/'docs'/'evidence').glob('P00-W*.md')): shutil.copy2(path,evidence/path.name)
  shutil.copy2(root/'status'/'P00_FEATURE_STATUS.yaml', evidence/'P00_FEATURE_STATUS.yaml')
  shutil.copy2(root/'specs'/'001-p00-engineering-foundation'/'tasks.md', evidence/'P00-tasks.md')
+ delivery_docs=dest/'P00-delivery-docs'; delivery_docs.mkdir()
+ for path in sorted((root/'docs'/'delivery').glob('P00_*.md')): shutil.copy2(path,delivery_docs/path.name)
  lines=[]
  for f in sorted(x for x in dest.rglob('*') if x.is_file() and x.name!='SHA256SUMS.txt'):
   lines.append(f'{sha(f)}  {f.relative_to(dest).as_posix()}')
