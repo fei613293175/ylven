@@ -1,0 +1,6 @@
+state_id,page_id,mockup_path,runtime_screenshot_path,device_width_dp,theme,font_scale,status,notes
+YL-M-027-S02_POPULATED,YL-M-027,ui/mockups/admin/YL-M-027/YL-M-027-S02_POPULATED.png,docs/evidence/screenshots/P01-W05/YL-M-027-S02_POPULATED.png,1440,light,1.0,CAPTURED,Real runtime user list with API-backed status action
+YL-M-037-S02_POPULATED,YL-M-037,ui/mockups/admin/YL-M-037/YL-M-037-S02_POPULATED.png,docs/evidence/screenshots/P01-W05/YL-M-037-S02_POPULATED.png,1440,light,1.0,CAPTURED,Real runtime RBAC roles and permission editor
+YL-M-038-S02_POPULATED,YL-M-038,ui/mockups/admin/YL-M-038/YL-M-038-S02_POPULATED.png,docs/evidence/screenshots/P01-W05/YL-M-038-S02_POPULATED.png,1440,light,1.0,CAPTURED,Real runtime administrator and session list
+YL-M-039-S02_POPULATED,YL-M-039,ui/mockups/admin/YL-M-039/YL-M-039-S02_POPULATED.png,docs/evidence/screenshots/P01-W05/YL-M-039-S02_POPULATED.png,1440,light,1.0,CAPTURED,Real runtime high-risk confirmation cards
+YL-M-040-S07_SAVE_SUCCESS,YL-M-040,ui/mockups/admin/YL-M-040/YL-M-040-S07_SAVE_SUCCESS.png,docs/evidence/screenshots/P01-W05/YL-M-040-S07_SAVE_SUCCESS.png,1440,light,1.0,CAPTURED,Real runtime step-up then versioned template save success

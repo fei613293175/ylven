@@ -162,22 +162,42 @@ features:
   - backend/internal/identity/identity.go::Store.UserDetail
   - web/admin/src/App.js::/admin/036
 - feature_id: P01-024
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /admin/v1/users/{userId}/status
+  - backend/internal/identity/identity.go::Store.SetUserStatus revokes sessions when disabled
+  - backend/internal/identity/identity_test.go::TestAdminRBACStepUpAndUserStatus
+  - web/admin/src/App.js::YL-M-027 account status action
 - feature_id: P01-025
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET|POST /admin/v1/rbac/roles
+  - backend/internal/identity/identity.go::Role and Store.PutRole
+  - backend/internal/identity/identity_test.go::TestAdminHTTPRequiresBearerAndStepUp
+  - web/admin/src/App.js::YL-M-037 role editor
 - feature_id: P01-026
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /admin/v1/auth/login and GET /admin/v1/auth/sessions
+  - backend/internal/identity/identity.go::AdminUser, AdminSession and Store.AdminLogin
+  - backend/internal/identity/identity_test.go::TestAdminHTTPRequiresBearerAndStepUp
+  - web/admin/src/App.js::administrator login and YL-M-038
 - feature_id: P01-027
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /admin/v1/security/step-up
+  - backend/internal/identity/identity.go::StepUpChallenge and Store.ConsumeStepUp
+  - backend/internal/identity/identity_test.go::TestAdminRBACStepUpAndUserStatus
+  - web/admin/src/App.js::step-up modal and YL-M-039
 - feature_id: P01-028
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET|PUT /admin/v1/notifications/email-templates
+  - backend/internal/identity/identity.go::EmailTemplate, NotificationDelivery and Store.PutEmailTemplate
+  - backend/internal/identity/identity_test.go::TestEmailTemplateVersionAndDeliveryRecords
+  - web/admin/src/App.js::YL-M-040 template editor and delivery count

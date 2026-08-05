@@ -65,6 +65,13 @@ type Session struct {
 
 type AuditEvent struct { ID string `json:"id"`; Type string `json:"type"`; Email string `json:"email,omitempty"`; SessionID string `json:"session_id,omitempty"`; CreatedAt time.Time `json:"created_at"` }
 
+type Role struct { ID string `json:"id"`; Name string `json:"name"`; Permissions []string `json:"permissions"`; CreatedAt time.Time `json:"created_at"`; UpdatedAt time.Time `json:"updated_at"` }
+type AdminUser struct { ID string `json:"id"`; Email string `json:"email"`; PasswordHash string `json:"password_hash,omitempty"`; RoleIDs []string `json:"role_ids"`; Status string `json:"status"`; CreatedAt time.Time `json:"created_at"` }
+type AdminSession struct { ID string `json:"id"`; AdminUserID string `json:"admin_user_id"`; AccessDigest string `json:"access_digest"`; ExpiresAt time.Time `json:"expires_at"`; CreatedAt time.Time `json:"created_at"`; Revoked bool `json:"revoked"` }
+type StepUpChallenge struct { ID string `json:"id"`; AdminSessionID string `json:"admin_session_id"`; TokenDigest string `json:"token_digest"`; ExpiresAt time.Time `json:"expires_at"`; Consumed bool `json:"consumed"` }
+type EmailTemplate struct { Key string `json:"key"`; Subject string `json:"subject"`; Body string `json:"body"`; Version int64 `json:"version"`; UpdatedAt time.Time `json:"updated_at"` }
+type NotificationDelivery struct { ID string `json:"id"`; TemplateKey string `json:"template_key"`; Recipient string `json:"recipient"`; Status string `json:"status"`; CreatedAt time.Time `json:"created_at"` }
+
 type state struct {
 	Challenges map[string]Challenge `json:"challenges"`
 	OTPs map[string]OTP `json:"otps"`
@@ -73,6 +80,12 @@ type state struct {
 	RateLimits map[string][]time.Time `json:"rate_limits"`
 	Audit []AuditEvent `json:"audit"`
 	Settings map[string]map[string]string `json:"settings"`
+	Roles map[string]Role `json:"roles"`
+	AdminUsers map[string]AdminUser `json:"admin_users"`
+	AdminSessions map[string]AdminSession `json:"admin_sessions"`
+	StepUpChallenges map[string]StepUpChallenge `json:"step_up_challenges"`
+	EmailTemplates map[string]EmailTemplate `json:"email_templates"`
+	NotificationDeliveries []NotificationDelivery `json:"notification_deliveries"`
 }
 
 type Store struct {
@@ -82,7 +95,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings:defaultSettings()}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings:defaultSettings(), Roles:defaultRoles(), AdminUsers:map[string]AdminUser{}, AdminSessions:map[string]AdminSession{}, StepUpChallenges:map[string]StepUpChallenge{}, EmailTemplates:defaultEmailTemplates(), NotificationDeliveries:[]NotificationDelivery{}}}
 	if path == "" { return s, nil }
 	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) { return s, nil }
@@ -94,6 +107,12 @@ func NewStore(path string) (*Store, error) {
 	if s.data.Sessions == nil { s.data.Sessions = map[string]Session{} }
 	if s.data.RateLimits == nil { s.data.RateLimits = map[string][]time.Time{} }
 	if s.data.Settings == nil { s.data.Settings = defaultSettings() }
+	if s.data.Roles == nil { s.data.Roles = defaultRoles() }
+	if s.data.AdminUsers == nil { s.data.AdminUsers = map[string]AdminUser{} }
+	if s.data.AdminSessions == nil { s.data.AdminSessions = map[string]AdminSession{} }
+	if s.data.StepUpChallenges == nil { s.data.StepUpChallenges = map[string]StepUpChallenge{} }
+	if s.data.EmailTemplates == nil { s.data.EmailTemplates = defaultEmailTemplates() }
+	if s.data.NotificationDeliveries == nil { s.data.NotificationDeliveries = []NotificationDelivery{} }
 	return s, nil
 }
 
@@ -147,6 +166,9 @@ func (s *Store) CreateOTP(challengeID string, code string) (OTP, error) {
 	// Store the salt with the digest; it is not secret and is required for verification.
 	o.Digest = salt + ":" + o.Digest
 	s.data.OTPs[id] = o
+	deliveryID, err := randomToken(16); if err != nil { return OTP{}, err }
+	templateKey := "register_otp"; if c.Purpose == "login" { templateKey = "login_otp" }
+	s.data.NotificationDeliveries = append(s.data.NotificationDeliveries, NotificationDelivery{ID:deliveryID, TemplateKey:templateKey, Recipient:c.Email, Status:"queued", CreatedAt:time.Now().UTC()})
 	return o, s.persistLocked()
 }
 
@@ -187,7 +209,7 @@ func (s *Store) CreateSession(challengeID, email string) (Session, string, strin
 	c, ok := s.data.Challenges[challengeID]
 	if !ok || c.Email != normalized || c.Purpose != "login" || !c.OTPVerified || c.ExpiresAt.Before(time.Now()) || c.Consumed { return Session{}, "", "", errors.New("login_not_verified") }
 	u, ok := s.data.Users[normalized]
-	if !ok { return Session{}, "", "", errors.New("login_not_verified") }
+	if !ok || u.Status != "active" { return Session{}, "", "", errors.New("login_not_verified") }
 	id, err := randomToken(16); if err != nil { return Session{}, "", "", err }
 	access, err := randomToken(32); if err != nil { return Session{}, "", "", err }
 	refresh, err := randomToken(32); if err != nil { return Session{}, "", "", err }
@@ -234,6 +256,84 @@ func (s *Store) GetSetting(name string) (map[string]string,bool) { s.mu.Lock(); 
 func (s *Store) PutSetting(name string, value map[string]string) error { s.mu.Lock(); defer s.mu.Unlock(); if _,ok:=s.data.Settings[name];!ok{return errors.New("setting_not_found")}; for key:=range value { if strings.Contains(strings.ToLower(key),"secret") && !strings.Contains(strings.ToLower(key),"reference") {return errors.New("raw_secret_forbidden")} }; s.data.Settings[name]=value; id,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:id,Type:"setting_updated:"+name,CreatedAt:time.Now().UTC()});return s.persistLocked() }
 func (s *Store) ListUsers() []User { s.mu.Lock(); defer s.mu.Unlock(); result:=make([]User,0,len(s.data.Users));for _,user:=range s.data.Users{user.PasswordHash="";result=append(result,user)};return result }
 func (s *Store) UserDetail(id string) (User,[]Session,bool) { s.mu.Lock(); defer s.mu.Unlock();for _,user:=range s.data.Users{if user.ID==id{user.PasswordHash="";sessions:=[]Session{};for _,session:=range s.data.Sessions{if session.UserID==id{session.AccessDigest="";session.RefreshDigest="";sessions=append(sessions,session)}};return user,sessions,true}};return User{},nil,false }
+
+func defaultRoles() map[string]Role {
+	now := time.Now().UTC()
+	return map[string]Role{
+		"superadmin": {ID:"superadmin", Name:"Super Administrator", Permissions:[]string{"*"}, CreatedAt:now, UpdatedAt:now},
+		"support": {ID:"support", Name:"Support", Permissions:[]string{"users:read", "notifications:read"}, CreatedAt:now, UpdatedAt:now},
+	}
+}
+
+func defaultEmailTemplates() map[string]EmailTemplate {
+	now := time.Now().UTC()
+	return map[string]EmailTemplate{
+		"register_otp": {Key:"register_otp", Subject:"Verify your YLVEN account", Body:"Your verification code is {{code}}.", Version:1, UpdatedAt:now},
+		"login_otp": {Key:"login_otp", Subject:"Your YLVEN sign-in code", Body:"Your sign-in code is {{code}}.", Version:1, UpdatedAt:now},
+	}
+}
+
+func verifyPassword(encoded, password string) bool {
+	parts := strings.SplitN(encoded, ":", 2)
+	return len(parts) == 2 && subtle.ConstantTimeCompare([]byte(hashSecret(password, parts[0])), []byte(parts[1])) == 1
+}
+
+func (s *Store) BootstrapAdmin(email, password string) (AdminUser, error) {
+	normalized, err := NormalizeEmail(email); if err != nil { return AdminUser{}, err }
+	if len(password) < 12 { return AdminUser{}, errors.New("admin_password_too_short") }
+	s.mu.Lock(); defer s.mu.Unlock()
+	if existing, ok := s.data.AdminUsers[normalized]; ok { existing.PasswordHash=""; return existing,nil }
+	salt, err := randomToken(16); if err != nil { return AdminUser{}, err }
+	id, err := randomToken(16); if err != nil { return AdminUser{}, err }
+	admin := AdminUser{ID:id, Email:normalized, PasswordHash:salt+":"+hashSecret(password,salt), RoleIDs:[]string{"superadmin"}, Status:"active", CreatedAt:time.Now().UTC()}
+	s.data.AdminUsers[normalized]=admin
+	if err:=s.persistLocked();err!=nil{return AdminUser{},err};admin.PasswordHash="";return admin,nil
+}
+
+func (s *Store) AdminLogin(email, password string) (AdminSession,string,error) {
+	normalized, err := NormalizeEmail(email); if err != nil { return AdminSession{},"",errors.New("admin_credentials_invalid") }
+	s.mu.Lock(); defer s.mu.Unlock()
+	admin, ok := s.data.AdminUsers[normalized]
+	if !ok || admin.Status!="active" || !verifyPassword(admin.PasswordHash,password) { return AdminSession{},"",errors.New("admin_credentials_invalid") }
+	id,err:=randomToken(16);if err!=nil{return AdminSession{},"",err};token,err:=randomToken(32);if err!=nil{return AdminSession{},"",err};now:=time.Now().UTC()
+	session:=AdminSession{ID:id,AdminUserID:admin.ID,AccessDigest:digestToken(token),ExpiresAt:now.Add(8*time.Hour),CreatedAt:now};s.data.AdminSessions[id]=session
+	auditID,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:auditID,Type:"admin_login",Email:normalized,SessionID:id,CreatedAt:now})
+	return session,token,s.persistLocked()
+}
+
+func (s *Store) adminByAccessLocked(access string) (AdminUser,AdminSession,bool) {
+	digest:=digestToken(access)
+	for _,session:=range s.data.AdminSessions { if session.AccessDigest!=digest || session.Revoked || !session.ExpiresAt.After(time.Now()){continue};for _,admin:=range s.data.AdminUsers{if admin.ID==session.AdminUserID && admin.Status=="active"{return admin,session,true}} }
+	return AdminUser{},AdminSession{},false
+}
+
+func permissionGranted(roles map[string]Role, roleIDs []string, permission string) bool { for _,roleID:=range roleIDs{role,ok:=roles[roleID];if !ok{continue};for _,item:=range role.Permissions{if item=="*"||item==permission{return true}}};return false }
+func (s *Store) AuthorizeAdmin(access, permission string) (AdminUser,bool) { s.mu.Lock();defer s.mu.Unlock();admin,_,ok:=s.adminByAccessLocked(access);if !ok||!permissionGranted(s.data.Roles,admin.RoleIDs,permission){return AdminUser{},false};admin.PasswordHash="";return admin,true }
+
+func (s *Store) CreateStepUp(access,password string) (string,time.Time,error) {
+	s.mu.Lock();defer s.mu.Unlock();admin,session,ok:=s.adminByAccessLocked(access);if !ok||!verifyPassword(admin.PasswordHash,password){return "",time.Time{},errors.New("step_up_failed")}
+	id,err:=randomToken(16);if err!=nil{return "",time.Time{},err};token,err:=randomToken(32);if err!=nil{return "",time.Time{},err};expires:=time.Now().UTC().Add(5*time.Minute)
+	s.data.StepUpChallenges[id]=StepUpChallenge{ID:id,AdminSessionID:session.ID,TokenDigest:digestToken(token),ExpiresAt:expires};return token,expires,s.persistLocked()
+}
+
+func (s *Store) ConsumeStepUp(access,token string) error {
+	s.mu.Lock();defer s.mu.Unlock();_,session,ok:=s.adminByAccessLocked(access);if !ok{return errors.New("admin_session_invalid")};digest:=digestToken(token)
+	for id,item:=range s.data.StepUpChallenges{if item.AdminSessionID==session.ID&&item.TokenDigest==digest&&!item.Consumed&&item.ExpiresAt.After(time.Now()){item.Consumed=true;s.data.StepUpChallenges[id]=item;return s.persistLocked()}}
+	return errors.New("step_up_required")
+}
+
+func (s *Store) SetUserStatus(userID,status,actorID string) (User,error) {
+	if status!="active"&&status!="disabled"{return User{},errors.New("invalid_user_status")};s.mu.Lock();defer s.mu.Unlock()
+	for email,user:=range s.data.Users{if user.ID!=userID{continue};user.Status=status;s.data.Users[email]=user;if status=="disabled"{for id,session:=range s.data.Sessions{if session.UserID==userID{session.Revoked=true;session.RefreshConsumed=true;s.data.Sessions[id]=session}}};auditID,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:auditID,Type:"user_status:"+status,Email:user.Email,SessionID:actorID,CreatedAt:time.Now().UTC()});user.PasswordHash="";return user,s.persistLocked()};return User{},errors.New("user_not_found")
+}
+
+func (s *Store) ListRoles() []Role { s.mu.Lock();defer s.mu.Unlock();result:=make([]Role,0,len(s.data.Roles));for _,role:=range s.data.Roles{role.Permissions=append([]string(nil),role.Permissions...);result=append(result,role)};return result }
+func (s *Store) PutRole(role Role,actorID string) (Role,error) { role.ID=strings.TrimSpace(role.ID);role.Name=strings.TrimSpace(role.Name);if role.ID==""||role.Name==""||len(role.Permissions)==0{return Role{},errors.New("invalid_role")};for _,p:=range role.Permissions{if strings.TrimSpace(p)==""{return Role{},errors.New("invalid_permission")}};s.mu.Lock();defer s.mu.Unlock();now:=time.Now().UTC();if old,ok:=s.data.Roles[role.ID];ok{role.CreatedAt=old.CreatedAt}else{role.CreatedAt=now};role.UpdatedAt=now;s.data.Roles[role.ID]=role;auditID,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:auditID,Type:"role_updated:"+role.ID,SessionID:actorID,CreatedAt:now});return role,s.persistLocked() }
+
+func (s *Store) ListAdmins() []AdminUser { s.mu.Lock();defer s.mu.Unlock();result:=make([]AdminUser,0,len(s.data.AdminUsers));for _,admin:=range s.data.AdminUsers{admin.PasswordHash="";result=append(result,admin)};return result }
+func (s *Store) ListAdminSessions() []AdminSession { s.mu.Lock();defer s.mu.Unlock();result:=make([]AdminSession,0,len(s.data.AdminSessions));for _,session:=range s.data.AdminSessions{session.AccessDigest="";result=append(result,session)};return result }
+func (s *Store) ListEmailTemplates() ([]EmailTemplate,[]NotificationDelivery) { s.mu.Lock();defer s.mu.Unlock();templates:=make([]EmailTemplate,0,len(s.data.EmailTemplates));for _,item:=range s.data.EmailTemplates{templates=append(templates,item)};deliveries:=append([]NotificationDelivery(nil),s.data.NotificationDeliveries...);return templates,deliveries }
+func (s *Store) PutEmailTemplate(template EmailTemplate,actorID string) (EmailTemplate,error) { template.Key=strings.TrimSpace(template.Key);template.Subject=strings.TrimSpace(template.Subject);template.Body=strings.TrimSpace(template.Body);if template.Key==""||template.Subject==""||template.Body==""{return EmailTemplate{},errors.New("invalid_email_template")};s.mu.Lock();defer s.mu.Unlock();current,exists:=s.data.EmailTemplates[template.Key];if exists&&template.Version!=current.Version{return EmailTemplate{},errors.New("template_version_conflict")};template.Version=current.Version+1;if !exists{template.Version=1};template.UpdatedAt=time.Now().UTC();s.data.EmailTemplates[template.Key]=template;auditID,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:auditID,Type:"email_template_updated:"+template.Key,SessionID:actorID,CreatedAt:template.UpdatedAt});return template,s.persistLocked() }
 
 func hashSecret(secret, salt string) string {
 	key := []byte(salt); block := []byte(secret); var result [32]byte

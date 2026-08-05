@@ -119,10 +119,10 @@ work_packets:
 - work_packet_id: P01-W05
   phase: P01
   sequence: 5
-  status: TODO
-  started_at: null
+  status: DOING
+  started_at: '2026-08-05T18:10:33+08:00'
   closed_at: null
-  started_commit: null
+  started_commit: daa0e6f1180aab6e7deee0e1a61690a299a72ca9
   closed_commit: null
   result: null
   reason: ''
@@ -731,4 +731,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-05T18:10:08+08:00'
+updated_at: '2026-08-05T18:10:33+08:00'
