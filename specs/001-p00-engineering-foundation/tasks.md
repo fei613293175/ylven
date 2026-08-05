@@ -75,7 +75,7 @@
 - [x] T025 `[P00-022]` Enforce the secret-storage boundary across `.gitignore`, config examples, CI environments, and safety scripts; test detection of credentials, private keys, signing material, server inventory, and accidental evidence leaks.
 - [x] T026 `[P00-023]` Implement the Vue admin application shell, RBAC route guards, permission-denied behavior, audit entry point, and the P00-bound admin states in `web/admin/`; add Vitest and browser/CI screenshot tests.
 - [x] T027 `[P00-024]` Implement the isolated Vue developer portal shell with stable routes and loading/empty/error/success states in `web/developer/`; add Vitest and browser/CI screenshot tests.
-- [ ] T028 `[P00-021..P00-024]` Run provider, secret, Web, RBAC, browser screenshot, visual-diff, and safety tests; finalize evidence, commit cleanly, and close only `P00-W05` through the controller.
+- [x] T028 `[P00-021..P00-024]` Run provider, secret, Web, RBAC, browser screenshot, visual-diff, and safety tests; finalize evidence, commit cleanly, and close only `P00-W05` through the controller.
 
 ## P00 Integration and Delivery
 
