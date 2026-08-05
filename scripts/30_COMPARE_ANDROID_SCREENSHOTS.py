@@ -14,8 +14,10 @@ def score(a:Image.Image,b:Image.Image)->tuple[float,float]:
 def main()->int:
  p=argparse.ArgumentParser(); p.add_argument('--phase',required=True); p.add_argument('--screenshots',required=True); p.add_argument('--report',required=True); a=p.parse_args()
  phase=a.phase.upper(); shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
- with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if phase in r.get('phases','').split('|')]
+ with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if phase in r.get('phases','').split('|') and r.get('surface') == 'ANDROID']
  errors=[]; lines=[f'# Visual Diff Report — {phase}','', '| State | Similarity | Mismatch | Result |','|---|---:|---:|---|']
+ if not rows:
+  lines += ['', 'No Android surface states are bound to this phase.', 'Admin/Web visual evidence is reviewed from the phase evidence package and is not an Android emulator screenshot.']
  for r in rows:
   sid=r['state_id']; actual=shots/f'{sid}.png'; ref=ROOT/r['mockup_path']
   if not actual.is_file():
