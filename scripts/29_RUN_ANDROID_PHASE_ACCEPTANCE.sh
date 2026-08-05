@@ -9,7 +9,9 @@ APK="$(find . -type f -path '*/build/outputs/apk/*/*.apk' | sort | tail -n 1 || 
 if [[ -z "$APK" ]]; then echo 'No Gradle APK found.' >&2; exit 1; fi
 IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 EXPECTED_CODE=$((MAJOR * 1000000 + MINOR * 10000 + PATCH * 100))
-BADGING="$(aapt dump badging "$APK")"
+AAPT="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/build-tools" -type f -name aapt -perm -111 2>/dev/null | sort | tail -n 1)"
+if [[ -z "$AAPT" ]]; then echo 'Android aapt was not found under the configured SDK.' >&2; exit 1; fi
+BADGING="$("$AAPT" dump badging "$APK")"
 grep -q "versionCode='$EXPECTED_CODE' versionName='$VERSION'" <<< "$BADGING" || {
   echo "APK manifest version mismatch: expected $VERSION/$EXPECTED_CODE" >&2
   echo "$BADGING" | head -n 2 >&2
