@@ -99,25 +99,42 @@ features:
   - backend/internal/platform/scheduling/scheduling_test.go
   - docs/evidence/P00-W02.md
 - feature_id: P00-011
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/db/migrations/0001_p00_runtime.sql
+  - backend/internal/platform/database/migrations.go
+  - backend/internal/platform/database/migrations_test.go
+  - docs/evidence/P00-W03.md
 - feature_id: P00-012
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/cache/cache.go
+  - backend/internal/platform/cache/cache_test.go
+  - docs/evidence/P00-W03.md
 - feature_id: P00-013
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/events/events.go
+  - backend/internal/platform/events/events_test.go
+  - docs/evidence/P00-W03.md
 - feature_id: P00-014
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/storage/storage.go
+  - backend/internal/platform/storage/storage_test.go
+  - docs/evidence/P00-W03.md
 - feature_id: P00-015
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - contracts/openapi-skeleton.yaml
+  - contracts/openapi/openapi.sha256
+  - scripts/43_VERIFY_OPENAPI_DRIFT.py
+  - docs/evidence/P00-W03.md
 - feature_id: P00-016
   status: PLANNED
   reason: ''
