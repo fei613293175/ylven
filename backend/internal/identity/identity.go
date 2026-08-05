@@ -49,10 +49,21 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type Session struct {
+	ID string `json:"id"`
+	UserID string `json:"user_id"`
+	AccessDigest string `json:"access_digest"`
+	RefreshDigest string `json:"refresh_digest"`
+	AccessExpiresAt time.Time `json:"access_expires_at"`
+	RefreshExpiresAt time.Time `json:"refresh_expires_at"`
+	RefreshConsumed bool `json:"refresh_consumed"`
+}
+
 type state struct {
 	Challenges map[string]Challenge `json:"challenges"`
 	OTPs map[string]OTP `json:"otps"`
 	Users map[string]User `json:"users"`
+	Sessions map[string]Session `json:"sessions"`
 }
 
 type Store struct {
@@ -62,7 +73,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}}}
 	if path == "" { return s, nil }
 	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) { return s, nil }
@@ -71,6 +82,7 @@ func NewStore(path string) (*Store, error) {
 	if s.data.Challenges == nil { s.data.Challenges = map[string]Challenge{} }
 	if s.data.OTPs == nil { s.data.OTPs = map[string]OTP{} }
 	if s.data.Users == nil { s.data.Users = map[string]User{} }
+	if s.data.Sessions == nil { s.data.Sessions = map[string]Session{} }
 	return s, nil
 }
 
@@ -156,6 +168,42 @@ func (s *Store) CreateUser(challengeID, email, password string) (User, error) {
 	s.data.Users[normalized] = u; c.Consumed = true; s.data.Challenges[challengeID] = c
 	return u, s.persistLocked()
 }
+
+func (s *Store) CreateSession(challengeID, email string) (Session, string, string, error) {
+	normalized, err := NormalizeEmail(email)
+	if err != nil { return Session{}, "", "", err }
+	s.mu.Lock(); defer s.mu.Unlock()
+	c, ok := s.data.Challenges[challengeID]
+	if !ok || c.Email != normalized || c.Purpose != "login" || !c.OTPVerified || c.ExpiresAt.Before(time.Now()) || c.Consumed { return Session{}, "", "", errors.New("login_not_verified") }
+	u, ok := s.data.Users[normalized]
+	if !ok { return Session{}, "", "", errors.New("login_not_verified") }
+	id, err := randomToken(16); if err != nil { return Session{}, "", "", err }
+	access, err := randomToken(32); if err != nil { return Session{}, "", "", err }
+	refresh, err := randomToken(32); if err != nil { return Session{}, "", "", err }
+	now := time.Now().UTC()
+	session := Session{ID:id, UserID:u.ID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour)}
+	s.data.Sessions[id] = session; c.Consumed = true; s.data.Challenges[challengeID] = c
+	return session, access, refresh, s.persistLocked()
+}
+
+func (s *Store) RotateSession(refreshToken string) (Session, string, string, error) {
+	digest := digestToken(refreshToken)
+	s.mu.Lock(); defer s.mu.Unlock()
+	for id, current := range s.data.Sessions {
+		if current.RefreshDigest != digest || current.RefreshConsumed || current.RefreshExpiresAt.Before(time.Now()) { continue }
+		current.RefreshConsumed = true; s.data.Sessions[id] = current
+		access, err := randomToken(32); if err != nil { return Session{}, "", "", err }
+		refresh, err := randomToken(32); if err != nil { return Session{}, "", "", err }
+		newID, err := randomToken(16); if err != nil { return Session{}, "", "", err }
+		now := time.Now().UTC()
+		next := Session{ID:newID, UserID:current.UserID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour)}
+		s.data.Sessions[newID] = next
+		return next, access, refresh, s.persistLocked()
+	}
+	return Session{}, "", "", errors.New("refresh_token_invalid")
+}
+
+func digestToken(token string) string { sum := sha256.Sum256([]byte(token)); return hex.EncodeToString(sum[:]) }
 
 func hashSecret(secret, salt string) string {
 	key := []byte(salt); block := []byte(secret); var result [32]byte

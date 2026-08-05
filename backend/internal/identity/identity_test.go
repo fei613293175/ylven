@@ -20,3 +20,20 @@ func TestRegistrationFlowAndOneTimeOTP(t *testing.T) {
 	if u.Email != "user@example.com" || u.PasswordHash == "correct horse battery" { t.Fatalf("bad user: %+v", u) }
 	if _, err := s.CreateUser(c.ID, u.Email, "another password"); err == nil { t.Fatal("challenge reused") }
 }
+
+func TestSessionRefreshRotatesRefreshToken(t *testing.T) {
+	s, _ := NewStore("")
+	c, _ := s.CreateChallenge("user@example.com", "register")
+	_ = s.VerifyTurnstile(c.ID, "test-pass", true)
+	_, _ = s.CreateOTP(c.ID, "123456")
+	_ = s.VerifyOTP(c.ID, "123456")
+	_, _ = s.CreateUser(c.ID, "user@example.com", "correct horse battery")
+	l, _ := s.CreateChallenge("user@example.com", "login")
+	_, _ = s.CreateOTP(l.ID, "654321")
+	_ = s.VerifyOTP(l.ID, "654321")
+	first, access, refresh, err := s.CreateSession(l.ID, "user@example.com")
+	if err != nil || first.ID == "" || access == "" || refresh == "" { t.Fatalf("session issue failed: %+v %v", first, err) }
+	second, _, nextRefresh, err := s.RotateSession(refresh)
+	if err != nil || second.ID == first.ID || nextRefresh == refresh { t.Fatalf("rotation failed: %+v %v", second, err) }
+	if _, _, _, err := s.RotateSession(refresh); err == nil { t.Fatal("refresh token was reusable") }
+}

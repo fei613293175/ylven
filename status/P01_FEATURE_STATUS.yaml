@@ -57,29 +57,42 @@ features:
   - backend/internal/identity/identity.go::hashSecret PBKDF2-HMAC-SHA256
   - backend/http API /api/v1/auth/register/complete
 - feature_id: P01-007
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.CreateUser mutex and unique email map
+  - backend/db/migrations/0002_p01_identity.sql::users.email UNIQUE
 - feature_id: P01-008
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /api/v1/auth/login/challenge
+  - backend/internal/identity/identity.go::CreateChallenge purpose=login
 - feature_id: P01-009
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /api/v1/auth/login/otp/send
+  - backend/internal/identity/http.go::loginChallenge accepted response for unknown email
 - feature_id: P01-010
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /api/v1/auth/login/otp/verify
+  - backend/internal/identity/identity.go::Store.VerifyOTP
 - feature_id: P01-011
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /api/v1/auth/sessions
+  - backend/internal/identity/identity.go::Store.CreateSession
+  - backend/db/migrations/0002_p01_identity.sql::sessions
 - feature_id: P01-012
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /api/v1/auth/sessions/refresh
+  - backend/internal/identity/identity.go::Store.RotateSession one-time refresh
 - feature_id: P01-013
   status: PLANNED
   reason: ''

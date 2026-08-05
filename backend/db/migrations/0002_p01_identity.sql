@@ -31,3 +31,13 @@ CREATE TABLE IF NOT EXISTS password_credentials (
   password_hash TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id),
+  access_token_digest TEXT NOT NULL,
+  refresh_token_digest TEXT NOT NULL UNIQUE,
+  access_expires_at TIMESTAMPTZ NOT NULL,
+  refresh_expires_at TIMESTAMPTZ NOT NULL,
+  refresh_consumed_at TIMESTAMPTZ
+);
