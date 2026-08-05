@@ -60,25 +60,44 @@ features:
   - android/app/src/androidTest/java/cc/orbexa/ylven/AppShellTest.kt::selectedTabSurvivesStateRestoration
   - docs/evidence/P00-W01.md
 - feature_id: P00-006
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/cmd/core-api/main.go
+  - backend/internal/platform/health/health.go
+  - backend/internal/platform/runtime/runtime_test.go
+  - backend/tests/process_test.go
+  - docs/evidence/P00-W02.md
 - feature_id: P00-007
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/cmd/ai-runtime/main.go
+  - backend/tests/process_test.go
+  - docs/evidence/P00-W02.md
 - feature_id: P00-008
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/cmd/developer-gateway/main.go
+  - backend/tests/process_test.go
+  - docs/evidence/P00-W02.md
 - feature_id: P00-009
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/cmd/worker/main.go
+  - backend/internal/platform/jobs/jobs.go
+  - backend/internal/platform/jobs/jobs_test.go
+  - docs/evidence/P00-W02.md
 - feature_id: P00-010
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/cmd/scheduler/main.go
+  - backend/internal/platform/scheduling/scheduling.go
+  - backend/internal/platform/scheduling/scheduling_test.go
+  - docs/evidence/P00-W02.md
 - feature_id: P00-011
   status: PLANNED
   reason: ''

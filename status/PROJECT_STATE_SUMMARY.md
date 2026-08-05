@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T12:46:29+08:00`
+- Generated: `2026-08-05T12:50:31+08:00`
 - Current phase: `P00`
 - Phase status: `DOING`
 - Current Work Packet: `P00-W02`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P00-W01`
 - Last closed phase: `none`
 - Last closed version: `none`
 - Closed/deferred Work Packets recorded: `1`
 - Closed releases recorded: `0`
 - Git branch: `phase/p00-engineering-foundation`
-- Git HEAD: `4c6a2bd20c33d06bbe9d116c6ae3e25430a5265c`
+- Git HEAD: `031b64f9b893a382595d9c8d6b645381985967ad`
 
 ## Exact next action
 
-`P00-W01` is final at `4c6a2bd20c33d06bbe9d116c6ae3e25430a5265c`. Continue exactly `P00-W02`.
+Implement `P00-W02` (Android 设计系统与四栏应用壳). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 

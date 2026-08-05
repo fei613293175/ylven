@@ -41,14 +41,14 @@
 
 ## Work Packet P00-W02: Runtime Process Shells
 
-- [ ] T010 `[P00-006,P00-007,P00-008]` After controller selection and rereading `work-packets/P00-W02.md`, implement Core API, AI Runtime, and Developer Gateway process identities, versioned health/readiness endpoints, and stable error envelopes in `backend/cmd/` and `backend/internal/platform/health/`.
+- [x] T010 `[P00-006,P00-007,P00-008]` After controller selection and rereading `work-packets/P00-W02.md`, implement Core API, AI Runtime, and Developer Gateway process identities, versioned health/readiness endpoints, and stable error envelopes in `backend/cmd/` and `backend/internal/platform/health/`.
   - API: `/api/health`, `/runtime/health`, `/developer/health` and their readiness counterparts.
   - Tests: process startup, healthy/degraded/unready dependency cases, and response contract tests in `backend/tests/`.
   - Evidence: real command output and request/response fixtures; no static success placeholder.
-- [ ] T011 `[P00-009]` Implement the Worker job envelope, idempotency, bounded retry, and failure archive in `backend/cmd/worker/` and `backend/internal/platform/jobs/`.
+- [x] T011 `[P00-009]` Implement the Worker job envelope, idempotency, bounded retry, and failure archive in `backend/cmd/worker/` and `backend/internal/platform/jobs/`.
   - Tests: duplicate job, retry exhaustion, poison message, and graceful shutdown.
   - Evidence: zero duplicate business side effects in the recorded test.
-- [ ] T012 `[P00-010]` Implement the Scheduler process, lease/lock abstraction, and duplicate-run protection in `backend/cmd/scheduler/` and `backend/internal/platform/scheduling/`.
+- [x] T012 `[P00-010]` Implement the Scheduler process, lease/lock abstraction, and duplicate-run protection in `backend/cmd/scheduler/` and `backend/internal/platform/scheduling/`.
   - Tests: lock contention, lease expiry, clock boundary, and single execution.
   - Evidence: deterministic contention test output.
 - [ ] T013 `[P00-006..P00-010]` Finalize W02 status/evidence, run process tests and public safety gate, commit cleanly, and close only `P00-W02` through the controller.
