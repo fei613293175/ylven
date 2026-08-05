@@ -14,6 +14,7 @@ DOCS = {
     "comparison": "{phase}_FEATURE_COMPLETION_COMPARISON.md",
     "checklist": "{phase}_OWNER_TEST_CHECKLIST.md",
 }
+FINAL_STATUSES = {"IMPLEMENTED", "DEFERRED_WITH_REASON", "BLOCKED_EXTERNAL"}
 
 
 def expected_feature_ids(phase: str) -> set[str]:
@@ -31,8 +32,32 @@ def covered_ids(text: str) -> set[str]:
     return found
 
 
+def table_rows(text: str, phase: str) -> dict[str, list[str]]:
+    rows: dict[str, list[str]] = {}
+    for line in text.splitlines():
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+        if cells and re.fullmatch(rf"{re.escape(phase)}-\d{{3}}", cells[0]):
+            rows[cells[0]] = cells
+    return rows
+
+
+def status_by_feature(phase: str) -> dict[str, str]:
+    path = ROOT / "status" / f"{phase}_FEATURE_STATUS.yaml"
+    if not path.is_file():
+        return {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return {
+        str(item.get("feature_id")): str(item.get("status"))
+        for item in data.get("features", [])
+        if item.get("feature_id")
+    }
+
+
 def validate(phase: str, version: str) -> list[str]:
     ids = expected_feature_ids(phase)
+    canonical_statuses = status_by_feature(phase)
     errors: list[str] = []
     if not ids:
         return [f"no canonical Feature IDs found for {phase}"]
@@ -51,6 +76,42 @@ def validate(phase: str, version: str) -> list[str]:
         missing = sorted(ids - covered_ids(text))
         if missing:
             errors.append(f"{kind} document omits Feature IDs: {', '.join(missing)}")
+        if kind in {"original", "comparison"}:
+            rows = table_rows(text, phase)
+            missing_rows = sorted(ids - set(rows))
+            if missing_rows:
+                errors.append(f"{kind} table has no individual row for: {', '.join(missing_rows)}")
+            for feature_id, cells in rows.items():
+                if kind == "original" and (len(cells) < 2 or len(cells[1]) < 4):
+                    errors.append(f"original row {feature_id} has no concrete planned function")
+                if kind == "comparison":
+                    if len(cells) < 4:
+                        errors.append(f"comparison row {feature_id} must include function, status and evidence/difference")
+                        continue
+                    status = cells[2]
+                    if status not in FINAL_STATUSES:
+                        errors.append(f"comparison row {feature_id} has invalid final status: {status}")
+                    expected_status = canonical_statuses.get(feature_id)
+                    if expected_status and status != expected_status:
+                        errors.append(f"comparison row {feature_id} status differs from status YAML: {status} != {expected_status}")
+                    if len(cells[3]) < 12:
+                        errors.append(f"comparison row {feature_id} has no concrete evidence or difference")
+        if kind == "checklist":
+            checkboxes = re.findall(r"(?m)^\s*-\s*\[(?: |x|X)\]\s+.+$", text)
+            if len(checkboxes) < 10:
+                errors.append("checklist must contain at least 10 executable owner checks")
+            for marker in ("进入路径", "操作步骤", "正确预期", "失败", "恢复", "已知限制"):
+                if marker not in text:
+                    errors.append(f"checklist omits required section or field: {marker}")
+    missing_statuses = sorted(ids - set(canonical_statuses))
+    if missing_statuses:
+        errors.append(f"feature status YAML omits: {', '.join(missing_statuses)}")
+    invalid_statuses = sorted(
+        feature_id for feature_id, status in canonical_statuses.items()
+        if feature_id in ids and status not in FINAL_STATUSES
+    )
+    if invalid_statuses:
+        errors.append(f"features are not in a final release status: {', '.join(invalid_statuses)}")
     return errors
 
 

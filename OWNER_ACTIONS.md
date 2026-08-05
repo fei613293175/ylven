@@ -1,13 +1,13 @@
 # OWNER_ACTIONS
 
-当前开发尚未开始。以下资源在对应阶段需要由项目所有者提供；Codex 必须在真正需要时将其拆成可验证的具体条目，而不是要求提前把所有 Secret 写进聊天或仓库。
+P01 code, isolated staging deployment and automated mock-mode integration can be completed without placing any Secret in Git. The following external production integrations remain owner-controlled and must not be represented as already verified.
 
-| 阶段 | Feature ID | 外部资源 | 当前状态 | 安全提供方式 | 验证标准 |
+| Phase / Feature | Goal | Current state | Owner-controlled input | Safe delivery method | Completion check |
 |---|---|---|---|---|---|
-| P00/P01 | 待具体绑定 | Cloudflare Turnstile staging Site Key/Secret | NOT_REQUIRED_YET | Secret Manager/服务器环境变量 | 后端 siteverify 测试通过且 Token 不可重放 |
-| P00/P01 | 待具体绑定 | 邮件服务与发件域名 | NOT_REQUIRED_YET | Secret Manager/服务器环境变量 | 测试邮箱收到验证码，退信和限流可观测 |
-| P00/P05 | 待具体绑定 | Cloudflare R2 staging Bucket/凭据 | NOT_REQUIRED_YET | Secret Manager/服务器环境变量 | 预签名上传、校验、下载与删除通过 |
-| P00/P04 | 待具体绑定 | Sub2API Base URL/受控集成凭据 | NOT_REQUIRED_YET | Secret Manager/服务器环境变量 | 能力探测矩阵记录文本、流式、取消、视觉、文件和图片结果 |
-| P00/P12 | 待具体绑定 | Linux/Docker staging 主机 | NOT_REQUIRED_YET | SSH Agent/部署平台 Secret | 部署、健康检查、日志和回滚命令通过 |
+| P01 / P01-003 | Real Cloudflare Turnstile siteverify | Adapter implemented; staging explicitly uses mock token | `TURNSTILE_SECRET`, site key, expected hostname/action | Mount `TURNSTILE_SECRET_FILE` on server; never commit it | Valid token passes once; invalid, wrong-host, wrong-action and replay fail |
+| P01 / P01-004, P01-009 | Real registration/login email delivery | SMTP adapter implemented; staging explicitly returns debug OTP | SMTP host, port, username/password and verified sender | Mount `SMTP_PASSWORD_FILE`; set non-secret SMTP fields in deployment env | Test mailbox receives OTP; failed delivery is recorded; response never contains `debug_code` |
+| P01 / auth domain | Dedicated authentication web origin | `auth.orbexa.cc` remains NXDOMAIN; API is temporarily co-hosted on `ai-admin.orbexa.cc` | Cloudflare DNS record and future Turnstile widget hostname | Configure in Cloudflare, then issue TLS certificate | DNS/TLS and `https://auth.orbexa.cc/health/ready` return the YLVEN service |
+| P05 | R2 staging storage | Not required by P01 | R2 bucket and S3-compatible credentials | Server secret files / Secret Manager | Pre-signed upload, download and delete pass |
+| P04 | Sub2API controlled integration | Not required by P01 | Base URL and minimum-scope integration credential | Server secret file / Secret Manager | Capability probe records text, stream, cancel, image and file results |
 
-完整格式见 `docs/24_EXTERNAL_CONFIGURATION_OWNER_ACTIONS_AND_SECRET_HANDLING.md`。
+P01 staging limitations are repeated in `docs/delivery/P01_FEATURE_COMPLETION_COMPARISON.md` and `docs/delivery/P01_OWNER_TEST_CHECKLIST.md` so the release cannot be mistaken for production email or production Turnstile acceptance.

@@ -63,7 +63,7 @@ contracts/release-version-matrix.yaml
 ## 5. 管理后台交付
 
 - P00 / App 1.0.0：交付后台工程壳、健康检查和部署基础，不交付可长期使用的默认密码。
-- **P01 / App 1.1.0：首次交付可访问的 `admin.orbexa.cc`、管理员邮箱和一次性密码。**
+- **P01 / App 1.1.0：首次交付可访问的 `ai-admin.orbexa.cc`、管理员账号和项目所有者指定的测试密码。**
 - 管理员邮箱由本机或服务器私密变量 `OWNER_ADMIN_EMAIL` 提供。
 - Codex 在 staging 生成高强度一次性密码，只写入项目所有者桌面交付目录的 `ADMIN_ACCESS_ONE_TIME.txt`；不得进入 Git、GitHub Artifact、日志或聊天。
 - 首次登录强制修改密码，并使一次性密码失效。

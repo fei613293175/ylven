@@ -1,0 +1,5 @@
+FROM 127.0.0.1:5000/hhy-android-toolchain:r08-api36-cache@sha256:0b4a09d836f3508e68440f231591677704301e42dccec2996fbb88dca7e91738
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       libx11-6 libxext6 libxcb1 libxrender1 libxi6 libxtst6 libnss3 libasound2t64 libpulse0 \
+    && rm -rf /var/lib/apt/lists/*

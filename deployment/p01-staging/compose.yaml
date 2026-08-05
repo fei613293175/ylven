@@ -1,0 +1,42 @@
+name: ylven-p01
+
+services:
+  api:
+    image: ylven-p01-api:${YLVEN_IMAGE_TAG:?set YLVEN_IMAGE_TAG}
+    build:
+      context: ../..
+      dockerfile: deployment/p01-staging/Dockerfile.api
+    container_name: ylven-p01-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:28201:8080"
+    environment:
+      APP_VERSION: "1.1.0-${YLVEN_IMAGE_TAG}"
+      HTTP_ADDR: ":8080"
+      IDENTITY_STORE_PATH: /data/identity.json
+      TURNSTILE_MODE: mock
+      TURNSTILE_MOCK_TOKEN_FILE: /run/secrets/turnstile_mock_token
+      EMAIL_MODE: mock
+      IDENTITY_DEBUG_OTP: "1"
+      OWNER_ADMIN_USERNAME: admin
+      OWNER_ADMIN_EMAIL: admin@ai-admin.orbexa.cc
+      ADMIN_BOOTSTRAP_PASSWORD_FILE: /run/secrets/admin_credential
+    volumes:
+      - /opt/ylven-p01/data:/data
+      - /opt/ylven-p01/secrets/admin_credential:/run/secrets/admin_credential:ro
+      - /opt/ylven-p01/secrets/turnstile_mock_token:/run/secrets/turnstile_mock_token:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

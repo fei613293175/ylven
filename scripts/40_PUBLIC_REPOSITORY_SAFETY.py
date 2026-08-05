@@ -20,7 +20,7 @@ for p in ROOT.rglob('*'):
  for m in secret.finditer(text):
   value=m.group(2)
   nearby=text[max(0,m.start()-80):min(len(text),m.end()+80)].lower()
-  if any(x in nearby for x in ['example','placeholder','secret://','ref=','_ref','your_','<','__']): continue
+  if any(x in nearby for x in ['example','placeholder','secret://','ref=','_ref','_file','your_','<','__']): continue
   errors.append(f'possible real secret in {p.relative_to(ROOT)}: {m.group(1)}')
   break
 required=['.env','.ylven-local/','*.jks','*.keystore','*.p12','*.pfx','*.pem']

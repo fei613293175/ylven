@@ -19,6 +19,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+        val apiBaseUrl = providers.gradleProperty("ylvenApiBaseUrl")
+            .orElse("https://ai-admin.orbexa.cc")
+            .get()
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        val stagingTurnstileToken = providers.gradleProperty("ylvenStagingTurnstileToken")
+            .orElse("")
+            .get()
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "STAGING_TURNSTILE_TOKEN", "\"$stagingTurnstileToken\"")
     }
 
     buildTypes {
@@ -38,7 +50,10 @@ android {
 
     kotlinOptions { jvmTarget = "17" }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"

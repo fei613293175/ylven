@@ -101,8 +101,8 @@ def main() -> int:
             if number in scripts:
                 errors.append(f'duplicate script number {number:02d}')
             scripts[number] = path
-    if set(scripts) != set(range(43)):
-        errors.append(f'scripts must be exactly 00..42; found {sorted(scripts)}')
+    if set(scripts) != set(range(48)):
+        errors.append(f'scripts must be exactly 00..47; found {sorted(scripts)}')
     checks['numbered_script_count'] = len(scripts)
 
     for phase in PHASES:
@@ -199,6 +199,8 @@ def main() -> int:
 
     font_extensions = {'.ttf', '.otf', '.ttc', '.woff', '.woff2'}
     for path in ROOT.rglob('*'):
+        if any(part in FORBIDDEN for part in path.relative_to(ROOT).parts):
+            continue
         if path.is_file() and path.suffix.lower() in font_extensions:
             errors.append(f'font file must not be distributed: {path.relative_to(ROOT)}')
         if path.is_file() and path.suffix.lower() == '.apk':

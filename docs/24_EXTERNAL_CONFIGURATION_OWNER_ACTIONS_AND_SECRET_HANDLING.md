@@ -19,7 +19,7 @@
 
 ## 4. 域名规划
 
-首期使用 `api.orbexa.cc`、`auth.orbexa.cc`、`admin.orbexa.cc`、`developer.orbexa.cc`、`docs.orbexa.cc`、`gateway.orbexa.cc`、`files.orbexa.cc`、`assets.orbexa.cc`、`download.orbexa.cc`、`status.orbexa.cc`、`sub2api.orbexa.cc` 和受限的 `sub2api-admin.orbexa.cc`。外部暴露面必须最小化，数据库、Redis、NATS 和内部 Worker 不直接公网开放。
+首期使用 `api.orbexa.cc`、`auth.orbexa.cc`、`ai-admin.orbexa.cc`、`developer.orbexa.cc`、`docs.orbexa.cc`、`gateway.orbexa.cc`、`files.orbexa.cc`、`assets.orbexa.cc`、`download.orbexa.cc`、`status.orbexa.cc`、`sub2api.orbexa.cc` 和受限的 `sub2api-admin.orbexa.cc`。外部暴露面必须最小化，数据库、Redis、NATS 和内部 Worker 不直接公网开放。
 
 ## 5. 验证方式
 

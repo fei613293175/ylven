@@ -1,0 +1,16 @@
+FROM golang:1.26.5 AS build
+
+WORKDIR /src/backend
+COPY backend/go.mod ./
+COPY backend/cmd ./cmd
+COPY backend/internal ./internal
+COPY backend/tests ./tests
+RUN go test ./... && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /out/ylven-core-api ./cmd/core-api
+
+FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=build /out/ylven-core-api /ylven-core-api
+USER 65532:65532
+EXPOSE 8080
+ENTRYPOINT ["/ylven-core-api"]

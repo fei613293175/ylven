@@ -24,7 +24,7 @@ domains:
   health_check: /health/ready
   owner_action: Codex 在本阶段开始及发布前生成 DNS_ACTION_REQUIRED.md，并明确提醒项目所有者完成解析；未获得真实目标值时不得猜测 IP/CNAME。
   evidence: dist/releases/P01/DOMAIN_DNS_STATUS.md
-- host: admin.orbexa.cc
+- host: ai-admin.orbexa.cc
   required_by_phase: P01
   required_by_version: 1.1.0
   purpose: 专业管理后台

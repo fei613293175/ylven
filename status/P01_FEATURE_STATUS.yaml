@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P01
 phase_title: 统一身份后端、邮箱认证与管理后台基础
-overall_status: IN_PROGRESS
-updated_at: '2026-08-05T17:05:00+08:00'
+overall_status: READY_FOR_RELEASE
+updated_at: '2026-08-06T02:12:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -34,13 +34,15 @@ features:
   evidence:
   - backend/internal/identity/identity.go::Store.VerifyTurnstile
   - backend/internal/identity/http.go::POST /internal/v1/security/turnstile/verify
-  - backend/internal/identity/http.go::TURNSTILE_MODE mock/external boundary
+  - backend/internal/identity/integrations.go::CloudflareTurnstileVerifier hostname/action checks
+  - backend/internal/identity/integrations_test.go::TestCloudflareTurnstileVerifierChecksHostnameAndAction
 - feature_id: P01-004
   status: IMPLEMENTED
   reason: ''
   evidence:
   - backend/internal/identity/identity.go::Store.CreateOTP
   - backend/internal/identity/http.go::POST /api/v1/auth/register/otp/send
+  - backend/internal/identity/integrations.go::SMTPMailer STARTTLS adapter
   - backend/db/migrations/0002_p01_identity.sql::email_otps
 - feature_id: P01-005
   status: IMPLEMENTED
@@ -54,7 +56,7 @@ features:
   reason: ''
   evidence:
   - backend/internal/identity/identity.go::Store.CreateUser
-  - backend/internal/identity/identity.go::hashSecret PBKDF2-HMAC-SHA256
+  - backend/internal/identity/identity.go::hashSecret salted iterated HMAC-SHA256
   - backend/http API /api/v1/auth/register/complete
 - feature_id: P01-007
   status: IMPLEMENTED
@@ -74,6 +76,7 @@ features:
   evidence:
   - backend/internal/identity/http.go::POST /api/v1/auth/login/otp/send
   - backend/internal/identity/http.go::loginChallenge accepted response for unknown email
+  - backend/internal/identity/integrations.go::SMTPMailer and delivery status boundary
 - feature_id: P01-010
   status: IMPLEMENTED
   reason: ''
@@ -127,8 +130,9 @@ features:
   status: IMPLEMENTED
   reason: ''
   evidence:
-  - backend/internal/identity/identity.go::AuditEvent and logout audit records
+  - backend/internal/identity/identity.go::challenge, OTP, registration, login, refresh, logout and rate-limit audit records
   - backend/internal/identity/identity.go::Store.AuditSnapshot
+  - backend/internal/identity/identity_test.go::audit secret-leak assertions
 - feature_id: P01-019
   status: IMPLEMENTED
   reason: ''
@@ -181,8 +185,9 @@ features:
   status: IMPLEMENTED
   reason: ''
   evidence:
-  - backend/internal/identity/http.go::POST /admin/v1/auth/login and GET /admin/v1/auth/sessions
+  - backend/internal/identity/http.go::POST login/logout and GET /admin/v1/auth/sessions
   - backend/internal/identity/identity.go::AdminUser, AdminSession and Store.AdminLogin
+  - backend/internal/identity/identity.go::Store.AdminLogout server-side revocation
   - backend/internal/identity/identity_test.go::TestAdminHTTPRequiresBearerAndStepUp
   - web/admin/src/App.js::administrator login and YL-M-038
 - feature_id: P01-027

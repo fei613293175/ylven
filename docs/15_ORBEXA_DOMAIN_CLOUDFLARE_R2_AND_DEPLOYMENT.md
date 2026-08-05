@@ -6,7 +6,7 @@
 |---|---|---|
 | `api.orbexa.cc` | Android Mobile BFF 与 YLVEN 原生 API | Cloudflare 橙云、WAF、限流 |
 | `gateway.orbexa.cc` | 对外 OpenAI 兼容/公共 API | 橙云、严格 Key 限流 |
-| `admin.orbexa.cc` | 专业管理后台 | 橙云，建议 Cloudflare Access |
+| `ai-admin.orbexa.cc` | YLVEN 专业管理后台 | 橙云，建议 Cloudflare Access |
 | `developer.orbexa.cc` | 开发者中心 Web | 橙云 |
 | `docs.orbexa.cc` | API 文档与帮助 | CDN |
 | `auth.orbexa.cc` | Turnstile 移动验证页与未来 OIDC | 橙云，严格 CSP |

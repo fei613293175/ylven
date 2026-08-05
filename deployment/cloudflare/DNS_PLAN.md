@@ -4,7 +4,7 @@
 |---|---|---|---|
 | api.orbexa.cc | Android/Mobile API | Orange cloud | HTTPS only through reverse proxy/WAF |
 | auth.orbexa.cc | login/registration/OIDC | Orange cloud | strict rate limit and bot protection |
-| admin.orbexa.cc | management UI | Orange cloud | access policy/MFA recommended |
+| ai-admin.orbexa.cc | YLVEN management UI | Orange cloud | access policy/MFA recommended |
 | developer.orbexa.cc | developer portal | Orange cloud | public HTTPS |
 | docs.orbexa.cc | public API docs | Orange cloud | public HTTPS |
 | gateway.orbexa.cc | public developer API | Orange cloud | API WAF, rate/budget enforcement |

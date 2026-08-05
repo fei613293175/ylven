@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+VERSION='1.3.0'
+BASE='/opt/android-build-coordinator'
+CONFIG_ROOT='/etc/android-build-coordinator'
+PROJECT_ROOT="$CONFIG_ROOT/projects.d"
+STATE_ROOT='/var/lib/android-build-coordinator'
+LOG_ROOT='/var/log/android-build-coordinator'
+GLOBAL_LOCK='/run/lock/orbexa-android-build.lock'
+EVENT_LOG="$LOG_ROOT/events.tsv"
+ACTIVE_STATE="$STATE_ROOT/active.state"
+BUILDER_IMAGE='orbexa/android-builder:gradle8.9-api35-v1'
+BUILDER_IMAGE_ID='sha256:fdd6bc537b1f3141bdbaf99cb4f0bcdbd0bb388574a9b7783f3ce1cccd3eefb3'
+BUILDER_REGISTRY_REPOSITORY='orbexa/android-builder'
+BUILDER_MANIFEST_DIGEST='sha256:531539ed21dfc6707d71813f28504927b174ef350be12f505736cd5954472351'
+BASE_REGISTRY_REPOSITORY='hhy-android-toolchain'
+BASE_MANIFEST_DIGEST='sha256:0b4a09d836f3508e68440f231591677704301e42dccec2996fbb88dca7e91738'
+LOCAL_REGISTRY='http://127.0.0.1:5000'
+
+die() { echo "ANDROID_BUILD_COORDINATOR_ERROR $*" >&2; exit 64; }
+usage() {
+  cat >&2 <<'EOF'
+Usage:
+  android-build status
+  android-build doctor
+  android-build projects
+  android-build run --project <slug> [--kind build|emulator|release] [--queue-timeout seconds] -- <command> [args...]
+  android-build docker-run --project <slug> [--kind build|emulator|release] [--queue-timeout seconds] -- <docker run args...>
+EOF
+}
+
+require_root() { [[ "$(id -u)" == '0' ]] || die 'must run as root'; }
+require_layout() {
+  install -d -m 0750 "$STATE_ROOT" "$LOG_ROOT" "$PROJECT_ROOT"
+  if [[ ! -e "$GLOBAL_LOCK" ]]; then
+    install -m 0600 /dev/null "$GLOBAL_LOCK"
+  else
+    chmod 0600 "$GLOBAL_LOCK"
+  fi
+  touch "$EVENT_LOG"
+  chmod 0640 "$EVENT_LOG"
+}
+project_config() {
+  local slug="$1"
+  [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{1,31}$ ]] || die "invalid project slug: $slug"
+  local config="$PROJECT_ROOT/$slug.conf"
+  [[ -r "$config" ]] || die "project is not registered: $slug"
+  # Project files are root-owned configuration, not user input.
+  # shellcheck disable=SC1090
+  source "$config"
+  [[ "${PROJECT_SLUG:-}" == "$slug" ]] || die "invalid project registration: $slug"
+  [[ "${PROJECT_RUN_ROOT:-}" == /opt/android-builds/* ]] || die "invalid run root: $slug"
+  install -d -m 0750 "$PROJECT_RUN_ROOT/runs" "$PROJECT_RUN_ROOT/artifacts" "$PROJECT_RUN_ROOT/gradle-cache" "$PROJECT_RUN_ROOT/avd"
+}
+
+float_load() { awk '{print $1}' /proc/loadavg; }
+available_mb() { awk '/MemAvailable:/ {print int($2/1024); exit}' /proc/meminfo; }
+disk_mb() { df -Pm /opt | awk 'NR==2 {print $4}'; }
+registry_digest() {
+  local repository="$1"
+  local tag="$2"
+  curl --fail --silent --show-error --head \
+    --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
+    "$LOCAL_REGISTRY/v2/$repository/manifests/$tag" \
+    | awk 'tolower($1) == "docker-content-digest:" {gsub("\r", "", $2); print $2; exit}'
+}
+verify_toolchain_integrity() {
+  command -v docker >/dev/null || die 'docker missing'
+  command -v curl >/dev/null || die 'curl missing'
+  curl --fail --silent --show-error "$LOCAL_REGISTRY/v2/" >/dev/null || die 'local registry unavailable'
+  TOOLCHAIN_IMAGE_ID="$(docker image inspect "$BUILDER_IMAGE" --format '{{.Id}}' 2>/dev/null)" || die "builder image missing: $BUILDER_IMAGE"
+  [[ "$TOOLCHAIN_IMAGE_ID" == "$BUILDER_IMAGE_ID" ]] || die "builder image ID mismatch: actual=$TOOLCHAIN_IMAGE_ID expected=$BUILDER_IMAGE_ID"
+  TOOLCHAIN_BUILDER_DIGEST="$(registry_digest "$BUILDER_REGISTRY_REPOSITORY" 'gradle8.9-api35-v1')"
+  [[ "$TOOLCHAIN_BUILDER_DIGEST" == "$BUILDER_MANIFEST_DIGEST" ]] || die "builder manifest mismatch: actual=$TOOLCHAIN_BUILDER_DIGEST expected=$BUILDER_MANIFEST_DIGEST"
+  TOOLCHAIN_BASE_DIGEST="$(registry_digest "$BASE_REGISTRY_REPOSITORY" 'r08-api36-cache')"
+  [[ "$TOOLCHAIN_BASE_DIGEST" == "$BASE_MANIFEST_DIGEST" ]] || die "base manifest mismatch: actual=$TOOLCHAIN_BASE_DIGEST expected=$BASE_MANIFEST_DIGEST"
+}
+
+active_heavy_processes() {
+  pgrep -af 'GradleDaemon|org\.gradle\.launcher\.GradleMain|/emulator([^ ]|$)|qemu-system' || true
+}
+active_build_containers() {
+  docker ps --format '{{.Names}}|{{.Image}}' 2>/dev/null | grep -Ei '(^|[-_])(android|gradle|emulator|build)([-_]|$)' || true
+}
+
+preflight() {
+  local kind="$1"
+  local cpus
+  cpus="$(nproc)"
+  local load
+  load="$(float_load)"
+  local max_load
+  max_load="$(awk -v c="$cpus" 'BEGIN { printf "%.2f", c * 1.25 }')"
+  local memory
+  memory="$(available_mb)"
+  local minimum=6144
+  [[ "$kind" == 'emulator' ]] && minimum=8192
+  local disk
+  disk="$(disk_mb)"
+  awk -v a="$load" -v b="$max_load" 'BEGIN {exit !(a <= b)}' || die "load too high: load=$load limit=$max_load"
+  (( memory >= minimum )) || die "available memory too low: ${memory}MiB required=${minimum}MiB"
+  (( disk >= 20480 )) || die "free /opt space too low: ${disk}MiB"
+  local processes
+  processes="$(active_heavy_processes)"
+  [[ -z "$processes" ]] || die "uncoordinated Android process already active"
+  local containers
+  containers="$(active_build_containers)"
+  [[ -z "$containers" ]] || die "uncoordinated Android container already active"
+  printf 'ANDROID_PREFLIGHT_PASS kind=%s load=%s/%s mem_available_mib=%s disk_free_mib=%s\n' "$kind" "$load" "$max_load" "$memory" "$disk"
+}
+
+status() {
+  require_layout
+  local lock_state=free
+  if ! flock -n "$GLOBAL_LOCK" -c ':' 2>/dev/null; then lock_state=busy; fi
+  echo "ANDROID_BUILD_COORDINATOR version=$VERSION global_lock=$lock_state"
+  if [[ -s "$ACTIVE_STATE" ]]; then
+    echo 'ACTIVE_STATE:'
+    sed -n '1,20p' "$ACTIVE_STATE"
+  else
+    echo 'ACTIVE_STATE: none'
+  fi
+  echo 'HEAVY_PROCESSES:'
+  active_heavy_processes
+  echo 'HEAVY_CONTAINERS:'
+  active_build_containers
+}
+
+doctor() {
+  require_layout
+  command -v flock >/dev/null || die 'flock missing'
+  command -v awk >/dev/null || die 'awk missing'
+  [[ "$(nproc)" -ge 4 ]] || die 'fewer than 4 CPUs'
+  [[ -d /run/lock ]] || die '/run/lock missing'
+  verify_toolchain_integrity
+  echo "ANDROID_DOCTOR_PASS version=$VERSION image=$BUILDER_IMAGE image_id=$TOOLCHAIN_IMAGE_ID builder_manifest=$TOOLCHAIN_BUILDER_DIGEST base_manifest=$TOOLCHAIN_BASE_DIGEST cpus=$(nproc) mem_available_mib=$(available_mb) disk_free_mib=$(disk_mb)"
+}
+
+projects() {
+  require_layout
+  for config in "$PROJECT_ROOT"/*.conf; do
+    [[ -f "$config" ]] || continue
+    unset PROJECT_SLUG PROJECT_RUN_ROOT PROJECT_SOURCE_ROOT PROJECT_NOTES
+    # shellcheck disable=SC1090
+    source "$config"
+    printf '%s|run_root=%s|source_root=%s|notes=%s\n' "$PROJECT_SLUG" "$PROJECT_RUN_ROOT" "${PROJECT_SOURCE_ROOT:-}" "${PROJECT_NOTES:-}"
+  done
+}
+
+run_job() {
+  local mode="$1"
+  local project="$2"
+  local kind="$3"
+  local queue_timeout="$4"
+  shift 4
+  local -a command_args=("$@")
+  ((${#command_args[@]} > 0)) || die 'missing command after --'
+  project_config "$project"
+  exec 9>"$GLOBAL_LOCK"
+  if ! flock -w "$queue_timeout" 9; then
+    echo "ANDROID_BUILD_QUEUE_TIMEOUT after ${queue_timeout}s" >&2
+    exit 75
+  fi
+  local project_lock="$STATE_ROOT/${project}.lock"
+  exec 8>"$project_lock"
+  if ! flock -n 8; then
+    echo "ANDROID_BUILD_PROJECT_LOCK_BUSY project=$project" >&2
+    exit 75
+  fi
+  verify_toolchain_integrity
+  printf 'ANDROID_TOOLCHAIN_INTEGRITY_PASS image_id=%s builder_manifest=%s base_manifest=%s\n' "$TOOLCHAIN_IMAGE_ID" "$TOOLCHAIN_BUILDER_DIGEST" "$TOOLCHAIN_BASE_DIGEST"
+  preflight "$kind"
+
+  local run_id
+  run_id="$(date -u +%Y%m%dT%H%M%SZ)-${project}-${kind}-$$"
+  local run_root="$PROJECT_RUN_ROOT/runs/$run_id"
+  install -d -m 0750 "$run_root" "$run_root/artifacts" "$run_root/avd"
+  local started
+  started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  {
+    printf 'run_id=%s\n' "$run_id"
+    printf 'project=%s\n' "$project"
+    printf 'kind=%s\n' "$kind"
+    printf 'mode=%s\n' "$mode"
+    printf 'pid=%s\n' "$$"
+    printf 'started_at=%s\n' "$started"
+    printf 'host=%s\n' "$(hostname -s)"
+  } > "$ACTIVE_STATE.tmp"
+  mv -f "$ACTIVE_STATE.tmp" "$ACTIVE_STATE"
+  printf '%s\tSTART\t%s\t%s\t%s\n' "$started" "$project" "$kind" "$run_id" >> "$EVENT_LOG"
+
+  COORD_PROJECT="$project"
+  COORD_KIND="$kind"
+  COORD_RUN_ID="$run_id"
+
+  cleanup() {
+    local rc=$?
+    trap - EXIT INT TERM
+    printf '%s\tEND\t%s\t%s\t%s\trc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$COORD_PROJECT" "$COORD_KIND" "$COORD_RUN_ID" "$rc" >> "$EVENT_LOG"
+    rm -f "$ACTIVE_STATE" "$ACTIVE_STATE.tmp"
+    exit "$rc"
+  }
+  trap cleanup EXIT INT TERM
+
+  export ANDROID_BUILD_PROJECT="$project"
+  export ANDROID_BUILD_KIND="$kind"
+  export ANDROID_BUILD_RUN_ID="$run_id"
+  export ANDROID_BUILD_ROOT="$run_root"
+  export ANDROID_BUILD_ARTIFACT_ROOT="$run_root/artifacts"
+  export ANDROID_AVD_HOME="$run_root/avd"
+  export GRADLE_USER_HOME="$PROJECT_RUN_ROOT/gradle-cache"
+  export ANDROID_BUILD_COORDINATED=1
+  printf 'ANDROID_BUILD_LOCK_ACQUIRED project=%s kind=%s run_id=%s mode=%s\n' "$project" "$kind" "$run_id" "$mode"
+  if [[ "$mode" == 'docker-run' ]]; then
+    local cpus=4 memory=6g
+    [[ "$kind" == 'emulator' ]] && memory=5g
+    docker run --rm \
+      --label orbexa.android.build=1 \
+      --label "orbexa.android.project=$project" \
+      --label "orbexa.android.run=$run_id" \
+      --cpus "$cpus" --memory "$memory" --memory-swap "$memory" --pids-limit 2048 \
+      --env "ANDROID_BUILD_PROJECT=$project" \
+      --env "ANDROID_BUILD_KIND=$kind" \
+      --env "ANDROID_BUILD_RUN_ID=$run_id" \
+      --env ANDROID_BUILD_ROOT=/run/android-build \
+      --env ANDROID_BUILD_ARTIFACT_ROOT=/artifacts \
+      --env ANDROID_AVD_HOME=/run/android-build/avd \
+      --env GRADLE_USER_HOME=/gradle-cache \
+      --volume "$PROJECT_RUN_ROOT/gradle-cache:/gradle-cache" \
+      --volume "$run_root:/run/android-build" \
+      --volume "$run_root/artifacts:/artifacts" \
+      "${command_args[@]}"
+  else
+    "${command_args[@]}"
+  fi
+}
+
+parse_job() {
+  local mode="$1"
+  shift
+  local project='' kind=build queue_timeout=21600
+  while (($# > 0)); do
+    case "$1" in
+      --project) [[ $# -ge 2 ]] || die 'missing --project value'; project="$2"; shift 2 ;;
+      --kind) [[ $# -ge 2 ]] || die 'missing --kind value'; kind="$2"; shift 2 ;;
+      --queue-timeout) [[ $# -ge 2 ]] || die 'missing --queue-timeout value'; queue_timeout="$2"; shift 2 ;;
+      --) shift; break ;;
+      *) die "unexpected option: $1" ;;
+    esac
+  done
+  [[ -n "$project" ]] || die '--project is required'
+  [[ "$kind" =~ ^(build|emulator|release)$ ]] || die "invalid --kind: $kind"
+  [[ "$queue_timeout" =~ ^[0-9]+$ ]] || die 'queue timeout must be an integer'
+  run_job "$mode" "$project" "$kind" "$queue_timeout" "$@"
+}
+
+main() {
+  require_root
+  local command="${1:-}"
+  case "$command" in
+    status) shift; (($# == 0)) || die 'status takes no options'; status ;;
+    doctor) shift; (($# == 0)) || die 'doctor takes no options'; doctor ;;
+    projects) shift; (($# == 0)) || die 'projects takes no options'; projects ;;
+    run|docker-run) shift; parse_job "$command" "$@" ;;
+    -h|--help|'') usage; [[ -n "$command" ]] || exit 2 ;;
+    *) usage; die "unknown command: $command" ;;
+  esac
+}
+
+main "$@"

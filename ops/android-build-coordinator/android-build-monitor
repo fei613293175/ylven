@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+LOG_ROOT='/var/log/android-build-coordinator'
+mkdir -p "$LOG_ROOT"
+event_log="$LOG_ROOT/monitor.tsv"
+now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+process_list="$(pgrep -f 'GradleDaemon|org\.gradle\.launcher\.GradleMain|/emulator([^ ]|$)|qemu-system' || true)"
+if [[ -n "$process_list" ]]; then
+  process_count="$(wc -l <<< "$process_list" | tr -d ' ')"
+else
+  process_count=0
+fi
+container_count="$(docker ps --format '{{.Names}}' 2>/dev/null | grep -Eic '(^|[-_])(android|gradle|emulator|build)([-_]|$)' || true)"
+lock_state=free
+if ! flock -n /run/lock/orbexa-android-build.lock -c ':' 2>/dev/null; then lock_state=busy; fi
+if (( process_count > 0 || container_count > 0 )) && [[ "$lock_state" == free ]]; then
+  printf '%s\tUNCOORDINATED\tprocesses=%s\tcontainers=%s\n' "$now" "$process_count" "$container_count" >> "$event_log"
+  logger -t android-build-coordinator "uncoordinated Android workload processes=$process_count containers=$container_count" 2>/dev/null || true
+else
+  printf '%s\tOK\tlock=%s\tprocesses=%s\tcontainers=%s\n' "$now" "$lock_state" "$process_count" "$container_count" >> "$event_log"
+fi

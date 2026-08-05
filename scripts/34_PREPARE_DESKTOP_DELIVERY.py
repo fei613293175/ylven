@@ -129,14 +129,20 @@ def prepare_delivery(
         "git_commit": provenance.get("commit_sha"),
         "apk_name": apk.name,
         "apk_sha256": expected["apk_sha256"],
+        "apk_size": apk.stat().st_size,
         "artifact_origin": "github-actions",
+        "source_apk": f"github-actions-run-{run_id}/{apk.name}" if run_id is not None else f"github-actions/{apk.name}",
         "workflow_run_id": run_id,
+        "design_system_version": "YL-DS-1.2.0",
         "self_test_fixture": False,
     }
     (dest / "BUILD_INFO.json").write_text(json.dumps(build_info, indent=2) + "\n", encoding="utf-8")
     acceptance = (root / "templates" / "OWNER_ACCEPTANCE_TEMPLATE.md").read_text(encoding="utf-8")
     acceptance = acceptance.replace("YLVEN-Pxx-test.apk", apk.name).replace("Pxx", phase)
     (dest / "OWNER_ACCEPTANCE.md").write_text(acceptance, encoding="utf-8")
+    owner_actions = root / "OWNER_ACTIONS.md"
+    if owner_actions.is_file():
+        shutil.copy2(owner_actions, dest / "OWNER_ACTIONS.md")
 
     lines = []
     for path in sorted(

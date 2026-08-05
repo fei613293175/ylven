@@ -20,7 +20,10 @@ grep -q "versionCode='$EXPECTED_CODE' versionName='$VERSION'" <<< "$BADGING" || 
 adb wait-for-device
 adb install -r "$APK"
 # The actual Compose test suite must enumerate Interaction IDs and emit state screenshots.
-./gradlew --no-daemon -PylvenVersionName="$VERSION" connectedDebugAndroidTest
+./gradlew --no-daemon -PylvenVersionName="$VERSION" -PylvenApiBaseUrl="https://ai-admin.orbexa.cc" -PylvenStagingTurnstileToken="test-pass" connectedDebugAndroidTest
+if [[ "$PHASE" == "P01" ]]; then
+  adb pull /sdcard/Android/data/cc.orbexa.ylven/files/screenshots/. build/owner-release/screenshots/
+fi
 cp "$APK" "build/owner-release/YLVEN-${VERSION}-${PHASE}.apk"
 python scripts/30_COMPARE_ANDROID_SCREENSHOTS.py --phase "$PHASE" --screenshots build/owner-release/screenshots --report build/owner-release/VISUAL_DIFF_REPORT.md
 python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py

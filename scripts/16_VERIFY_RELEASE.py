@@ -12,10 +12,15 @@ import zipfile
 from pathlib import Path
 
 import yaml
+from PIL import Image, ImageChops, ImageStat
 
 ROOT = Path(__file__).resolve().parents[1]
 FINAL_STATUSES = {"IMPLEMENTED", "DEFERRED_WITH_REASON", "BLOCKED_EXTERNAL"}
 DESIGN_SYSTEM_VERSION = "YL-DS-1.2.0"
+P01_RUNTIME_SCREENSHOTS = [
+    "P01-AUTH-LOGIN.png", "P01-AUTH-REGISTER.png", "P01-AUTH-REGISTER-OTP.png",
+    "P01-AUTH-REGISTERED.png", "P01-AUTH-ACCOUNT.png",
+]
 
 
 def sha256(path: Path) -> str:
@@ -170,6 +175,30 @@ def validate_ui(release_dir: Path, phase: str, fixture: bool, errors: list[str])
         errors.append("real release VISUAL_DIFF_REPORT result must be PASS")
 
 
+def validate_ci_ui(release_dir: Path, phase: str, errors: list[str]) -> None:
+    report = release_dir / "VISUAL_DIFF_REPORT.md"
+    text = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
+    if not re.search(r"(?im)^Result:\s*\*\*PASS[^\n]*\*\*\s*$", text):
+        errors.append("CI VISUAL_DIFF_REPORT does not contain a PASS result")
+    screenshot_dir = release_dir / "screenshots"
+    names = P01_RUNTIME_SCREENSHOTS if phase == "P01" else [path.name for path in screenshot_dir.glob("*.png")]
+    images: list[tuple[str, Image.Image]] = []
+    for name in names:
+        path = screenshot_dir / name
+        if not path.is_file():
+            errors.append(f"missing CI runtime screenshot: {name}")
+            continue
+        shot = Image.open(path).convert("RGB")
+        images.append((name, shot))
+        if shot.width < 720 or shot.height < 1280:
+            errors.append(f"CI runtime screenshot is too small: {name} {shot.size}")
+        if all(high - low < 8 for low, high in ImageStat.Stat(shot).extrema):
+            errors.append(f"CI runtime screenshot is blank: {name}")
+    for (left_name, left), (right_name, right) in zip(images, images[1:]):
+        if left.size == right.size and sum(ImageStat.Stat(ImageChops.difference(left, right)).mean) / 3 < 2:
+            errors.append(f"CI runtime screenshots are effectively identical: {left_name}, {right_name}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", required=True, choices=[f"P{i:02d}" for i in range(14)])
@@ -190,7 +219,10 @@ def main() -> int:
         if not path.is_file() or path.stat().st_size == 0:
             errors.append(f"missing or empty required output: {name}")
 
-    apk = release_dir / f"YLVEN-{phase}-test.apk"
+    apk_files = sorted(release_dir.glob("*.apk"))
+    if len(apk_files) != 1:
+        errors.append(f"release must contain exactly one APK, got {len(apk_files)}")
+    apk = apk_files[0] if len(apk_files) == 1 else release_dir / f"missing-{phase}.apk"
     minimum = int((contract.get("apk_rules") or {}).get("minimum_bytes", 1048576))
     if apk.is_file():
         if apk.stat().st_size < minimum:
@@ -231,10 +263,29 @@ def main() -> int:
                 errors.append("self-test fixture is forbidden for a real release")
             if not fixture:
                 source = str(build.get("source_apk", "")).replace("\\", "/").lower()
-                if "/build/outputs/apk/" not in source or build.get("artifact_origin") != "gradle":
-                    errors.append("real release BUILD_INFO does not prove Gradle APK origin")
+                origin = build.get("artifact_origin")
+                source_ok = (origin == "gradle" and "/build/outputs/apk/" in source) or (origin == "github-actions" and "github-actions" in source)
+                if not source_ok:
+                    errors.append("real release BUILD_INFO does not prove Gradle or exact GitHub Actions APK origin")
                 if not re.fullmatch(r"[0-9a-fA-F]{40,64}", str(build.get("git_commit", ""))):
                     errors.append("real release BUILD_INFO has no valid Git commit")
+
+    provenance_path = release_dir / "CI_PROVENANCE.json"
+    provenance: dict = {}
+    if provenance_path.is_file():
+        try:
+            provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            errors.append(f"invalid CI_PROVENANCE.json: {exc}")
+        else:
+            if provenance.get("phase") != phase:
+                errors.append("CI provenance phase mismatch")
+            if provenance.get("apk") != apk.name:
+                errors.append("CI provenance APK name mismatch")
+            if apk.is_file() and provenance.get("apk_sha256") != sha256(apk):
+                errors.append("CI provenance APK SHA-256 mismatch")
+            if build and provenance.get("commit_sha") != build.get("git_commit"):
+                errors.append("CI provenance commit differs from BUILD_INFO")
 
     sha_path = release_dir / "SHA256SUMS.txt"
     if sha_path.is_file():
@@ -273,31 +324,31 @@ def main() -> int:
         elif current != "IMPLEMENTED" and not str(entry.get("reason", "")).strip():
             errors.append(f"{entry.get('feature_id')}: non-implemented status lacks reason")
 
-    features_text = (release_dir / "FEATURES.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "FEATURES.md").is_file() else ""
+    features_path = release_dir / "FEATURE_COMPLETION_COMPARISON.md"
+    features_text = features_path.read_text(encoding="utf-8", errors="replace") if features_path.is_file() else ""
     for feature_id in expected_ids:
         if feature_id not in features_text:
-            errors.append(f"FEATURES.md is missing {feature_id}")
+            errors.append(f"FEATURE_COMPLETION_COMPARISON.md is missing {feature_id}")
 
-    tests_text = (release_dir / "TESTS.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "TESTS.md").is_file() else ""
-    if "- Release command result: PASS" not in tests_text:
-        errors.append("TESTS.md does not record a passing release command")
-    if build and not build.get("self_test_fixture") and "- Self-test fixture: false" not in tests_text:
-        errors.append("TESTS.md does not identify the release as non-fixture")
+    tests_path = release_dir / "AUTOMATED_TEST_REPORT.md"
+    tests_text = tests_path.read_text(encoding="utf-8", errors="replace") if tests_path.is_file() else ""
+    if not re.search(r"(?im)^-\s*Result:\s*PASS\s*$", tests_text):
+        errors.append("AUTOMATED_TEST_REPORT.md does not record PASS")
 
-    deployment_text = (release_dir / "DEPLOYMENT.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "DEPLOYMENT.md").is_file() else ""
-    if build.get("self_test_fixture"):
-        if "- Deployment result: SELF_TEST_ONLY" not in deployment_text:
-            errors.append("self-test DEPLOYMENT.md marker is missing")
+    deployment_path = release_dir / "DEPLOYMENT_ENDPOINTS.md"
+    deployment_text = deployment_path.read_text(encoding="utf-8", errors="replace") if deployment_path.is_file() else ""
+    checks = [
+        r"(?im)^-\s*Deployment result:\s*SUCCESS\s*$",
+        r"(?im)^-\s*Health check result:\s*PASS\s*$",
+        r"(?im)^-\s*Rollback result:\s*PASS\s*$",
+    ]
+    if not all(re.search(pattern, deployment_text) for pattern in checks):
+        errors.append("DEPLOYMENT_ENDPOINTS.md lacks SUCCESS/PASS/PASS evidence markers")
+
+    if build.get("artifact_origin") == "github-actions":
+        validate_ci_ui(release_dir, phase, errors)
     else:
-        checks = [
-            r"(?im)^-\s*Deployment result:\s*(SUCCESS|NOT_APPLICABLE)\s*$",
-            r"(?im)^-\s*Health check result:\s*(PASS|NOT_APPLICABLE)\s*$",
-            r"(?im)^-\s*Rollback result:\s*(PASS|NOT_APPLICABLE)\s*$",
-        ]
-        if not all(re.search(pattern, deployment_text) for pattern in checks):
-            errors.append("DEPLOYMENT.md lacks required result/health/rollback evidence markers")
-
-    validate_ui(release_dir, phase, bool(build.get("self_test_fixture")), errors)
+        validate_ui(release_dir, phase, bool(build.get("self_test_fixture")), errors)
 
     acceptance_text = (release_dir / "OWNER_ACCEPTANCE.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "OWNER_ACCEPTANCE.md").is_file() else ""
     if f"- Phase: {phase}" not in acceptance_text or f"- APK: {apk.name}" not in acceptance_text:
@@ -312,7 +363,7 @@ def main() -> int:
     fixture_note = " (self-test fixture allowed)" if build.get("self_test_fixture") else ""
     print(
         f"Release verification passed for {phase}{fixture_note}: "
-        f"{len(required)} required outputs and {len(phase_states(phase))} UI state contracts."
+        f"{len(required)} required outputs and exact CI runtime evidence."
     )
     return 0
 

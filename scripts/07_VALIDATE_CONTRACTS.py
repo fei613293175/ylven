@@ -129,7 +129,7 @@ def main() -> int:
         if not root_current.get('phase_id'): errors.append('CURRENT_PHASE.yaml missing phase_id')
         root_release=load_yaml(ROOT/'RELEASE_CONTRACT.yaml'); contract_release=load_yaml(ROOT/'contracts/release-contract.yaml')
         if root_release!=contract_release: errors.append('root RELEASE_CONTRACT.yaml differs from contracts copy')
-        required=set(root_release.get('required_outputs') or []); expected={'YLVEN-{phase}-test.apk','FEATURES.md','TESTS.md','CHANGELOG.md','DEPLOYMENT.md','OWNER_ACTIONS.md','OWNER_ACCEPTANCE.md','BUILD_INFO.json','SHA256SUMS.txt','UI_SCREENSHOT_INDEX.csv','VISUAL_DIFF_REPORT.md','UI_CONTRACT_REPORT.json'}
+        required=set(root_release.get('required_outputs') or []); expected={'AUTOMATED_TEST_REPORT.md','VISUAL_DIFF_REPORT.md','CI_PROVENANCE.json','BUILD_INFO.json','FEATURES_ORIGINAL.md','FEATURE_COMPLETION_COMPARISON.md','OWNER_TEST_CHECKLIST.md','FEATURES_PLANNED.md','FEATURES_COMPLETED.md','DEPLOYMENT_ENDPOINTS.md','DOMAIN_DNS_STATUS.md','OWNER_ACTIONS.md','OWNER_ACCEPTANCE.md','SHA256SUMS.txt'}
         if required!=expected: errors.append(f'release outputs mismatch; expected={sorted(expected)}, actual={sorted(required)}')
     except Exception as exc: errors.append(f'root state/release contract validation failed: {exc}')
 

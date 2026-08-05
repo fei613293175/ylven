@@ -107,7 +107,7 @@ jobs:
         with:
           gradle-version: "8.9"
       - name: Build, unit test and lint
-        run: ./gradlew --no-daemon -PylvenVersionName="${{ inputs.version || '1.0.0' }}" clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
+        run: ./gradlew --no-daemon -PylvenVersionName="${{ inputs.version || '1.0.0' }}" -PylvenApiBaseUrl="https://ai-admin.orbexa.cc" -PylvenStagingTurnstileToken="test-pass" clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
       - name: Grant Android emulator access to KVM
         run: sudo chmod 666 /dev/kvm
       - name: Run fixed Android emulator acceptance
