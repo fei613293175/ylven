@@ -74,6 +74,7 @@ jobs:
         run: |
           python scripts/07_VALIDATE_CONTRACTS.py
           python scripts/38_VALIDATE_STATE_CONTINUITY.py
+          python scripts/41_SELF_TEST_STATE_CONTINUITY.py
           python scripts/40_PUBLIC_REPOSITORY_SAFETY.py
           python scripts/43_VERIFY_OPENAPI_DRIFT.py
           python scripts/44_VALIDATE_P00_TRACEABILITY.py

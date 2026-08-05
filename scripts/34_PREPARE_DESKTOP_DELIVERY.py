@@ -29,7 +29,15 @@ def copy_matches(source: Path, pattern: str, destination: Path) -> list[Path]:
     return copied
 
 
-def prepare_delivery(src: Path, root: Path, dest: Path, phase: str, version: str) -> None:
+def prepare_delivery(
+    src: Path,
+    root: Path,
+    dest: Path,
+    phase: str,
+    version: str,
+    run_id: int | None = None,
+    formal_dest: Path | None = None,
+) -> None:
     gate = root / "scripts" / "47_VALIDATE_OWNER_DELIVERY_MANIFEST.py"
     result = subprocess.run(
         [sys.executable, str(gate), "--phase", phase, "--version", version],
@@ -69,6 +77,9 @@ def prepare_delivery(src: Path, root: Path, dest: Path, phase: str, version: str
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(src, dest)
+    if run_id is not None:
+        provenance["workflow_run_id"] = run_id
+        (dest / "CI_PROVENANCE.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
 
     evidence = dest / f"{phase}-evidence"
     packet_evidence = copy_matches(root / "docs" / "evidence", f"{phase}-W*.md", evidence)
@@ -101,11 +112,55 @@ def prepare_delivery(src: Path, root: Path, dest: Path, phase: str, version: str
     shutil.copy2(root / "docs" / "delivery" / f"{phase}_OWNER_TEST_CHECKLIST.md", dest / "OWNER_TEST_CHECKLIST.md")
     shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURES_ORIGINAL.md", dest / "FEATURES_ORIGINAL.md")
     shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURE_COMPLETION_COMPARISON.md", dest / "FEATURE_COMPLETION_COMPARISON.md")
+    shutil.copy2(dest / "FEATURES_ORIGINAL.md", dest / "FEATURES_PLANNED.md")
+    shutil.copy2(dest / "FEATURE_COMPLETION_COMPARISON.md", dest / "FEATURES_COMPLETED.md")
+    for name in ("DEPLOYMENT_ENDPOINTS", "DOMAIN_DNS_STATUS", "ADMIN_ACCESS"):
+        source = root / "docs" / "delivery" / f"{phase}_{name}.md"
+        if source.is_file():
+            shutil.copy2(source, dest / f"{name}.md")
+
+    version_parts = [int(part) for part in version.split(".")]
+    if len(version_parts) != 3:
+        raise ValueError(f"invalid semantic version: {version}")
+    build_info = {
+        "phase": phase,
+        "version_name": version,
+        "version_code": version_parts[0] * 1_000_000 + version_parts[1] * 10_000 + version_parts[2] * 100,
+        "git_commit": provenance.get("commit_sha"),
+        "apk_name": apk.name,
+        "apk_sha256": expected["apk_sha256"],
+        "artifact_origin": "github-actions",
+        "workflow_run_id": run_id,
+        "self_test_fixture": False,
+    }
+    (dest / "BUILD_INFO.json").write_text(json.dumps(build_info, indent=2) + "\n", encoding="utf-8")
+    acceptance = (root / "templates" / "OWNER_ACCEPTANCE_TEMPLATE.md").read_text(encoding="utf-8")
+    acceptance = acceptance.replace("YLVEN-Pxx-test.apk", apk.name).replace("Pxx", phase)
+    (dest / "OWNER_ACCEPTANCE.md").write_text(acceptance, encoding="utf-8")
 
     lines = []
-    for path in sorted(item for item in dest.rglob("*") if item.is_file() and item.name != "SHA256SUMS.txt"):
+    for path in sorted(
+        item for item in dest.rglob("*")
+        if item.is_file() and item.name not in {"SHA256SUMS.txt", "OWNER_ACCEPTANCE.md"}
+    ):
         lines.append(f"{sha256(path)}  {path.relative_to(dest).as_posix()}")
     (dest / "SHA256SUMS.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if formal_dest is not None:
+        preserved_acceptance: str | None = None
+        old_provenance = formal_dest / "CI_PROVENANCE.json"
+        old_acceptance = formal_dest / "OWNER_ACCEPTANCE.md"
+        if old_provenance.is_file() and old_acceptance.is_file():
+            try:
+                old = json.loads(old_provenance.read_text(encoding="utf-8"))
+                if old.get("commit_sha") == provenance.get("commit_sha") and old.get("apk_sha256") == expected["apk_sha256"]:
+                    preserved_acceptance = old_acceptance.read_text(encoding="utf-8")
+            except json.JSONDecodeError:
+                pass
+        if formal_dest.exists():
+            shutil.rmtree(formal_dest)
+        shutil.copytree(dest, formal_dest)
+        if preserved_acceptance is not None:
+            (formal_dest / "OWNER_ACCEPTANCE.md").write_text(preserved_acceptance, encoding="utf-8")
 
 
 def main() -> int:
@@ -113,13 +168,17 @@ def main() -> int:
     parser.add_argument("--artifact-dir", required=True)
     parser.add_argument("--phase", required=True)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--run-id", type=int)
     parser.add_argument("--destination")
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
     destination = Path(args.destination) if args.destination else Path.home() / "Desktop" / "YLVEN-Releases" / args.version
     try:
-        prepare_delivery(Path(args.artifact_dir), root, destination, args.phase, args.version)
+        prepare_delivery(
+            Path(args.artifact_dir), root, destination, args.phase, args.version,
+            run_id=args.run_id, formal_dest=root / "dist" / "releases" / args.phase,
+        )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(exc)
         return 1

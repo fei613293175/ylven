@@ -22,6 +22,7 @@ def main() -> int:
         work = Path(temporary)
         artifact = work / "artifact"
         destination = work / "delivery"
+        formal = work / "formal"
         artifact.mkdir()
         apk = artifact / "YLVEN-1.1.0-P01.apk"
         apk.write_bytes(b"tested-apk")
@@ -33,13 +34,16 @@ def main() -> int:
             encoding="utf-8",
         )
 
-        MODULE.prepare_delivery(artifact, root, destination, "P01", "1.1.0")
+        MODULE.prepare_delivery(artifact, root, destination, "P01", "1.1.0", run_id=123, formal_dest=formal)
 
         assert (destination / "P01-evidence" / "P01-W05.md").is_file()
         assert (destination / "P01-evidence" / "P01_FEATURE_STATUS.yaml").is_file()
         assert (destination / "OWNER_TEST_CHECKLIST.md").is_file()
         assert (destination / "FEATURES_ORIGINAL.md").is_file()
         assert (destination / "FEATURE_COMPLETION_COMPARISON.md").is_file()
+        assert (destination / "BUILD_INFO.json").is_file()
+        assert (formal / "OWNER_ACCEPTANCE.md").is_file()
+        assert (formal / "CI_PROVENANCE.json").is_file()
         assert not (destination / "P00-evidence").exists()
         assert "P01-evidence/P01-W05.md" in (destination / "SHA256SUMS.txt").read_text(encoding="utf-8")
     print("PASS: phase-specific desktop delivery evidence")

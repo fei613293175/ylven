@@ -23,12 +23,12 @@ def chain_init(path:Path,event:str,**extra):
 def main():
  with tempfile.TemporaryDirectory(prefix='state-continuity-') as td:
   r=Path(td); (r/'scripts').mkdir(); shutil.copy2(CONTROLLER,r/'scripts/37_PROJECT_STATE.py'); (r/'contracts').mkdir(); (r/'status').mkdir(); (r/'dist/releases').mkdir(parents=True)
-  definitions=[{'work_packet_id':'P00-W01','phase':'P00','sequence':1,'title':'first','feature_ids':['F-1']},{'work_packet_id':'P00-W02','phase':'P00','sequence':2,'title':'second','feature_ids':['F-2']},{'work_packet_id':'P01-W01','phase':'P01','sequence':1,'title':'third','feature_ids':['F-3']}]
+  definitions=[{'work_packet_id':'P00-W01','phase':'P00','sequence':1,'title':'first','feature_ids':['P00-001']},{'work_packet_id':'P00-W02','phase':'P00','sequence':2,'title':'second','feature_ids':['P00-002']},{'work_packet_id':'P01-W01','phase':'P01','sequence':1,'title':'third','feature_ids':['P01-001']}]
   wy(r/'contracts/work-packet-map.yaml',{'work_packets':definitions}); wy(r/'contracts/release-version-matrix.yaml',{'phases':[{'phase':'P00','version_name':'1.0.0','version_code':1000000},{'phase':'P01','version_name':'1.1.0','version_code':1010000}]}); wy(r/'PROJECT_CONTEXT.yaml',{'project':{'code':'sample'}})
   rows=[{'work_packet_id':d['work_packet_id'],'phase':d['phase'],'sequence':d['sequence'],'status':'TODO' if i==0 else 'PLANNED','started_at':None,'closed_at':None,'started_commit':None,'closed_commit':None,'result':None,'reason':'','evidence':[]} for i,d in enumerate(definitions)]
   wy(r/'status/WORK_PACKET_STATUS.yaml',{'work_packets':rows}); wy(r/'CURRENT_PHASE.yaml',{'current_phase':'P00','phase_id':'P00','current_work_packet':'P00-W01','status':'TODO','last_closed_phase':None,'last_closed_version':None}); wy(r/'CURRENT_WORK_PACKET.yaml',{'phase_id':'P00','work_packet_id':'P00-W01','status':'TODO','last_closed_work_packet':None})
   chain_init(r/'status/WORK_PACKET_HISTORY.jsonl','STATE_INITIALIZED',phase_id='P00',work_packet_id='P00-W01'); chain_init(r/'status/RELEASE_LEDGER.jsonl','LEDGER_INITIALIZED',next_phase='P00',next_work_packet='P00-W01')
-  feature(r,'P00',['F-1','F-2']); feature(r,'P01',['F-3']); (r/'.gitignore').write_text('dist/\n.ylven-local/\n',encoding='utf-8')
+  feature(r,'P00',['P00-001','P00-002']); feature(r,'P01',['P01-001']); (r/'.gitignore').write_text('dist/\n.ylven-local/\n',encoding='utf-8')
   subprocess.run(['git','init','-b','main'],cwd=r,check=True,capture_output=True); subprocess.run(['git','config','user.email','test@example.invalid'],cwd=r,check=True); subprocess.run(['git','config','user.name','State Test'],cwd=r,check=True); commit(r,'initial')
   run(r,'validate'); run(r,'start-packet'); commit(r,'implement first'); run(r,'close-packet','--no-push')
   current=yaml.safe_load((r/'CURRENT_WORK_PACKET.yaml').read_text()); assert current['work_packet_id']=='P00-W02'
@@ -38,6 +38,9 @@ def main():
   with zipfile.ZipFile(apk,'w') as z: z.writestr('AndroidManifest.xml',b'x'); z.writestr('classes.dex',b'x')
   sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip(); apksha=hashlib.sha256(apk.read_bytes()).hexdigest()
   (release/'BUILD_INFO.json').write_text(json.dumps({'commit_sha':sha,'version_name':'1.0.0','version_code':1000000,'apk_sha256':apksha}),encoding='utf-8'); (release/'CI_PROVENANCE.json').write_text(json.dumps({'commit_sha':sha,'workflow_run_id':'1','artifact_id':'2','artifact_name':'sample','artifact_sha256':apksha}),encoding='utf-8'); (release/'OWNER_ACCEPTANCE.md').write_text('- Result: APPROVED\n',encoding='utf-8'); (release/'SHA256SUMS.txt').write_text(f'{apksha}  sample.apk\n',encoding='utf-8')
+  manifest='- Phase: P00\n- Version: 1.0.0\nP00-001 P00-002\n'
+  for name in ('FEATURES_ORIGINAL.md','FEATURE_COMPLETION_COMPARISON.md','OWNER_TEST_CHECKLIST.md'): (release/name).write_text(manifest,encoding='utf-8')
+  for name in ('DEPLOYMENT_ENDPOINTS.md','DOMAIN_DNS_STATUS.md'): (release/name).write_text('- Result: PASS\n',encoding='utf-8')
   run(r,'close-release','--phase','P00','--no-push'); run(r,'validate')
   phase=yaml.safe_load((r/'CURRENT_PHASE.yaml').read_text()); packet=yaml.safe_load((r/'CURRENT_WORK_PACKET.yaml').read_text()); assert phase['phase_id']=='P01' and packet['work_packet_id']=='P01-W01'
   ledger=[json.loads(x) for x in (r/'status/RELEASE_LEDGER.jsonl').read_text().splitlines() if x.strip()]; assert ledger[-1]['version_name']=='1.0.0' and ledger[-1]['owner_result']=='APPROVED'

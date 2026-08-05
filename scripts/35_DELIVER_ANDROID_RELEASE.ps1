@@ -21,6 +21,6 @@ if ($LASTEXITCODE -ne 0) { throw 'Failed to download the exact GitHub Actions ar
 $ArtifactDirs = @(Get-ChildItem -Path $Temp -Directory)
 if ($ArtifactDirs.Count -ne 1) { throw "Expected one exact artifact directory, got $($ArtifactDirs.Count)." }
 
-& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/34_PREPARE_DESKTOP_DELIVERY.py' --artifact-dir $ArtifactDirs[0].FullName --phase $Phase --version $Version
+& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/34_PREPARE_DESKTOP_DELIVERY.py' --artifact-dir $ArtifactDirs[0].FullName --phase $Phase --version $Version --run-id $RunId
 if ($LASTEXITCODE -ne 0) { throw 'Desktop delivery validation failed.' }
 Write-Host "YLVEN $Version has been delivered from exact CI Artifact to the desktop." -ForegroundColor Green

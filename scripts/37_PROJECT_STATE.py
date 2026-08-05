@@ -328,9 +328,23 @@ def owner_acceptance(phase: str) -> str | None:
     return match.group(1).upper() if match else None
 
 
+def document_feature_ids(text: str) -> set[str]:
+    found = set(re.findall(r"\bP\d{2}-\d{3}\b", text))
+    for start, end in re.findall(r"\b(P\d{2}-\d{3})\s*\.\.\s*(P\d{2}-\d{3})\b", text):
+        phase_a, number_a = start.split("-")
+        phase_b, number_b = end.split("-")
+        if phase_a == phase_b:
+            found.update(f"{phase_a}-{number:03d}" for number in range(int(number_a), int(number_b) + 1))
+    return found
+
+
 def release_evidence(phase: str) -> tuple[Path, dict[str, Any], dict[str, Any]]:
     directory = ROOT / "dist" / "releases" / phase
-    required = ["BUILD_INFO.json", "CI_PROVENANCE.json", "OWNER_ACCEPTANCE.md", "SHA256SUMS.txt"]
+    required = [
+        "BUILD_INFO.json", "CI_PROVENANCE.json", "OWNER_ACCEPTANCE.md", "SHA256SUMS.txt",
+        "FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md",
+        "DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md",
+    ]
     missing = [name for name in required if not (directory / name).is_file()]
     if missing:
         raise SystemExit(f"{phase}: missing release evidence: {', '.join(missing)}")
@@ -339,6 +353,19 @@ def release_evidence(phase: str) -> tuple[Path, dict[str, Any], dict[str, Any]]:
         provenance = json.loads((directory / "CI_PROVENANCE.json").read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise SystemExit(f"{phase}: invalid JSON release evidence: {exc}") from exc
+    expected_ids = {
+        str(item.get("feature_id"))
+        for item in load_yaml(ROOT / "status" / f"{phase}_FEATURE_STATUS.yaml").get("features", [])
+    }
+    for name in ("FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md"):
+        text = (directory / name).read_text(encoding="utf-8", errors="replace")
+        missing_ids = sorted(expected_ids - document_feature_ids(text))
+        if missing_ids:
+            raise SystemExit(f"{phase}: {name} omits Feature IDs: {', '.join(missing_ids)}")
+    for name in ("DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md"):
+        text = (directory / name).read_text(encoding="utf-8", errors="replace")
+        if not re.search(r"(?im)^-\s*Result:\s*PASS\s*$", text):
+            raise SystemExit(f"{phase}: {name} must contain '- Result: PASS'")
     return directory, build, provenance
 
 
