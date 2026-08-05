@@ -1,8 +1,8 @@
 schema_version: '1.0'
-phase_id: P01
-work_packet_id: null
-status: PHASE_COMPLETE
+phase_id: P02
+work_packet_id: P02-W01
+status: TODO
 started_at: null
 started_commit: null
 last_closed_work_packet: P01-W05
-updated_at: '2026-08-05T19:47:50+08:00'
+updated_at: '2026-08-06T06:45:53+08:00'
