@@ -11,7 +11,7 @@ def sha(p:Path):
 
 def main()->int:
  p=argparse.ArgumentParser(); p.add_argument('--artifact-dir',required=True); p.add_argument('--phase',required=True); p.add_argument('--version',required=True); a=p.parse_args()
- src=Path(a.artifact_dir); dest=Path.home()/'Desktop'/'YLVEN-Releases'/a.version; required=['FEATURES_PLANNED.md','FEATURES_COMPLETED.md','OWNER_TEST_CHECKLIST.md','AUTOMATED_TEST_REPORT.md','VISUAL_DIFF_REPORT.md','BUILD_INFO.json','CI_PROVENANCE.json']
+ src=Path(a.artifact_dir); root=Path(__file__).resolve().parents[1]; dest=Path.home()/'Desktop'/'YLVEN-Releases'/a.version; required=['AUTOMATED_TEST_REPORT.md','VISUAL_DIFF_REPORT.md','CI_PROVENANCE.json']
  apks=list(src.rglob('*.apk')); errors=[]
  if len(apks)!=1: errors.append(f'exactly one tested APK required, got {len(apks)}')
  for n in required:
@@ -19,6 +19,10 @@ def main()->int:
  if errors: print('\n'.join(errors)); return 1
  if dest.exists(): shutil.rmtree(dest)
  shutil.copytree(src,dest)
+ evidence=dest/'P00-evidence'; evidence.mkdir()
+ for path in sorted((root/'docs'/'evidence').glob('P00-W*.md')): shutil.copy2(path,evidence/path.name)
+ shutil.copy2(root/'status'/'P00_FEATURE_STATUS.yaml', evidence/'P00_FEATURE_STATUS.yaml')
+ shutil.copy2(root/'specs'/'001-p00-engineering-foundation'/'tasks.md', evidence/'P00-tasks.md')
  lines=[]
  for f in sorted(x for x in dest.rglob('*') if x.is_file() and x.name!='SHA256SUMS.txt'):
   lines.append(f'{sha(f)}  {f.relative_to(dest).as_posix()}')
