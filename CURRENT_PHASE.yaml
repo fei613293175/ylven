@@ -1,15 +1,15 @@
 schema_version: 1.6.0
-current_phase: P00
-phase_id: P00
-current_work_packet: null
-status: READY_FOR_RELEASE
+current_phase: P01
+phase_id: P01
+current_work_packet: P01-W01
+status: TODO
 phase_title: 工程基座、部署骨架与上游能力证明
-started_at: '2026-08-05T06:17:58+08:00'
+started_at: null
 blocked_reason: null
-last_closed_phase: null
-last_closed_version: null
-last_owner_approved_phase: null
-updated_at: '2026-08-05T14:22:18+08:00'
+last_closed_phase: P00
+last_closed_version: 1.0.0
+last_owner_approved_phase: P00
+updated_at: '2026-08-05T17:01:46+08:00'
 allowed_statuses:
 - TODO
 - DOING

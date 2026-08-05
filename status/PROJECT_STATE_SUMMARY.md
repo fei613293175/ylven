@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T16:23:21+08:00`
-- Current phase: `P00`
-- Phase status: `READY_FOR_RELEASE`
-- Current Work Packet: `NONE`
-- Work Packet status: `PHASE_COMPLETE`
+- Generated: `2026-08-05T17:01:46+08:00`
+- Current phase: `P01`
+- Phase status: `TODO`
+- Current Work Packet: `P01-W01`
+- Work Packet status: `TODO`
 - Last closed Work Packet: `P00-W05`
-- Last closed phase: `none`
-- Last closed version: `none`
+- Last closed phase: `P00`
+- Last closed version: `1.0.0`
 - Closed/deferred Work Packets recorded: `5`
-- Closed releases recorded: `0`
+- Closed releases recorded: `1`
 - Git branch: `phase/p00-engineering-foundation`
-- Git HEAD: `74dd633a4dc9a2d2f4e8082b24d9d1e5a161d598`
+- Git HEAD: `8e87855ae1b518ccbedd50ee815f3be236328b66`
 
 ## Exact next action
 
-All Work Packets in `P00` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, obtain `OWNER_ACCEPTANCE.md: APPROVED`, then close `P00` through the release controller. Do not start the next phase yet.
+Release `1.0.0` is closed. The exact next work is `P01-W01` in `P01`.
 
 ## New-conversation rule
 
