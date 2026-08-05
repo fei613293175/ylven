@@ -78,6 +78,7 @@ jobs:
           python scripts/43_VERIFY_OPENAPI_DRIFT.py
           python scripts/44_VALIDATE_P00_TRACEABILITY.py
           python scripts/45_VALIDATE_SECRET_BOUNDARY.py
+          python scripts/46_SELF_TEST_DESKTOP_DELIVERY.py
           python scripts/19_VALIDATE_UI_CONTRACTS.py
           python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
