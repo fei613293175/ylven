@@ -1,6 +1,10 @@
 package cc.orbexa.ylven
 
 import android.graphics.Bitmap
+import android.content.ContentValues
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -66,12 +70,44 @@ class P01IdentityUiTest {
     private fun capture(name: String) {
         composeRule.waitForIdle()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        // Keep acceptance screenshots in the debug package so API 35 scoped-storage rules
-        // do not prevent the CI runner from exporting them with run-as.
-        val output = File(context.filesDir, "screenshots/$name.png")
-        output.parentFile?.mkdirs()
-        FileOutputStream(output).use { stream ->
-            check(composeRule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream))
+        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = context.contentResolver
+            val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/ylven-p01/"
+            resolver.delete(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?",
+                arrayOf("$name.png", relativePath),
+            )
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.png")
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val uri = requireNotNull(resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)) {
+                "Could not create acceptance screenshot media entry"
+            }
+            try {
+                val stream = requireNotNull(resolver.openOutputStream(uri)) {
+                    "Could not open acceptance screenshot output"
+                }
+                stream.use {
+                    check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
+                }
+                resolver.update(uri, ContentValues().apply {
+                    put(MediaStore.MediaColumns.IS_PENDING, 0)
+                }, null, null)
+            } catch (failure: Throwable) {
+                resolver.delete(uri, null, null)
+                throw failure
+            }
+        } else {
+            val output = File(context.getExternalFilesDir(null), "screenshots/$name.png")
+            output.parentFile?.mkdirs()
+            FileOutputStream(output).use { stream ->
+                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
+            }
         }
     }
 }
