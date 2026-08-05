@@ -48,3 +48,11 @@ func TestSessionLogoutAndRateLimit(t *testing.T) {
 	ok, err = s.AllowAttempt("user@example.com", 1, time.Hour)
 	if err != nil || ok { t.Fatalf("second attempt was not limited: %v", err) }
 }
+
+func TestAdminSettingsRejectRawSecrets(t *testing.T) {
+	s, _ := NewStore("")
+	if err := s.PutSetting("turnstile", map[string]string{"secret":"plain-text"}); err == nil { t.Fatal("raw secret accepted") }
+	if err := s.PutSetting("turnstile", map[string]string{"site_key_reference":"cf-site","secret_reference":"vault:turnstile"}); err != nil { t.Fatal(err) }
+	value, ok := s.GetSetting("turnstile")
+	if !ok || value["secret_reference"] != "vault:turnstile" { t.Fatalf("unexpected setting: %#v", value) }
+}

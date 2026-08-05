@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS email_otps (
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL
 );
 CREATE TABLE IF NOT EXISTS password_credentials (
@@ -43,4 +44,20 @@ CREATE TABLE IF NOT EXISTS sessions (
   device_id TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL,
   revoked_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS identity_settings (
+  setting_key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS identity_audit_events (
+  id UUID PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  actor_id UUID,
+  target_id UUID,
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL
 );

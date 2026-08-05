@@ -47,6 +47,7 @@ type User struct {
 	Email string `json:"email"`
 	PasswordHash string `json:"password_hash"`
 	CreatedAt time.Time `json:"created_at"`
+	Status string `json:"status"`
 }
 
 type Session struct {
@@ -71,6 +72,7 @@ type state struct {
 	Sessions map[string]Session `json:"sessions"`
 	RateLimits map[string][]time.Time `json:"rate_limits"`
 	Audit []AuditEvent `json:"audit"`
+	Settings map[string]map[string]string `json:"settings"`
 }
 
 type Store struct {
@@ -80,7 +82,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings:defaultSettings()}}
 	if path == "" { return s, nil }
 	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) { return s, nil }
@@ -91,6 +93,7 @@ func NewStore(path string) (*Store, error) {
 	if s.data.Users == nil { s.data.Users = map[string]User{} }
 	if s.data.Sessions == nil { s.data.Sessions = map[string]Session{} }
 	if s.data.RateLimits == nil { s.data.RateLimits = map[string][]time.Time{} }
+	if s.data.Settings == nil { s.data.Settings = defaultSettings() }
 	return s, nil
 }
 
@@ -172,7 +175,7 @@ func (s *Store) CreateUser(challengeID, email, password string) (User, error) {
 	if _, exists := s.data.Users[normalized]; exists { return User{}, errors.New("email_already_registered") }
 	salt, err := randomToken(16); if err != nil { return User{}, err }
 	uuid, err := randomToken(16); if err != nil { return User{}, err }
-	u := User{ID:uuid, Email:normalized, PasswordHash:salt+":"+hashSecret(password,salt), CreatedAt:time.Now().UTC()}
+	u := User{ID:uuid, Email:normalized, PasswordHash:salt+":"+hashSecret(password,salt), CreatedAt:time.Now().UTC(), Status:"active"}
 	s.data.Users[normalized] = u; c.Consumed = true; s.data.Challenges[challengeID] = c
 	return u, s.persistLocked()
 }
@@ -225,6 +228,12 @@ func (s *Store) ListSessions(access string) ([]Session, error) { s.mu.Lock(); de
 func (s *Store) RevokeSession(access, targetID string) error { s.mu.Lock(); defer s.mu.Unlock(); item, ok := s.sessionByAccessLocked(access); if !ok { return errors.New("session_invalid") }; target, exists:=s.data.Sessions[targetID]; if !exists || target.UserID!=item.UserID { return errors.New("session_not_found") }; target.Revoked=true; target.RefreshConsumed=true; s.data.Sessions[targetID]=target; s.data.Audit=append(s.data.Audit, AuditEvent{ID:targetID,Type:"session_revoked",SessionID:targetID,CreatedAt:time.Now().UTC()}); return s.persistLocked() }
 func (s *Store) AllowAttempt(key string, limit int, window time.Duration) (bool, error) { s.mu.Lock(); defer s.mu.Unlock(); now:=time.Now(); recent:=[]time.Time{}; for _, when:=range s.data.RateLimits[key] { if now.Sub(when)<window { recent=append(recent,when) } }; if len(recent)>=limit { s.data.RateLimits[key]=recent; _=s.persistLocked(); return false,nil }; s.data.RateLimits[key]=append(recent,now); return true,s.persistLocked() }
 func (s *Store) AuditSnapshot() []AuditEvent { s.mu.Lock(); defer s.mu.Unlock(); return append([]AuditEvent(nil),s.data.Audit...) }
+
+func defaultSettings() map[string]map[string]string { return map[string]map[string]string{"email":{"provider":"","sender":"","secret_reference":""},"turnstile":{"site_key_reference":"","secret_reference":""},"otp-policy":{"ttl_seconds":"600","send_limit":"5","cooldown_seconds":"60"}} }
+func (s *Store) GetSetting(name string) (map[string]string,bool) { s.mu.Lock(); defer s.mu.Unlock(); value,ok:=s.data.Settings[name]; if !ok{return nil,false}; copyValue:=map[string]string{};for k,v:=range value{copyValue[k]=v};return copyValue,true }
+func (s *Store) PutSetting(name string, value map[string]string) error { s.mu.Lock(); defer s.mu.Unlock(); if _,ok:=s.data.Settings[name];!ok{return errors.New("setting_not_found")}; for key:=range value { if strings.Contains(strings.ToLower(key),"secret") && !strings.Contains(strings.ToLower(key),"reference") {return errors.New("raw_secret_forbidden")} }; s.data.Settings[name]=value; id,_:=randomToken(8);s.data.Audit=append(s.data.Audit,AuditEvent{ID:id,Type:"setting_updated:"+name,CreatedAt:time.Now().UTC()});return s.persistLocked() }
+func (s *Store) ListUsers() []User { s.mu.Lock(); defer s.mu.Unlock(); result:=make([]User,0,len(s.data.Users));for _,user:=range s.data.Users{user.PasswordHash="";result=append(result,user)};return result }
+func (s *Store) UserDetail(id string) (User,[]Session,bool) { s.mu.Lock(); defer s.mu.Unlock();for _,user:=range s.data.Users{if user.ID==id{user.PasswordHash="";sessions:=[]Session{};for _,session:=range s.data.Sessions{if session.UserID==id{session.AccessDigest="";session.RefreshDigest="";sessions=append(sessions,session)}};return user,sessions,true}};return User{},nil,false }
 
 func hashSecret(secret, salt string) string {
 	key := []byte(salt); block := []byte(secret); var result [32]byte

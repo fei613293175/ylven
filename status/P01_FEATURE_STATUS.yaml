@@ -130,25 +130,37 @@ features:
   - backend/internal/identity/identity.go::AuditEvent and logout audit records
   - backend/internal/identity/identity.go::Store.AuditSnapshot
 - feature_id: P01-019
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET|PUT /admin/v1/settings/email
+  - backend/internal/identity/identity.go::Store.PutSetting raw-secret boundary
 - feature_id: P01-020
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET|PUT /admin/v1/settings/turnstile
+  - backend/internal/identity/identity_test.go::TestAdminSettingsRejectRawSecrets
 - feature_id: P01-021
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET|PUT /admin/v1/settings/otp-policy
+  - backend/internal/identity/identity.go::defaultSettings otp-policy
 - feature_id: P01-022
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET /admin/v1/users
+  - backend/internal/identity/identity.go::Store.ListUsers password sanitization
+  - web/admin/src/App.js::/admin/027
 - feature_id: P01-023
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::GET /admin/v1/users/{userId}
+  - backend/internal/identity/identity.go::Store.UserDetail
+  - web/admin/src/App.js::/admin/036
 - feature_id: P01-024
   status: PLANNED
   reason: ''

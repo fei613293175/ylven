@@ -32,6 +32,11 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/auth/logout-all", a.logoutAll)
 	mux.HandleFunc("/api/v1/account/devices", a.devices)
 	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
+	mux.HandleFunc("/admin/v1/settings/email", a.adminSetting("email"))
+	mux.HandleFunc("/admin/v1/settings/turnstile", a.adminSetting("turnstile"))
+	mux.HandleFunc("/admin/v1/settings/otp-policy", a.adminSetting("otp-policy"))
+	mux.HandleFunc("/admin/v1/users", a.adminUsers)
+	mux.HandleFunc("/admin/v1/users/", a.adminUserDetail)
 	return requestGuard(mux)
 }
 
@@ -56,3 +61,7 @@ func (a *API) logout(w http.ResponseWriter, r *http.Request) { if r.Method!=http
 func (a *API) logoutAll(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodPost {writeError(w,405,"method_not_allowed","POST required");return};if err:=a.Store.LogoutAll(bearer(r));err!=nil{writeError(w,401,"session_invalid","Session is invalid");return};writeJSON(w,200,map[string]any{"logged_out_all":true}) }
 func (a *API) devices(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodGet {writeError(w,405,"method_not_allowed","GET required");return};items,err:=a.Store.ListSessions(bearer(r));if err!=nil{writeError(w,401,"session_invalid","Session is invalid");return};writeJSON(w,200,map[string]any{"devices":items}) }
 func (a *API) deviceSession(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodDelete {writeError(w,405,"method_not_allowed","DELETE required");return};id:=strings.TrimPrefix(r.URL.Path,"/api/v1/account/devices/");if id==""{writeError(w,400,"device_id_required","Device ID required");return};if err:=a.Store.RevokeSession(bearer(r),id);err!=nil{writeError(w,404,"session_not_found","Session not found");return};writeJSON(w,200,map[string]any{"revoked":true,"session_id":id}) }
+func adminAllowed(r *http.Request) bool { return r.Header.Get("X-Admin-Role")=="superadmin" }
+func (a *API) adminSetting(name string) http.HandlerFunc { return func(w http.ResponseWriter,r *http.Request){if !adminAllowed(r){writeError(w,403,"permission_denied","Administrator role required");return};if r.Method==http.MethodGet{value,ok:=a.Store.GetSetting(name);if !ok{writeError(w,404,"setting_not_found","Setting not found");return};writeJSON(w,200,map[string]any{"name":name,"value":value});return};if r.Method==http.MethodPut{value:=map[string]string{};if !decode(r,&value){writeError(w,400,"invalid_json","Invalid JSON");return};if err:=a.Store.PutSetting(name,value);err!=nil{writeError(w,422,err.Error(),err.Error());return};writeJSON(w,200,map[string]any{"name":name,"value":value,"audited":true});return};writeError(w,405,"method_not_allowed","GET or PUT required")} }
+func (a *API) adminUsers(w http.ResponseWriter,r *http.Request){if !adminAllowed(r){writeError(w,403,"permission_denied","Administrator role required");return};if r.Method!=http.MethodGet{writeError(w,405,"method_not_allowed","GET required");return};writeJSON(w,200,map[string]any{"users":a.Store.ListUsers()})}
+func (a *API) adminUserDetail(w http.ResponseWriter,r *http.Request){if !adminAllowed(r){writeError(w,403,"permission_denied","Administrator role required");return};if r.Method!=http.MethodGet{writeError(w,405,"method_not_allowed","GET required");return};id:=strings.TrimPrefix(r.URL.Path,"/admin/v1/users/");user,sessions,ok:=a.Store.UserDetail(id);if !ok{writeError(w,404,"user_not_found","User not found");return};writeJSON(w,200,map[string]any{"user":user,"sessions":sessions})}
