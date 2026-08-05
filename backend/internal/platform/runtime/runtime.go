@@ -50,6 +50,11 @@ func Handler(service Service, featurePath string) http.Handler {
 	mux.HandleFunc("/version", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": service.Name, "version": service.Version})
 	})
+	mux.HandleFunc("/internal/metrics", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ylven_process_up 1\n"))
+	})
 	mux.HandleFunc(featurePath, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet { writeError(w, r, http.StatusBadRequest, "INVALID_REQUEST", "method not allowed", false); return }
 		writeHealth(w, service, false)

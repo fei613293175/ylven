@@ -136,25 +136,41 @@ features:
   - scripts/43_VERIFY_OPENAPI_DRIFT.py
   - docs/evidence/P00-W03.md
 - feature_id: P00-016
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - scripts/44_VALIDATE_P00_TRACEABILITY.py
+  - scripts/07_VALIDATE_CONTRACTS.py
+  - docs/evidence/P00-W04.md
 - feature_id: P00-017
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/telemetry/telemetry.go
+  - backend/internal/platform/runtime/runtime.go::/internal/metrics
+  - backend/internal/platform/telemetry/telemetry_test.go
+  - docs/evidence/P00-W04.md
 - feature_id: P00-018
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - .github/workflows/android-phase-acceptance.yml
+  - docs/evidence/P00-W04.md
 - feature_id: P00-019
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - scripts/05_RELEASE_PHASE.ps1
+  - scripts/33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py
+  - scripts/34_PREPARE_DESKTOP_DELIVERY.py
+  - docs/evidence/P00-W04.md
 - feature_id: P00-020
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/providers/sub2api/probe.go
+  - backend/internal/platform/providers/sub2api/probe_test.go
+  - docs/evidence/P00-W04.md
 - feature_id: P00-021
   status: PLANNED
   reason: ''

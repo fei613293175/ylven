@@ -63,11 +63,11 @@
 
 ## Work Packet P00-W04: Traceability, Observability, CI, Release, and Text Probe
 
-- [ ] T019 `[P00-016]` After controller selection and rereading `work-packets/P00-W04.md`, implement mechanical Feature/API/data/UI/test/evidence traceability checks in `scripts/`, `contracts/`, and `tests/`.
-- [ ] T020 `[P00-017]` Implement structured redacted logging, metrics, trace/request correlation, and `/internal/metrics` in `backend/internal/platform/telemetry/` with process integration tests.
-- [ ] T021 `[P00-018,P00-019]` Implement exact-revision GitHub Actions gates and exact-Artifact release verification in `.github/workflows/`, `scripts/`, and release evidence templates; include contract, backend, Web, Android, secret, provenance, hash, screenshot, and visual-diff gates.
-- [ ] T022 `[P00-020]` Implement Sub2API text/stream capability probing and explicit unconfigured/failure states in `backend/internal/platform/providers/sub2api/` and the admin probe endpoint; record real external evidence only when configuration is genuinely available.
-- [ ] T023 `[P00-016..P00-020]` Run traceability, telemetry, CI workflow, release-controller self-tests, probe tests, and public safety gate; finalize evidence, commit cleanly, and close only `P00-W04` through the controller.
+- [x] T019 `[P00-016]` After controller selection and rereading `work-packets/P00-W04.md`, implement mechanical Feature/API/data/UI/test/evidence traceability checks in `scripts/`, `contracts/`, and `tests/`.
+- [x] T020 `[P00-017]` Implement structured redacted logging, metrics, trace/request correlation, and `/internal/metrics` in `backend/internal/platform/telemetry/` with process integration tests.
+- [x] T021 `[P00-018,P00-019]` Implement exact-revision GitHub Actions gates and exact-Artifact release verification in `.github/workflows/`, `scripts/`, and release evidence templates; include contract, backend, Web, Android, secret, provenance, hash, screenshot, and visual-diff gates.
+- [x] T022 `[P00-020]` Implement Sub2API text/stream capability probing and explicit unconfigured/failure states in `backend/internal/platform/providers/sub2api/` and the admin probe endpoint; record real external evidence only when configuration is genuinely available.
+- [x] T023 `[P00-016..P00-020]` Run traceability, telemetry, CI workflow, release-controller self-tests, probe tests, and public safety gate; finalize evidence, commit cleanly, and close only `P00-W04` through the controller.
 
 ## Work Packet P00-W05: Multimodal Probe, Secret Boundary, and Web Shells
 
