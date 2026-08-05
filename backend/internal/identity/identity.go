@@ -57,13 +57,20 @@ type Session struct {
 	AccessExpiresAt time.Time `json:"access_expires_at"`
 	RefreshExpiresAt time.Time `json:"refresh_expires_at"`
 	RefreshConsumed bool `json:"refresh_consumed"`
+	DeviceID string `json:"device_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Revoked bool `json:"revoked"`
 }
+
+type AuditEvent struct { ID string `json:"id"`; Type string `json:"type"`; Email string `json:"email,omitempty"`; SessionID string `json:"session_id,omitempty"`; CreatedAt time.Time `json:"created_at"` }
 
 type state struct {
 	Challenges map[string]Challenge `json:"challenges"`
 	OTPs map[string]OTP `json:"otps"`
 	Users map[string]User `json:"users"`
 	Sessions map[string]Session `json:"sessions"`
+	RateLimits map[string][]time.Time `json:"rate_limits"`
+	Audit []AuditEvent `json:"audit"`
 }
 
 type Store struct {
@@ -73,7 +80,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}}}
 	if path == "" { return s, nil }
 	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) { return s, nil }
@@ -83,6 +90,7 @@ func NewStore(path string) (*Store, error) {
 	if s.data.OTPs == nil { s.data.OTPs = map[string]OTP{} }
 	if s.data.Users == nil { s.data.Users = map[string]User{} }
 	if s.data.Sessions == nil { s.data.Sessions = map[string]Session{} }
+	if s.data.RateLimits == nil { s.data.RateLimits = map[string][]time.Time{} }
 	return s, nil
 }
 
@@ -181,7 +189,7 @@ func (s *Store) CreateSession(challengeID, email string) (Session, string, strin
 	access, err := randomToken(32); if err != nil { return Session{}, "", "", err }
 	refresh, err := randomToken(32); if err != nil { return Session{}, "", "", err }
 	now := time.Now().UTC()
-	session := Session{ID:id, UserID:u.ID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour)}
+	session := Session{ID:id, UserID:u.ID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour), DeviceID:"device-"+id[:8], CreatedAt:now}
 	s.data.Sessions[id] = session; c.Consumed = true; s.data.Challenges[challengeID] = c
 	return session, access, refresh, s.persistLocked()
 }
@@ -196,7 +204,7 @@ func (s *Store) RotateSession(refreshToken string) (Session, string, string, err
 		refresh, err := randomToken(32); if err != nil { return Session{}, "", "", err }
 		newID, err := randomToken(16); if err != nil { return Session{}, "", "", err }
 		now := time.Now().UTC()
-		next := Session{ID:newID, UserID:current.UserID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour)}
+		next := Session{ID:newID, UserID:current.UserID, AccessDigest:digestToken(access), RefreshDigest:digestToken(refresh), AccessExpiresAt:now.Add(15*time.Minute), RefreshExpiresAt:now.Add(30*24*time.Hour), DeviceID:current.DeviceID, CreatedAt:now}
 		s.data.Sessions[newID] = next
 		return next, access, refresh, s.persistLocked()
 	}
@@ -204,6 +212,19 @@ func (s *Store) RotateSession(refreshToken string) (Session, string, string, err
 }
 
 func digestToken(token string) string { sum := sha256.Sum256([]byte(token)); return hex.EncodeToString(sum[:]) }
+
+func (s *Store) sessionByAccessLocked(access string) (Session, bool) {
+	d := digestToken(access)
+	for _, item := range s.data.Sessions { if item.AccessDigest == d && !item.Revoked && item.AccessExpiresAt.After(time.Now()) { return item, true } }
+	return Session{}, false
+}
+
+func (s *Store) Logout(access string) error { s.mu.Lock(); defer s.mu.Unlock(); item, ok := s.sessionByAccessLocked(access); if !ok { return errors.New("session_invalid") }; item.Revoked=true; s.data.Sessions[item.ID]=item; s.data.Audit=append(s.data.Audit, AuditEvent{ID:item.ID,Type:"logout",SessionID:item.ID,CreatedAt:time.Now().UTC()}); return s.persistLocked() }
+func (s *Store) LogoutAll(access string) error { s.mu.Lock(); defer s.mu.Unlock(); item, ok := s.sessionByAccessLocked(access); if !ok { return errors.New("session_invalid") }; for id, session := range s.data.Sessions { if session.UserID==item.UserID { session.Revoked=true; s.data.Sessions[id]=session } }; s.data.Audit=append(s.data.Audit, AuditEvent{ID:item.ID,Type:"logout_all",SessionID:item.ID,CreatedAt:time.Now().UTC()}); return s.persistLocked() }
+func (s *Store) ListSessions(access string) ([]Session, error) { s.mu.Lock(); defer s.mu.Unlock(); item, ok := s.sessionByAccessLocked(access); if !ok { return nil, errors.New("session_invalid") }; result:=[]Session{}; for _, session := range s.data.Sessions { if session.UserID==item.UserID && !session.Revoked { session.AccessDigest=""; session.RefreshDigest=""; result=append(result,session) } }; return result,nil }
+func (s *Store) RevokeSession(access, targetID string) error { s.mu.Lock(); defer s.mu.Unlock(); item, ok := s.sessionByAccessLocked(access); if !ok { return errors.New("session_invalid") }; target, exists:=s.data.Sessions[targetID]; if !exists || target.UserID!=item.UserID { return errors.New("session_not_found") }; target.Revoked=true; target.RefreshConsumed=true; s.data.Sessions[targetID]=target; s.data.Audit=append(s.data.Audit, AuditEvent{ID:targetID,Type:"session_revoked",SessionID:targetID,CreatedAt:time.Now().UTC()}); return s.persistLocked() }
+func (s *Store) AllowAttempt(key string, limit int, window time.Duration) (bool, error) { s.mu.Lock(); defer s.mu.Unlock(); now:=time.Now(); recent:=[]time.Time{}; for _, when:=range s.data.RateLimits[key] { if now.Sub(when)<window { recent=append(recent,when) } }; if len(recent)>=limit { s.data.RateLimits[key]=recent; _=s.persistLocked(); return false,nil }; s.data.RateLimits[key]=append(recent,now); return true,s.persistLocked() }
+func (s *Store) AuditSnapshot() []AuditEvent { s.mu.Lock(); defer s.mu.Unlock(); return append([]AuditEvent(nil),s.data.Audit...) }
 
 func hashSecret(secret, salt string) string {
 	key := []byte(salt); block := []byte(secret); var result [32]byte

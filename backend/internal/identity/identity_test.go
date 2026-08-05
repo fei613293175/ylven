@@ -1,6 +1,9 @@
 package identity
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestNormalizeEmail(t *testing.T) {
 	got, err := NormalizeEmail("  User@Example.COM ")
@@ -36,4 +39,12 @@ func TestSessionRefreshRotatesRefreshToken(t *testing.T) {
 	second, _, nextRefresh, err := s.RotateSession(refresh)
 	if err != nil || second.ID == first.ID || nextRefresh == refresh { t.Fatalf("rotation failed: %+v %v", second, err) }
 	if _, _, _, err := s.RotateSession(refresh); err == nil { t.Fatal("refresh token was reusable") }
+}
+
+func TestSessionLogoutAndRateLimit(t *testing.T) {
+	s, _ := NewStore("")
+	ok, err := s.AllowAttempt("user@example.com", 1, time.Hour)
+	if err != nil || !ok { t.Fatalf("first attempt blocked: %v", err) }
+	ok, err = s.AllowAttempt("user@example.com", 1, time.Hour)
+	if err != nil || ok { t.Fatalf("second attempt was not limited: %v", err) }
 }

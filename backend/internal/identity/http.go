@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type API struct { Store *Store; TurnstileMode string; DebugOTP bool }
@@ -27,10 +28,14 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/auth/login/otp/verify", a.loginOTPVerify)
 	mux.HandleFunc("/api/v1/auth/sessions", a.sessions)
 	mux.HandleFunc("/api/v1/auth/sessions/refresh", a.refreshSession)
+	mux.HandleFunc("/api/v1/auth/logout", a.logout)
+	mux.HandleFunc("/api/v1/auth/logout-all", a.logoutAll)
+	mux.HandleFunc("/api/v1/account/devices", a.devices)
+	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
 	return requestGuard(mux)
 }
 
-func requestGuard(next http.Handler) http.Handler { return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Content-Type","application/json"); if r.Method != http.MethodPost { writeError(w,http.StatusMethodNotAllowed,"method_not_allowed","POST required"); return }; next.ServeHTTP(w,r) }) }
+func requestGuard(next http.Handler) http.Handler { return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Content-Type","application/json"); next.ServeHTTP(w,r) }) }
 func decode(r *http.Request, dst any) bool { return json.NewDecoder(io.LimitReader(r.Body,1<<20)).Decode(dst)==nil }
 func writeJSON(w http.ResponseWriter, status int, value any) { w.WriteHeader(status); _ = json.NewEncoder(w).Encode(value) }
 func writeError(w http.ResponseWriter, status int, code, message string) { writeJSON(w,status,map[string]any{"error":map[string]string{"code":code,"message":message}}) }
@@ -46,3 +51,8 @@ func (a *API) loginOTPSend(w http.ResponseWriter, r *http.Request) { a.otpSend(w
 func (a *API) loginOTPVerify(w http.ResponseWriter, r *http.Request) { a.otpVerify(w,r) }
 func (a *API) sessions(w http.ResponseWriter, r *http.Request) { var in struct{ChallengeID string `json:"challenge_id"`; Email string `json:"email"`}; if !decode(r,&in){writeError(w,400,"invalid_json","Invalid JSON");return}; session,access,refresh,err:=a.Store.CreateSession(in.ChallengeID,in.Email);if err!=nil{writeError(w,401,"login_not_verified","Unable to authenticate");return};writeJSON(w,201,map[string]any{"session_id":session.ID,"access_token":access,"refresh_token":refresh,"access_expires_at":session.AccessExpiresAt,"refresh_expires_at":session.RefreshExpiresAt}) }
 func (a *API) refreshSession(w http.ResponseWriter, r *http.Request) { var in struct{RefreshToken string `json:"refresh_token"`};if !decode(r,&in){writeError(w,400,"invalid_json","Invalid JSON");return};session,access,refresh,err:=a.Store.RotateSession(in.RefreshToken);if err!=nil{writeError(w,401,"refresh_token_invalid","Refresh token is invalid or expired");return};writeJSON(w,200,map[string]any{"session_id":session.ID,"access_token":access,"refresh_token":refresh,"access_expires_at":session.AccessExpiresAt,"refresh_expires_at":session.RefreshExpiresAt}) }
+func bearer(r *http.Request) string { value:=strings.TrimSpace(r.Header.Get("Authorization")); if len(value)>7 && strings.EqualFold(value[:7],"Bearer "){ return strings.TrimSpace(value[7:]) }; return "" }
+func (a *API) logout(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodPost {writeError(w,405,"method_not_allowed","POST required");return}; if err:=a.Store.Logout(bearer(r));err!=nil{writeError(w,401,"session_invalid","Session is invalid");return};writeJSON(w,200,map[string]any{"logged_out":true}) }
+func (a *API) logoutAll(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodPost {writeError(w,405,"method_not_allowed","POST required");return};if err:=a.Store.LogoutAll(bearer(r));err!=nil{writeError(w,401,"session_invalid","Session is invalid");return};writeJSON(w,200,map[string]any{"logged_out_all":true}) }
+func (a *API) devices(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodGet {writeError(w,405,"method_not_allowed","GET required");return};items,err:=a.Store.ListSessions(bearer(r));if err!=nil{writeError(w,401,"session_invalid","Session is invalid");return};writeJSON(w,200,map[string]any{"devices":items}) }
+func (a *API) deviceSession(w http.ResponseWriter, r *http.Request) { if r.Method!=http.MethodDelete {writeError(w,405,"method_not_allowed","DELETE required");return};id:=strings.TrimPrefix(r.URL.Path,"/api/v1/account/devices/");if id==""{writeError(w,400,"device_id_required","Device ID required");return};if err:=a.Store.RevokeSession(bearer(r),id);err!=nil{writeError(w,404,"session_not_found","Session not found");return};writeJSON(w,200,map[string]any{"revoked":true,"session_id":id}) }

@@ -39,5 +39,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   refresh_token_digest TEXT NOT NULL UNIQUE,
   access_expires_at TIMESTAMPTZ NOT NULL,
   refresh_expires_at TIMESTAMPTZ NOT NULL,
-  refresh_consumed_at TIMESTAMPTZ
+  refresh_consumed_at TIMESTAMPTZ,
+  device_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ
 );

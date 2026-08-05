@@ -94,29 +94,41 @@ features:
   - backend/internal/identity/http.go::POST /api/v1/auth/sessions/refresh
   - backend/internal/identity/identity.go::Store.RotateSession one-time refresh
 - feature_id: P01-013
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.Logout
+  - backend/internal/identity/http.go::POST /api/v1/auth/logout
 - feature_id: P01-014
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.LogoutAll
+  - backend/internal/identity/http.go::POST /api/v1/auth/logout-all
 - feature_id: P01-015
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.ListSessions
+  - backend/internal/identity/http.go::GET /api/v1/account/devices
 - feature_id: P01-016
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.RevokeSession
+  - backend/internal/identity/http.go::DELETE /api/v1/account/devices/{deviceId}/sessions
 - feature_id: P01-017
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.AllowAttempt
+  - backend/internal/identity/identity_test.go::TestSessionLogoutAndRateLimit
 - feature_id: P01-018
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::AuditEvent and logout audit records
+  - backend/internal/identity/identity.go::Store.AuditSnapshot
 - feature_id: P01-019
   status: PLANNED
   reason: ''
