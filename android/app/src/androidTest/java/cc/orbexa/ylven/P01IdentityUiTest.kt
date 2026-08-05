@@ -66,7 +66,9 @@ class P01IdentityUiTest {
     private fun capture(name: String) {
         composeRule.waitForIdle()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val output = File(context.getExternalFilesDir(null), "screenshots/$name.png")
+        // Keep acceptance screenshots in the debug package so API 35 scoped-storage rules
+        // do not prevent the CI runner from exporting them with run-as.
+        val output = File(context.filesDir, "screenshots/$name.png")
         output.parentFile?.mkdirs()
         FileOutputStream(output).use { stream ->
             check(composeRule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream))

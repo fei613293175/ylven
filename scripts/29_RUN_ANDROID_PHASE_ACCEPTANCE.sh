@@ -22,7 +22,20 @@ adb install -r "$APK"
 # The actual Compose test suite must enumerate Interaction IDs and emit state screenshots.
 ./gradlew --no-daemon -PylvenVersionName="$VERSION" -PylvenApiBaseUrl="https://ai-admin.orbexa.cc" -PylvenStagingTurnstileToken="test-pass" connectedDebugAndroidTest
 if [[ "$PHASE" == "P01" ]]; then
-  adb pull /sdcard/Android/data/cc.orbexa.ylven/files/screenshots/. build/owner-release/screenshots/
+  # API 35 blocks direct adb access to /sdcard/Android/data. The debug APK is
+  # debuggable, so export the test-owned internal files through run-as instead.
+  for screenshot in \
+    P01-AUTH-LOGIN.png \
+    P01-AUTH-REGISTER.png \
+    P01-AUTH-REGISTER-OTP.png \
+    P01-AUTH-REGISTERED.png \
+    P01-AUTH-ACCOUNT.png; do
+    remote="files/screenshots/$screenshot"
+    output="build/owner-release/screenshots/$screenshot"
+    adb shell run-as cc.orbexa.ylven test -s "$remote"
+    adb exec-out run-as cc.orbexa.ylven cat "$remote" > "$output"
+    test -s "$output"
+  done
 fi
 cp "$APK" "build/owner-release/YLVEN-${VERSION}-${PHASE}.apk"
 python scripts/30_COMPARE_ANDROID_SCREENSHOTS.py --phase "$PHASE" --screenshots build/owner-release/screenshots --report build/owner-release/VISUAL_DIFF_REPORT.md
