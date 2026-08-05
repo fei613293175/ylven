@@ -14,5 +14,5 @@
 ## 完成判定
 
 - 28/28 Feature ID 在阶段状态中为最终状态并有证据引用。
-- 自动验证：CI Run `31004934562`（提交 `3b94c63668eacac75af833ff69010a55c99c4aa0`）通过。
+- 自动验证：以本次交付目录的 `CI_PROVENANCE.json` 和 `AUTOMATED_TEST_REPORT.md` 为唯一来源，不接受旧 Run 或手工改名 APK。
 - 外部部署差异：`auth.orbexa.cc` 当前无 DNS；`admin.orbexa.cc` 当前指向其他产品，不能冒充 YLVEN 正式环境。该外部事实阻止正式线上验收，不改变代码已通过的实现证据。
