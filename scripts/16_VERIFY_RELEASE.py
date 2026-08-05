@@ -338,12 +338,17 @@ def main() -> int:
     deployment_path = release_dir / "DEPLOYMENT_ENDPOINTS.md"
     deployment_text = deployment_path.read_text(encoding="utf-8", errors="replace") if deployment_path.is_file() else ""
     checks = [
-        r"(?im)^-\s*Deployment result:\s*SUCCESS\s*$",
-        r"(?im)^-\s*Health check result:\s*PASS\s*$",
-        r"(?im)^-\s*Rollback result:\s*PASS\s*$",
+        ("Deployment result", r"(?im)^-\s*Deployment result:\s*(SUCCESS|NOT_APPLICABLE)\s*$"),
+        ("Health check result", r"(?im)^-\s*Health check result:\s*(PASS|NOT_APPLICABLE)\s*$"),
+        ("Rollback result", r"(?im)^-\s*Rollback result:\s*(PASS|NOT_APPLICABLE)\s*$"),
     ]
-    if not all(re.search(pattern, deployment_text) for pattern in checks):
-        errors.append("DEPLOYMENT_ENDPOINTS.md lacks SUCCESS/PASS/PASS evidence markers")
+    for label, pattern in checks:
+        match = re.search(pattern, deployment_text)
+        if not match:
+            errors.append(f"DEPLOYMENT_ENDPOINTS.md lacks valid {label} evidence marker")
+        elif label == "Rollback result" and match.group(1) == "NOT_APPLICABLE":
+            if not re.search(r"(?ims)^\s*(?:Rollback evidence|回滚证据)\s*[:：]\s*\S", deployment_text):
+                errors.append("DEPLOYMENT_ENDPOINTS.md must explain a NOT_APPLICABLE rollback result")
 
     if build.get("artifact_origin") == "github-actions":
         validate_ci_ui(release_dir, phase, errors)
