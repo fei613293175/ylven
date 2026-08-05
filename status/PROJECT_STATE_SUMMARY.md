@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T14:19:38+08:00`
+- Generated: `2026-08-05T14:22:18+08:00`
 - Current phase: `P00`
-- Phase status: `DOING`
-- Current Work Packet: `P00-W05`
-- Work Packet status: `DOING`
-- Last closed Work Packet: `P00-W04`
+- Phase status: `READY_FOR_RELEASE`
+- Current Work Packet: `NONE`
+- Work Packet status: `PHASE_COMPLETE`
+- Last closed Work Packet: `P00-W05`
 - Last closed phase: `none`
 - Last closed version: `none`
-- Closed/deferred Work Packets recorded: `4`
+- Closed/deferred Work Packets recorded: `5`
 - Closed releases recorded: `0`
 - Git branch: `phase/p00-engineering-foundation`
-- Git HEAD: `9735eba83fd012d4395b218896b2d4070561cf06`
+- Git HEAD: `aed44ba654dce18e915861cc9cdb351a99a5dca7`
 
 ## Exact next action
 
-Continue exactly `P00-W05` using `work-packets/P00-W05.md` and the current phase specification. Do not reselect work from chat history.
+Every Work Packet in `P00` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
 
 ## New-conversation rule
 
