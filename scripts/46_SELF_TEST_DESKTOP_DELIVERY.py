@@ -37,6 +37,9 @@ def main() -> int:
 
         assert (destination / "P01-evidence" / "P01-W05.md").is_file()
         assert (destination / "P01-evidence" / "P01_FEATURE_STATUS.yaml").is_file()
+        assert (destination / "OWNER_TEST_CHECKLIST.md").is_file()
+        assert (destination / "FEATURES_ORIGINAL.md").is_file()
+        assert (destination / "FEATURE_COMPLETION_COMPARISON.md").is_file()
         assert not (destination / "P00-evidence").exists()
         assert "P01-evidence/P01-W05.md" in (destination / "SHA256SUMS.txt").read_text(encoding="utf-8")
     print("PASS: phase-specific desktop delivery evidence")

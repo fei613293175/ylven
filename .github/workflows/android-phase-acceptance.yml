@@ -79,6 +79,7 @@ jobs:
           python scripts/44_VALIDATE_P00_TRACEABILITY.py
           python scripts/45_VALIDATE_SECRET_BOUNDARY.py
           python scripts/46_SELF_TEST_DESKTOP_DELIVERY.py
+          python scripts/47_VALIDATE_OWNER_DELIVERY_MANIFEST.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}"
           python scripts/19_VALIDATE_UI_CONTRACTS.py
           python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py

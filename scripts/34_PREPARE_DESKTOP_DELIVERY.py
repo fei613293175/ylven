@@ -5,6 +5,8 @@ import argparse
 import hashlib
 import json
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -28,6 +30,15 @@ def copy_matches(source: Path, pattern: str, destination: Path) -> list[Path]:
 
 
 def prepare_delivery(src: Path, root: Path, dest: Path, phase: str, version: str) -> None:
+    gate = root / "scripts" / "47_VALIDATE_OWNER_DELIVERY_MANIFEST.py"
+    result = subprocess.run(
+        [sys.executable, str(gate), "--phase", phase, "--version", version],
+        cwd=root,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        raise ValueError(result.stdout.strip() or result.stderr.strip())
     required = ["AUTOMATED_TEST_REPORT.md", "VISUAL_DIFF_REPORT.md", "CI_PROVENANCE.json"]
     apks = list(src.rglob("*.apk"))
     errors: list[str] = []
@@ -87,6 +98,9 @@ def prepare_delivery(src: Path, root: Path, dest: Path, phase: str, version: str
         empty_delivery_dir = dest / f"{phase}-delivery-docs"
         if empty_delivery_dir.exists():
             empty_delivery_dir.rmdir()
+    shutil.copy2(root / "docs" / "delivery" / f"{phase}_OWNER_TEST_CHECKLIST.md", dest / "OWNER_TEST_CHECKLIST.md")
+    shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURES_ORIGINAL.md", dest / "FEATURES_ORIGINAL.md")
+    shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURE_COMPLETION_COMPARISON.md", dest / "FEATURE_COMPLETION_COMPARISON.md")
 
     lines = []
     for path in sorted(item for item in dest.rglob("*") if item.is_file() and item.name != "SHA256SUMS.txt"):
