@@ -2,12 +2,14 @@
 
 - Phase: P01
 - Version: 1.1.0
-- Result: BLOCKED_EXTERNAL
+- Result: DEPLOYED_STAGING
+- Checked at: 2026-08-06T03:35:02+08:00
 - DNS provider: Cloudflare
 
-| Host | Contract | Current state | Required owner decision/action |
+| Host | Contract | Current state | Evidence |
 |---|---|---|---|
-| `auth.orbexa.cc` | CNAME/Tunnel、代理、Full strict、`/health/ready` | NXDOMAIN | 提供真实 Tunnel/CNAME 目标并创建记录 |
-| `admin.orbexa.cc` | CNAME/Tunnel、代理、Full strict、`/health` | 已指向另一线上产品 | 决定迁移现有域名，或批准新的 YLVEN 专用子域名 |
+| `ai-admin.orbexa.cc` | YLVEN 专用管理后台/API、代理、Full strict、`/health` | 已解析到 `103.96.149.219` | 公网 HTTPS 200，证书有效至 2026-11-03 |
+| `auth.orbexa.cc` | 独立认证服务、`/health/ready` | 本版本未配置 | 认证 API 暂由 `ai-admin.orbexa.cc` 同源提供 |
+| `admin.orbexa.cc` | 其他项目既有入口 | 保持原项目不变 | 本次未修改 |
 
-禁止猜测 DNS 目标，禁止在没有所有者决定时覆盖现有站点。
+本次没有覆盖或迁移其他项目域名；YLVEN 使用 `ai-admin.orbexa.cc`。

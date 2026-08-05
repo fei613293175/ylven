@@ -2,9 +2,11 @@
 
 - Phase: P01
 - Version: 1.1.0
-- Result: NOT_DELIVERED
-- URL: PENDING_OWNER_DOMAIN_DECISION
-- Administrator email: PENDING_PRIVATE_CONFIGURATION
-- One-time password file: NOT_CREATED
+- Result: DEPLOYED_STAGING
+- URL: `https://ai-admin.orbexa.cc`
+- Administrator username: `admin`
+- Administrator password: `12345678` (交付约定凭据；未写入 Git、CI、日志或截图)
+- Private backup: `/opt/ylven-p01/backups/20260806T025222/ylven-admin-credentials.txt`
+- Container: `ylven-p01-api:9d7ec53`
 
-当前 `admin.orbexa.cc` 属于另一线上产品，不能作为 YLVEN 入口。确定安全域名并完成 staging 部署后，管理员邮箱和一次性密码只能写入本机私密交付文件，不得进入 Git、CI、日志、截图或聊天。
+已用公网后台真实登录并回读 API 数据。`admin.orbexa.cc` 保持其他项目使用，YLVEN 不覆盖该入口。所有者验收清单仍保持 `PENDING`，不得据此冒充最终批准。
