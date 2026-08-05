@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T13:47:39+08:00`
+- Generated: `2026-08-05T13:48:11+08:00`
 - Current phase: `P00`
 - Phase status: `DOING`
 - Current Work Packet: `P00-W04`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P00-W03`
 - Last closed phase: `none`
 - Last closed version: `none`
 - Closed/deferred Work Packets recorded: `3`
 - Closed releases recorded: `0`
 - Git branch: `phase/p00-engineering-foundation`
-- Git HEAD: `9b8e57d60df0757cee47646fc8cd3ebed51b73af`
+- Git HEAD: `2d41d02b59ca2ed20dd26728fa452dce5fb5d531`
 
 ## Exact next action
 
-`P00-W03` is final at `9b8e57d60df0757cee47646fc8cd3ebed51b73af`. Continue exactly `P00-W04`.
+Implement `P00-W04` (数据基础设施、可观测性、CI 与阶段发布). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 

@@ -41,10 +41,10 @@ work_packets:
 - work_packet_id: P00-W04
   phase: P00
   sequence: 4
-  status: TODO
-  started_at: null
+  status: DOING
+  started_at: '2026-08-05T13:48:11+08:00'
   closed_at: null
-  started_commit: null
+  started_commit: 2d41d02b59ca2ed20dd26728fa452dce5fb5d531
   closed_commit: null
   result: null
   reason: ''
@@ -719,4 +719,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-05T13:47:39+08:00'
+updated_at: '2026-08-05T13:48:11+08:00'

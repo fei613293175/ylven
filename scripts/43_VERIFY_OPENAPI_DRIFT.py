@@ -7,7 +7,7 @@ SPEC = ROOT / "contracts" / "openapi-skeleton.yaml"
 CHECKSUM = ROOT / "contracts" / "openapi" / "openapi.sha256"
 
 expected = CHECKSUM.read_text(encoding="utf-8").split()[0].lower()
-actual = sha256(SPEC.read_bytes()).hexdigest()
+actual = sha256(SPEC.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8")).hexdigest()
 if actual != expected:
     raise SystemExit(f"OpenAPI drift: expected {expected}, got {actual}")
 print(f"PASS: canonical OpenAPI SHA-256 {actual}")
