@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T17:01:46+08:00`
+- Generated: `2026-08-05T17:03:34+08:00`
 - Current phase: `P01`
-- Phase status: `TODO`
+- Phase status: `DOING`
 - Current Work Packet: `P01-W01`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P00-W05`
 - Last closed phase: `P00`
 - Last closed version: `1.0.0`
 - Closed/deferred Work Packets recorded: `5`
 - Closed releases recorded: `1`
-- Git branch: `phase/p00-engineering-foundation`
-- Git HEAD: `8e87855ae1b518ccbedd50ee815f3be236328b66`
+- Git branch: `phase/p01-identity-backend-email-auth-and-admin`
+- Git HEAD: `92383b3a96537e24448bf3005878ca4ee0e5c521`
 
 ## Exact next action
 
-Release `1.0.0` is closed. The exact next work is `P01-W01` in `P01`.
+Implement `P01-W01` (邮箱身份规范、安全挑战与 Turnstile 验证). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 
