@@ -21,6 +21,8 @@ class AppShellTest {
         composeRule.onNodeWithTag("YL-A-001-C-P00_003-01").assertExists()
         composeRule.onNodeWithTag("YL-A-002-C-P00_004-01").assertExists()
         composeRule.onNodeWithTag("YL-A-003-C-P00_005-01").assertExists()
+        composeRule.onNodeWithText("P01 身份与管理后台").assertExists()
+        composeRule.onNodeWithText("P01 版本状态").assertExists()
 
         listOf("home", "work", "discover", "mine").forEach { tab ->
             composeRule.onNodeWithTag("main-tab-$tab").performClick().assertIsSelected()

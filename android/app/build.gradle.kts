@@ -12,8 +12,10 @@ android {
         applicationId = "cc.orbexa.ylven"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1000000
-        versionName = "1.0.0"
+        val ownerVersionName = providers.gradleProperty("ylvenVersionName").orElse("1.0.0").get()
+        val versionParts = ownerVersionName.split(".").map(String::toInt)
+        versionCode = versionParts[0] * 1_000_000 + versionParts[1] * 10_000 + versionParts[2] * 100
+        versionName = ownerVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

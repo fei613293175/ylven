@@ -93,9 +93,9 @@ fun YlvenApp() {
                     .padding(horizontal = YlvenDimensions.PageHorizontal, vertical = YlvenDimensions.PageTop),
                 verticalArrangement = Arrangement.spacedBy(YlvenDimensions.SectionGap),
             ) {
-                Text(tab.label, style = MaterialTheme.typography.headlineSmall)
-                TabContent(tab)
-                DesignTokenSummary()
+            Text("P01 身份与管理后台", style = MaterialTheme.typography.headlineSmall)
+            TabContent(tab)
+            DesignTokenSummary()
             }
         }
     }
@@ -122,8 +122,9 @@ private fun TabContent(tab: MainTab) {
                 .testTag("tab-content-${tab.name.lowercase()}"),
             verticalArrangement = Arrangement.spacedBy(YlvenDimensions.InlineGap),
         ) {
-            Text("当前暂无内容", style = MaterialTheme.typography.titleMedium)
-            Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("P01 版本状态", style = MaterialTheme.typography.titleMedium)
+            Text("身份后端、邮箱认证与管理后台已完成 CI 验证。", style = MaterialTheme.typography.bodyMedium)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
