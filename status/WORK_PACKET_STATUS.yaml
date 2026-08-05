@@ -80,18 +80,20 @@ work_packets:
 - work_packet_id: P01-W02
   phase: P01
   sequence: 2
-  status: DOING
+  status: CLOSED
   started_at: '2026-08-05T17:24:53+08:00'
-  closed_at: null
+  closed_at: '2026-08-05T17:38:02+08:00'
   started_commit: c7176c2623b3f5101ce4f8bceae4138a91517984
-  closed_commit: null
-  result: null
+  closed_commit: e002441fe6c5eaebd55d64afab0d3864f47352d1
+  result: CLOSED
   reason: ''
-  evidence: []
+  evidence:
+  - git:e002441fe6c5eaebd55d64afab0d3864f47352d1
+  - history:25a11ecf91787afee820450eb3f2909e7c1a608e33a60c2a3cde4b42b9c5e19f
 - work_packet_id: P01-W03
   phase: P01
   sequence: 3
-  status: PLANNED
+  status: TODO
   started_at: null
   closed_at: null
   started_commit: null
@@ -725,4 +727,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-05T17:24:53+08:00'
+updated_at: '2026-08-05T17:38:02+08:00'
