@@ -17,5 +17,6 @@ $sha=(& git rev-parse HEAD).Trim(); $branch=(& git branch --show-current).Trim()
 & gh workflow run android-phase-acceptance.yml --ref $branch -f phase=$Phase -f version=$version -f commit_sha=$sha
 if($LASTEXITCODE-ne 0){throw 'Could not dispatch GitHub Actions release acceptance.'}
 Start-Sleep -Seconds 3
-$run=(& gh run list --workflow android-phase-acceptance.yml --branch $branch --limit 1 --json databaseId,status,headSha --jq '.[0] | "\(.databaseId) \(.status) \(.headSha)"').Trim(); Write-Host "Dispatched CI: $run"
+$runData=(& gh run list --workflow android-phase-acceptance.yml --branch $branch --limit 1 --json databaseId,status,headSha | ConvertFrom-Json)[0]
+$run="$($runData.databaseId) $($runData.status) $($runData.headSha)"; Write-Host "Dispatched CI: $run"
 if(-not $NoWait){$id=($run -split ' ')[0]; & gh run watch $id --exit-status; if($LASTEXITCODE-ne 0){throw 'GitHub Actions acceptance failed.'}; Write-Host "CI passed. Deliver exact Artifact with scripts/35_DELIVER_ANDROID_RELEASE.ps1 -Phase $Phase -Version $version -RunId $id"}
