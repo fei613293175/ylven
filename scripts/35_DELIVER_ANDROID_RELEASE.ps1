@@ -18,7 +18,7 @@ if ($ActualOrigin -ne $ExpectedOrigin) { throw "origin mismatch: $ActualOrigin" 
 $ArtifactPattern = "ylven-$Phase-$Version-*-android-acceptance"
 & gh run download $RunId --repo $Repo --pattern $ArtifactPattern --dir $Temp
 if ($LASTEXITCODE -ne 0) { throw 'Failed to download the exact GitHub Actions artifact.' }
-$ArtifactDirs = Get-ChildItem -Path $Temp -Directory
+$ArtifactDirs = @(Get-ChildItem -Path $Temp -Directory)
 if ($ArtifactDirs.Count -ne 1) { throw "Expected one exact artifact directory, got $($ArtifactDirs.Count)." }
 
 & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/34_PREPARE_DESKTOP_DELIVERY.py' --artifact-dir $ArtifactDirs[0].FullName --phase $Phase --version $Version
