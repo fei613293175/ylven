@@ -19,7 +19,7 @@
 
 ## 当前进行中
 
-P00-W01 已通过轻量控制端合同测试和门禁并由控制器关闭。P00-W02 已完成 Go 运行时实现和确定性测试；本机未安装 Go，真实执行由新增 GitHub Actions `backend-process-tests` job 负责。
+P00-W01 已通过轻量控制端合同测试和门禁并由控制器关闭。P00-W02 已完成 Go 运行时实现和确定性测试；精确提交 `af9619851caf0f96f81dea494d19a22bc497abd6` 的 GitHub Actions Run `30978144371` 已通过 `backend-process-tests`、合同安全、Android 构建与模拟器验收。
 
 ## 外部阻塞
 

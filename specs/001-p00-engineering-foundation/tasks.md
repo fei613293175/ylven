@@ -51,7 +51,7 @@
 - [x] T012 `[P00-010]` Implement the Scheduler process, lease/lock abstraction, and duplicate-run protection in `backend/cmd/scheduler/` and `backend/internal/platform/scheduling/`.
   - Tests: lock contention, lease expiry, clock boundary, and single execution.
   - Evidence: deterministic contention test output.
-- [ ] T013 `[P00-006..P00-010]` Finalize W02 status/evidence, run process tests and public safety gate, commit cleanly, and close only `P00-W02` through the controller.
+- [x] T013 `[P00-006..P00-010]` Finalize W02 status/evidence, run process tests and public safety gate, commit cleanly, and close only `P00-W02` through the controller.
 
 ## Work Packet P00-W03: Data, Events, Storage, and OpenAPI
 
