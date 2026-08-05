@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-05T18:12:42+08:00`
+- Generated: `2026-08-05T19:47:50+08:00`
 - Current phase: `P01`
-- Phase status: `DOING`
-- Current Work Packet: `P01-W05`
-- Work Packet status: `DOING`
-- Last closed Work Packet: `P01-W04`
+- Phase status: `READY_FOR_RELEASE`
+- Current Work Packet: `NONE`
+- Work Packet status: `PHASE_COMPLETE`
+- Last closed Work Packet: `P01-W05`
 - Last closed phase: `P00`
 - Last closed version: `1.0.0`
-- Closed/deferred Work Packets recorded: `9`
+- Closed/deferred Work Packets recorded: `10`
 - Closed releases recorded: `1`
 - Git branch: `phase/p01-identity-backend-email-auth-and-admin`
-- Git HEAD: `daa0e6f1180aab6e7deee0e1a61690a299a72ca9`
+- Git HEAD: `0ead3ec3dfd2d493a4d53cdbd912278037fffe03`
 
 ## Exact next action
 
-Continue exactly `P01-W05` using `work-packets/P01-W05.md` and the current phase specification. Do not reselect work from chat history.
+Every Work Packet in `P01` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
 
 ## New-conversation rule
 
