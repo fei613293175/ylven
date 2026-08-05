@@ -59,7 +59,7 @@
 - [x] T015 `[P00-012,P00-013]` Implement Redis cache/rate-limit and NATS JetStream publish/consume adapters in `backend/internal/platform/cache/` and `backend/internal/platform/events/`, including timeout/degraded states and duplicate-message handling.
 - [x] T016 `[P00-014]` Implement the R2-compatible object-store interface and explicitly selected local filesystem test adapter in `backend/internal/platform/storage/`; never claim external R2 success without real credentials and evidence.
 - [x] T017 `[P00-015]` Establish the canonical OpenAPI document and deterministic generation/drift check in `contracts/openapi/`, generated clients, and `scripts/`.
-- [ ] T018 `[P00-011..P00-015]` Run migration, cache, rate-limit, event, object-store, OpenAPI, and safety tests; finalize evidence, commit cleanly, and close only `P00-W03` through the controller.
+- [x] T018 `[P00-011..P00-015]` Run migration, cache, rate-limit, event, object-store, OpenAPI, and safety tests; finalize evidence, commit cleanly, and close only `P00-W03` through the controller.
 
 ## Work Packet P00-W04: Traceability, Observability, CI, Release, and Text Probe
 
