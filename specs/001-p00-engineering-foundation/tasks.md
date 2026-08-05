@@ -37,7 +37,7 @@
   - Android state: `YL-A-003-S01_DEFAULT`; test interactions are limited to registered tab navigation.
   - Tests: state unit tests and Compose click/recreation tests for all four tabs.
   - Evidence: CI emulator screenshots and `UI_SCREENSHOT_INDEX.csv` entries for the packet's applicable Android states.
-- [ ] T009 `[P00-001..P00-005]` Finalize W01 feature evidence in `status/P00_FEATURE_STATUS.yaml`, run affected tests, the P00-W01 visual gate, and the public-repository safety gate; commit implementation and tests, ensure a clean worktree, then run `./ylven.ps1 close-packet -Packet P00-W01`.
+- [x] T009 `[P00-001..P00-005]` Finalize W01 feature evidence in `status/P00_FEATURE_STATUS.yaml`, run affected tests, the P00-W01 visual gate, and the public-repository safety gate; commit implementation and tests, ensure a clean worktree, then run `./ylven.ps1 close-packet -Packet P00-W01`.
 
 ## Work Packet P00-W02: Runtime Process Shells
 
