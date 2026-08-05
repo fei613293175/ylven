@@ -172,18 +172,32 @@ features:
   - backend/internal/platform/providers/sub2api/probe_test.go
   - docs/evidence/P00-W04.md
 - feature_id: P00-021
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/platform/providers/sub2api/probe.go
+  - backend/internal/platform/providers/sub2api/probe_test.go
+  - docs/evidence/P00-W05.md
 - feature_id: P00-022
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - .gitignore
+  - .env.example
+  - scripts/45_VALIDATE_SECRET_BOUNDARY.py
+  - docs/evidence/P00-W05.md
 - feature_id: P00-023
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - web/admin/src/App.js
+  - web/admin/src/router.js
+  - web/admin/src/router.test.js
+  - docs/evidence/P00-W05.md
 - feature_id: P00-024
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - web/developer/src/main.js
+  - web/developer/src/app.test.js
+  - docs/evidence/P00-W05.md

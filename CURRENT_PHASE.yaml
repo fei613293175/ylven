@@ -9,7 +9,7 @@ blocked_reason: null
 last_closed_phase: null
 last_closed_version: null
 last_owner_approved_phase: null
-updated_at: '2026-08-05T14:04:48+08:00'
+updated_at: '2026-08-05T14:05:13+08:00'
 allowed_statuses:
 - TODO
 - DOING

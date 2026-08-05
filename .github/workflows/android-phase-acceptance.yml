@@ -34,6 +34,22 @@ env:
   ANDROID_API_LEVEL: "35"
 
 jobs:
+  web-shell-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [admin, developer]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/${{ matrix.app }}/package.json
+      - name: Install and test ${{ matrix.app }} shell
+        working-directory: web/${{ matrix.app }}
+        run: npm install --no-audit --no-fund && npm test && npm run build
+
   backend-process-tests:
     runs-on: ubuntu-latest
     steps:
@@ -61,6 +77,7 @@ jobs:
           python scripts/40_PUBLIC_REPOSITORY_SAFETY.py
           python scripts/43_VERIFY_OPENAPI_DRIFT.py
           python scripts/44_VALIDATE_P00_TRACEABILITY.py
+          python scripts/45_VALIDATE_SECRET_BOUNDARY.py
           python scripts/19_VALIDATE_UI_CONTRACTS.py
           python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
