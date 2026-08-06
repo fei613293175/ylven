@@ -51,6 +51,10 @@ if [[ "$PHASE" != "P00" && -n "$UPGRADE_FROM" && "$UPGRADE_FROM" != "NONE" ]]; t
 fi
 
 adb wait-for-device
+# Pre-confirm Android's one-time immersive-mode education dialog. The approved
+# P02 screenshots intentionally contain the renderer's contract status clock
+# and gesture pill, so the device must not display its own full-screen tutorial.
+adb shell settings put secure immersive_mode_confirmations confirmed || true
 if [[ -n "$PREVIOUS_APK" ]]; then
   adb install -r "$PREVIOUS_APK"
 else

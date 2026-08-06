@@ -52,11 +52,11 @@ private fun AcceptanceSystemBars() {
     DisposableEffect(view) {
         val window = view.context.findActivity()?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, view) }
-        // Keep the real status/navigation bars visible. Hiding them triggers
-        // Android's one-time immersive-mode education overlay in CI, which
-        // contaminates the contract screenshots. MainActivity already enables
-        // edge-to-edge, so the renderer retains the full 1080x2400 canvas.
-        controller?.show(WindowInsetsCompat.Type.systemBars())
+        // The approved contract includes a code-rendered status clock and
+        // gesture pill. Keep system bars hidden so their device-specific icons
+        // do not contaminate the 1080x2400 visual baseline. The acceptance
+        // runner pre-confirms Android's one-time immersive education overlay.
+        controller?.hide(WindowInsetsCompat.Type.systemBars())
         onDispose { controller?.show(WindowInsetsCompat.Type.systemBars()) }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import java.io.File
@@ -25,11 +26,17 @@ class P02IdentityStateUiTest {
     fun everyP02AndroidStateIsRuntimeCaptured() {
         val activeState = mutableStateOf(P02_STATE_IDS.first())
         composeRule.setContent {
-            YlvenTheme(darkTheme = false) { YlvenAcceptanceState(activeState.value) }
+            YlvenTheme(darkTheme = false) {
+                key(activeState.value) { YlvenAcceptanceState(activeState.value) }
+            }
         }
         P02_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            // Allow the real device compositor to present the newly keyed Canvas
+            // before uiAutomation.takeScreenshot() samples the frame.
+            Thread.sleep(120)
             composeRule.onNodeWithTag("p02-state-$stateId").assertExists()
             capture(stateId)
         }
