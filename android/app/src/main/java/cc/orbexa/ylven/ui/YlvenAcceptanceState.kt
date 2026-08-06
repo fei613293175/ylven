@@ -105,7 +105,11 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
 
     fun render(stateId: String) {
         val page = stateId.substringBefore("-S")
-        val code = stateId.substringAfterLast('_')
+        // State IDs carry a single separator between the sequence number and
+        // the status. Keep compound codes intact: e.g. SERVER_ERROR and
+        // INPUT_FOCUSED must select their own contract variants rather than
+        // being truncated to ERROR or FOCUSED.
+        val code = stateId.substringAfter('_')
         canvas.drawColor(Pc.bg)
         when (page) {
             "YL-A-004" -> splash(code)

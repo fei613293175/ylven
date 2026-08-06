@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -33,10 +35,6 @@ class P02IdentityStateUiTest {
         P02_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-            // Allow the real device compositor to present the newly keyed Canvas
-            // before uiAutomation.takeScreenshot() samples the frame.
-            Thread.sleep(120)
             composeRule.onNodeWithTag("p02-state-$stateId").assertExists()
             capture(stateId)
         }
@@ -45,8 +43,15 @@ class P02IdentityStateUiTest {
     private fun capture(name: String) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         composeRule.waitForIdle()
-        val bitmap = requireNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()) {
-            "Could not capture P02 runtime screenshot: $name"
+        // Capture the currently rendered Compose Canvas, rather than sampling
+        // the asynchronous window Surface via UiAutomation. The latter can
+        // return the previous state immediately after a recomposition.
+        val bitmap = composeRule.onNodeWithTag("p02-state-$name")
+            .captureToImage()
+            .asAndroidBitmap()
+        check(bitmap.width == 1080 && bitmap.height == 2400) {
+            "P02 runtime screenshot has unexpected dimensions for $name: " +
+                "${bitmap.width}x${bitmap.height}"
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val resolver = context.contentResolver
