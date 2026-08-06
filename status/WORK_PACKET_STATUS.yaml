@@ -145,10 +145,10 @@ work_packets:
 - work_packet_id: P02-W02
   phase: P02
   sequence: 2
-  status: TODO
-  started_at: null
+  status: DOING
+  started_at: '2026-08-06T08:22:30+08:00'
   closed_at: null
-  started_commit: null
+  started_commit: 9610c40fbc45c0f9cb8a73fd40421026a44dc453
   closed_commit: null
   result: null
   reason: ''
@@ -735,4 +735,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-06T08:22:14+08:00'
+updated_at: '2026-08-06T08:22:30+08:00'
