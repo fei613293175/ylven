@@ -58,22 +58,29 @@ import cc.orbexa.ylven.identity.DeviceSession
 fun YlvenAcceptanceState(stateId: String) {
     val page = stateId.substringBefore("-S")
     val code = stateId.substringAfterLast('_', "DEFAULT")
-    when (page) {
-        "YL-A-004" -> AcceptanceLaunch(code)
-        "YL-A-005" -> AcceptanceAuthForm(registering = false, code = code)
-        "YL-A-006" -> AcceptanceSecurityOverlay(registering = false, code = code)
-        "YL-A-007" -> AcceptanceTurnstile(code)
-        "YL-A-008" -> AcceptanceOtp(registering = false, code = code)
-        "YL-A-009" -> AcceptanceRegistered(code)
-        "YL-A-010" -> AcceptanceAuthForm(registering = true, code = code)
-        "YL-A-011" -> AcceptanceSecurityOverlay(registering = true, code = code)
-        "YL-A-012" -> AcceptanceOtp(registering = true, code = code)
-        "YL-A-013" -> AcceptanceRegistered(code)
-        "YL-A-014" -> AcceptanceSession(code)
-        "YL-A-015" -> AcceptanceLogout(code)
-        "YL-A-016" -> AcceptanceDevices(code)
-        "YL-A-017" -> AcceptanceResilience(code)
-        else -> AcceptanceStatusPage("认证状态", code)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .testTag("p02-state-$stateId"),
+    ) {
+        when (page) {
+            "YL-A-004" -> AcceptanceLaunch(code)
+            "YL-A-005" -> AcceptanceAuthForm(registering = false, code = code)
+            "YL-A-006" -> AcceptanceSecurityOverlay(registering = false, code = code)
+            "YL-A-007" -> AcceptanceTurnstile(code)
+            "YL-A-008" -> AcceptanceOtp(registering = false, code = code)
+            "YL-A-009" -> AcceptanceRegistered(code)
+            "YL-A-010" -> AcceptanceAuthForm(registering = true, code = code)
+            "YL-A-011" -> AcceptanceSecurityOverlay(registering = true, code = code)
+            "YL-A-012" -> AcceptanceOtp(registering = true, code = code)
+            "YL-A-013" -> AcceptanceRegistered(code)
+            "YL-A-014" -> AcceptanceSession(code)
+            "YL-A-015" -> AcceptanceLogout(code)
+            "YL-A-016" -> AcceptanceDevices(code)
+            "YL-A-017" -> AcceptanceResilience(code)
+            else -> AcceptanceStatusPage("认证状态", code)
+        }
     }
 }
 

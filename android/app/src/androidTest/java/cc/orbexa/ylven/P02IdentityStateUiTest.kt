@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.graphics.Bitmap
+import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ class P02IdentityStateUiTest {
         P02_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
+            composeRule.onNodeWithTag("p02-state-$stateId").assertExists()
             capture(stateId)
         }
     }
