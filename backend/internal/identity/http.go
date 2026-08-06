@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 type API struct {
 	Store             *Store
 	TurnstileMode     string
+	TurnstileSiteKey  string
 	TurnstileVerifier TurnstileVerifier
 	EmailMode         string
 	Mailer            OTPMailer
@@ -28,6 +30,7 @@ type API struct {
 
 func NewAPI(store *Store) *API {
 	api := &API{Store: store}
+	api.TurnstileSiteKey = strings.TrimSpace(os.Getenv("TURNSTILE_SITE_KEY"))
 	api.TurnstileMode = strings.ToLower(strings.TrimSpace(os.Getenv("TURNSTILE_MODE")))
 	if api.TurnstileMode == "" {
 		api.TurnstileMode = "external"
@@ -41,6 +44,9 @@ func NewAPI(store *Store) *API {
 			api.TurnstileVerifier = MockTurnstileVerifier{Token: mockToken}
 		}
 	case "external":
+		if api.TurnstileSiteKey == "" {
+			api.configurationErrs = append(api.configurationErrs, "Turnstile site key is not configured")
+		}
 		secret, err := envOrFile("TURNSTILE_SECRET")
 		if err != nil || secret == "" {
 			api.configurationErrs = append(api.configurationErrs, "Turnstile secret is not configured")
@@ -114,6 +120,7 @@ func (a *API) ConfigurationOK() bool { return len(a.configurationErrs) == 0 }
 
 func (a *API) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/security/turnstile", a.turnstilePage)
 	mux.HandleFunc("/api/v1/auth/email/normalize", a.normalize)
 	mux.HandleFunc("/api/v1/auth/register/challenge", a.challenge)
 	mux.HandleFunc("/internal/v1/security/turnstile/verify", a.turnstile)
@@ -178,6 +185,102 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
 	writeJSON(w, status, map[string]any{"error": map[string]string{"code": code, "message": message}})
+}
+
+var turnstilePageTemplate = template.Must(template.New("turnstile").Parse(`<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>YLVEN 安全验证</title>
+  <style nonce="{{.Nonce}}">
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #101828; background: #fff; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+    main { width: min(100% - 32px, 360px); text-align: center; }
+    h1 { margin: 0 0 12px; font-size: 22px; line-height: 30px; }
+    p { margin: 0 0 24px; color: #475467; font-size: 14px; line-height: 20px; }
+    .widget { min-height: 70px; display: grid; place-items: center; }
+    #status { margin-top: 16px; min-height: 20px; }
+    button { margin-top: 12px; min-height: 44px; padding: 0 20px; border: 1px solid #e4e7ec; border-radius: 12px; background: #fff; color: #475467; font-size: 14px; }
+    [hidden] { display: none; }
+  </style>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <main>
+    <h1>完成安全验证</h1>
+    <p>验证令牌仅用于当前登录或注册请求。</p>
+    <div class="widget">
+      <div class="cf-turnstile" data-sitekey="{{.SiteKey}}" data-action="{{.Action}}" data-callback="turnstileSuccess" data-error-callback="turnstileError" data-expired-callback="turnstileExpired"></div>
+    </div>
+    <p id="status" role="status" aria-live="polite">正在加载安全验证...</p>
+    <button id="retry" type="button" hidden>重新验证</button>
+  </main>
+  <script nonce="{{.Nonce}}">
+    const statusNode = document.getElementById('status');
+    const retryNode = document.getElementById('retry');
+    window.turnstileSuccess = function(token) {
+      statusNode.textContent = '验证已通过，正在返回应用...';
+      retryNode.hidden = true;
+      if (window.YlvenSecurity && typeof window.YlvenSecurity.onTurnstileToken === 'function') {
+        window.YlvenSecurity.onTurnstileToken(token);
+      } else {
+        statusNode.textContent = '验证已通过，请返回 YLVEN 应用。';
+      }
+    };
+    window.turnstileError = function() {
+      statusNode.textContent = '安全验证暂时无法完成，请重试。';
+      retryNode.hidden = false;
+    };
+    window.turnstileExpired = function() {
+      statusNode.textContent = '验证已过期，请重新验证。';
+      retryNode.hidden = false;
+    };
+    retryNode.addEventListener('click', function() {
+      retryNode.hidden = true;
+      statusNode.textContent = '正在重新加载安全验证...';
+      if (window.turnstile) window.turnstile.reset();
+    });
+  </script>
+</body>
+</html>`))
+
+func (a *API) turnstilePage(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	challengeID := strings.TrimSpace(r.URL.Query().Get("challenge_id"))
+	action := strings.TrimSpace(r.URL.Query().Get("action"))
+	challenge, ok := a.Store.ChallengeSnapshot(challengeID)
+	if !ok || challenge.ExpiresAt.Before(time.Now()) || challenge.Consumed {
+		writeError(w, http.StatusNotFound, "challenge_not_found", "Security challenge is unavailable")
+		return
+	}
+	if (action != "login" && action != "register") || action != challenge.Purpose {
+		writeError(w, http.StatusUnprocessableEntity, "challenge_action_mismatch", "Security challenge action is invalid")
+		return
+	}
+	if challenge.TurnstileVerified {
+		writeError(w, http.StatusConflict, "turnstile_already_verified", "Security challenge was already verified")
+		return
+	}
+	if a.TurnstileSiteKey == "" {
+		writeError(w, http.StatusServiceUnavailable, "turnstile_unconfigured", "Security verification is unavailable")
+		return
+	}
+	nonceBytes := make([]byte, 18)
+	if _, err := rand.Read(nonceBytes); err != nil {
+		writeError(w, http.StatusServiceUnavailable, "turnstile_unavailable", "Security verification is unavailable")
+		return
+	}
+	nonce := fmt.Sprintf("%x", nonceBytes)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'nonce-"+nonce+" https://challenges.cloudflare.com; style-src 'nonce-"+nonce+"; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; img-src data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+	if err := turnstilePageTemplate.Execute(w, map[string]string{"SiteKey": a.TurnstileSiteKey, "Action": action, "Nonce": nonce}); err != nil {
+		return
+	}
 }
 
 func (a *API) normalize(w http.ResponseWriter, r *http.Request) {
@@ -401,16 +504,26 @@ func (a *API) complete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) passwordPolicy(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) { return }
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"min_length": 8, "requires_letter": true, "requires_digit": true})
 }
 
 func (a *API) personalWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPost) { return }
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
 	user, _, err := a.Store.CurrentAccount(bearer(r))
-	if err != nil { writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid"); return }
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		return
+	}
 	workspace, err := a.Store.EnsureWorkspace(user.ID)
-	if err != nil { writeError(w, http.StatusInternalServerError, "workspace_unavailable", "Workspace could not be initialized"); return }
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "workspace_unavailable", "Workspace could not be initialized")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"workspace": workspace, "initialized": true})
 }
 

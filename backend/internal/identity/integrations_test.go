@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -74,5 +75,45 @@ func TestHTTPRegistrationUsesExplicitStagingMocks(t *testing.T) {
 	verified := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/register/otp/verify", map[string]string{"challenge_id": challengeBody.ChallengeID, "code": deliveryBody.DebugCode}, "", "")
 	if verified.Code != http.StatusOK {
 		t.Fatalf("verify status=%d body=%s", verified.Code, verified.Body.String())
+	}
+}
+
+func TestTurnstilePageBindsExistingChallengeAndSecurityPolicy(t *testing.T) {
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	challenge, err := store.CreateChallenge("turnstile-page@example.com", "login")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := &API{Store: store, TurnstileSiteKey: "site-key"}
+	handler := api.Handler()
+
+	page := httptest.NewRecorder()
+	handler.ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id="+challenge.ID+"&action=login", nil))
+	if page.Code != http.StatusOK {
+		t.Fatalf("page status=%d body=%s", page.Code, page.Body.String())
+	}
+	if contentType := page.Header().Get("Content-Type"); contentType != "text/html; charset=utf-8" {
+		t.Fatalf("content type=%q", contentType)
+	}
+	if csp := page.Header().Get("Content-Security-Policy"); csp == "" || !strings.Contains(csp, "frame-ancestors 'none'") {
+		t.Fatalf("missing strict CSP: %q", csp)
+	}
+	if body := page.Body.String(); !strings.Contains(body, `data-sitekey="site-key"`) || !strings.Contains(body, `data-action="login"`) || !strings.Contains(body, "YlvenSecurity.onTurnstileToken") {
+		t.Fatalf("unexpected page body: %s", body)
+	}
+
+	mismatch := httptest.NewRecorder()
+	handler.ServeHTTP(mismatch, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id="+challenge.ID+"&action=register", nil))
+	if mismatch.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("mismatch status=%d body=%s", mismatch.Code, mismatch.Body.String())
+	}
+
+	missing := httptest.NewRecorder()
+	handler.ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id=missing&action=login", nil))
+	if missing.Code != http.StatusNotFound {
+		t.Fatalf("missing status=%d body=%s", missing.Code, missing.Body.String())
 	}
 }
