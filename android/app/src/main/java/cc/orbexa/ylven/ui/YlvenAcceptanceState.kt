@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.view.View
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -50,6 +51,12 @@ fun YlvenAcceptanceState(stateId: String) {
 private fun AcceptanceSystemBars() {
     val view = LocalView.current
     DisposableEffect(view) {
+        // Android's hardware renderer can ignore blur layers on a native
+        // Canvas depending on the device GPU/API combination. The approved
+        // Pillow baseline is a software Gaussian blur, so keep this isolated
+        // acceptance surface on a software layer for deterministic pixels.
+        val previousLayerType = view.layerType
+        view.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         val window = view.context.findActivity()?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, view) }
         // The approved contract includes a code-rendered status clock and
@@ -57,7 +64,10 @@ private fun AcceptanceSystemBars() {
         // do not contaminate the 1080x2400 visual baseline. The acceptance
         // runner pre-confirms Android's one-time immersive education overlay.
         controller?.hide(WindowInsetsCompat.Type.systemBars())
-        onDispose { controller?.show(WindowInsetsCompat.Type.systemBars()) }
+        onDispose {
+            controller?.show(WindowInsetsCompat.Type.systemBars())
+            view.setLayerType(previousLayerType, null)
+        }
     }
 }
 
