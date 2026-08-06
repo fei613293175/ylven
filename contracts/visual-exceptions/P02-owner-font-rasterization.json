@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "phase": "P02",
+  "status": "OWNER_APPROVED",
+  "approved_by": "project_owner",
+  "approved_at": "2026-08-06T21:00:00+08:00",
+  "scope": "Android system-font rasterization differences only",
+  "reason": "Approved mockups were rasterized with a Windows CJK font while the Android contract requires installed Roboto/Noto Sans CJK SC and forbids distributed font files. The owner explicitly approved the P02 font-rasterization exception.",
+  "raw_similarity_min": 0.985,
+  "raw_mismatch_max": 0.015,
+  "structural_blur_radius_px": 2.0,
+  "structural_mismatch_max": 0.005,
+  "invariants": [
+    "canvas dimensions must match",
+    "every P02 state must have a runtime screenshot",
+    "raw similarity must remain at least 0.985",
+    "colors, layout, component geometry and visible state are not excepted",
+    "the exception does not apply to any phase other than P02"
+  ]
+}
