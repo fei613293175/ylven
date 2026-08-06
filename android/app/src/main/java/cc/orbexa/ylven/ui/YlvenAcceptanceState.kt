@@ -688,9 +688,8 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         // Keep the source shape transparent: the Pillow implementation has
         // only the blurred shadow contribution, never a second dark card.
         paint.color = Color.TRANSPARENT
-        // The fixed emulator's hardware Canvas does not consistently rasterize
-        // shadow layers; leaving the source transparent would otherwise make
-        // the result device-dependent. The approved card border is deterministic.
+        paint.setShadowLayer(shadow, 0f, offset, Color.argb(22, 16, 24, 40))
+        canvas.drawRoundRect(RectF(x1, y1, x2 + 1f, y2 + 1f), radius, radius, paint)
         paint.clearShadowLayer()
         rounded(x1, y1, x2, y2, radius, fill, outline, 1f)
     }
