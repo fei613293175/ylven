@@ -14,7 +14,7 @@
 
 ## 外部阻塞
 
-开发范围无阻塞。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；Android acceptance 属于交付后异步验收。Run 31122821310、31125864650 均已取消，GitHub Actions 仍处于官方 major outage，等待恢复后对最新分支 HEAD 重试。
+开发范围无阻塞。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；Android acceptance 属于交付后异步验收。Run 31122821310、31125864650、31126525218 均已取消；必须对包含发布门禁修复的最新分支 HEAD 重新生成精确 Artifact。
 
 ## 关键命令与证据
 
@@ -25,4 +25,5 @@
 - `ssh obx-test "android-build docker-run --project ylven --kind build ... gradle clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin"`：PASS。
 - `gh run 31125864650`：按 `eef22f4` dispatch 后已取消；不得用历史 Run 31106248150（`1335e1b`）绑定本次交付。服务恢复后必须以届时最新分支 HEAD 重新生成精确 Artifact。
 - 公网 `auth.orbexa.cc`：修复前 CSP nonce 未闭合，导致内联样式和 `turnstileSuccess` 被浏览器拦截；Commit `25150c4` 已修正 nonce 并确保回调先于 Cloudflare API 注册。浏览器复测页面样式和成功回调 PASS。
+- P02 发布校验：部署与回滚证据已对齐发布合同；P02 截图门禁只拒绝像素完全相同的截图，不再以全屏平均像素差误判局部但明确的状态变化。三项回归测试和 `scripts/06_VERIFY_RELEASE.ps1 -Phase P02` 本地校验 PASS。
 - Admin/Developer `npm test && npm run build`：PASS；P02 合同、状态连续性、公开仓库安全和 OpenAPI 漂移门禁：PASS。

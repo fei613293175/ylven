@@ -85,6 +85,7 @@ jobs:
           python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
           python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}"
+          python tests/p02_release_visual_guard_test.py
 
   android-emulator-acceptance:
     needs: contracts-and-schema

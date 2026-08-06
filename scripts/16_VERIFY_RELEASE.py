@@ -194,9 +194,25 @@ def validate_ci_ui(release_dir: Path, phase: str, errors: list[str]) -> None:
             errors.append(f"CI runtime screenshot is too small: {name} {shot.size}")
         if all(high - low < 8 for low, high in ImageStat.Stat(shot).extrema):
             errors.append(f"CI runtime screenshot is blank: {name}")
-    for (left_name, left), (right_name, right) in zip(images, images[1:]):
-        if left.size == right.size and sum(ImageStat.Stat(ImageChops.difference(left, right)).mean) / 3 < 2:
-            errors.append(f"CI runtime screenshots are effectively identical: {left_name}, {right_name}")
+    validate_runtime_screenshot_distinctness(images, phase, errors)
+
+
+def validate_runtime_screenshot_distinctness(
+    images: list[tuple[str, Image.Image]], phase: str, errors: list[str]
+) -> None:
+    if phase == "P01":
+        for (left_name, left), (right_name, right) in zip(images, images[1:]):
+            if left.size == right.size and sum(ImageStat.Stat(ImageChops.difference(left, right)).mean) / 3 < 2:
+                errors.append(f"CI runtime screenshots are effectively identical: {left_name}, {right_name}")
+        return
+
+    pixel_digests: dict[str, str] = {}
+    for name, shot in images:
+        digest = hashlib.sha256(shot.tobytes()).hexdigest()
+        if digest in pixel_digests:
+            errors.append(f"CI runtime screenshots are pixel-identical: {pixel_digests[digest]}, {name}")
+        else:
+            pixel_digests[digest] = name
 
 
 def main() -> int:
