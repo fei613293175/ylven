@@ -271,7 +271,7 @@ class HttpIdentityGateway(
                 outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
             }
         }
-        try {
+        return try {
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
@@ -288,7 +288,6 @@ class HttpIdentityGateway(
         } finally {
             connection.disconnect()
         }
-        error("unreachable")
     }
 
     private fun JSONObject.toSession(email: String) = AuthSession(
