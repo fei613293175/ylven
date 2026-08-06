@@ -1,7 +1,7 @@
 schema_version: 1.6.0
 current_phase: P02
 phase_id: P02
-current_work_packet: P02-W04
+current_work_packet: P02-W05
 status: DOING
 phase_title: 工程基座、部署骨架与上游能力证明
 started_at: '2026-08-06T06:58:30+08:00'
@@ -9,7 +9,7 @@ blocked_reason: null
 last_closed_phase: P01
 last_closed_version: 1.1.0
 last_owner_approved_phase: P01
-updated_at: '2026-08-06T08:23:51+08:00'
+updated_at: '2026-08-06T08:24:06+08:00'
 allowed_statuses:
 - TODO
 - DOING
