@@ -12,9 +12,17 @@
 10. Money, credit, payment, retryable write, job and webhook operations require idempotency, auditability and deterministic state transitions.
 11. Keep API, migrations, admin controls, metrics and Android states aligned with the Feature Map and error catalog.
 12. A phase is not complete until `scripts/05_RELEASE_PHASE.ps1 -Phase Pxx` and `scripts/06_VERIFY_RELEASE.ps1 -Phase Pxx` succeed.
-13. Release output contains a real Gradle APK, FEATURES, TESTS, CHANGELOG, DEPLOYMENT, OWNER_ACTIONS, OWNER_ACCEPTANCE, BUILD_INFO and SHA256 files in `dist/releases/Pxx/` and a desktop mirror when available.
+13. Release output contains a real Gradle APK plus the Chinese owner artifacts `原功能清单.md`、`功能完成对比清单.md`、`完整测试清单.md`、`部署证据.md`、`管理后台实测证据.md`、`截图/` and `校验文件_SHA256.txt` in `dist/releases/Pxx/` and a desktop mirror when available.
 14. Update `status/Pxx_FEATURE_STATUS.yaml` and `status/Pxx_IMPLEMENTATION_STATUS.md` continuously. Release statuses are only IMPLEMENTED, DEFERRED_WITH_REASON or BLOCKED_EXTERNAL.
 15. Stop after reporting the current phase. Do not autonomously advance phases or introduce Governance V5.0, Kiro, Attempt or FAILED_BOUNDED state machines.
+
+## 全局发布硬门禁（P00-P13，任何版本不得绕过）
+
+- 软件 Logo 固定使用 `android/app/src/main/res/drawable/ylven_logo.png`，启动图固定使用 `android/app/src/main/res/drawable-nodpi/ylven_splash.png`；资源来源和校验必须记录在版本证据中。
+- 所有版本必须保持 `cc.orbexa.ylven`、正式签名证书和单调递增 `versionCode`，先安装上一版本，再执行 `adb install -r` 覆盖安装；禁止卸载、清除数据或换包名绕过。覆盖安装后必须验证数据标记、数据库迁移和登录态恢复，失败即阻断交付。
+- 所有者交付目录中，原功能清单、功能完成对比清单、完整测试清单、部署证据、截图目录/截图索引和 SHA-256 校验文件必须使用中文文件名：`原功能清单.md`、`功能完成对比清单.md`、`完整测试清单.md`、`部署证据.md`、`截图/`、`截图索引.csv`、`校验文件_SHA256.txt`。英文别名不能作为正式交付物。
+- 每个版本（包括没有新增后台菜单的版本）都必须由 Codex 亲自打开公共管理后台，使用交付账号登录，逐项操作当前版本对应功能，核对真实 API 数据、持久化结果和审计记录；只能健康检查、静态页面、mock 或无法回读真实数据时，不得交付。
+- 以上规则同时由 `contracts/owner-delivery-contract.yaml`、`contracts/release-contract.yaml`、`contracts/release-version-matrix.yaml` 和 `contracts/android-phase-acceptance.yaml` 约束；脚本校验失败即视为未完成，不得在回复中冒充完成。
 
 <!-- YLVEN_UI_AGENTS_V1_2 -->
 ## 强制 UI 与效果图合同

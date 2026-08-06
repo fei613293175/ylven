@@ -13,6 +13,30 @@ versioning:
   upgrade_install_required: true
   fixed_application_id: cc.orbexa.ylven
   fixed_signing_certificate_required: true
+global_release_requirements:
+  applies_to_every_phase: true
+  logo_resource: android/app/src/main/res/drawable/ylven_logo.png
+  splash_resource: android/app/src/main/res/drawable-nodpi/ylven_splash.png
+  overlay_install:
+    command: adb install -r
+    clear_data_forbidden: true
+    same_application_id_required: true
+    same_signing_certificate_required: true
+    data_and_login_state_migration_required: true
+  chinese_delivery_files:
+    original_features: 原功能清单.md
+    completion_comparison: 功能完成对比清单.md
+    complete_test_checklist: 完整测试清单.md
+    deployment_evidence: 部署证据.md
+    upgrade_evidence: 覆盖安装证据.md
+    screenshots: 截图
+    screenshot_index: 截图索引.csv
+    checksum: 校验文件_SHA256.txt
+  admin_real_test:
+    codex_must_open_every_version: true
+    current_phase_features_must_be_real_and_complete: true
+    public_url_and_real_api_data_required: true
+    evidence: 管理后台实测证据.md
 phases:
 - phase: P00
   title: 工程基座、能力验证与可运行壳
@@ -23,7 +47,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.0.0
   upgrade_test_from: null
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -53,7 +77,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.2.0
   upgrade_test_from: 1.1.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -68,7 +92,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.3.0
   upgrade_test_from: 1.2.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -83,7 +107,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.4.0
   upgrade_test_from: 1.3.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -98,7 +122,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.5.0
   upgrade_test_from: 1.4.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -113,7 +137,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.6.0
   upgrade_test_from: 1.5.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -128,7 +152,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.7.0
   upgrade_test_from: 1.6.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -143,7 +167,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.8.0
   upgrade_test_from: 1.7.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -158,7 +182,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.9.0
   upgrade_test_from: 1.8.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -173,7 +197,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.10.0
   upgrade_test_from: 1.9.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -188,7 +212,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.11.0
   upgrade_test_from: 1.10.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -203,7 +227,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.12.0
   upgrade_test_from: 1.11.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true
@@ -218,7 +242,7 @@ phases:
   ci_acceptance_workflow: .github/workflows/android-phase-acceptance.yml
   desktop_delivery_directory: ~/Desktop/YLVEN-Releases/1.13.0
   upgrade_test_from: 1.12.0
-  admin_access_delivery: false
+  admin_access_delivery: true
   closure_required: true
   work_packet_history_required: true
   release_ledger_required: true

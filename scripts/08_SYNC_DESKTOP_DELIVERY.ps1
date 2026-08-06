@@ -19,7 +19,9 @@ try {
   Copy-Item -Path (Join-Path $Source '*') -Destination $Temp -Recurse -Force
   Push-Location $Temp
   try {
-    foreach ($line in Get-Content 'SHA256SUMS.txt') {
+    $checksumPath = Join-Path $Temp '校验文件_SHA256.txt'
+    if (-not (Test-Path $checksumPath)) { throw "Desktop copy is missing 校验文件_SHA256.txt" }
+    foreach ($line in Get-Content $checksumPath) {
       if ($line -match '^([0-9a-fA-F]{64})\s+(.+)$') {
         $name = $Matches[2]
         $file = Join-Path $Temp $name

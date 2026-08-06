@@ -10,7 +10,8 @@
   [Parameter(ValueFromRemainingArguments=$true)][string[]]$RemainingArguments,
   [switch]$SkipInitialPush,
   [switch]$NoWait,
-  [switch]$NoPush
+  [switch]$NoPush,
+  [switch]$LegacyException
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -66,6 +67,7 @@ switch($Command){
     $args=@('close-release')
     if($Phase){$args+=@('--phase',$Phase)}
     if($NoPush){$args+='--no-push'}
+    if($LegacyException){$args+='--legacy-exception'}
     Invoke-RepositoryPython -RepositoryScript 'scripts/37_PROJECT_STATE.py' -Arguments $args
   }
   'inventory' {

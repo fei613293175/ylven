@@ -1,0 +1,49 @@
+schema_version: '1.0'
+authority: CANONICAL
+applies_to:
+  phases: [P00, P01, P02, P03, P04, P05, P06, P07, P08, P09, P10, P11, P12, P13]
+  owner_facing_releases_only: false
+hard_gates:
+  brand_assets:
+    logo_source: 'C:/Users/小白/Desktop/round_corner_image_by_atool(1)_min.png'
+    logo_resource: android/app/src/main/res/drawable/ylven_logo.png
+    splash_source: 'C:/Users/小白/Documents/Tencent Files/613293175/FileRecv/MobileFile/ChatGPT Image 2026年8月2日 15_52_17.png'
+    splash_resource: android/app/src/main/res/drawable-nodpi/ylven_splash.png
+    application_icon: '@drawable/ylven_logo'
+    startup_window_background: '@drawable/ylven_splash'
+  upgrade_install:
+    required: true
+    method: adb install -r
+    clear_data_forbidden: true
+    checks:
+      - fixed_application_id
+      - fixed_signing_certificate
+      - monotonically_increasing_version_code
+      - package_data_marker_survives_install
+      - login_state_or_migration_survives_install
+    failure_blocks_delivery: true
+  chinese_owner_artifacts:
+    required_files:
+      original_features: 原功能清单.md
+      completion_comparison: 功能完成对比清单.md
+      complete_test_checklist: 完整测试清单.md
+      deployment_evidence: 部署证据.md
+      upgrade_evidence: 覆盖安装证据.md
+      screenshot_index: 截图索引.csv
+      screenshot_directory: 截图
+      checksum_file: 校验文件_SHA256.txt
+    english_aliases_are_not_release_artifacts: true
+  admin_real_test:
+    required: true
+    every_phase: true
+    tester: Codex
+    must_open_public_url: true
+    must_login_with_delivery_account: true
+    must_exercise_current_phase_features: true
+    must_verify_real_api_data_and_audit_result: true
+    mock_or_static_success_is_not_accepted: true
+    evidence_file: 管理后台实测证据.md
+    unavailable_or_incomplete_blocks_delivery: true
+release_closure:
+  owner_acceptance_must_remain_pending_until_owner_confirms: true
+  no_claim_of_completion_without_all_hard_gates: true

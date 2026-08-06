@@ -1,3 +1,6 @@
 <resources>
-    <style name="Theme.Ylven" parent="android:style/Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Ylven" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/ylven_splash</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
 </resources>

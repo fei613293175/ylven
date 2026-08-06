@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P02
 phase_title: Android 注册登录与账号安全体验
-overall_status: TODO
-updated_at: '2026-08-04T00:00:00+08:00'
+overall_status: READY_FOR_RELEASE
+updated_at: '2026-08-06T08:15:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -15,106 +15,106 @@ release_final_statuses:
 - BLOCKED_EXTERNAL
 features:
 - feature_id: P02-001
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::session restore, backend/internal/identity/http.go::GET /api/v1/account/session]
 - feature_id: P02-002
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::LoginPage]
 - feature_id: P02-003
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::looksLikeEmail]
 - feature_id: P02-004
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::p01-security-dialog]
 - feature_id: P02-005
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::ControlledTurnstileWebView]
 - feature_id: P02-006
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::requestLoginOtp]
 - feature_id: P02-007
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::OtpPage, backend/internal/identity/http.go::POST /api/v1/auth/login/otp/verify]
 - feature_id: P02-008
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::p02-otp-countdown, backend/internal/identity/identity.go::otp_cooldown]
 - feature_id: P02-009
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::SessionStore AES-GCM]
 - feature_id: P02-010
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::RegisterPage]
 - feature_id: P02-011
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::passwordStrength, backend/internal/identity/http.go::GET /api/v1/auth/password-policy]
 - feature_id: P02-012
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::confirmation validation]
 - feature_id: P02-013
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::register security dialog]
 - feature_id: P02-014
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::requestRegistrationOtp]
 - feature_id: P02-015
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [backend/internal/identity/http.go::POST /api/v1/auth/register/complete, backend/internal/identity/identity_test.go::registration test]
 - feature_id: P02-016
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [backend/internal/identity/identity.go::EnsureWorkspace, android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::finishRegistrationSession]
 - feature_id: P02-017
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::restore refresh fallback]
 - feature_id: P02-018
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::session invalid returns LOGIN]
 - feature_id: P02-019
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::SessionStore.clear, POST /api/v1/auth/logout-all]
 - feature_id: P02-020
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::AccountPage devices]
 - feature_id: P02-021
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: ["backend/internal/identity/http.go::DELETE /api/v1/account/devices/{deviceId}/sessions"]
 - feature_id: P02-022
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [backend/internal/identity/identity.go::challenge_expired and turnstile_already_verified, Android cancel]
 - feature_id: P02-023
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::GET retry, timeout/error UI]
 - feature_id: P02-024
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::numeric OTP keyboard and IME]
 - feature_id: P02-025
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::LazyColumn responsive layout and test tags]
 - feature_id: P02-026
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::isAllowedSecurityUrl and restricted JS bridge]

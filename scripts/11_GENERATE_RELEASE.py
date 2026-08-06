@@ -101,10 +101,16 @@ This record validates the release-control workflow only. It is not evidence that
 
 def clean_previous_output(output: Path, phase: str) -> None:
     names = {
-        f"YLVEN-{phase}-test.apk", "FEATURES.md", "TESTS.md", "CHANGELOG.md",
-        "DEPLOYMENT.md", "OWNER_ACTIONS.md", "OWNER_ACCEPTANCE.md", "BUILD_INFO.json",
-        "SHA256SUMS.txt", "UI_SCREENSHOT_INDEX.csv", "VISUAL_DIFF_REPORT.md",
-        "UI_CONTRACT_REPORT.json",
+        f"YLVEN-{phase}-test.apk", "原功能清单.md", "功能完成对比清单.md",
+        "完整测试清单.md", "自动化测试报告.md", "变更记录.md", "部署证据.md",
+        "所有者操作项.md", "所有者验收.md", "构建信息.json", "CI来源证明.json",
+        "校验文件_SHA256.txt", "截图索引.csv", "视觉差异报告.md",
+        "界面合同报告.json", "管理后台实测证据.md", "覆盖安装证据.md",
+        # Remove legacy English aliases when regenerating an existing output.
+        "FEATURES.md", "TESTS.md", "CHANGELOG.md", "DEPLOYMENT.md",
+        "OWNER_ACTIONS.md", "OWNER_ACCEPTANCE.md", "BUILD_INFO.json",
+        "CI_PROVENANCE.json", "SHA256SUMS.txt", "UI_SCREENSHOT_INDEX.csv",
+        "VISUAL_DIFF_REPORT.md", "UI_CONTRACT_REPORT.json",
     }
     for name in names:
         candidate = output / name
@@ -113,9 +119,12 @@ def clean_previous_output(output: Path, phase: str) -> None:
                 shutil.rmtree(candidate)
             else:
                 candidate.unlink()
-    screenshot_dir = output / "screenshots"
+    screenshot_dir = output / "截图"
     if screenshot_dir.exists():
         shutil.rmtree(screenshot_dir)
+    legacy_screenshot_dir = output / "screenshots"
+    if legacy_screenshot_dir.exists():
+        shutil.rmtree(legacy_screenshot_dir)
 
 
 def write_self_test_ui(output: Path, phase: str, states: list[dict[str, str]]) -> dict:
@@ -124,7 +133,7 @@ def write_self_test_ui(output: Path, phase: str, states: list[dict[str, str]]) -
         "runtime_screenshot_path", "runtime_sha256", "device_width_dp",
         "theme", "font_scale", "status", "notes",
     ]
-    with (output / "UI_SCREENSHOT_INDEX.csv").open(
+    with (output / "截图索引.csv").open(
         "w", encoding="utf-8-sig", newline=""
     ) as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -143,8 +152,8 @@ def write_self_test_ui(output: Path, phase: str, states: list[dict[str, str]]) -
                 "status": "SELF_TEST_ONLY",
                 "notes": "Release-control self-test only; no visual implementation is claimed.",
             })
-    (output / "VISUAL_DIFF_REPORT.md").write_text(
-        "# YLVEN UI Visual Diff Report\n\n"
+    (output / "视觉差异报告.md").write_text(
+        "# YLVEN 界面视觉差异报告\n\n"
         f"- Phase: {phase}\n"
         f"- Design system: {DESIGN_SYSTEM_VERSION}\n"
         "- Result: SELF_TEST_ONLY\n\n"
@@ -162,7 +171,7 @@ def write_self_test_ui(output: Path, phase: str, states: list[dict[str, str]]) -
         "unexplained_difference_count": 0,
         "generated_at": utc_now(),
     }
-    (output / "UI_CONTRACT_REPORT.json").write_text(
+    (output / "界面合同报告.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     return report
@@ -185,7 +194,7 @@ def write_real_ui(output: Path, phase: str, states: list[dict[str, str]], eviden
         raise SystemExit("Visual gate failed before release:\n" + (gate.stdout + gate.stderr).strip())
 
     mockups = mockups_by_state()
-    screenshot_dir = output / "screenshots"
+    screenshot_dir = output / "截图"
     screenshot_dir.mkdir(parents=True, exist_ok=True)
     fields = [
         "state_id", "page_id", "mockup_path", "mockup_sha256",
@@ -212,7 +221,7 @@ def write_real_ui(output: Path, phase: str, states: list[dict[str, str]], eviden
             "page_id": row["page_id"],
             "mockup_path": mockup["relative_path"],
             "mockup_sha256": mockup["sha256"].lower(),
-            "runtime_screenshot_path": f"screenshots/{destination.name}",
+            "runtime_screenshot_path": f"截图/{destination.name}",
             "runtime_sha256": sha256(destination),
             "device_width_dp": "360" if row["surface"] == "ANDROID" else "1440px-canonical",
             "theme": "light",
@@ -220,14 +229,16 @@ def write_real_ui(output: Path, phase: str, states: list[dict[str, str]], eviden
             "status": "PASS",
             "notes": "Compared against approved state mockup and locked numeric contract.",
         })
-    with (output / "UI_SCREENSHOT_INDEX.csv").open(
+    with (output / "截图索引.csv").open(
         "w", encoding="utf-8-sig", newline=""
     ) as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(index_rows)
 
-    diff_source = evidence_root / "VISUAL_DIFF_REPORT.md"
+    diff_source = evidence_root / "视觉差异报告.md"
+    if not diff_source.is_file():
+        diff_source = evidence_root / "VISUAL_DIFF_REPORT.md"
     if not diff_source.is_file():
         raise SystemExit(f"Missing visual diff report: {diff_source}")
     diff_text = diff_source.read_text(encoding="utf-8", errors="replace")
@@ -238,14 +249,14 @@ def write_real_ui(output: Path, phase: str, states: list[dict[str, str]], eviden
     ]
     if not all(re.search(pattern, diff_text) for pattern in markers):
         raise SystemExit(
-            "VISUAL_DIFF_REPORT.md must contain exact Phase, Design system and '- Result: PASS' markers."
+            "视觉差异报告.md must contain exact Phase, Design system and '- Result: PASS' markers."
         )
     missing_state_rows = [row["state_id"] for row in states if row["state_id"] not in diff_text]
     if missing_state_rows:
         raise SystemExit(
             "VISUAL_DIFF_REPORT.md is missing state rows: " + ", ".join(missing_state_rows[:20])
         )
-    shutil.copy2(diff_source, output / "VISUAL_DIFF_REPORT.md")
+    shutil.copy2(diff_source, output / "视觉差异报告.md")
     report = {
         "schema_version": "1.0",
         "phase": phase,
@@ -258,7 +269,7 @@ def write_real_ui(output: Path, phase: str, states: list[dict[str, str]], eviden
         "evidence_root": str(evidence_root.resolve()),
         "generated_at": utc_now(),
     }
-    (output / "UI_CONTRACT_REPORT.json").write_text(
+    (output / "界面合同报告.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     return report
@@ -272,6 +283,7 @@ def main() -> int:
     parser.add_argument("--out", required=True)
     parser.add_argument("--android-task", default="unknown")
     parser.add_argument("--deployment-evidence")
+    parser.add_argument("--upgrade-evidence")
     parser.add_argument("--ui-evidence-root")
     parser.add_argument("--self-test-fixture", action="store_true")
     args = parser.parse_args()
@@ -328,7 +340,27 @@ def main() -> int:
             f"| `{entry['feature_id']}` | {names.get(entry['feature_id'], '')} | "
             f"{entry['status']} | {detail} |"
         )
-    (output / "FEATURES.md").write_text("\n".join(feature_lines) + "\n", encoding="utf-8")
+    original_source = ROOT / "docs" / "delivery" / f"{phase}_原功能清单.md"
+    comparison_source = ROOT / "docs" / "delivery" / f"{phase}_功能完成对比清单.md"
+    checklist_source = ROOT / "docs" / "delivery" / f"{phase}_完整测试清单.md"
+    dns_source = ROOT / "docs" / "delivery" / f"{phase}_域名DNS状态.md"
+    admin_source = ROOT / "docs" / "delivery" / f"{phase}_管理后台实测证据.md"
+    upgrade_source = Path(args.upgrade_evidence).resolve() if args.upgrade_evidence else None
+    required_sources = (original_source, comparison_source, checklist_source, dns_source, admin_source)
+    if not args.self_test_fixture:
+        missing = [str(path.relative_to(ROOT)) for path in required_sources if not path.is_file()]
+        if upgrade_source is None or not upgrade_source.is_file():
+            missing.append("--upgrade-evidence <真实覆盖安装证据文件>")
+        if missing:
+            raise SystemExit("Real release is missing Chinese owner documents: " + ", ".join(missing))
+    if original_source.is_file():
+        shutil.copy2(original_source, output / "原功能清单.md")
+    else:
+        (output / "原功能清单.md").write_text("\n".join(feature_lines) + "\n", encoding="utf-8")
+    if comparison_source.is_file():
+        shutil.copy2(comparison_source, output / "功能完成对比清单.md")
+    else:
+        (output / "功能完成对比清单.md").write_text("\n".join(feature_lines) + "\n", encoding="utf-8")
 
     test_log = test_log_path.read_text(encoding="utf-8", errors="replace")
     tests = (
@@ -342,7 +374,27 @@ def main() -> int:
         f"{test_log[-300000:]}\n"
         "```\n"
     )
-    (output / "TESTS.md").write_text(tests, encoding="utf-8")
+    if checklist_source.is_file():
+        shutil.copy2(checklist_source, output / "完整测试清单.md")
+    else:
+        (output / "完整测试清单.md").write_text(tests, encoding="utf-8")
+    (output / "自动化测试报告.md").write_text(tests.replace("# TESTS", "# 自动化测试报告"), encoding="utf-8")
+    if dns_source.is_file():
+        shutil.copy2(dns_source, output / "域名DNS状态.md")
+    else:
+        (output / "域名DNS状态.md").write_text(
+            f"# {phase} 域名DNS状态\n\n- 阶段：{phase}\n- 结果：SELF_TEST_ONLY\n",
+            encoding="utf-8",
+        )
+    if upgrade_source is not None and upgrade_source.is_file():
+        shutil.copy2(upgrade_source, output / "覆盖安装证据.md")
+    else:
+        (output / "覆盖安装证据.md").write_text(
+            f"# 覆盖安装证据\n\n- 阶段：{phase}\n- 结果：SELF_TEST_ONLY\n",
+            encoding="utf-8",
+        )
+    shutil.copy2(output / "原功能清单.md", output / "计划功能清单.md")
+    shutil.copy2(output / "功能完成对比清单.md", output / "已完成功能清单.md")
 
     commit = run(["git", "rev-parse", "HEAD"])
     short_commit = run(["git", "rev-parse", "--short", "HEAD"])
@@ -351,20 +403,20 @@ def main() -> int:
             "A real release requires a Git commit. Initialize the repository, commit the phase implementation, then rerun."
         )
     recent_changes = run(["git", "log", "-20", "--pretty=format:- %h %s"])
-    (output / "CHANGELOG.md").write_text(
-        f"# CHANGELOG\n\n- Phase: {phase}\n- Commit: `{commit}`\n- Generated: {utc_now()}\n\n"
-        f"## Recent commits\n{recent_changes}\n\n"
-        "## Known limitations\nSee FEATURES.md and OWNER_ACTIONS.md for deferred or externally blocked Feature IDs.\n",
+    (output / "变更记录.md").write_text(
+        f"# 变更记录\n\n- 阶段：{phase}\n- Commit：`{commit}`\n- 生成时间：{utc_now()}\n\n"
+        f"## 最近提交\n{recent_changes}\n\n"
+        "## 已知限制\n详见原功能清单.md、功能完成对比清单.md和所有者操作项.md。\n",
         encoding="utf-8",
     )
-    (output / "DEPLOYMENT.md").write_text(deployment_content, encoding="utf-8")
+    (output / "部署证据.md").write_text(deployment_content, encoding="utf-8")
 
     owner_actions = ROOT / "OWNER_ACTIONS.md"
     if owner_actions.exists():
-        shutil.copy2(owner_actions, output / "OWNER_ACTIONS.md")
+        shutil.copy2(owner_actions, output / "所有者操作项.md")
     else:
-        (output / "OWNER_ACTIONS.md").write_text(
-            "# OWNER_ACTIONS\n\nNo owner actions were recorded.\n", encoding="utf-8"
+        (output / "所有者操作项.md").write_text(
+            "# 所有者操作项\n\n当前没有待所有者处理的事项。\n", encoding="utf-8"
         )
 
     if args.self_test_fixture:
@@ -399,8 +451,20 @@ def main() -> int:
         "ui_expected_state_count": ui_report["expected_state_count"],
         "ui_screenshot_count": ui_report["screenshot_count"],
     }
-    (output / "BUILD_INFO.json").write_text(
+    (output / "构建信息.json").write_text(
         json.dumps(build_info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    (output / "CI来源证明.json").write_text(
+        json.dumps({
+            "phase": phase,
+            "commit_sha": commit,
+            "apk": target_apk.name,
+            "apk_sha256": sha256(target_apk),
+            "artifact_origin": build_info["artifact_origin"],
+            "test_log": str(test_log_path),
+            "generated_at": utc_now(),
+        }, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
     )
 
     acceptance_template = (ROOT / "templates" / "OWNER_ACCEPTANCE_TEMPLATE.md").read_text(
@@ -416,17 +480,24 @@ def main() -> int:
             "- All bound page states checked against approved mockups: PENDING\n"
             "- Visual differences reviewed: PENDING\n"
         )
-    (output / "OWNER_ACCEPTANCE.md").write_text(acceptance_template, encoding="utf-8")
+    (output / "所有者验收.md").write_text(acceptance_template, encoding="utf-8")
+    if admin_source.is_file():
+        shutil.copy2(admin_source, output / "管理后台实测证据.md")
+    elif args.self_test_fixture:
+        (output / "管理后台实测证据.md").write_text(
+            "# 管理后台实测证据\n\n- 测试人：Codex\n- 网址：SELF_TEST_ONLY\n- 真实 API 数据：SELF_TEST_ONLY\n- 审计记录：SELF_TEST_ONLY\n",
+            encoding="utf-8",
+        )
 
     immutable = sorted(
         [
             path for path in output.rglob("*")
             if path.is_file()
-            and path.name not in {"SHA256SUMS.txt", "OWNER_ACCEPTANCE.md"}
+            and path.name not in {"校验文件_SHA256.txt", "所有者验收.md"}
         ],
         key=lambda item: item.relative_to(output).as_posix(),
     )
-    (output / "SHA256SUMS.txt").write_text(
+    (output / "校验文件_SHA256.txt").write_text(
         "".join(
             f"{sha256(path)}  {path.relative_to(output).as_posix()}\n"
             for path in immutable

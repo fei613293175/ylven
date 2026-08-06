@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FINAL_STATUSES = {"IMPLEMENTED", "DEFERRED_WITH_REASON", "BLOCKED_EXTERNAL"}
 DESIGN_SYSTEM_VERSION = "YL-DS-1.2.0"
 P01_RUNTIME_SCREENSHOTS = [
-    "P01-AUTH-LOGIN.png", "P01-AUTH-REGISTER.png", "P01-AUTH-REGISTER-OTP.png",
-    "P01-AUTH-REGISTERED.png", "P01-AUTH-ACCOUNT.png",
+    "登录页.png", "注册页.png", "注册验证码页.png",
+    "注册完成页.png", "账户与设备页.png",
 ]
 
 
@@ -71,56 +71,56 @@ def parse_sha_file(path: Path) -> dict[str, str]:
 def validate_ui(release_dir: Path, phase: str, fixture: bool, errors: list[str]) -> None:
     states = phase_states(phase)
     expected_ids = {row["state_id"] for row in states}
-    index_path = release_dir / "UI_SCREENSHOT_INDEX.csv"
+    index_path = release_dir / "截图索引.csv"
     rows: list[dict[str, str]] = []
     if index_path.is_file():
         try:
             with index_path.open(encoding="utf-8-sig", newline="") as handle:
                 rows = list(csv.DictReader(handle))
         except Exception as exc:
-            errors.append(f"cannot parse UI_SCREENSHOT_INDEX.csv: {exc}")
+            errors.append(f"cannot parse 截图索引.csv: {exc}")
     actual_ids = {row.get("state_id", "") for row in rows}
     if actual_ids != expected_ids:
         errors.append(
-            "UI_SCREENSHOT_INDEX state set differs: "
+            "截图索引 state set differs: "
             f"missing={sorted(expected_ids-actual_ids)[:20]}, extra={sorted(actual_ids-expected_ids)[:20]}"
         )
 
-    report_path = release_dir / "UI_CONTRACT_REPORT.json"
+    report_path = release_dir / "界面合同报告.json"
     ui_report: dict = {}
     if report_path.is_file():
         try:
             ui_report = json.loads(report_path.read_text(encoding="utf-8"))
         except Exception as exc:
-            errors.append(f"invalid UI_CONTRACT_REPORT.json: {exc}")
+            errors.append(f"invalid 界面合同报告.json: {exc}")
     if ui_report:
         if ui_report.get("phase") != phase:
-            errors.append("UI_CONTRACT_REPORT phase mismatch")
+            errors.append("界面合同报告 phase mismatch")
         if ui_report.get("design_system_version") != DESIGN_SYSTEM_VERSION:
-            errors.append("UI_CONTRACT_REPORT design system mismatch")
+            errors.append("界面合同报告 design system mismatch")
         if int(ui_report.get("expected_state_count", -1)) != len(states):
-            errors.append("UI_CONTRACT_REPORT expected state count mismatch")
+            errors.append("界面合同报告 expected state count mismatch")
 
-    diff_path = release_dir / "VISUAL_DIFF_REPORT.md"
+    diff_path = release_dir / "视觉差异报告.md"
     diff_text = diff_path.read_text(encoding="utf-8", errors="replace") if diff_path.is_file() else ""
     if f"- Phase: {phase}" not in diff_text:
-        errors.append("VISUAL_DIFF_REPORT phase marker is missing")
+        errors.append("视觉差异报告 phase marker is missing")
     if f"- Design system: {DESIGN_SYSTEM_VERSION}" not in diff_text:
-        errors.append("VISUAL_DIFF_REPORT design-system marker is missing")
+        errors.append("视觉差异报告 design-system marker is missing")
 
     if fixture:
         if any(row.get("status") != "SELF_TEST_ONLY" for row in rows):
             errors.append("self-test UI screenshot index must use SELF_TEST_ONLY status")
         if ui_report.get("result") != "SELF_TEST_ONLY":
-            errors.append("self-test UI_CONTRACT_REPORT result must be SELF_TEST_ONLY")
+            errors.append("self-test 界面合同报告 result must be SELF_TEST_ONLY")
         if int(ui_report.get("screenshot_count", -1)) != 0:
-            errors.append("self-test UI_CONTRACT_REPORT must not claim screenshots")
+            errors.append("self-test 界面合同报告 must not claim screenshots")
         if not re.search(r"(?im)^-\s*Result:\s*SELF_TEST_ONLY\s*$", diff_text):
-            errors.append("self-test VISUAL_DIFF_REPORT marker is missing")
+            errors.append("self-test 视觉差异报告 marker is missing")
         return
 
     mockups = mockups_by_state()
-    screenshots_dir = release_dir / "screenshots"
+    screenshots_dir = release_dir / "截图"
     if not screenshots_dir.is_dir():
         errors.append("real release is missing screenshots/ directory")
     declared_screenshots: set[str] = set()
@@ -164,7 +164,7 @@ def validate_ui(release_dir: Path, phase: str, fixture: bool, errors: list[str])
             f"extra={sorted(actual_screenshots-declared_screenshots)[:20]}"
         )
     if ui_report.get("result") != "PASS":
-        errors.append("real release UI_CONTRACT_REPORT result must be PASS")
+        errors.append("real release 界面合同报告 result must be PASS")
     if int(ui_report.get("screenshot_count", -1)) != len(states):
         errors.append("real release UI screenshot count mismatch")
     if int(ui_report.get("approved_mockup_count", -1)) != len(states):
@@ -172,15 +172,15 @@ def validate_ui(release_dir: Path, phase: str, fixture: bool, errors: list[str])
     if int(ui_report.get("unexplained_difference_count", -1)) != 0:
         errors.append("unexplained visual differences are forbidden")
     if not re.search(r"(?im)^-\s*Result:\s*PASS\s*$", diff_text):
-        errors.append("real release VISUAL_DIFF_REPORT result must be PASS")
+        errors.append("real release 视觉差异报告 result must be PASS")
 
 
 def validate_ci_ui(release_dir: Path, phase: str, errors: list[str]) -> None:
-    report = release_dir / "VISUAL_DIFF_REPORT.md"
+    report = release_dir / "视觉差异报告.md"
     text = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
     if not re.search(r"(?im)^Result:\s*\*\*PASS[^\n]*\*\*\s*$", text):
-        errors.append("CI VISUAL_DIFF_REPORT does not contain a PASS result")
-    screenshot_dir = release_dir / "screenshots"
+        errors.append("CI 视觉差异报告 does not contain a PASS result")
+    screenshot_dir = release_dir / "截图"
     names = P01_RUNTIME_SCREENSHOTS if phase == "P01" else [path.name for path in screenshot_dir.glob("*.png")]
     images: list[tuple[str, Image.Image]] = []
     for name in names:
@@ -240,13 +240,13 @@ def main() -> int:
         except zipfile.BadZipFile as exc:
             errors.append(f"APK is not a valid ZIP/APK: {exc}")
 
-    build_path = release_dir / "BUILD_INFO.json"
+    build_path = release_dir / "构建信息.json"
     build: dict = {}
     if build_path.is_file():
         try:
             build = json.loads(build_path.read_text(encoding="utf-8"))
         except Exception as exc:
-            errors.append(f"invalid BUILD_INFO.json: {exc}")
+            errors.append(f"invalid 构建信息.json: {exc}")
         else:
             if build.get("phase") != phase:
                 errors.append("BUILD_INFO phase mismatch")
@@ -270,13 +270,13 @@ def main() -> int:
                 if not re.fullmatch(r"[0-9a-fA-F]{40,64}", str(build.get("git_commit", ""))):
                     errors.append("real release BUILD_INFO has no valid Git commit")
 
-    provenance_path = release_dir / "CI_PROVENANCE.json"
+    provenance_path = release_dir / "CI来源证明.json"
     provenance: dict = {}
     if provenance_path.is_file():
         try:
             provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
         except Exception as exc:
-            errors.append(f"invalid CI_PROVENANCE.json: {exc}")
+            errors.append(f"invalid CI来源证明.json: {exc}")
         else:
             if provenance.get("phase") != phase:
                 errors.append("CI provenance phase mismatch")
@@ -287,18 +287,18 @@ def main() -> int:
             if build and provenance.get("commit_sha") != build.get("git_commit"):
                 errors.append("CI provenance commit differs from BUILD_INFO")
 
-    sha_path = release_dir / "SHA256SUMS.txt"
+    sha_path = release_dir / "校验文件_SHA256.txt"
     if sha_path.is_file():
         try:
             declared = parse_sha_file(sha_path)
             expected_files = {
                 path.relative_to(release_dir).as_posix()
                 for path in release_dir.rglob("*")
-                if path.is_file() and path.name not in {"SHA256SUMS.txt", "OWNER_ACCEPTANCE.md"}
+                if path.is_file() and path.name not in {"校验文件_SHA256.txt", "所有者验收.md"}
             }
             if set(declared) != expected_files:
                 errors.append(
-                    "SHA256SUMS file set differs: "
+                    "校验文件_SHA256 file set differs: "
                     f"missing={sorted(expected_files-set(declared))[:20]}, "
                     f"extra={sorted(set(declared)-expected_files)[:20]}"
                 )
@@ -307,7 +307,7 @@ def main() -> int:
                 if path.is_file() and sha256(path) != expected_hash:
                     errors.append(f"SHA-256 mismatch for {name}")
         except Exception as exc:
-            errors.append(f"SHA256SUMS validation failed: {exc}")
+            errors.append(f"校验文件_SHA256 validation failed: {exc}")
 
     feature_map = load_yaml(ROOT / "contracts" / "feature-map.yaml").get("features") or []
     expected_ids = {feature["feature_id"] for feature in feature_map if feature["phase"] == phase}
@@ -324,18 +324,18 @@ def main() -> int:
         elif current != "IMPLEMENTED" and not str(entry.get("reason", "")).strip():
             errors.append(f"{entry.get('feature_id')}: non-implemented status lacks reason")
 
-    features_path = release_dir / "FEATURE_COMPLETION_COMPARISON.md"
+    features_path = release_dir / "功能完成对比清单.md"
     features_text = features_path.read_text(encoding="utf-8", errors="replace") if features_path.is_file() else ""
     for feature_id in expected_ids:
         if feature_id not in features_text:
-            errors.append(f"FEATURE_COMPLETION_COMPARISON.md is missing {feature_id}")
+            errors.append(f"功能完成对比清单.md is missing {feature_id}")
 
-    tests_path = release_dir / "AUTOMATED_TEST_REPORT.md"
+    tests_path = release_dir / "自动化测试报告.md"
     tests_text = tests_path.read_text(encoding="utf-8", errors="replace") if tests_path.is_file() else ""
     if not re.search(r"(?im)^-\s*Result:\s*PASS\s*$", tests_text):
-        errors.append("AUTOMATED_TEST_REPORT.md does not record PASS")
+        errors.append("自动化测试报告.md does not record PASS")
 
-    deployment_path = release_dir / "DEPLOYMENT_ENDPOINTS.md"
+    deployment_path = release_dir / "部署证据.md"
     deployment_text = deployment_path.read_text(encoding="utf-8", errors="replace") if deployment_path.is_file() else ""
     checks = [
         ("Deployment result", r"(?im)^-\s*Deployment result:\s*(SUCCESS|NOT_APPLICABLE)\s*$"),
@@ -345,21 +345,35 @@ def main() -> int:
     for label, pattern in checks:
         match = re.search(pattern, deployment_text)
         if not match:
-            errors.append(f"DEPLOYMENT_ENDPOINTS.md lacks valid {label} evidence marker")
+            errors.append(f"部署证据.md lacks valid {label} evidence marker")
         elif label == "Rollback result" and match.group(1) == "NOT_APPLICABLE":
             if not re.search(r"(?ims)^\s*(?:Rollback evidence|回滚证据)\s*[:：]\s*\S", deployment_text):
-                errors.append("DEPLOYMENT_ENDPOINTS.md must explain a NOT_APPLICABLE rollback result")
+                errors.append("部署证据.md must explain a NOT_APPLICABLE rollback result")
+
+    admin_path = release_dir / "管理后台实测证据.md"
+    admin_text = admin_path.read_text(encoding="utf-8", errors="replace") if admin_path.is_file() else ""
+    if not admin_path.is_file():
+        errors.append("管理后台实测证据.md is required for every phase")
+    for label, markers in {
+        "URL": ("URL", "网址"),
+        "real data": ("Real-data", "真实"),
+        "audit": ("Audit", "审计"),
+    }.items():
+        if not any(marker in admin_text for marker in markers):
+            errors.append(f"管理后台实测证据.md lacks {label} evidence")
+    if re.search(r"(?im)mock|static success|模拟成功|静态页面", admin_text) and not re.search(r"(?im)scope|限制|不宣称", admin_text):
+        errors.append("管理后台实测证据.md cannot claim mock/static success as real delivery")
 
     if build.get("artifact_origin") == "github-actions":
         validate_ci_ui(release_dir, phase, errors)
     else:
         validate_ui(release_dir, phase, bool(build.get("self_test_fixture")), errors)
 
-    acceptance_text = (release_dir / "OWNER_ACCEPTANCE.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "OWNER_ACCEPTANCE.md").is_file() else ""
+    acceptance_text = (release_dir / "所有者验收.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "所有者验收.md").is_file() else ""
     if f"- Phase: {phase}" not in acceptance_text or f"- APK: {apk.name}" not in acceptance_text:
-        errors.append("OWNER_ACCEPTANCE.md phase/APK was not normalized")
+        errors.append("所有者验收.md phase/APK was not normalized")
     if not re.search(r"(?im)^-\s*Result:\s*(PENDING|APPROVED|REJECTED)\s*$", acceptance_text):
-        errors.append("OWNER_ACCEPTANCE.md has no valid Result")
+        errors.append("所有者验收.md has no valid Result")
 
     if errors:
         for error in errors:

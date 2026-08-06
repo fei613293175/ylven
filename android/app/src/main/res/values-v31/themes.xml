@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Ylven" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/ylven_splash</item>
+        <item name="android:windowSplashScreenBackground">#060B2A</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ylven_logo</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/ylven_splash</item>
+    </style>
+</resources>

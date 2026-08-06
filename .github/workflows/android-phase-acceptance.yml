@@ -119,7 +119,9 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash scripts/29_RUN_ANDROID_PHASE_ACCEPTANCE.sh "${{ inputs.phase || 'AUTO' }}" "${{ inputs.version || 'AUTO' }}"
+          script: |
+            UPGRADE_FROM=$(python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ inputs.phase || 'AUTO' }}" --print-upgrade-from)
+            bash scripts/29_RUN_ANDROID_PHASE_ACCEPTANCE.sh "${{ inputs.phase || 'AUTO' }}" "${{ inputs.version || 'AUTO' }}" "$UPGRADE_FROM"
       - name: Verify exact acceptance artifact
         run: python scripts/33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}" --commit "${GITHUB_SHA}"
       - name: Upload exact acceptance artifact

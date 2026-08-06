@@ -1,4 +1,4 @@
-# OWNER ACCEPTANCE
+# 所有者验收
 
 - Phase: Pxx
 - APK: YLVEN-Pxx-test.apk
@@ -8,6 +8,8 @@
 - Admin environment/URL:
 - Result: PENDING
 
+本文件只记录所有者最终结论。Codex 的后台实测、覆盖安装、中文交付文件、截图和校验门禁全部通过后，仍必须等待所有者亲自验收，不能自动改为 APPROVED。
+
 ## Required checks
 
 - [ ] APK installs and launches without crash.
@@ -15,7 +17,7 @@
 - [ ] Loading, empty, validation, network failure and retry states are understandable.
 - [ ] No obvious layout overflow on the test device and enlarged font.
 - [ ] Current-phase admin menus load, modify permitted configuration and show audit evidence.
-- [ ] `FEATURES.md`, `TESTS.md`, `OWNER_ACTIONS.md` and known limitations match observed behavior.
+- [ ] `原功能清单.md`、`功能完成对比清单.md`、`完整测试清单.md`、`部署证据.md`、`管理后台实测证据.md`、`校验文件_SHA256.txt` 与实际行为一致。
 
 ## Issues
 

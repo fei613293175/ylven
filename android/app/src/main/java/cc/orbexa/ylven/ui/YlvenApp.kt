@@ -1,5 +1,13 @@
 package cc.orbexa.ylven.ui
 
+import android.annotation.SuppressLint
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +49,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,16 +64,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.DeviceSession
 import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.OtpChallenge
+import cc.orbexa.ylven.identity.PasswordPolicy
+import cc.orbexa.ylven.identity.SecurityChallenge
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import kotlinx.coroutines.launch
 
-private enum class IdentityScreen { LOGIN, REGISTER, LOGIN_OTP, REGISTER_OTP, REGISTERED, ACCOUNT }
+private enum class IdentityScreen {
+    RESTORING,
+    LOGIN,
+    REGISTER,
+    LOGIN_SECURITY,
+    REGISTER_SECURITY,
+    TURNSTILE,
+    LOGIN_OTP,
+    REGISTER_OTP,
+    REGISTERED,
+    ACCOUNT,
+}
 
 @Composable
 fun YlvenApp(
@@ -71,14 +96,39 @@ fun YlvenApp(
     initialSession: AuthSession? = null,
     onSessionChange: (AuthSession?) -> Unit = {},
 ) {
-    var screen by rememberSaveable { mutableStateOf(if (initialSession == null) IdentityScreen.LOGIN else IdentityScreen.ACCOUNT) }
+    var screen by rememberSaveable { mutableStateOf(if (initialSession == null) IdentityScreen.LOGIN else IdentityScreen.RESTORING) }
     var session by remember { mutableStateOf(initialSession) }
     var challenge by remember { mutableStateOf<OtpChallenge?>(null) }
+    var securityChallenge by remember { mutableStateOf<SecurityChallenge?>(null) }
     var pendingPassword by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var securityAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var passwordPolicy by remember { mutableStateOf(PasswordPolicy()) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(initialSession) {
+        val local = initialSession ?: return@LaunchedEffect
+        try {
+            session = gateway.restore(local)
+            screen = IdentityScreen.ACCOUNT
+        } catch (first: Exception) {
+            runCatching { gateway.refresh(local) }
+                .onSuccess { refreshed ->
+                    session = refreshed
+                    onSessionChange(refreshed)
+                    screen = IdentityScreen.ACCOUNT
+                }
+                .onFailure {
+                    session = null
+                    onSessionChange(null)
+                    error = first.message ?: "登录状态已失效，请重新登录"
+                    screen = IdentityScreen.LOGIN
+                }
+        }
+    }
+
+    LaunchedEffect(Unit) { runCatching { passwordPolicy = gateway.passwordPolicy() } }
 
     fun runRequest(block: suspend () -> Unit) {
         loading = true
@@ -96,32 +146,57 @@ fun YlvenApp(
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).testTag("p01-auth-root")) {
         when (screen) {
+            IdentityScreen.RESTORING -> SessionRestorePage(error)
             IdentityScreen.LOGIN -> LoginPage(
                 loading = loading,
                 error = error,
                 onRegister = { error = null; screen = IdentityScreen.REGISTER },
                 onSendCode = { email ->
-                    securityAction = {
-                        securityAction = null
-                        runRequest {
-                            challenge = gateway.startLogin(email)
-                            screen = IdentityScreen.LOGIN_OTP
+                    runRequest {
+                        securityChallenge = gateway.createLoginChallenge(email)
+                        securityAction = {
+                            securityAction = null
+                            challenge = securityChallenge?.legacyOtp
+                            screen = if (securityChallenge?.legacyOtp != null) IdentityScreen.LOGIN_OTP else IdentityScreen.TURNSTILE
                         }
+                        screen = IdentityScreen.LOGIN_SECURITY
                     }
                 },
             )
             IdentityScreen.REGISTER -> RegisterPage(
                 loading = loading,
                 error = error,
+                policy = passwordPolicy,
                 onBack = { error = null; screen = IdentityScreen.LOGIN },
                 onCreate = { email, password ->
-                    securityAction = {
-                        securityAction = null
-                        pendingPassword = password
-                        runRequest {
-                            challenge = gateway.startRegistration(email)
-                            screen = IdentityScreen.REGISTER_OTP
+                    pendingPassword = password
+                    runRequest {
+                        securityChallenge = gateway.createRegistrationChallenge(email)
+                        securityAction = {
+                            securityAction = null
+                            challenge = securityChallenge?.legacyOtp
+                            screen = if (securityChallenge?.legacyOtp != null) IdentityScreen.REGISTER_OTP else IdentityScreen.TURNSTILE
                         }
+                        screen = IdentityScreen.REGISTER_SECURITY
+                    }
+                },
+            )
+            IdentityScreen.LOGIN_SECURITY, IdentityScreen.REGISTER_SECURITY -> Unit
+            IdentityScreen.TURNSTILE -> TurnstilePage(
+                challenge = requireNotNull(securityChallenge),
+                error = error,
+                onCancel = {
+                    val destination = if (securityChallenge?.purpose == "register") IdentityScreen.REGISTER else IdentityScreen.LOGIN
+                    error = null
+                    securityChallenge = null
+                    screen = destination
+                },
+                onToken = { token ->
+                    val active = requireNotNull(securityChallenge)
+                    runRequest {
+                        gateway.verifyTurnstile(active, token)
+                        challenge = if (active.purpose == "register") gateway.requestRegistrationOtp(active) else gateway.requestLoginOtp(active)
+                        screen = if (active.purpose == "register") IdentityScreen.REGISTER_OTP else IdentityScreen.LOGIN_OTP
                     }
                 },
             )
@@ -131,13 +206,24 @@ fun YlvenApp(
                 loading = loading,
                 error = error,
                 onBack = { error = null; screen = if (screen == IdentityScreen.REGISTER_OTP) IdentityScreen.REGISTER else IdentityScreen.LOGIN },
+                onResend = {
+                    val active = requireNotNull(securityChallenge)
+                    runRequest {
+                        challenge = if (active.purpose == "register") gateway.requestRegistrationOtp(active) else gateway.requestLoginOtp(active)
+                    }
+                },
                 onSubmit = { code ->
                     val active = requireNotNull(challenge)
                     runRequest {
                         if (screen == IdentityScreen.REGISTER_OTP) {
-                            gateway.finishRegistration(active, code, pendingPassword)
+                            val registeredSession = gateway.finishRegistrationSession(active, code, pendingPassword)
                             pendingPassword = ""
-                            screen = IdentityScreen.REGISTERED
+                            if (registeredSession != null) {
+                                session = registeredSession
+                                onSessionChange(registeredSession)
+                                gateway.initializeWorkspace(registeredSession)
+                                screen = IdentityScreen.ACCOUNT
+                            } else screen = IdentityScreen.REGISTERED
                         } else {
                             session = gateway.finishLogin(active, code)
                             onSessionChange(session)
@@ -160,13 +246,125 @@ fun YlvenApp(
                 modifier = Modifier.testTag("p01-security-dialog"),
                 onDismissRequest = { securityAction = null },
                 icon = { Icon(Icons.Default.Security, contentDescription = null) },
-                title = { Text("安全验证") },
-                text = { Text("继续后将验证当前请求，并通过安全连接发送邮箱验证码。") },
+                title = { Text(if (screen == IdentityScreen.REGISTER_SECURITY) "注册安全验证" else "登录安全验证") },
+                text = { Text("继续后将在受控安全页面完成 Turnstile 验证，验证通过后才会发送邮箱验证码。") },
                 confirmButton = { Button(onClick = { securityAction?.invoke() }, modifier = Modifier.testTag("p01-security-confirm")) { Text("继续验证") } },
                 dismissButton = { TextButton(onClick = { securityAction = null }) { Text("取消") } },
             )
         }
     }
+}
+
+@Composable
+private fun SessionRestorePage(error: String?) {
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CircularProgressIndicator(modifier = Modifier.testTag("p02-session-restoring"))
+        Spacer(Modifier.height(20.dp))
+        Text("正在恢复登录状态", style = MaterialTheme.typography.titleLarge)
+        if (!error.isNullOrBlank()) InlineError(error)
+    }
+}
+
+@Composable
+private fun TurnstilePage(
+    challenge: SecurityChallenge,
+    error: String?,
+    onCancel: () -> Unit,
+    onToken: (String) -> Unit,
+) {
+    var submitted by remember(challenge.id) { mutableStateOf(false) }
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onCancel, modifier = Modifier.testTag("p02-turnstile-cancel")) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+            }
+            Text("安全验证", style = MaterialTheme.typography.titleLarge)
+        }
+        Text("请在受控安全页面完成验证。验证令牌仅用于当前登录请求。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ControlledTurnstileWebView(
+            challenge = challenge,
+            modifier = Modifier.fillMaxWidth().weight(1f).testTag("p02-turnstile-webview"),
+            onToken = { token ->
+                if (!submitted) {
+                    submitted = true
+                    onToken(token)
+                }
+            },
+        )
+        InlineError(error)
+        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("取消验证") }
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun ControlledTurnstileWebView(
+    challenge: SecurityChallenge,
+    modifier: Modifier,
+    onToken: (String) -> Unit,
+) {
+    var webView: WebView? = null
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            WebView(context).apply {
+                webView = this
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
+                settings.setSupportMultipleWindows(false)
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                        return !isAllowedSecurityUrl(request.url)
+                    }
+
+                    @Deprecated("Deprecated in API 24")
+                    override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                        return !isAllowedSecurityUrl(Uri.parse(url))
+                    }
+                }
+                addJavascriptInterface(object {
+                    @JavascriptInterface
+                    fun onTurnstileToken(token: String) {
+                        val trimmed = token.trim()
+                        if (trimmed.isNotEmpty()) Handler(Looper.getMainLooper()).post { onToken(trimmed) }
+                    }
+                }, "YlvenSecurity")
+                val target = Uri.Builder()
+                    .scheme("https")
+                    .authority("auth.orbexa.cc")
+                    .path("/security/turnstile")
+                    .appendQueryParameter("challenge_id", challenge.id)
+                    .appendQueryParameter("action", challenge.purpose)
+                    .build()
+                loadUrl(target.toString())
+            }
+        },
+    )
+    DisposableEffect(challenge.id) {
+        onDispose {
+            webView?.apply {
+                stopLoading()
+                removeJavascriptInterface("YlvenSecurity")
+                destroy()
+            }
+            webView = null
+        }
+    }
+}
+
+private fun isAllowedSecurityUrl(uri: Uri): Boolean {
+    if (uri.scheme != "https") return false
+    return uri.host.equals("auth.orbexa.cc", ignoreCase = true) ||
+        uri.host.equals("challenges.cloudflare.com", ignoreCase = true)
 }
 
 @Composable
@@ -241,6 +439,7 @@ private fun LoginPage(
 private fun RegisterPage(
     loading: Boolean,
     error: String?,
+    policy: PasswordPolicy,
     onBack: () -> Unit,
     onCreate: (String, String) -> Unit,
 ) {
@@ -253,16 +452,19 @@ private fun RegisterPage(
             AuthField(email, { email = it; validation = null }, "邮箱地址", "p01-register-email", KeyboardType.Email, false)
             AuthField(password, { password = it; validation = null }, "登录密码", "p01-register-password", KeyboardType.Password, true)
             AuthField(confirmation, { confirmation = it; validation = null }, "确认登录密码", "p01-register-confirm", KeyboardType.Password, true)
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("· 至少 8 个字符", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("· 包含字母和数字", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("· 两次密码一致", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("p02-password-policy")) {
+                val strength = passwordStrength(password, policy)
+                Text("密码强度：$strength", style = MaterialTheme.typography.bodySmall, color = if (strength == "强") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("· 至少 ${policy.minLength} 个字符", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (policy.requiresLetter) Text("· 包含字母", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (policy.requiresDigit) Text("· 包含数字", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("· 两次密码一致", style = MaterialTheme.typography.bodySmall, color = if (confirmation.isNotEmpty() && password != confirmation) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             InlineError(validation ?: error)
             PrimaryAction("创建账户", loading, "p01-register-submit") {
                 validation = when {
                     !email.looksLikeEmail() -> "请输入有效的邮箱地址"
-                    password.length < 8 || password.none(Char::isLetter) || password.none(Char::isDigit) -> "密码至少 8 位，并包含字母和数字"
+                    password.length < policy.minLength || (policy.requiresLetter && password.none(Char::isLetter)) || (policy.requiresDigit && password.none(Char::isDigit)) -> "密码不符合安全策略"
                     password != confirmation -> "两次输入的密码不一致"
                     else -> null
                 }
@@ -287,7 +489,7 @@ private fun AuthField(
         modifier = Modifier.fillMaxWidth().testTag(tag),
         label = { Text(label) },
         leadingIcon = { Icon(if (password) Icons.Default.Lock else Icons.Default.Email, null) },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
         visualTransformation = if (password) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
         singleLine = true,
     )
@@ -300,9 +502,17 @@ private fun OtpPage(
     loading: Boolean,
     error: String?,
     onBack: () -> Unit,
+    onResend: () -> Unit,
     onSubmit: (String) -> Unit,
 ) {
     var code by rememberSaveable(challenge.id) { mutableStateOf(challenge.debugCode.orEmpty()) }
+    var secondsRemaining by remember(challenge.id) { mutableStateOf(challenge.resendAfterSeconds) }
+    LaunchedEffect(challenge.id, secondsRemaining) {
+        if (secondsRemaining > 0) {
+            kotlinx.coroutines.delay(1000)
+            secondsRemaining -= 1
+        }
+    }
     val masked = challenge.email.maskEmail()
     AuthLayout(if (registering) "验证注册邮箱" else "输入登录验证码", "输入发送至 $masked 的六位验证码", onBack) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -322,9 +532,21 @@ private fun OtpPage(
                 onValueChange = { code = it.filter(Char::isDigit).take(6) },
                 modifier = Modifier.fillMaxWidth().testTag("p01-otp-code"),
                 label = { Text("六位验证码") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.None),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { if (code.length == 6) onSubmit(code) }),
                 singleLine = true,
             )
+            Text(
+                if (secondsRemaining > 0) "${secondsRemaining}s 后可重新发送" else "可以重新发送验证码",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("p02-otp-countdown"),
+            )
+            TextButton(
+                onClick = { secondsRemaining = challenge.resendAfterSeconds; onResend() },
+                enabled = secondsRemaining == 0 && !loading,
+                modifier = Modifier.testTag("p02-otp-resend"),
+            ) { Text("重新发送验证码") }
             InlineError(error)
             PrimaryAction(if (registering) "确认并创建账户" else "验证并登录", loading, "p01-otp-submit") {
                 if (code.length == 6) onSubmit(code)
@@ -458,6 +680,16 @@ private fun PrimaryAction(label: String, loading: Boolean, tag: String, onClick:
 @Composable
 private fun InlineError(message: String?) {
     if (!message.isNullOrBlank()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("p01-inline-error"))
+}
+
+private fun passwordStrength(password: String, policy: PasswordPolicy): String {
+    val checks = listOf(
+        password.length >= policy.minLength,
+        !policy.requiresLetter || password.any(Char::isLetter),
+        !policy.requiresDigit || password.any(Char::isDigit),
+        password.any { !it.isLetterOrDigit() },
+    )
+    return when (checks.count { it }) { 4 -> "强"; 2, 3 -> "中"; else -> "弱" }
 }
 
 private fun String.looksLikeEmail() = trim().matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))

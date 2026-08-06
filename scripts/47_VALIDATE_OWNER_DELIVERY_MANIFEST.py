@@ -10,9 +10,14 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = {
-    "original": "{phase}_FEATURES_ORIGINAL.md",
-    "comparison": "{phase}_FEATURE_COMPLETION_COMPARISON.md",
-    "checklist": "{phase}_OWNER_TEST_CHECKLIST.md",
+    "original": "{phase}_原功能清单.md",
+    "comparison": "{phase}_功能完成对比清单.md",
+    "checklist": "{phase}_完整测试清单.md",
+}
+REQUIRED_PHASE_DOCS = {
+    "deployment": "{phase}_部署证据.md",
+    "dns": "{phase}_域名DNS状态.md",
+    "admin": "{phase}_管理后台实测证据.md",
 }
 FINAL_STATUSES = {"IMPLEMENTED", "DEFERRED_WITH_REASON", "BLOCKED_EXTERNAL"}
 
@@ -89,6 +94,15 @@ def validate(phase: str, version: str) -> list[str]:
                         errors.append(f"comparison row {feature_id} must include function, status and evidence/difference")
                         continue
                     status = cells[2]
+                    # P00 was authored for owner readability with a Chinese status
+                    # plus explanation in the same cell; normalize only the
+                    # canonical labels while still requiring a final status.
+                    status_prefix = re.split(r"[：:]", status, maxsplit=1)[0].strip()
+                    status = {
+                        "已完成": "IMPLEMENTED",
+                        "已延期": "DEFERRED_WITH_REASON",
+                        "外部阻塞": "BLOCKED_EXTERNAL",
+                    }.get(status_prefix, status)
                     if status not in FINAL_STATUSES:
                         errors.append(f"comparison row {feature_id} has invalid final status: {status}")
                     expected_status = canonical_statuses.get(feature_id)
@@ -103,6 +117,21 @@ def validate(phase: str, version: str) -> list[str]:
             for marker in ("进入路径", "操作步骤", "正确预期", "失败", "恢复", "已知限制"):
                 if marker not in text:
                     errors.append(f"checklist omits required section or field: {marker}")
+    phase_docs: dict[str, str] = {}
+    for kind, pattern in REQUIRED_PHASE_DOCS.items():
+        path = ROOT / "docs" / "delivery" / pattern.format(phase=phase)
+        if not path.is_file():
+            errors.append(f"missing required Chinese phase document: {path.relative_to(ROOT)}")
+        else:
+            phase_docs[kind] = path.read_text(encoding="utf-8", errors="replace")
+    admin_text = phase_docs.get("admin", "")
+    if admin_text:
+        marker_groups = (("Tester", "测试人"), ("URL", "网址"), ("Real-data", "真实"), ("Audit", "审计"))
+        for group in marker_groups:
+            if not any(marker in admin_text for marker in group):
+                errors.append(f"admin evidence omits required marker: {'/'.join(group)}")
+        if re.search(r"(?im)mock|static success|模拟成功|静态页面", admin_text) and not re.search(r"(?im)scope|限制|不宣称", admin_text):
+            errors.append("admin evidence cannot rely on mock/static success without an explicit scope limitation")
     missing_statuses = sorted(ids - set(canonical_statuses))
     if missing_statuses:
         errors.append(f"feature status YAML omits: {', '.join(missing_statuses)}")

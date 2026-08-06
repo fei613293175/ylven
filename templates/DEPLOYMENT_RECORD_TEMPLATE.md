@@ -36,4 +36,4 @@ Record rollback command or deployment revision, data compatibility assessment an
 
 ## Known limitations and Owner Actions
 
-Reference `OWNER_ACTIONS.md` and the exact Feature IDs for any external configuration or accepted limitation.
+Reference `所有者操作项.md` and the exact Feature IDs for any external configuration or accepted limitation.

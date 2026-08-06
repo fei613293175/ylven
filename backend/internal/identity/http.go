@@ -123,7 +123,10 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/auth/login/challenge", a.loginChallenge)
 	mux.HandleFunc("/api/v1/auth/login/otp/send", a.loginOTPSend)
 	mux.HandleFunc("/api/v1/auth/login/otp/verify", a.loginOTPVerify)
+	mux.HandleFunc("/api/v1/auth/password-policy", a.passwordPolicy)
 	mux.HandleFunc("/api/v1/auth/sessions", a.sessions)
+	mux.HandleFunc("/api/v1/onboarding/personal-workspace", a.personalWorkspace)
+	mux.HandleFunc("/api/v1/account/session", a.accountSession)
 	mux.HandleFunc("/api/v1/auth/sessions/refresh", a.refreshSession)
 	mux.HandleFunc("/api/v1/auth/token/refresh", a.refreshSession)
 	mux.HandleFunc("/api/v1/auth/logout", a.logout)
@@ -294,6 +297,9 @@ func (a *API) otpSend(w http.ResponseWriter, r *http.Request) {
 		if err.Error() == "turnstile_required" {
 			status = 403
 		}
+		if err.Error() == "otp_cooldown" {
+			status = 429
+		}
 		writeError(w, status, err.Error(), "Challenge is not ready for email verification")
 		return
 	}
@@ -329,7 +335,7 @@ func (a *API) otpSend(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	out := map[string]any{"delivery_id": otp.DeliveryID, "expires_at": otp.ExpiresAt.UTC()}
+	out := map[string]any{"delivery_id": otp.DeliveryID, "expires_at": otp.ExpiresAt.UTC(), "resend_after_seconds": 60}
 	if a.DebugOTP {
 		out["debug_code"] = code
 	}
@@ -377,7 +383,35 @@ func (a *API) complete(w http.ResponseWriter, r *http.Request) {
 		writeError(w, status, err.Error(), err.Error())
 		return
 	}
-	writeJSON(w, 201, map[string]any{"user_id": user.ID, "email": user.Email})
+	workspace, workspaceErr := a.Store.EnsureWorkspace(user.ID)
+	if workspaceErr != nil {
+		writeError(w, http.StatusInternalServerError, "workspace_unavailable", "Workspace could not be initialized")
+		return
+	}
+	session, access, refresh, sessionErr := a.Store.CreateSessionForUser(user.Email)
+	if sessionErr != nil {
+		writeError(w, http.StatusInternalServerError, "session_unavailable", "Session could not be created")
+		return
+	}
+	writeJSON(w, 201, map[string]any{
+		"user_id": user.ID, "email": user.Email, "workspace": workspace,
+		"session_id": session.ID, "access_token": access, "refresh_token": refresh,
+		"access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt,
+	})
+}
+
+func (a *API) passwordPolicy(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) { return }
+	writeJSON(w, http.StatusOK, map[string]any{"min_length": 8, "requires_letter": true, "requires_digit": true})
+}
+
+func (a *API) personalWorkspace(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) { return }
+	user, _, err := a.Store.CurrentAccount(bearer(r))
+	if err != nil { writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid"); return }
+	workspace, err := a.Store.EnsureWorkspace(user.ID)
+	if err != nil { writeError(w, http.StatusInternalServerError, "workspace_unavailable", "Workspace could not be initialized"); return }
+	writeJSON(w, http.StatusOK, map[string]any{"workspace": workspace, "initialized": true})
 }
 
 func (a *API) loginChallenge(w http.ResponseWriter, r *http.Request) {
@@ -420,6 +454,10 @@ func (a *API) loginOTPSend(w http.ResponseWriter, r *http.Request)   { a.otpSend
 func (a *API) loginOTPVerify(w http.ResponseWriter, r *http.Request) { a.otpVerify(w, r) }
 
 func (a *API) sessions(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		a.accountSession(w, r)
+		return
+	}
 	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
@@ -437,6 +475,18 @@ func (a *API) sessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 201, map[string]any{"session_id": session.ID, "access_token": access, "refresh_token": refresh, "access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt})
+}
+
+func (a *API) accountSession(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	user, session, err := a.Store.CurrentAccount(bearer(r))
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"user": user, "session": session, "authenticated": true})
 }
 
 func (a *API) refreshSession(w http.ResponseWriter, r *http.Request) {

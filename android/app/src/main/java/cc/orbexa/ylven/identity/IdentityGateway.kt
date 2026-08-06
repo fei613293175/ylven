@@ -20,6 +20,16 @@ data class OtpChallenge(
     val id: String,
     val email: String,
     val debugCode: String?,
+    val expiresAt: String? = null,
+    val resendAfterSeconds: Int = 60,
+)
+
+data class SecurityChallenge(
+    val id: String,
+    val email: String,
+    val purpose: String,
+    /** Only populated by legacy test gateways; production always verifies in WebView. */
+    val legacyOtp: OtpChallenge? = null,
 )
 
 data class AuthSession(
@@ -39,13 +49,49 @@ data class DeviceSession(
 interface IdentityGateway {
     suspend fun startRegistration(email: String): OtpChallenge
     suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String)
+    suspend fun finishRegistrationSession(challenge: OtpChallenge, code: String, password: String): AuthSession? {
+        finishRegistration(challenge, code, password)
+        return null
+    }
     suspend fun startLogin(email: String): OtpChallenge
     suspend fun finishLogin(challenge: OtpChallenge, code: String): AuthSession
     suspend fun refresh(session: AuthSession): AuthSession
     suspend fun devices(bearer: String): List<DeviceSession>
     suspend fun revokeDevice(bearer: String, sessionId: String)
     suspend fun logout(bearer: String, allDevices: Boolean)
+
+    suspend fun restore(session: AuthSession): AuthSession = session
+
+    suspend fun createLoginChallenge(email: String): SecurityChallenge {
+        val otp = startLogin(email)
+        return SecurityChallenge(otp.id, otp.email, "login", otp)
+    }
+
+    suspend fun createRegistrationChallenge(email: String): SecurityChallenge {
+        val otp = startRegistration(email)
+        return SecurityChallenge(otp.id, otp.email, "register", otp)
+    }
+
+    suspend fun verifyTurnstile(challenge: SecurityChallenge, token: String) {
+        require(challenge.legacyOtp != null) { "当前网关未实现安全验证" }
+    }
+
+    suspend fun requestLoginOtp(challenge: SecurityChallenge): OtpChallenge =
+        challenge.legacyOtp ?: error("登录安全验证尚未完成")
+
+    suspend fun requestRegistrationOtp(challenge: SecurityChallenge): OtpChallenge =
+        challenge.legacyOtp ?: error("注册安全验证尚未完成")
+
+    suspend fun passwordPolicy(): PasswordPolicy = PasswordPolicy()
+
+    suspend fun initializeWorkspace(session: AuthSession) = Unit
 }
+
+data class PasswordPolicy(
+    val minLength: Int = 8,
+    val requiresLetter: Boolean = true,
+    val requiresDigit: Boolean = true,
+)
 
 class ApiException(
     val status: Int,
@@ -66,7 +112,7 @@ class HttpIdentityGateway(
         val challenge = request("POST", "/api/v1/auth/register/challenge", payload)
         val challengeId = challenge.getString("challenge_id")
         val delivery = request("POST", "/api/v1/auth/register/otp/send", JSONObject().put("challenge_id", challengeId))
-        return OtpChallenge(challengeId, normalized, delivery.optString("debug_code").ifBlank { null })
+        return OtpChallenge(challengeId, normalized, delivery.optString("debug_code").ifBlank { null }, delivery.optString("expires_at"), delivery.optInt("resend_after_seconds", 60))
     }
 
     override suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String) {
@@ -82,17 +128,63 @@ class HttpIdentityGateway(
         )
     }
 
+    override suspend fun finishRegistrationSession(challenge: OtpChallenge, code: String, password: String): AuthSession {
+        request("POST", "/api/v1/auth/register/otp/verify", JSONObject().put("challenge_id", challenge.id).put("code", code))
+        val body = request("POST", "/api/v1/auth/register/complete", JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("password", password))
+        return body.toSession(challenge.email)
+    }
+
     override suspend fun startLogin(email: String): OtpChallenge {
+        val challenge = createLoginChallenge(email)
+        turnstileToken()?.let { verifyTurnstile(challenge, it) }
+        return requestLoginOtp(challenge)
+    }
+
+    override suspend fun restore(session: AuthSession): AuthSession {
+        request("GET", "/api/v1/account/session", bearer = session.bearer)
+        return session
+    }
+
+    override suspend fun createLoginChallenge(email: String): SecurityChallenge {
         val normalized = request("POST", "/api/v1/auth/email/normalize", JSONObject().put("email", email)).getString("email")
-        val payload = JSONObject().put("email", normalized)
-        turnstileToken()?.let { payload.put("turnstile_token", it) }
-        val challenge = request("POST", "/api/v1/auth/login/challenge", payload)
+        val challenge = request("POST", "/api/v1/auth/login/challenge", JSONObject().put("email", normalized))
         if (!challenge.has("challenge_id")) {
             throw ApiException(401, "login_unavailable", "无法为该账户创建登录验证")
         }
-        val challengeId = challenge.getString("challenge_id")
-        val delivery = request("POST", "/api/v1/auth/login/otp/send", JSONObject().put("challenge_id", challengeId))
-        return OtpChallenge(challengeId, normalized, delivery.optString("debug_code").ifBlank { null })
+        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "login")
+    }
+
+    override suspend fun createRegistrationChallenge(email: String): SecurityChallenge {
+        val normalized = request("POST", "/api/v1/auth/email/normalize", JSONObject().put("email", email)).getString("email")
+        val challenge = request("POST", "/api/v1/auth/register/challenge", JSONObject().put("email", normalized).put("purpose", "register"))
+        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "register")
+    }
+
+    override suspend fun verifyTurnstile(challenge: SecurityChallenge, token: String) {
+        request(
+            "POST",
+            "/internal/v1/security/turnstile/verify",
+            JSONObject().put("challenge_id", challenge.id).put("token", token),
+        )
+    }
+
+    override suspend fun requestLoginOtp(challenge: SecurityChallenge): OtpChallenge {
+        val delivery = request("POST", "/api/v1/auth/login/otp/send", JSONObject().put("challenge_id", challenge.id))
+        return OtpChallenge(challenge.id, challenge.email, delivery.optString("debug_code").ifBlank { null }, delivery.optString("expires_at"), delivery.optInt("resend_after_seconds", 60))
+    }
+
+    override suspend fun requestRegistrationOtp(challenge: SecurityChallenge): OtpChallenge {
+        val delivery = request("POST", "/api/v1/auth/register/otp/send", JSONObject().put("challenge_id", challenge.id))
+        return OtpChallenge(challenge.id, challenge.email, delivery.optString("debug_code").ifBlank { null }, delivery.optString("expires_at"), delivery.optInt("resend_after_seconds", 60))
+    }
+
+    override suspend fun passwordPolicy(): PasswordPolicy {
+        val body = request("GET", "/api/v1/auth/password-policy")
+        return PasswordPolicy(body.optInt("min_length", 8), body.optBoolean("requires_letter", true), body.optBoolean("requires_digit", true))
+    }
+
+    override suspend fun initializeWorkspace(session: AuthSession) {
+        request("POST", "/api/v1/onboarding/personal-workspace", bearer = session.bearer)
     }
 
     override suspend fun finishLogin(challenge: OtpChallenge, code: String): AuthSession {
@@ -149,6 +241,24 @@ class HttpIdentityGateway(
         body: JSONObject? = null,
         bearer: String? = null,
     ): JSONObject = withContext(Dispatchers.IO) {
+        var lastFailure: Throwable? = null
+        repeat(2) { attempt ->
+            try {
+                return@withContext requestOnce(method, path, body, bearer)
+            } catch (failure: java.io.IOException) {
+                lastFailure = failure
+                if (attempt == 0 && method == "GET") Thread.sleep(250)
+            }
+        }
+        throw lastFailure ?: java.io.IOException("网络请求失败")
+    }
+
+    private fun requestOnce(
+        method: String,
+        path: String,
+        body: JSONObject?,
+        bearer: String?,
+    ): JSONObject {
         val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 10_000
@@ -178,6 +288,7 @@ class HttpIdentityGateway(
         } finally {
             connection.disconnect()
         }
+        error("unreachable")
     }
 
     private fun JSONObject.toSession(email: String) = AuthSession(

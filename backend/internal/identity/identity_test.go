@@ -297,3 +297,67 @@ func TestCanonicalRefreshAndDeviceRoutes(t *testing.T) {
 		t.Fatalf("device revoke status=%d body=%s", revoked.Code, revoked.Body.String())
 	}
 }
+
+func TestP02TurnstileReplayIsRejected(t *testing.T) {
+	s, _ := NewStore("")
+	c, err := s.CreateChallenge("p02-turnstile@example.com", "login")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyTurnstile(c.ID, "token", true); err == nil || err.Error() != "turnstile_already_verified" {
+		t.Fatalf("replay error=%v", err)
+	}
+}
+
+func TestP02AccountSessionEndpointReturnsSafeAuthenticatedView(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "restore@example.com")
+	c, _ := s.CreateChallenge("restore@example.com", "login")
+	_ = s.VerifyTurnstile(c.ID, "token", true)
+	_, _ = s.CreateOTP(c.ID, "123456")
+	_ = s.VerifyOTP(c.ID, "123456")
+	_, access, _, err := s.CreateSession(c.ID, "restore@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewAPI(s).Handler()
+	unauthorized := requestJSON(t, handler, http.MethodGet, "/api/v1/account/session", nil, "", "")
+	if unauthorized.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthorized status=%d", unauthorized.Code)
+	}
+	restored := requestJSON(t, handler, http.MethodGet, "/api/v1/account/session", nil, access, "")
+	if restored.Code != http.StatusOK || strings.Contains(restored.Body.String(), "password_hash") {
+		t.Fatalf("restore status=%d body=%s", restored.Code, restored.Body.String())
+	}
+}
+
+func TestP02RegistrationReturnsSessionAndInitializesWorkspace(t *testing.T) {
+	s, _ := NewStore("")
+	c, err := s.CreateChallenge("workspace@example.com", "register")
+	if err != nil { t.Fatal(err) }
+	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil { t.Fatal(err) }
+	if _, err := s.CreateOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
+	if err := s.VerifyOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
+	handler := NewAPI(s).Handler()
+	completed := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/register/complete", map[string]string{"challenge_id": c.ID, "email": "workspace@example.com", "password": "correct horse battery"}, "", "")
+	if completed.Code != http.StatusCreated || !strings.Contains(completed.Body.String(), "access_token") || !strings.Contains(completed.Body.String(), "个人工作区") {
+		t.Fatalf("registration completion status=%d body=%s", completed.Code, completed.Body.String())
+	}
+	var body struct { AccessToken string `json:"access_token"` }
+	if err := json.Unmarshal(completed.Body.Bytes(), &body); err != nil { t.Fatal(err) }
+	workspace := requestJSON(t, handler, http.MethodPost, "/api/v1/onboarding/personal-workspace", nil, body.AccessToken, "")
+	if workspace.Code != http.StatusOK || !strings.Contains(workspace.Body.String(), "initialized") { t.Fatalf("workspace status=%d body=%s", workspace.Code, workspace.Body.String()) }
+	policy := requestJSON(t, handler, http.MethodGet, "/api/v1/auth/password-policy", nil, "", "")
+	if policy.Code != http.StatusOK || !strings.Contains(policy.Body.String(), "min_length") { t.Fatalf("policy status=%d body=%s", policy.Code, policy.Body.String()) }
+}
+
+func TestP02OTPCooldownPreventsImmediateResend(t *testing.T) {
+	s, _ := NewStore("")
+	c, _ := s.CreateChallenge("cooldown@example.com", "login")
+	_ = s.VerifyTurnstile(c.ID, "token", true)
+	if _, err := s.CreateOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
+	if _, err := s.CreateOTP(c.ID, "654321"); err == nil || err.Error() != "otp_cooldown" { t.Fatalf("cooldown error=%v", err) }
+}

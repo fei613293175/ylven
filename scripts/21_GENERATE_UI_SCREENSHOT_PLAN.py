@@ -14,6 +14,6 @@ def main():
  fields=['state_id','page_id','page_name','state_name','mockup_path','runtime_screenshot_path','device_width_dp','theme','font_scale','status','notes']
  with out.open('w',encoding='utf-8-sig',newline='') as f:
   w=csv.DictWriter(f,fieldnames=fields); w.writeheader()
-  for r in rows: w.writerow({'state_id':r['state_id'],'page_id':r['page_id'],'page_name':r['page_name'],'state_name':r['state_name'],'mockup_path':r['mockup_path'],'runtime_screenshot_path':f"screenshots/{r['state_id']}.png",'device_width_dp':'360','theme':'light','font_scale':'1.0','status':'PENDING','notes':''})
+  for r in rows: w.writerow({'state_id':r['state_id'],'page_id':r['page_id'],'page_name':r['page_name'],'state_name':r['state_name'],'mockup_path':r['mockup_path'],'runtime_screenshot_path':f"截图/{r['state_id']}.png",'device_width_dp':'360','theme':'light','font_scale':'1.0','status':'PENDING','notes':''})
  print(out)
 if __name__=='__main__': main()

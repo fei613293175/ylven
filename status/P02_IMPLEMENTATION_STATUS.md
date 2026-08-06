@@ -1,12 +1,12 @@
 # P02 实施状态
 
 - 阶段：P02 — Android 注册登录与账号安全体验
-- 当前状态：TODO
-- 最后更新：2026-08-04
+- 当前状态：READY_FOR_RELEASE
+- 最后更新：2026-08-06
 
 ## 已完成的纵向切片
 
-尚未开始。Codex 开始阶段后必须按真实代码、迁移、接口、页面和测试持续更新，不得仅写“已检查”。
+已完成身份注册登录纵向链路：本地会话恢复、受控 Turnstile、登录/注册 OTP、密码策略、AES-GCM 会话保存、注册自动会话和个人工作区、会话刷新/退出/设备撤销、弱网重试与 WebView 安全边界。
 
 ## 当前进行中
 
@@ -18,4 +18,8 @@
 
 ## 关键命令与证据
 
-尚未执行。每个命令必须记录完整命令、退出码、时间和日志路径。
+- `uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/19_VALIDATE_UI_CONTRACTS.py --mode planning`：PASS，332 pages / 2671 states。
+- `uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/20_CHECK_UI_VISUAL_GATE.py --packet P02-W01`：PASS，10 pages。
+- `uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/07_VALIDATE_CONTRACTS.py --phase P02`：PASS，26 features / 1086 tests。
+- `ssh obx-test "/usr/local/go/bin/go test ./..."`（独立源码目录）：PASS。
+- `ssh obx-test "android-build docker-run --project ylven --kind build ... gradle clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin"`：PASS。

@@ -129,8 +129,50 @@ def main() -> int:
         if not root_current.get('phase_id'): errors.append('CURRENT_PHASE.yaml missing phase_id')
         root_release=load_yaml(ROOT/'RELEASE_CONTRACT.yaml'); contract_release=load_yaml(ROOT/'contracts/release-contract.yaml')
         if root_release!=contract_release: errors.append('root RELEASE_CONTRACT.yaml differs from contracts copy')
-        required=set(root_release.get('required_outputs') or []); expected={'AUTOMATED_TEST_REPORT.md','VISUAL_DIFF_REPORT.md','CI_PROVENANCE.json','BUILD_INFO.json','FEATURES_ORIGINAL.md','FEATURE_COMPLETION_COMPARISON.md','OWNER_TEST_CHECKLIST.md','FEATURES_PLANNED.md','FEATURES_COMPLETED.md','DEPLOYMENT_ENDPOINTS.md','DOMAIN_DNS_STATUS.md','OWNER_ACTIONS.md','OWNER_ACCEPTANCE.md','SHA256SUMS.txt'}
-        if required!=expected: errors.append(f'release outputs mismatch; expected={sorted(expected)}, actual={sorted(required)}')
+        required=set(root_release.get('required_outputs') or []); contract_required=set(contract_release.get('required_outputs') or [])
+        if required!=contract_required: errors.append('root and contracts release output names differ')
+        if not {'原功能清单.md','功能完成对比清单.md','完整测试清单.md','部署证据.md','截图索引.csv','校验文件_SHA256.txt'}.issubset(required):
+            errors.append('release contract does not enforce all required Chinese owner artifact names')
+
+        version_matrix = load_yaml(ROOT/'contracts/release-version-matrix.yaml') or {}
+        global_requirements = version_matrix.get('global_release_requirements') or {}
+        if global_requirements.get('applies_to_every_phase') is not True:
+            errors.append('release-version-matrix must apply hard gates to every phase')
+        if global_requirements.get('logo_resource') != 'android/app/src/main/res/drawable/ylven_logo.png':
+            errors.append('release-version-matrix logo_resource is not the fixed YLVEN logo')
+        if global_requirements.get('splash_resource') != 'android/app/src/main/res/drawable-nodpi/ylven_splash.png':
+            errors.append('release-version-matrix splash_resource is not the fixed YLVEN startup image')
+        upgrade = global_requirements.get('overlay_install') or {}
+        if upgrade.get('command') != 'adb install -r' or upgrade.get('clear_data_forbidden') is not True:
+            errors.append('release-version-matrix must require adb install -r without clearing data')
+        chinese = global_requirements.get('chinese_delivery_files') or {}
+        required_chinese = {
+            'original_features': '原功能清单.md',
+            'completion_comparison': '功能完成对比清单.md',
+            'complete_test_checklist': '完整测试清单.md',
+            'deployment_evidence': '部署证据.md',
+            'upgrade_evidence': '覆盖安装证据.md',
+            'screenshots': '截图',
+            'screenshot_index': '截图索引.csv',
+            'checksum': '校验文件_SHA256.txt',
+        }
+        for key, expected in required_chinese.items():
+            if chinese.get(key) != expected:
+                errors.append(f'release-version-matrix Chinese delivery file {key} must be {expected}')
+        admin = global_requirements.get('admin_real_test') or {}
+        if admin.get('codex_must_open_every_version') is not True or admin.get('current_phase_features_must_be_real_and_complete') is not True:
+            errors.append('release-version-matrix must require Codex real admin testing for every version')
+        phase_rows = version_matrix.get('phases') or []
+        by_phase = {str(row.get('phase')): row for row in phase_rows}
+        if set(by_phase) != set(PHASES):
+            errors.append('release-version-matrix phase rows must cover exactly P00-P13')
+        for index, phase_id in enumerate(PHASES):
+            row = by_phase.get(phase_id) or {}
+            if row.get('admin_access_delivery') is not True:
+                errors.append(f'{phase_id}: admin_access_delivery must be true; every version requires real admin testing')
+            expected_upgrade = None if index == 0 else str((by_phase.get(PHASES[index - 1]) or {}).get('version_name'))
+            if row.get('upgrade_test_from') != expected_upgrade:
+                errors.append(f'{phase_id}: upgrade_test_from must be {expected_upgrade!r}')
     except Exception as exc: errors.append(f'root state/release contract validation failed: {exc}')
 
     if len((ROOT/'AGENTS.md').read_bytes())>32768: errors.append('AGENTS.md exceeds 32 KiB')

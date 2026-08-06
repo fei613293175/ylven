@@ -1,6 +1,38 @@
 schema_version: '1.0'
 authority: CANONICAL
 workflow: .github/workflows/android-phase-acceptance.yml
+owner_delivery_contract: contracts/owner-delivery-contract.yaml
+all_phase_hard_gates:
+- P00
+- P01
+- P02
+- P03
+- P04
+- P05
+- P06
+- P07
+- P08
+- P09
+- P10
+- P11
+- P12
+- P13
+brand_assets:
+  application_icon: android/app/src/main/res/drawable/ylven_logo.png
+  startup_image: android/app/src/main/res/drawable-nodpi/ylven_splash.png
+upgrade_install:
+  method: adb install -r
+  clear_data_forbidden: true
+  signing_certificate_must_match_previous_release: true
+  package_data_marker_must_survive: true
+  login_state_or_migration_must_survive: true
+  failure_blocks_release: true
+admin_real_test:
+  required_for_every_phase: true
+  evidence_file: 管理后台实测证据.md
+  public_url_must_be_opened_by_codex: true
+  current_phase_features_must_be_exercised_with_real_data: true
+  unavailable_or_incomplete_blocks_release: true
 emulator:
   api_level: 35
   target: google_apis
@@ -17,9 +49,12 @@ required_stages:
   - assemble、unit test、lint 通过
 - id: upgrade_install
   requirements:
-  - P01 以后先安装上一 owner release，再使用 adb install -r 安装本版
+  - P01 以后先安装上一 owner release，再使用 adb install -r 安装本版；P00 也必须执行同包名重装校验
   - 不得清除应用数据
+  - applicationId、签名证书和 versionCode 必须满足覆盖更新条件
+  - 安装前写入应用数据标记，安装后标记必须存在
   - 数据库迁移和登录态恢复测试通过
+  - 覆盖安装失败立即阻断发布
 - id: interaction_coverage
   requirements:
   - 所有已发布且可交互的 Interaction ID 必须绑定 Compose testTag/semantics
@@ -39,6 +74,8 @@ required_stages:
   requirements:
   - 运行本阶段用户旅程、网络失败、操作失败、操作成功、权限和额度等流程
   - 后端、数据库和后台证据完整
+  - Codex 必须亲自打开公共管理后台，登录交付账号，逐项操作本阶段对应菜单和功能
+  - 必须从真实 API 回读数据并核对审计记录；静态页面、模拟成功和仅健康检查不算通过
 - id: artifact
   requirements:
   - 只允许交付当前 commit SHA 对应的 GitHub Actions Artifact
@@ -55,3 +92,5 @@ release_blockers:
 - 视觉差异未解释
 - APK 版本或签名不匹配
 - 升级覆盖安装失败
+- 管理后台未实际打开、登录、操作或缺少真实数据/审计证据
+- 任一中文交付文件、截图或校验文件缺失或使用英文替代名

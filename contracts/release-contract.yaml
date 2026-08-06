@@ -1,19 +1,23 @@
-schema_version: 1.3.0
+schema_version: 1.4.0
+owner_delivery_contract: contracts/owner-delivery-contract.yaml
 required_outputs:
-- AUTOMATED_TEST_REPORT.md
-- VISUAL_DIFF_REPORT.md
-- CI_PROVENANCE.json
-- BUILD_INFO.json
-- FEATURES_ORIGINAL.md
-- FEATURE_COMPLETION_COMPARISON.md
-- OWNER_TEST_CHECKLIST.md
-- FEATURES_PLANNED.md
-- FEATURES_COMPLETED.md
-- DEPLOYMENT_ENDPOINTS.md
-- DOMAIN_DNS_STATUS.md
-- OWNER_ACTIONS.md
-- OWNER_ACCEPTANCE.md
-- SHA256SUMS.txt
+- 自动化测试报告.md
+- 视觉差异报告.md
+- CI来源证明.json
+- 构建信息.json
+- 原功能清单.md
+- 功能完成对比清单.md
+- 完整测试清单.md
+- 计划功能清单.md
+- 已完成功能清单.md
+- 部署证据.md
+- 覆盖安装证据.md
+- 域名DNS状态.md
+- 管理后台实测证据.md
+- 所有者操作项.md
+- 所有者验收.md
+- 截图索引.csv
+- 校验文件_SHA256.txt
 apk_rules:
   exactly_one: true
   minimum_bytes: 1048576
@@ -23,10 +27,27 @@ apk_rules:
   - classes.dex
 completion_rules:
 - All current-phase Feature IDs have a final status and individual comparison row.
-- Original features, completion comparison and owner test checklist pass script 47.
+- 原功能清单、功能完成对比清单、完整测试清单逐 Feature 通过脚本 47。
 - Automated tests and the exact GitHub Actions commit are captured in provenance.
-- Deployment, public health, rollback and known limitations are explicit.
-- SHA256SUMS.txt validates every immutable release file.
+- 部署证据、公开健康检查、回滚和已知限制必须明确。
+- 校验文件_SHA256.txt 必须校验每个不可变交付文件。
+- 每个 P00-P13 版本必须完成真实管理后台打开、登录、当前版本功能操作、真实数据回读和审计证据。
+- 覆盖安装失败、后台不可访问、功能不可用或证据缺失均禁止交付。
+brand_assets:
+  logo: android/app/src/main/res/drawable/ylven_logo.png
+  splash: android/app/src/main/res/drawable-nodpi/ylven_splash.png
+  application_id: cc.orbexa.ylven
+  fixed_signing_certificate: true
+upgrade_install:
+  required: true
+  method: adb install -r
+  clear_data_forbidden: true
+  login_state_and_data_migration_required: true
+admin_real_test:
+  required_for_every_phase: true
+  evidence_file: 管理后台实测证据.md
+  real_public_url_and_api_data_required: true
+  static_or_mock_success_forbidden: true
 ui_rules:
   design_system_version: YL-DS-1.2.0
   ci_runtime_screenshots_required: true

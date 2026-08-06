@@ -62,8 +62,11 @@ contracts/release-version-matrix.yaml
 
 ## 5. 管理后台交付
 
-- P00 / App 1.0.0：交付后台工程壳、健康检查和部署基础，不交付可长期使用的默认密码。
-- **P01 / App 1.1.0：首次交付可访问的 `ai-admin.orbexa.cc`、管理员账号和项目所有者指定的测试密码。**
+- P00-P13 每个版本都必须由 Codex 亲自打开公共管理后台并完成当前版本对应菜单和功能的真实操作；不能因为版本没有新增后台菜单而跳过。
+- 每版必须验证：公共 URL 可访问、交付账号可登录、当前版本功能可操作、真实 API 数据可回读、持久化结果正确、审计记录存在。仅健康检查、静态页面、mock 或演示成功均不算通过。
+- 后台打不开、登录失败、任何对应功能不可用、真实数据或审计证据缺失时，版本状态必须保持未交付。
+- P00 / App 1.0.0：交付后台工程壳、健康检查和部署基础，但仍须完成上述真实打开和可用性核验。
+- P01 / App 1.1.0：交付可访问的 `ai-admin.orbexa.cc`、管理员账号和项目所有者指定的测试密码。
 - 管理员邮箱由本机或服务器私密变量 `OWNER_ADMIN_EMAIL` 提供。
 - Codex 在 staging 生成高强度一次性密码，只写入项目所有者桌面交付目录的 `ADMIN_ACCESS_ONE_TIME.txt`；不得进入 Git、GitHub Artifact、日志或聊天。
 - 首次登录强制修改密码，并使一次性密码失效。
@@ -79,24 +82,26 @@ contracts/release-version-matrix.yaml
 ```text
 ~/Desktop/YLVEN-Releases/<version>/
 ├── YLVEN-<version>-<phase>.apk
-├── FEATURES_PLANNED.md
-├── FEATURES_COMPLETED.md
-├── OWNER_TEST_CHECKLIST.md
-├── AUTOMATED_TEST_REPORT.md
-├── UI_SCREENSHOT_INDEX.csv
-├── VISUAL_DIFF_REPORT.md
-├── DEPLOYMENT_ENDPOINTS.md
-├── DOMAIN_DNS_STATUS.md
-├── BUILD_INFO.json
-├── CI_PROVENANCE.json
-└── SHA256SUMS.txt
+├── 原功能清单.md
+├── 功能完成对比清单.md
+├── 完整测试清单.md
+├── 自动化测试报告.md
+├── 截图索引.csv
+├── 截图/
+├── 视觉差异报告.md
+├── 部署证据.md
+├── 域名DNS状态.md
+├── 构建信息.json
+├── CI来源证明.json
+├── 管理后台实测证据.md
+└── 校验文件_SHA256.txt
 ```
 
 P01 额外包含本地生成且不进入 Git/CI 的 `ADMIN_ACCESS_ONE_TIME.txt`。
 
 ## 8. 项目所有者测试清单
 
-`OWNER_TEST_CHECKLIST.md` 必须逐项说明：
+`完整测试清单.md` 必须逐项说明：
 
 - 本版新增功能；
 - 每项功能的进入路径；
@@ -104,6 +109,7 @@ P01 额外包含本地生成且不进入 Git/CI 的 `ADMIN_ACCESS_ONE_TIME.txt`�
 - 正确预期；
 - 需要测试的失败和恢复路径；
 - 后台需要核对的字段或记录；
+- Codex 实际打开后台的 URL、时间、菜单、操作、真实返回数据和审计记录；
 - 覆盖更新安装步骤；
 - 已知限制；
 - 通过/不通过填写位置。

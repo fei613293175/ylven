@@ -47,7 +47,7 @@ def prepare_delivery(
     )
     if result.returncode:
         raise ValueError(result.stdout.strip() or result.stderr.strip())
-    required = ["AUTOMATED_TEST_REPORT.md", "VISUAL_DIFF_REPORT.md", "CI_PROVENANCE.json"]
+    required = ["自动化测试报告.md", "视觉差异报告.md", "CI来源证明.json"]
     apks = list(src.rglob("*.apk"))
     errors: list[str] = []
     if len(apks) != 1:
@@ -58,7 +58,7 @@ def prepare_delivery(
     if errors:
         raise ValueError("\n".join(errors))
 
-    provenance = json.loads((src / "CI_PROVENANCE.json").read_text(encoding="utf-8"))
+    provenance = json.loads((src / "CI来源证明.json").read_text(encoding="utf-8"))
     apk = apks[0]
     expected = {
         "phase": phase,
@@ -79,7 +79,7 @@ def prepare_delivery(
     shutil.copytree(src, dest)
     if run_id is not None:
         provenance["workflow_run_id"] = run_id
-        (dest / "CI_PROVENANCE.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+        (dest / "CI来源证明.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
 
     evidence = dest / f"{phase}-evidence"
     packet_evidence = copy_matches(root / "docs" / "evidence", f"{phase}-W*.md", evidence)
@@ -88,11 +88,12 @@ def prepare_delivery(
     copy_matches(root / "docs" / "evidence", f"VISUAL_DIFF_REPORT_{phase}*.md", evidence)
     screenshot_index = root / "docs" / "evidence" / "UI_SCREENSHOT_INDEX.csv"
     if screenshot_index.is_file():
-        shutil.copy2(screenshot_index, evidence / screenshot_index.name)
+        shutil.copy2(screenshot_index, evidence / "截图索引.csv")
+        shutil.copy2(screenshot_index, dest / "截图索引.csv")
     screenshots_root = root / "docs" / "evidence" / "screenshots"
     for screenshot_dir in sorted(screenshots_root.glob(f"{phase}-*")):
         if screenshot_dir.is_dir():
-            shutil.copytree(screenshot_dir, evidence / "screenshots" / screenshot_dir.name)
+            shutil.copytree(screenshot_dir, evidence / "截图" / screenshot_dir.name)
 
     for status_name in (f"{phase}_FEATURE_STATUS.yaml", f"{phase}_IMPLEMENTATION_STATUS.md"):
         status_path = root / "status" / status_name
@@ -109,15 +110,21 @@ def prepare_delivery(
         empty_delivery_dir = dest / f"{phase}-delivery-docs"
         if empty_delivery_dir.exists():
             empty_delivery_dir.rmdir()
-    shutil.copy2(root / "docs" / "delivery" / f"{phase}_OWNER_TEST_CHECKLIST.md", dest / "OWNER_TEST_CHECKLIST.md")
-    shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURES_ORIGINAL.md", dest / "FEATURES_ORIGINAL.md")
-    shutil.copy2(root / "docs" / "delivery" / f"{phase}_FEATURE_COMPLETION_COMPARISON.md", dest / "FEATURE_COMPLETION_COMPARISON.md")
-    shutil.copy2(dest / "FEATURES_ORIGINAL.md", dest / "FEATURES_PLANNED.md")
-    shutil.copy2(dest / "FEATURE_COMPLETION_COMPARISON.md", dest / "FEATURES_COMPLETED.md")
-    for name in ("DEPLOYMENT_ENDPOINTS", "DOMAIN_DNS_STATUS", "ADMIN_ACCESS"):
-        source = root / "docs" / "delivery" / f"{phase}_{name}.md"
-        if source.is_file():
-            shutil.copy2(source, dest / f"{name}.md")
+    source_docs = {
+        "完整测试清单.md": f"{phase}_完整测试清单.md",
+        "原功能清单.md": f"{phase}_原功能清单.md",
+        "功能完成对比清单.md": f"{phase}_功能完成对比清单.md",
+        "部署证据.md": f"{phase}_部署证据.md",
+        "域名DNS状态.md": f"{phase}_域名DNS状态.md",
+        "管理后台实测证据.md": f"{phase}_管理后台实测证据.md",
+    }
+    for destination_name, source_name in source_docs.items():
+        source = root / "docs" / "delivery" / source_name
+        if not source.is_file():
+            raise ValueError(f"missing Chinese delivery document: {source.relative_to(root)}")
+        shutil.copy2(source, dest / destination_name)
+    shutil.copy2(dest / "原功能清单.md", dest / "计划功能清单.md")
+    shutil.copy2(dest / "功能完成对比清单.md", dest / "已完成功能清单.md")
 
     version_parts = [int(part) for part in version.split(".")]
     if len(version_parts) != 3:
@@ -136,25 +143,25 @@ def prepare_delivery(
         "design_system_version": "YL-DS-1.2.0",
         "self_test_fixture": False,
     }
-    (dest / "BUILD_INFO.json").write_text(json.dumps(build_info, indent=2) + "\n", encoding="utf-8")
+    (dest / "构建信息.json").write_text(json.dumps(build_info, indent=2) + "\n", encoding="utf-8")
     acceptance = (root / "templates" / "OWNER_ACCEPTANCE_TEMPLATE.md").read_text(encoding="utf-8")
     acceptance = acceptance.replace("YLVEN-Pxx-test.apk", apk.name).replace("Pxx", phase)
-    (dest / "OWNER_ACCEPTANCE.md").write_text(acceptance, encoding="utf-8")
+    (dest / "所有者验收.md").write_text(acceptance, encoding="utf-8")
     owner_actions = root / "OWNER_ACTIONS.md"
     if owner_actions.is_file():
-        shutil.copy2(owner_actions, dest / "OWNER_ACTIONS.md")
+        shutil.copy2(owner_actions, dest / "所有者操作项.md")
 
     lines = []
     for path in sorted(
         item for item in dest.rglob("*")
-        if item.is_file() and item.name not in {"SHA256SUMS.txt", "OWNER_ACCEPTANCE.md"}
+        if item.is_file() and item.name not in {"校验文件_SHA256.txt", "所有者验收.md"}
     ):
         lines.append(f"{sha256(path)}  {path.relative_to(dest).as_posix()}")
-    (dest / "SHA256SUMS.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (dest / "校验文件_SHA256.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     if formal_dest is not None:
         preserved_acceptance: str | None = None
-        old_provenance = formal_dest / "CI_PROVENANCE.json"
-        old_acceptance = formal_dest / "OWNER_ACCEPTANCE.md"
+        old_provenance = formal_dest / "CI来源证明.json"
+        old_acceptance = formal_dest / "所有者验收.md"
         if old_provenance.is_file() and old_acceptance.is_file():
             try:
                 old = json.loads(old_provenance.read_text(encoding="utf-8"))
@@ -166,7 +173,7 @@ def prepare_delivery(
             shutil.rmtree(formal_dest)
         shutil.copytree(dest, formal_dest)
         if preserved_acceptance is not None:
-            (formal_dest / "OWNER_ACCEPTANCE.md").write_text(preserved_acceptance, encoding="utf-8")
+            (formal_dest / "所有者验收.md").write_text(preserved_acceptance, encoding="utf-8")
 
 
 def main() -> int:

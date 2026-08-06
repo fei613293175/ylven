@@ -41,6 +41,7 @@ type OTP struct {
 	ExpiresAt   time.Time `json:"expires_at"`
 	Attempts    int       `json:"attempts"`
 	Consumed    bool      `json:"consumed"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type User struct {
@@ -69,6 +70,13 @@ type UserView struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	Status    string    `json:"status"`
+}
+
+type Workspace struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type SessionView struct {
@@ -156,6 +164,7 @@ type state struct {
 	StepUpChallenges       map[string]StepUpChallenge   `json:"step_up_challenges"`
 	EmailTemplates         map[string]EmailTemplate     `json:"email_templates"`
 	NotificationDeliveries []NotificationDelivery       `json:"notification_deliveries"`
+	Workspaces             map[string]Workspace          `json:"workspaces"`
 }
 
 type Store struct {
@@ -165,7 +174,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}}}
 	if path == "" {
 		return s, nil
 	}
@@ -214,6 +223,9 @@ func NewStore(path string) (*Store, error) {
 	}
 	if s.data.NotificationDeliveries == nil {
 		s.data.NotificationDeliveries = []NotificationDelivery{}
+	}
+	if s.data.Workspaces == nil {
+		s.data.Workspaces = map[string]Workspace{}
 	}
 	return s, nil
 }
@@ -281,8 +293,17 @@ func (s *Store) VerifyTurnstile(challengeID, token string, valid bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	c, ok := s.data.Challenges[challengeID]
-	if !ok || c.ExpiresAt.Before(time.Now()) || c.Consumed {
+	if !ok {
 		return errors.New("challenge_not_found")
+	}
+	if c.ExpiresAt.Before(time.Now()) {
+		return errors.New("challenge_expired")
+	}
+	if c.Consumed {
+		return errors.New("challenge_consumed")
+	}
+	if c.TurnstileVerified {
+		return errors.New("turnstile_already_verified")
 	}
 	if !valid || strings.TrimSpace(token) == "" {
 		return errors.New("turnstile_failed")
@@ -310,7 +331,13 @@ func (s *Store) CreateOTP(challengeID string, code string) (OTP, error) {
 	if err != nil {
 		return OTP{}, err
 	}
-	o := OTP{ID: id, ChallengeID: challengeID, Email: c.Email, Digest: hashSecret(code, salt), ExpiresAt: time.Now().Add(10 * time.Minute)}
+	now := time.Now().UTC()
+	for _, existing := range s.data.OTPs {
+		if existing.ChallengeID == challengeID && !existing.Consumed && now.Sub(existing.CreatedAt) < 60*time.Second {
+			return OTP{}, errors.New("otp_cooldown")
+		}
+	}
+	o := OTP{ID: id, ChallengeID: challengeID, Email: c.Email, Digest: hashSecret(code, salt), ExpiresAt: now.Add(10 * time.Minute), CreatedAt: now}
 	// Store the salt with the digest; it is not secret and is required for verification.
 	o.Digest = salt + ":" + o.Digest
 	s.data.OTPs[id] = o
@@ -418,6 +445,50 @@ func (s *Store) CreateUser(challengeID, email, password string) (User, error) {
 	return u, s.persistLocked()
 }
 
+func (s *Store) EnsureWorkspace(userID string) (Workspace, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if existing, ok := s.data.Workspaces[userID]; ok {
+		return existing, nil
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return Workspace{}, err
+	}
+	workspace := Workspace{ID: id, UserID: userID, Name: "个人工作区", CreatedAt: time.Now().UTC()}
+	s.data.Workspaces[userID] = workspace
+	s.appendAuditLocked("personal_workspace_initialized", "", userID)
+	return workspace, s.persistLocked()
+}
+
+func (s *Store) CreateSessionForUser(email string) (Session, string, string, error) {
+	normalized, err := NormalizeEmail(email)
+	if err != nil {
+		return Session{}, "", "", err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	u, ok := s.data.Users[normalized]
+	if !ok || u.Status != "active" {
+		return Session{}, "", "", errors.New("login_not_verified")
+	}
+	return s.createSessionLocked(u, normalized)
+}
+
+func (s *Store) createSessionLocked(u User, email string) (Session, string, string, error) {
+	id, err := randomToken(16)
+	if err != nil { return Session{}, "", "", err }
+	access, err := randomToken(32)
+	if err != nil { return Session{}, "", "", err }
+	refresh, err := randomToken(32)
+	if err != nil { return Session{}, "", "", err }
+	now := time.Now().UTC()
+	session := Session{ID: id, UserID: u.ID, AccessDigest: digestToken(access), RefreshDigest: digestToken(refresh), AccessExpiresAt: now.Add(15 * time.Minute), RefreshExpiresAt: now.Add(30 * 24 * time.Hour), DeviceID: "device-" + id[:8], CreatedAt: now}
+	s.data.Sessions[id] = session
+	s.appendAuditLocked("user_login", email, id)
+	return session, access, refresh, s.persistLocked()
+}
+
 func (s *Store) CreateSession(challengeID, email string) (Session, string, string, error) {
 	normalized, err := NormalizeEmail(email)
 	if err != nil {
@@ -433,24 +504,10 @@ func (s *Store) CreateSession(challengeID, email string) (Session, string, strin
 	if !ok || u.Status != "active" {
 		return Session{}, "", "", errors.New("login_not_verified")
 	}
-	id, err := randomToken(16)
-	if err != nil {
-		return Session{}, "", "", err
-	}
-	access, err := randomToken(32)
-	if err != nil {
-		return Session{}, "", "", err
-	}
-	refresh, err := randomToken(32)
-	if err != nil {
-		return Session{}, "", "", err
-	}
-	now := time.Now().UTC()
-	session := Session{ID: id, UserID: u.ID, AccessDigest: digestToken(access), RefreshDigest: digestToken(refresh), AccessExpiresAt: now.Add(15 * time.Minute), RefreshExpiresAt: now.Add(30 * 24 * time.Hour), DeviceID: "device-" + id[:8], CreatedAt: now}
-	s.data.Sessions[id] = session
+	session, access, refresh, err := s.createSessionLocked(u, normalized)
+	if err != nil { return Session{}, "", "", err }
 	c.Consumed = true
 	s.data.Challenges[challengeID] = c
-	s.appendAuditLocked("user_login", normalized, id)
 	return session, access, refresh, s.persistLocked()
 }
 
@@ -550,6 +607,28 @@ func (s *Store) ListSessions(access string) ([]SessionView, error) {
 		}
 	}
 	return result, nil
+}
+
+// CurrentAccount returns the authenticated account and its active session.
+// The access token is only used for lookup and is never persisted or returned.
+func (s *Store) CurrentAccount(access string) (UserView, SessionView, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	item, ok := s.sessionByAccessLocked(access)
+	if !ok {
+		return UserView{}, SessionView{}, errors.New("session_invalid")
+	}
+	var user User
+	for _, candidate := range s.data.Users {
+		if candidate.ID == item.UserID {
+			user = candidate
+			break
+		}
+	}
+	if user.ID == "" || user.Status != "active" {
+		return UserView{}, SessionView{}, errors.New("session_invalid")
+	}
+	return userView(user), sessionView(item), nil
 }
 func (s *Store) RevokeSession(access, targetID string) error {
 	s.mu.Lock()

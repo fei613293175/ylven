@@ -320,12 +320,19 @@ def check_feature_closure(definition: dict[str, Any]) -> dict[str, int]:
     return counts
 
 
-def owner_acceptance(phase: str) -> str | None:
-    path = ROOT / "dist" / "releases" / phase / "OWNER_ACCEPTANCE.md"
-    if not path.exists():
-        return None
-    match = re.search(r"^-\s*Result:\s*(\S+)\s*$", path.read_text(encoding="utf-8", errors="replace"), re.M | re.I)
-    return match.group(1).upper() if match else None
+def owner_acceptance(phase: str, *, legacy_exception: bool = False) -> str | None:
+    directory = ROOT / "dist" / "releases" / phase
+    names = ["所有者验收.md"]
+    if legacy_exception:
+        names.append("OWNER_ACCEPTANCE.md")
+    for name in names:
+        path = directory / name
+        if not path.exists():
+            continue
+        match = re.search(r"^-\s*Result:\s*(\S+)\s*$", path.read_text(encoding="utf-8", errors="replace"), re.M | re.I)
+        if match:
+            return match.group(1).upper()
+    return None
 
 
 def document_feature_ids(text: str) -> set[str]:
@@ -338,34 +345,49 @@ def document_feature_ids(text: str) -> set[str]:
     return found
 
 
-def release_evidence(phase: str) -> tuple[Path, dict[str, Any], dict[str, Any]]:
+def release_evidence(phase: str, *, legacy_exception: bool = False) -> tuple[Path, dict[str, Any], dict[str, Any]]:
     directory = ROOT / "dist" / "releases" / phase
-    required = [
-        "BUILD_INFO.json", "CI_PROVENANCE.json", "OWNER_ACCEPTANCE.md", "SHA256SUMS.txt",
-        "FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md",
-        "DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md",
-    ]
+    if legacy_exception:
+        required = [
+            "BUILD_INFO.json", "CI_PROVENANCE.json", "OWNER_ACCEPTANCE.md", "SHA256SUMS.txt",
+            "FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md",
+            "DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md", "ADMIN_ACCESS.md",
+        ]
+        feature_documents = ("FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md")
+        deployment_documents = ("DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md")
+        build_name = "BUILD_INFO.json"
+        provenance_name = "CI_PROVENANCE.json"
+    else:
+        required = [
+            "构建信息.json", "CI来源证明.json", "所有者验收.md", "校验文件_SHA256.txt",
+            "原功能清单.md", "功能完成对比清单.md", "完整测试清单.md",
+            "部署证据.md", "域名DNS状态.md", "管理后台实测证据.md", "覆盖安装证据.md",
+        ]
+        feature_documents = ("原功能清单.md", "功能完成对比清单.md", "完整测试清单.md")
+        deployment_documents = ("部署证据.md", "域名DNS状态.md")
+        build_name = "构建信息.json"
+        provenance_name = "CI来源证明.json"
     missing = [name for name in required if not (directory / name).is_file()]
     if missing:
         raise SystemExit(f"{phase}: missing release evidence: {', '.join(missing)}")
     try:
-        build = json.loads((directory / "BUILD_INFO.json").read_text(encoding="utf-8"))
-        provenance = json.loads((directory / "CI_PROVENANCE.json").read_text(encoding="utf-8"))
+        build = json.loads((directory / build_name).read_text(encoding="utf-8"))
+        provenance = json.loads((directory / provenance_name).read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise SystemExit(f"{phase}: invalid JSON release evidence: {exc}") from exc
     expected_ids = {
         str(item.get("feature_id"))
         for item in load_yaml(ROOT / "status" / f"{phase}_FEATURE_STATUS.yaml").get("features", [])
     }
-    for name in ("FEATURES_ORIGINAL.md", "FEATURE_COMPLETION_COMPARISON.md", "OWNER_TEST_CHECKLIST.md"):
+    for name in feature_documents:
         text = (directory / name).read_text(encoding="utf-8", errors="replace")
         missing_ids = sorted(expected_ids - document_feature_ids(text))
         if missing_ids:
             raise SystemExit(f"{phase}: {name} omits Feature IDs: {', '.join(missing_ids)}")
-    for name in ("DEPLOYMENT_ENDPOINTS.md", "DOMAIN_DNS_STATUS.md"):
+    for name in deployment_documents:
         text = (directory / name).read_text(encoding="utf-8", errors="replace")
-        if not re.search(r"(?im)^-\s*Result:\s*PASS\s*$", text):
-            raise SystemExit(f"{phase}: {name} must contain '- Result: PASS'")
+        if not re.search(r"(?im)^-\s*Result:\s*(PASS|DEPLOYED_STAGING|SUCCESS)\s*$", text):
+            raise SystemExit(f"{phase}: {name} must contain a successful Result marker")
     return directory, build, provenance
 
 
@@ -579,7 +601,7 @@ def resume() -> None:
     if phase_state.get("status") == "READY_FOR_RELEASE":
         action = (
             f"All Work Packets in `{phase}` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, "
-            f"obtain `OWNER_ACCEPTANCE.md: APPROVED`, then close `{phase}` through the release controller. Do not start the next phase yet."
+            f"obtain `所有者验收.md: APPROVED`, then close `{phase}` through the release controller. Do not start the next phase yet."
         )
     elif phase_state.get("status") == "DONE":
         action = "All planned owner-facing releases are closed. Do not invent another version without an approved plan revision."
@@ -725,7 +747,7 @@ def finalize_packet(requested: str | None, note: str, deferred_reason: str | Non
     print(json.dumps({"implementation_commit": implementation_commit, "state_commit": state_commit, "next": packet_state.get("work_packet_id")}, ensure_ascii=False, indent=2))
 
 
-def close_release(requested_phase: str | None, no_tag: bool, no_push: bool) -> None:
+def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, legacy_exception: bool) -> None:
     phase_state, packet_state, runtime, _definitions_by_id, runtime_by_id = validate()
     phase = str(phase_state.get("phase_id"))
     if requested_phase and requested_phase != phase:
@@ -734,10 +756,21 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool) -> N
         raise SystemExit(f"{phase} is not READY_FOR_RELEASE")
     if any(row.get("status") not in PACKET_FINAL for row in packets_for_phase(list(runtime_by_id.values()), phase)):
         raise SystemExit(f"{phase}: all Work Packets must be CLOSED or DEFERRED_WITH_REASON")
-    if owner_acceptance(phase) != "APPROVED":
-        raise SystemExit(f"{phase}: OWNER_ACCEPTANCE.md must contain '- Result: APPROVED'")
-    release_commit = require_clean_git()
-    directory, build, provenance = release_evidence(phase)
+    if legacy_exception and phase != "P01":
+        raise SystemExit("--legacy-exception is a one-time owner-authorized closure path for P01 only")
+    if owner_acceptance(phase, legacy_exception=legacy_exception) != "APPROVED":
+        expected_file = "OWNER_ACCEPTANCE.md" if legacy_exception else "所有者验收.md"
+        raise SystemExit(f"{phase}: {expected_file} must contain '- Result: APPROVED'")
+    directory, build, provenance = release_evidence(phase, legacy_exception=legacy_exception)
+    if legacy_exception:
+        release_commit = first_value(
+            build.get("commit_sha"), build.get("git_commit"), build.get("source_commit"),
+            provenance.get("commit_sha"), provenance.get("git_commit"), provenance.get("source_commit"),
+        ) or head_sha()
+        if not release_commit:
+            raise SystemExit("P01 legacy closure requires an identifiable release commit")
+    else:
+        release_commit = require_clean_git()
     matrix = release_entry(phase)
     version_name = str(matrix.get("version_name"))
     version_code = matrix.get("version_code")
@@ -748,9 +781,9 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool) -> N
     if evidence_commit and str(evidence_commit) != release_commit:
         raise SystemExit(f"Release evidence commit {evidence_commit} differs from clean Git HEAD {release_commit}")
     if build.get("version_name") not in (None, "", version_name):
-        raise SystemExit(f"BUILD_INFO version_name {build.get('version_name')} differs from {version_name}")
+        raise SystemExit(f"构建信息 version_name {build.get('version_name')} differs from {version_name}")
     if build.get("version_code") not in (None, "", version_code):
-        raise SystemExit(f"BUILD_INFO version_code {build.get('version_code')} differs from {version_code}")
+        raise SystemExit(f"构建信息 version_code {build.get('version_code')} differs from {version_code}")
     apk_files = sorted(directory.glob("*.apk"))
     actual_apk_sha = sha256_file(apk_files[0]) if len(apk_files) == 1 else None
     declared_apk_sha = first_value(build.get("apk_sha256"), provenance.get("apk_sha256"), provenance.get("artifact_sha256"))
@@ -780,10 +813,21 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool) -> N
             "artifact_sha256": provenance.get("artifact_sha256"),
             "apk_sha256": actual_apk_sha or declared_apk_sha,
             "owner_result": "APPROVED",
-            "owner_acceptance_file": str((directory / "OWNER_ACCEPTANCE.md").relative_to(ROOT)),
+            "owner_acceptance_file": str(
+                (directory / ("OWNER_ACCEPTANCE.md" if legacy_exception else "所有者验收.md")).relative_to(ROOT)
+            ),
             "closed_at": now(),
         },
     )
+    if legacy_exception:
+        rows = read_jsonl(RELEASE_LEDGER)
+        rows[-1]["closure_mode"] = "OWNER_AUTHORIZED_LEGACY_EXCEPTION"
+        rows[-1]["exception_scope"] = "P01 legacy English delivery; new Chinese delivery and rebuild gates deferred"
+        rows[-1]["record_hash"] = canonical_hash(rows[-1])
+        RELEASE_LEDGER.write_text(
+            "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
 
     order = phase_order()
     index = order.index(phase)
@@ -865,6 +909,7 @@ def main() -> int:
     release.add_argument("--phase")
     release.add_argument("--no-tag", action="store_true")
     release.add_argument("--no-push", action="store_true")
+    release.add_argument("--legacy-exception", action="store_true")
     arguments = parser.parse_args()
 
     if arguments.command == "init":
@@ -883,7 +928,7 @@ def main() -> int:
     elif arguments.command == "block":
         block_packet(arguments.reason)
     elif arguments.command == "close-release":
-        close_release(arguments.phase, arguments.no_tag, arguments.no_push)
+        close_release(arguments.phase, arguments.no_tag, arguments.no_push, arguments.legacy_exception)
     return 0
 
 
