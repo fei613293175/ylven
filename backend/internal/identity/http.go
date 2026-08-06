@@ -204,7 +204,6 @@ var turnstilePageTemplate = template.Must(template.New("turnstile").Parse(`<!doc
     button { margin-top: 12px; min-height: 44px; padding: 0 20px; border: 1px solid #e4e7ec; border-radius: 12px; background: #fff; color: #475467; font-size: 14px; }
     [hidden] { display: none; }
   </style>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <main>
@@ -242,6 +241,7 @@ var turnstilePageTemplate = template.Must(template.New("turnstile").Parse(`<!doc
       if (window.turnstile) window.turnstile.reset();
     });
   </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
 </body>
 </html>`))
 
@@ -275,7 +275,7 @@ func (a *API) turnstilePage(w http.ResponseWriter, r *http.Request) {
 	}
 	nonce := fmt.Sprintf("%x", nonceBytes)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'nonce-"+nonce+" https://challenges.cloudflare.com; style-src 'nonce-"+nonce+"; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; img-src data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'nonce-"+nonce+"' https://challenges.cloudflare.com; style-src 'nonce-"+nonce+"'; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; img-src data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 	if err := turnstilePageTemplate.Execute(w, map[string]string{"SiteKey": a.TurnstileSiteKey, "Action": action, "Nonce": nonce}); err != nil {

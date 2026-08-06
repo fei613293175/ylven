@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -98,10 +99,19 @@ func TestTurnstilePageBindsExistingChallengeAndSecurityPolicy(t *testing.T) {
 	if contentType := page.Header().Get("Content-Type"); contentType != "text/html; charset=utf-8" {
 		t.Fatalf("content type=%q", contentType)
 	}
-	if csp := page.Header().Get("Content-Security-Policy"); csp == "" || !strings.Contains(csp, "frame-ancestors 'none'") {
+	csp := page.Header().Get("Content-Security-Policy")
+	if csp == "" || !strings.Contains(csp, "frame-ancestors 'none'") {
 		t.Fatalf("missing strict CSP: %q", csp)
 	}
-	if body := page.Body.String(); !strings.Contains(body, `data-sitekey="site-key"`) || !strings.Contains(body, `data-action="login"`) || !strings.Contains(body, "YlvenSecurity.onTurnstileToken") {
+	body := page.Body.String()
+	nonceMatch := regexp.MustCompile(`nonce="([a-f0-9]+)"`).FindStringSubmatch(body)
+	if len(nonceMatch) != 2 || !strings.Contains(csp, "script-src 'nonce-"+nonceMatch[1]+"'") || !strings.Contains(csp, "style-src 'nonce-"+nonceMatch[1]+"'") {
+		t.Fatalf("CSP nonce does not authorize page scripts/styles: csp=%q body=%s", csp, body)
+	}
+	if externalScript := strings.Index(body, `src="https://challenges.cloudflare.com/turnstile/v0/api.js"`); externalScript < 0 || strings.Index(body, "window.turnstileSuccess") > externalScript {
+		t.Fatalf("Turnstile API must execute after callback registration: %s", body)
+	}
+	if !strings.Contains(body, `data-sitekey="site-key"`) || !strings.Contains(body, `data-action="login"`) || !strings.Contains(body, "YlvenSecurity.onTurnstileToken") {
 		t.Fatalf("unexpected page body: %s", body)
 	}
 
