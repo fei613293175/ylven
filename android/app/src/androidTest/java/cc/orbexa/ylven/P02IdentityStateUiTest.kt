@@ -1,14 +1,11 @@
 package cc.orbexa.ylven
 
 import android.content.ContentValues
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
+import android.graphics.Bitmap
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.runtime.mutableStateOf
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
@@ -38,7 +35,10 @@ class P02IdentityStateUiTest {
 
     private fun capture(name: String) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
+        composeRule.waitForIdle()
+        val bitmap = requireNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()) {
+            "Could not capture P02 runtime screenshot: $name"
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val resolver = context.contentResolver
             val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/ylven-p02/"
@@ -74,6 +74,7 @@ class P02IdentityStateUiTest {
                 check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
             }
         }
+        bitmap.recycle()
     }
 }
 
