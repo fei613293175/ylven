@@ -576,7 +576,14 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         val tx = if (icon != null) x1 + 96f else x1 + 38f
         val shown = if (secure && value.isNotEmpty()) "••••••••••" else value.ifEmpty { placeholder }
         text(shown, tx, (y1 + y2) / 2f, 39f, if (value.isNotEmpty()) Pc.text else Pc.disabled, anchor = Anchor.LEFT_MIDDLE, maxWidth = x2 - tx - 60f)
-        if (secure) text("◉", x2 - 68f, (y1 + y2) / 2f, 30f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+        if (secure) {
+            val eyeX = x2 - 68f
+            val eyeY = (y1 + y2) / 2f
+            circle(eyeX, eyeY, 14f, Pc.surface)
+            circle(eyeX, eyeY, 11f, Pc.text3)
+            circle(eyeX, eyeY, 7f, Pc.surface)
+            circle(eyeX, eyeY, 5f, Pc.text3)
+        }
         if (error != null) text(error, x1, y2 + 20f, 27f, Pc.error, maxWidth = x2 - x1)
     }
 
@@ -750,9 +757,20 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     }
 
     private fun rounded(x1: Float, y1: Float, x2: Float, y2: Float, radius: Float, fill: Int?, outline: Int? = null, width: Float = 1f) {
-        val box = RectF(x1, y1, x2, y2)
-        if (fill != null) { paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawRoundRect(box, radius, radius, paint) }
-        if (outline != null) { paint.style = Paint.Style.STROKE; paint.strokeWidth = width; paint.color = outline; canvas.drawRoundRect(box, radius, radius, paint) }
+        // Pillow's contract generator treats right/bottom as inclusive and
+        // draws outlines inward. Android Canvas uses exclusive bounds and
+        // centers strokes, so normalize the primitive semantics here.
+        val fillBox = RectF(x1, y1, x2 + 1f, y2 + 1f)
+        if (fill != null) { paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawRoundRect(fillBox, radius, radius, paint) }
+        if (outline != null) {
+            val inset = width / 2f
+            val strokeBox = RectF(x1 + inset, y1 + inset, x2 + 1f - inset, y2 + 1f - inset)
+            val strokeRadius = max(0f, radius - inset)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = width
+            paint.color = outline
+            canvas.drawRoundRect(strokeBox, strokeRadius, strokeRadius, paint)
+        }
     }
 
     private fun rect(x1: Float, y1: Float, x2: Float, y2: Float, fill: Int) {
@@ -760,13 +778,19 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     }
 
     private fun circle(cx: Float, cy: Float, radius: Float, fill: Int) {
-        paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawCircle(cx, cy, radius, paint)
+        paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawCircle(cx, cy, radius + .5f, paint)
     }
 
     private fun oval(x1: Float, y1: Float, x2: Float, y2: Float, fill: Int?, outline: Int?, width: Float) {
-        val box = RectF(x1, y1, x2, y2)
-        if (fill != null) { paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawOval(box, paint) }
-        if (outline != null) { paint.style = Paint.Style.STROKE; paint.strokeWidth = width; paint.color = outline; canvas.drawOval(box, paint) }
+        val fillBox = RectF(x1, y1, x2 + 1f, y2 + 1f)
+        if (fill != null) { paint.style = Paint.Style.FILL; paint.color = fill; canvas.drawOval(fillBox, paint) }
+        if (outline != null) {
+            val inset = width / 2f
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = width
+            paint.color = outline
+            canvas.drawOval(RectF(x1 + inset, y1 + inset, x2 + 1f - inset, y2 + 1f - inset), paint)
+        }
     }
 
     private fun line(x1: Float, y1: Float, x2: Float, y2: Float, fill: Int, width: Float) {
