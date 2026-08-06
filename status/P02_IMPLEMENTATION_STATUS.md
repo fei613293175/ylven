@@ -14,7 +14,7 @@
 
 ## 外部阻塞
 
-开发范围无阻塞。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；GitHub Actions Run 31125864650 的 Android acceptance 属于交付后异步验收，当前因 GitHub Actions 部分系统故障排队。
+开发范围无阻塞。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；Android acceptance 属于交付后异步验收。Run 31122821310、31125864650 均已取消，针对最终 HEAD 的手动 dispatch 当前返回 HTTP 500，等待 GitHub Actions 恢复后重试。
 
 ## 关键命令与证据
 
@@ -23,5 +23,5 @@
 - `uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/07_VALIDATE_CONTRACTS.py --phase P02`：PASS，26 features / 1086 tests。
 - `ssh obx-test "/usr/local/go/bin/go test ./..."`（独立源码目录）：PASS。
 - `ssh obx-test "android-build docker-run --project ylven --kind build ... gradle clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin"`：PASS。
-- `gh run 31125864650`：已按最终分支 HEAD `eef22f4` dispatch，当前 QUEUED；不得用历史 Run 31106248150（`1335e1b`）绑定本次交付。
+- `gh run 31125864650`：按 `eef22f4` dispatch 后已取消；最新目标 HEAD 为 `9af79bc165cbb25d631dd9d8a2ce3b28efd532f1`。不得用历史 Run 31106248150（`1335e1b`）绑定本次交付。
 - Admin/Developer `npm test && npm run build`：PASS；P02 合同、状态连续性、公开仓库安全和 OpenAPI 漂移门禁：PASS。
