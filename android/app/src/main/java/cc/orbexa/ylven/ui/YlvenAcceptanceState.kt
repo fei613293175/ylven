@@ -127,6 +127,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             "YL-A-016" -> devices(code)
             "YL-A-017" -> resilience(code)
         }
+        stateFeedback(page, code)
     }
 
     private fun splash(code: String) {
