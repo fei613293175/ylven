@@ -98,7 +98,7 @@ private object Pc {
 private fun color(value: String): Int = Color.parseColor(value)
 
 private class P02ContractRenderer(private val canvas: AndroidCanvas) {
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
@@ -685,9 +685,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         // 22/255-alpha, offset rounded rectangle.  A platform blur avoids
         // the much wider profile produced by hand-layered Canvas rings.
         paint.style = Paint.Style.FILL
-        // Keep the source shape transparent: the Pillow implementation has
-        // only the blurred shadow contribution, never a second dark card.
-        paint.color = Color.TRANSPARENT
+        paint.color = Color.argb(22, 16, 24, 40)
         paint.setShadowLayer(shadow, 0f, offset, Color.argb(22, 16, 24, 40))
         canvas.drawRoundRect(RectF(x1, y1, x2 + 1f, y2 + 1f), radius, radius, paint)
         paint.clearShadowLayer()
