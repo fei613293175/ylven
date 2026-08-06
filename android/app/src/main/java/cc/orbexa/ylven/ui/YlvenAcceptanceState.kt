@@ -136,9 +136,11 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             rect(0f, y.toFloat(), 1080f, (y + 12).toFloat(), mix(color("#040814"), color("#152458"), y / 2400f))
             y += 12
         }
-        circle(540f, 930f, 390f, Color.argb(22, 91, 97, 246))
-        circle(540f, 930f, 280f, Color.argb(30, 91, 97, 246))
-        circle(540f, 930f, 170f, Color.argb(44, 91, 97, 246))
+        // Pillow's RGBA ImageDraw writes the source RGB values directly for
+        // these contract circles before the baseline is converted to RGB. The
+        // approved result is therefore one solid outer brand circle, not
+        // three alpha-composited rings.
+        circle(540f, 930f, 390f, Pc.brand)
         iconCircle(540f, 900f, 126f, "Y", Pc.brand, Pc.surface, 100f)
         text("YLVEN", 540f, 1070f, 76f, Pc.surface, true, Anchor.MIDDLE_ASCENDER)
         text("INTELLIGENCE, REFINED.", 540f, 1160f, 28f, color("#CBD5FF"), anchor = Anchor.MIDDLE_ASCENDER)
@@ -724,8 +726,9 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         val lines = wrap(value, maxWidth)
         val metrics = paint.fontMetrics
         val baseline = when (anchor) {
-            Anchor.LEFT_MIDDLE, Anchor.MIDDLE_MIDDLE -> y - (metrics.ascent + metrics.descent) / 2f
-            else -> y - metrics.ascent
+            Anchor.LEFT_MIDDLE, Anchor.MIDDLE_MIDDLE ->
+                y - (metrics.ascent + metrics.descent) / 2f + size * .1f
+            else -> y - metrics.ascent + size * .225f
         }
         val step = size + 8f
         lines.forEachIndexed { index, line -> canvas.drawText(line, x, baseline + index * step, paint) }
