@@ -759,6 +759,12 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         paint.color = fill
         paint.textSize = size
         paint.typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
+        // The reference mockups use Microsoft YaHei, whose Latin glyphs are
+        // wider than Android's default sans face at the same size. Keep CJK
+        // untouched and widen mixed Latin/number labels to match the source
+        // rasterization contract.
+        val mixedLatin = value.any { it.code in 0x21..0x7E }
+        paint.textScaleX = if (mixedLatin) 1.1f else 1f
         paint.textAlign = when (anchor) {
             Anchor.MIDDLE_ASCENDER, Anchor.MIDDLE_MIDDLE -> Paint.Align.CENTER
             else -> Paint.Align.LEFT
@@ -772,6 +778,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         }
         val step = size + 8f
         lines.forEachIndexed { index, line -> canvas.drawText(line, x, baseline + index * step, paint) }
+        paint.textScaleX = 1f
     }
 
     private fun wrap(value: String, maxWidth: Float?): List<String> {
