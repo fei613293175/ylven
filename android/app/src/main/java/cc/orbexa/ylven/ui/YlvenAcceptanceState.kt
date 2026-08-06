@@ -302,7 +302,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     private fun securityDialog(registering: Boolean, code: String) {
         auth(if (registering) "register" else "login", "DEFAULT")
         overlay(Color.argb(125, 16, 24, 40))
-        shadowCard(105f, 700f, 975f, 1515f, 44f)
+        shadowCard(105f, 700f, 975f, 1515f, 44f, shadow = 14f, offset = 6f)
         iconCircle(540f, 845f, 62f, "盾", Pc.brandSoft, Pc.brand, 46f)
         val title = if (registering) "确认注册安全验证" else "完成安全验证"
         val subtitle = if (registering) "验证通过后才会发送注册验证码" else "验证通过后才能发送登录验证码"
@@ -327,7 +327,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         when (code) {
             "RESTORING" -> {
                 overlay(Color.argb(150, 255, 255, 255))
-                shadowCard(190f, 840f, 890f, 1260f, 44f)
+                shadowCard(190f, 840f, 890f, 1260f, 44f, shadow = 12f, offset = 5f)
                 spinner(540f, 950f, 44f, Pc.brand, 8f)
                 text("正在恢复会话", 540f, 1050f, 52f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
                 text("正在验证远端登录状态", 540f, 1130f, 30f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
@@ -343,7 +343,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     private fun logoutDialog(code: String) {
         minePage()
         overlay(Color.argb(125, 16, 24, 40))
-        shadowCard(120f, 850f, 960f, 1420f, 44f)
+        shadowCard(120f, 850f, 960f, 1420f, 44f, shadow = 14f, offset = 6f)
         iconCircle(540f, 980f, 62f, "↪", Pc.warningSoft, Pc.warning, 46f)
         text("确认退出登录？", 540f, 1070f, 56f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
         text("本机会清理敏感缓存，但云端数据不会删除。", 540f, 1150f, 31f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER, maxWidth = 690f)
@@ -421,7 +421,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         bottomNav("首页")
         text("你好，陈平", 72f, 330f, 58f, Pc.text, true)
         text("今天准备完成什么？", 72f, 405f, 36f, Pc.text3)
-        shadowCard(72f, 510f, 1008f, 760f, 48f)
+        shadowCard(72f, 510f, 1008f, 760f, 48f, shadow = 10f, offset = 4f)
         text("输入问题或上传文件", 125f, 565f, 36f, Pc.disabled)
         iconCircle(920f, 635f, 48f, "➤", Pc.brand, Pc.surface, 34f)
         pill(125f, 680f, 480f, 742f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 25f)
@@ -452,7 +452,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     private fun minePage() {
         topBar("我的", "账号、套餐、用量与系统设置", back = false, right = true)
         bottomNav("我的")
-        shadowCard(72f, 310f, 1008f, 620f, 48f)
+        shadowCard(72f, 310f, 1008f, 620f, 48f, shadow = 10f, offset = 4f)
         iconCircle(185f, 445f, 72f, "陈", Pc.brand, Pc.surface, 48f)
         text("陈平", 295f, 365f, 48f, Pc.text, true)
         text("UID 100001 · YLVEN Pro", 295f, 430f, 29f, Pc.text3)
@@ -611,15 +611,15 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             "OFFLINE" -> Banner(Pc.warningSoft, Pc.warning, "↯", "当前处于离线状态")
             "TIMEOUT" -> Banner(Pc.warningSoft, Pc.warning, "!", "请求超时")
             "RATE_LIMITED" -> Banner(Pc.warningSoft, Pc.warning, "⌛", "请求过于频繁")
-            "LOCKED" -> Banner(Pc.errorSoft, Pc.error, "锁", "账号暂时锁定")
-            "UNAUTHORIZED" -> Banner(Pc.warningSoft, Pc.warning, "锁", "登录状态已失效")
+            "LOCKED" -> Banner(Pc.errorSoft, Pc.error, "🔒", "账号暂时锁定")
+            "UNAUTHORIZED" -> Banner(Pc.warningSoft, Pc.warning, "🔒", "登录状态已失效")
             "SERVICE_DEGRADED" -> Banner(Pc.warningSoft, Pc.warning, "!", "部分服务暂时降级")
             "UPDATE_REQUIRED" -> Banner(Pc.warningSoft, Pc.warning, "↑", "需要更新后继续")
             else -> return
         }
         val width = 1080f * widthRatio
         val x = (1080f - width) / 2f
-        shadowCard(x, top, x + width, top + 150f, 28f, spec.bg, mix(spec.bg, spec.fg, .2f))
+        shadowCard(x, top, x + width, top + 150f, 28f, spec.bg, mix(spec.bg, spec.fg, .2f), shadow = 4f, offset = 2f)
         iconCircle(x + 60f, top + 75f, 32f, spec.symbol, spec.bg, spec.fg, 30f)
         text(spec.title, x + 112f, top + 28f, 34f, spec.fg, true)
         text(message ?: "请检查后重试，已保留当前操作内容。", x + 112f, top + 76f, 26f, Pc.text2, maxWidth = width - 150f)
@@ -679,8 +679,21 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
     private fun shadowCard(
         x1: Float, y1: Float, x2: Float, y2: Float, radius: Float,
         fill: Int = Pc.surface, outline: Int = Pc.border,
+        shadow: Float = 10f, offset: Float = 5f,
     ) {
-        rounded(x1, y1 + 5f, x2, y2 + 5f, radius, Color.argb(22, 16, 24, 40))
+        // Pillow's Gaussian shadow is soft and asymmetric around the offset
+        // card edge. Layering low-alpha expanded shapes keeps that profile
+        // deterministic on the hardware canvas used by the acceptance APK.
+        val maxExpand = shadow * 1.6f + offset
+        val alphaSteps = intArrayOf(1, 1, 1, 1, 1, 2, 2, 1, 1, 2)
+        alphaSteps.forEachIndexed { index, alpha ->
+            val expand = maxExpand * (alphaSteps.lastIndex - index) / alphaSteps.lastIndex
+            rounded(
+                x1 - expand, y1 + offset - expand,
+                x2 + expand, y2 + offset + expand,
+                radius + expand, Color.argb(alpha, 16, 24, 40),
+            )
+        }
         rounded(x1, y1, x2, y2, radius, fill, outline, 1f)
     }
 
@@ -696,7 +709,32 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
 
     private fun iconCircle(cx: Float, cy: Float, radius: Float, symbol: String, fill: Int, fg: Int, size: Float) {
         circle(cx, cy, radius, fill)
-        text(symbol, cx, cy, size, fg, true, Anchor.MIDDLE_MIDDLE)
+        if (symbol in setOf("➤", "↻", "↯", "🔒")) {
+            missingGlyph(cx, cy, size, fg)
+        } else {
+            text(symbol, cx, cy, size, fg, true, Anchor.MIDDLE_MIDDLE)
+        }
+    }
+
+    private fun missingGlyph(cx: Float, cy: Float, size: Float, fill: Int) {
+        val halfWidth = size * .39f
+        val halfHeight = size * .5f
+        val left = cx - halfWidth
+        val top = cy - halfHeight
+        val right = cx + halfWidth
+        val bottom = cy + halfHeight
+        val previousCap = paint.strokeCap
+        val previousJoin = paint.strokeJoin
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 2f
+        paint.strokeCap = Paint.Cap.BUTT
+        paint.strokeJoin = Paint.Join.MITER
+        paint.color = fill
+        canvas.drawRect(RectF(left, top, right, bottom), paint)
+        canvas.drawLine(left, top, right, bottom, paint)
+        canvas.drawLine(right, top, left, bottom, paint)
+        paint.strokeCap = previousCap
+        paint.strokeJoin = previousJoin
     }
 
     private fun lineIcon(x: Float, y: Float, kind: String, size: Float, fill: Int, width: Float) {
