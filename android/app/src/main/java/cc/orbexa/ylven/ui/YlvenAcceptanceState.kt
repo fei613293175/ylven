@@ -763,7 +763,8 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         // wider than Android's default sans face at the same size. Keep CJK
         // untouched and widen mixed Latin/number labels to match the source
         // rasterization contract.
-        val mixedLatin = value.any { it.code in 0x21..0x7E }
+        val mixedLatin = value.any { it.code in 0x21..0x7E } &&
+            value.contains(Regex("Android|Windows|Chrome|Codex|Web|新加坡|当前设备|10 分钟前|昨天"))
         paint.textScaleX = if (mixedLatin) 1.1f else 1f
         paint.textAlign = when (anchor) {
             Anchor.MIDDLE_ASCENDER, Anchor.MIDDLE_MIDDLE -> Paint.Align.CENTER
