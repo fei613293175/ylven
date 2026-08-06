@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.graphics.Bitmap
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
