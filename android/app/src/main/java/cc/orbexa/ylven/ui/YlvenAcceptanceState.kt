@@ -685,7 +685,9 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         // 22/255-alpha, offset rounded rectangle.  A platform blur avoids
         // the much wider profile produced by hand-layered Canvas rings.
         paint.style = Paint.Style.FILL
-        paint.color = Color.argb(22, 16, 24, 40)
+        // Keep the source shape transparent: the Pillow implementation has
+        // only the blurred shadow contribution, never a second dark card.
+        paint.color = Color.TRANSPARENT
         paint.setShadowLayer(shadow, 0f, offset, Color.argb(22, 16, 24, 40))
         canvas.drawRoundRect(RectF(x1, y1, x2 + 1f, y2 + 1f), radius, radius, paint)
         paint.clearShadowLayer()
