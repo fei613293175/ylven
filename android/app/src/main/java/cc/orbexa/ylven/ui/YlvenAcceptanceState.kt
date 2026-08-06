@@ -681,22 +681,14 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         fill: Int = Pc.surface, outline: Int = Pc.border,
         shadow: Float = 10f, offset: Float = 5f,
     ) {
-        // Pillow's Gaussian shadow is soft and asymmetric around the offset
-        // card edge. Layering low-alpha expanded shapes keeps that profile
-        // deterministic on the hardware canvas used by the acceptance APK.
-        val maxExpand = shadow * 1.6f + offset
-        // The Pillow source uses a 22/255-alpha shadow before blurring.
-        // Keep the total center opacity equal to that source while making
-        // the outer rings progressively lighter like a Gaussian falloff.
-        val alphaSteps = intArrayOf(1, 1, 1, 2, 2, 2, 3, 3, 3, 4)
-        alphaSteps.forEachIndexed { index, alpha ->
-            val expand = maxExpand * (alphaSteps.lastIndex - index) / alphaSteps.lastIndex
-            rounded(
-                x1 - expand, y1 + offset - expand,
-                x2 + expand, y2 + offset + expand,
-                radius + expand, Color.argb(alpha, 16, 24, 40),
-            )
-        }
+        // This directly corresponds to Pillow's GaussianBlur(shadow) of a
+        // 22/255-alpha, offset rounded rectangle.  A platform blur avoids
+        // the much wider profile produced by hand-layered Canvas rings.
+        paint.style = Paint.Style.FILL
+        paint.color = Color.argb(22, 16, 24, 40)
+        paint.setShadowLayer(shadow, 0f, offset, Color.argb(22, 16, 24, 40))
+        canvas.drawRoundRect(RectF(x1, y1, x2 + 1f, y2 + 1f), radius, radius, paint)
+        paint.clearShadowLayer()
         rounded(x1, y1, x2, y2, radius, fill, outline, 1f)
     }
 
