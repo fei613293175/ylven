@@ -1,6 +1,6 @@
 # Project State Summary
 
-- Generated: `2026-08-06T08:24:36+08:00`
+- Generated: `2026-08-06T09:10:50+08:00`
 - Current phase: `P02`
 - Phase status: `READY_FOR_RELEASE`
 - Current Work Packet: `NONE`
@@ -11,11 +11,11 @@
 - Closed/deferred Work Packets recorded: `15`
 - Closed releases recorded: `2`
 - Git branch: `phase/p01-identity-backend-email-auth-and-admin`
-- Git HEAD: `419e991cd61b27e17c6d6850edab702a5174f0d1`
+- Git HEAD: `9cbc2e9c5c30b3b43611845c91a5b9d1f47b7fc1`
 
 ## Exact next action
 
-Every Work Packet in `P02` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
+All Work Packets in `P02` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, obtain `所有者验收.md: APPROVED`, then close `P02` through the release controller. Do not start the next phase yet.
 
 ## New-conversation rule
 

@@ -256,7 +256,7 @@ fun YlvenApp(
 }
 
 @Composable
-private fun SessionRestorePage(error: String?) {
+internal fun SessionRestorePage(error: String?) {
     Column(
         Modifier.fillMaxSize().padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.Center,
@@ -368,7 +368,7 @@ private fun isAllowedSecurityUrl(uri: Uri): Boolean {
 }
 
 @Composable
-private fun BrandHeader() {
+internal fun BrandHeader() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary, CircleShape), contentAlignment = Alignment.Center) {
             Text("Y", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)

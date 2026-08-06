@@ -124,6 +124,14 @@ jobs:
             bash scripts/29_RUN_ANDROID_PHASE_ACCEPTANCE.sh "${{ inputs.phase || 'AUTO' }}" "${{ inputs.version || 'AUTO' }}" "$UPGRADE_FROM"
       - name: Verify exact acceptance artifact
         run: python scripts/33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}" --commit "${GITHUB_SHA}"
+      - name: Upload failed Android acceptance diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ylven-${{ inputs.phase || 'auto' }}-${{ inputs.version || 'auto' }}-${{ github.sha }}-failed-diagnostics
+          path: build/owner-release/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload exact acceptance artifact
         uses: actions/upload-artifact@v4
         with:
