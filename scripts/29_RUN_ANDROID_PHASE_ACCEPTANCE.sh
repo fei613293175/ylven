@@ -4,6 +4,13 @@ PHASE="${1:-AUTO}"; VERSION="${2:-AUTO}"; UPGRADE_FROM="${3:-}"
 if [[ "$PHASE" == "AUTO" ]]; then PHASE="P00"; VERSION="1.0.0"; UPGRADE_FROM="NONE"; fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+if [[ "$PHASE" != "P00" && -z "$UPGRADE_FROM" ]]; then
+  UPGRADE_FROM="$(python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "$PHASE" --print-upgrade-from | tail -n 1)"
+fi
+if [[ "$PHASE" != "P00" && ( -z "$UPGRADE_FROM" || "$UPGRADE_FROM" == "NONE" ) ]]; then
+  echo "No upgrade source version is available for $PHASE." >&2
+  exit 1
+fi
 mkdir -p build/owner-release/截图 build/owner-release/test-results
 APK="$(find ./android/app/build/outputs/apk/debug -maxdepth 1 -type f -name 'app-debug.apk' -print -quit 2>/dev/null || true)"
 if [[ -z "$APK" ]]; then echo 'No Gradle APK found.' >&2; exit 1; fi
@@ -44,7 +51,15 @@ if [[ "$PHASE" != "P00" && -n "$UPGRADE_FROM" && "$UPGRADE_FROM" != "NONE" ]]; t
 fi
 
 adb wait-for-device
-if [[ -n "$PREVIOUS_APK" ]]; then adb install -r "$PREVIOUS_APK"; fi
+if [[ -n "$PREVIOUS_APK" ]]; then
+  adb install -r "$PREVIOUS_APK"
+else
+  adb install -r "$APK"
+fi
+adb shell pm path "$PACKAGE_ID" | grep -q '^package:' || {
+  echo "APK package was not installed before run-as: $PACKAGE_ID" >&2
+  exit 1
+}
 adb shell "run-as $PACKAGE_ID sh -c 'mkdir -p files; printf upgrade-ok > files/upgrade-marker; printf logged-in > files/login-state-marker'"
 adb install -r "$APK"
 adb shell "run-as $PACKAGE_ID test -s files/upgrade-marker"
