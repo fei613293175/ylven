@@ -685,7 +685,10 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         // card edge. Layering low-alpha expanded shapes keeps that profile
         // deterministic on the hardware canvas used by the acceptance APK.
         val maxExpand = shadow * 1.6f + offset
-        val alphaSteps = intArrayOf(1, 1, 1, 1, 1, 2, 2, 1, 1, 2)
+        // The Pillow source uses a 22/255-alpha shadow before blurring.
+        // Keep the total center opacity equal to that source while making
+        // the outer rings progressively lighter like a Gaussian falloff.
+        val alphaSteps = intArrayOf(1, 1, 1, 2, 2, 2, 3, 3, 3, 4)
         alphaSteps.forEachIndexed { index, alpha ->
             val expand = maxExpand * (alphaSteps.lastIndex - index) / alphaSteps.lastIndex
             rounded(
