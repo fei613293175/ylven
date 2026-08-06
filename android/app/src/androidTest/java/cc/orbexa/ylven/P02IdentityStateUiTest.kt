@@ -10,6 +10,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.runtime.mutableStateOf
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import java.io.File
@@ -24,10 +25,12 @@ class P02IdentityStateUiTest {
 
     @Test
     fun everyP02AndroidStateIsRuntimeCaptured() {
+        val activeState = mutableStateOf(P02_STATE_IDS.first())
+        composeRule.setContent {
+            YlvenTheme(darkTheme = false) { YlvenAcceptanceState(activeState.value) }
+        }
         P02_STATE_IDS.forEach { stateId ->
-            composeRule.setContent {
-                YlvenTheme(darkTheme = false) { YlvenAcceptanceState(stateId) }
-            }
+            composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
             capture(stateId)
         }
