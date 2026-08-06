@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-06T08:23:37+08:00`
+- Generated: `2026-08-06T08:23:51+08:00`
 - Current phase: `P02`
 - Phase status: `DOING`
 - Current Work Packet: `P02-W04`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P02-W03`
 - Last closed phase: `P01`
 - Last closed version: `1.1.0`
 - Closed/deferred Work Packets recorded: `13`
 - Closed releases recorded: `2`
 - Git branch: `phase/p01-identity-backend-email-auth-and-admin`
-- Git HEAD: `393ee83ca371a6d988087edd68f9ba88f2e1aa41`
+- Git HEAD: `ba5c399cd61bc8036590acd92dec1d5c4c705731`
 
 ## Exact next action
 
-`P02-W03` is final at `393ee83ca371a6d988087edd68f9ba88f2e1aa41`. Continue exactly `P02-W04`.
+Implement `P02-W04` (会话恢复、退出登录与设备管理). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 
