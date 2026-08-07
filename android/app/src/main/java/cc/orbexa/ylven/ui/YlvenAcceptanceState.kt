@@ -1207,12 +1207,12 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null, lineSpacing: Float = 8f,
     ) {
         val p03Text = currentPage in P03_PAGE_IDS
-        paint.style = if (p03Text && !bold) Paint.Style.FILL_AND_STROKE else Paint.Style.FILL
-        paint.strokeWidth = if (p03Text && !bold) .35f else 1f
+        paint.style = Paint.Style.FILL
+        paint.strokeWidth = 1f
         paint.color = fill
         paint.textSize = size
         paint.typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
-        paint.isFakeBoldText = p03Text && bold
+        paint.isFakeBoldText = false
         // The reference mockups use Microsoft YaHei, whose Latin glyphs are
         // wider than Android's default sans face at the same size. Keep CJK
         // untouched and widen mixed Latin/number labels to match the source
@@ -1238,7 +1238,6 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             canvas.drawText(line, x, baseline + index * step, paint)
         }
         paint.textScaleX = 1f
-        paint.isFakeBoldText = false
         paint.style = Paint.Style.FILL
         paint.strokeWidth = 1f
     }
@@ -1247,7 +1246,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         val visible = value.filterNot(Char::isWhitespace)
         if (visible.isEmpty()) return 1f
         val asciiRatio = visible.count { it.code in 0x21..0x7E }.toFloat() / visible.length
-        return if (bold) 1f + .12f * asciiRatio else 1.015f + .075f * asciiRatio
+        return 1f + (if (bold) .12f else .075f) * asciiRatio
     }
 
     private fun wrap(value: String, maxWidth: Float?, p03Text: Boolean, bold: Boolean): List<String> {
