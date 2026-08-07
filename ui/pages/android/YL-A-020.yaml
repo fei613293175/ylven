@@ -19,7 +19,7 @@ resolved_layout:
   list_gap_dp: 8
   section_gap_dp: 20
 design_system_version: YL-DS-1.2.0
-visual_kind: OVERLAY
+visual_kind: PAGE
 parent_page_id: YL-A-018
 visual_identity:
   template: conversation_drawer

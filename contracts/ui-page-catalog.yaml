@@ -920,7 +920,7 @@ pages:
   - ui/mockups/android/YL-A-020/YL-A-020-S07_NETWORK_ERROR.png
   - ui/mockups/android/YL-A-020/YL-A-020-S08_SERVER_ERROR.png
   - ui/mockups/android/YL-A-020/YL-A-020-S09_PERMISSION_DENIED.png
-  visual_kind: OVERLAY
+  visual_kind: PAGE
   parent_page_id: YL-A-018
   visual_identity:
     template: conversation_drawer

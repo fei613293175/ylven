@@ -137,6 +137,7 @@ jobs:
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
           python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ needs.resolve-release.outputs.phase }}" --version "${{ needs.resolve-release.outputs.version }}"
           python tests/p02_release_visual_guard_test.py
+          python tests/ui_contract_regeneration_safety_test.py
 
   android-emulator-acceptance:
     needs: [contracts-and-schema, resolve-release]

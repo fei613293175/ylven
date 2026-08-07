@@ -282,7 +282,11 @@ def android_identity(page: dict[str,Any], feature_by_id: dict[str,dict[str,Any]]
         'YL-A-017': dict(kind='SYSTEM_STATE_BOARD',template='auth_resilience',title='认证适配与异常状态',subtitle='弱网、离线、小屏和字体缩放统一规范',parent=None,profile='auth_resilience_board',items=['弱网重试','离线提示','320dp 小屏','大字体与无障碍']),
         'YL-A-018': dict(kind='PAGE',template='home',title='AI 首页',subtitle='统一多模型对话入口',parent=None,profile='main_tab',items=['新建对话','分析文件','生成图片','制作 PPT','最近对话']),
         'YL-A-019': dict(kind='PAGE',template='new_chat_landing',title='开始新对话',subtitle='选择模型后输入你的问题',parent='YL-A-018',profile='detail',items=['智能推荐','GPT','Claude','Grok','输入问题']),
-        'YL-A-020': dict(kind='OVERLAY',template='conversation_drawer',title='会话历史',subtitle='搜索、归档和管理全部对话',parent='YL-A-018',profile='list',items=['今天','昨天','最近 7 天','新建对话']),
+        # The approved states occupy the complete Android canvas and are rendered
+        # by the standard page chrome below.  Keep YL-A-018 as the navigation
+        # parent, but classify this as a PAGE so its contract cannot require an
+        # incompatible drawer overlay at runtime.
+        'YL-A-020': dict(kind='PAGE',template='conversation_drawer',title='会话历史',subtitle='搜索、归档和管理全部对话',parent='YL-A-018',profile='list',items=['今天','昨天','最近 7 天','新建对话']),
         'YL-A-021': dict(kind='PAGE',template='conversation_search',title='搜索会话',subtitle='按标题和消息内容查找历史记录',parent='YL-A-020',profile='list',items=['搜索输入框','筛选项目','搜索结果']),
         'YL-A-022': dict(kind='OVERLAY',template='conversation_menu',title='会话操作',subtitle='只展示已登记的会话操作',parent='YL-A-023',profile='dialog',items=['重命名','移入项目','导出','临时对话','删除']),
         'YL-A-023': dict(kind='PAGE',template='chat',title='YLVEN App 架构讨论',subtitle='GPT-5.6 Sol · 深度推理',parent=None,profile='chat',items=['用户消息','AI 回复','模型标签','输入区']),
@@ -411,7 +415,15 @@ CUSTOM_PROFILES = {
 
 # ---------- Contract regeneration ------------------------------------------
 
-def rebuild_contracts() -> tuple[list[dict[str,Any]], dict[str,dict[str,Any]], dict[str,Any]]:
+def rebuild_contracts(*, preserve_visual_assets: bool = False) -> tuple[list[dict[str,Any]], dict[str,dict[str,Any]], dict[str,Any]]:
+    """Rebuild derived UI contracts.
+
+    A full rebuild is allowed to discard generated visual evidence because every
+    PNG must then be regenerated and re-approved.  Callers that only reconcile
+    the machine-readable contracts for an existing approved visual set must set
+    ``preserve_visual_assets``: approved PNGs, reference boards and visual
+    review evidence are immutable release inputs, not disposable cache files.
+    """
     feature_doc=read_yaml(ROOT/'contracts/feature-map.yaml')
     feature_by_id={f['feature_id']:f for f in feature_doc['features']}
     page_doc=read_yaml(ROOT/'contracts/ui-page-catalog.yaml')
@@ -424,18 +436,20 @@ def rebuild_contracts() -> tuple[list[dict[str,Any]], dict[str,dict[str,Any]], d
 
     page_contract_rows=[]; state_rows=[]; mock_rows=[]
     surface_counts=Counter(); state_surface_counts=Counter()
-    # Remove old page contracts and mockup images only; retain README files.
+    # Page contracts are derived and are safe to recreate. Visual assets are
+    # evidence: do not remove them while reconciling existing approved entries.
     for sub in (ROOT/'ui/pages').iterdir():
         if sub.is_dir():
             for p in sub.glob('*.yaml'): p.unlink()
-    for sub in (ROOT/'ui/mockups').iterdir():
-        if sub.is_dir():
-            for child in sub.iterdir():
-                if child.is_dir(): shutil.rmtree(child)
-                elif child.suffix.lower()=='.png': child.unlink()
-    if (ROOT/'ui/reference-boards').exists():
-        for p in (ROOT/'ui/reference-boards').glob('*.png'): p.unlink()
-    if (ROOT/'ui/visual-review').exists(): shutil.rmtree(ROOT/'ui/visual-review')
+    if not preserve_visual_assets:
+        for sub in (ROOT/'ui/mockups').iterdir():
+            if sub.is_dir():
+                for child in sub.iterdir():
+                    if child.is_dir(): shutil.rmtree(child)
+                    elif child.suffix.lower()=='.png': child.unlink()
+        if (ROOT/'ui/reference-boards').exists():
+            for p in (ROOT/'ui/reference-boards').glob('*.png'): p.unlink()
+        if (ROOT/'ui/visual-review').exists(): shutil.rmtree(ROOT/'ui/visual-review')
 
     pages=[]
     for page in page_doc['pages']:

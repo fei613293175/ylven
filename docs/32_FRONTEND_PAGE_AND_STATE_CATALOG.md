@@ -23,7 +23,7 @@
 | `YL-A-017` | 登录与注册 | ANDROID | `SYSTEM_STATE_BOARD` | — | 5 | P02-W05 |
 | `YL-A-018` | 首页 | ANDROID | `PAGE` | — | 7 | P03-W01 |
 | `YL-A-019` | 首页/新对话 | ANDROID | `PAGE` | YL-A-018 | 9 | P03-W01 |
-| `YL-A-020` | 会话抽屉 | ANDROID | `OVERLAY` | YL-A-018 | 9 | P03-W01 |
+| `YL-A-020` | 会话历史 | ANDROID | `PAGE` | YL-A-018（导航父页面） | 9 | P03-W01 |
 | `YL-A-021` | 会话搜索 | ANDROID | `PAGE` | YL-A-020 | 9 | P03-W01 |
 | `YL-A-022` | 会话菜单 | ANDROID | `OVERLAY` | YL-A-023 | 5 | P03-W01, P03-W05, P06-W02 |
 | `YL-A-023` | 会话页 | ANDROID | `PAGE` | — | 13 | P03-W02, P03-W03, P03-W04 |

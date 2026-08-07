@@ -22,6 +22,29 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def require_approved_visual_evidence(rows: dict[str, dict[str, str]]) -> None:
+    """Reject reconciliation if the immutable approved visual baseline is absent."""
+    failures: list[str] = []
+    for mockup_id, row in rows.items():
+        if row.get('status') != 'APPROVED':
+            continue
+        path = ROOT / row['relative_path']
+        expected = row.get('sha256', '')
+        if not expected:
+            failures.append(f'{mockup_id}: approved entry has no SHA-256')
+        elif not path.is_file():
+            failures.append(f'{mockup_id}: approved PNG is missing ({path})')
+        elif sha256(path) != expected:
+            failures.append(f'{mockup_id}: approved PNG SHA-256 does not match the manifest')
+    if failures:
+        preview = '\n'.join(f'- {failure}' for failure in failures[:20])
+        remainder = '' if len(failures) <= 20 else f'\n- ... and {len(failures) - 20} more'
+        raise RuntimeError(
+            'Refusing contract reconciliation because approved visual evidence is incomplete. '
+            'Restore the approved assets before rerunning.\n' + preview + remainder
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--confirm', action='store_true')
@@ -32,6 +55,7 @@ def main() -> int:
     manifest_path = ROOT / 'contracts' / 'mockup-manifest.csv'
     with manifest_path.open(encoding='utf-8-sig', newline='') as handle:
         old = {row['mockup_id']: row for row in csv.DictReader(handle)}
+    require_approved_visual_evidence(old)
 
     stamp = datetime.now().strftime('%Y%m%d-%H%M%S')
     backup = ROOT / '.ylven-local' / 'ui-contract-backups' / stamp
@@ -55,7 +79,11 @@ def main() -> int:
         raise RuntimeError('Could not load the mockup generator')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    module.rebuild_contracts()
+    # Contract reconciliation must not delete the approved PNGs before their
+    # manifest hashes and approval metadata are checked below.  Full visual
+    # regeneration remains available through the generator's explicit --all
+    # flow, which deliberately resets the visual approval baseline.
+    module.rebuild_contracts(preserve_visual_assets=True)
 
     with manifest_path.open(encoding='utf-8-sig', newline='') as handle:
         rows = list(csv.DictReader(handle))

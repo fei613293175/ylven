@@ -952,7 +952,7 @@ features:
   - page_id: YL-A-020
     surface: ANDROID
     page_name: 会话抽屉
-    visual_kind: OVERLAY
+    visual_kind: PAGE
     parent_page_id: YL-A-018
   - page_id: YL-M-046
     surface: ADMIN

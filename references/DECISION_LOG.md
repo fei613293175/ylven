@@ -10,3 +10,4 @@
 | D-006 | Modular core plus separate AI Runtime/Gateway/Worker | scale without premature microservices | measured bottleneck and extraction plan |
 | D-007 | Spec Kit Lite with Codex; no Kiro/Governance V5.0 | avoid duplicate state and inspection overhead | development tool replacement decision |
 | D-008 | Machine-enforced release package | prevents long-session delivery drift | never remove; tooling may improve |
+| D-009 (proposed) | `YL-A-020` is a full page with `YL-A-018` as navigation parent | existing approved full-canvas baseline conflicts with prior overlay metadata; ADR-009 preserves the approved visual authority without changing it | explicit P03 owner release acceptance, or approval of a replacement overlay baseline |
