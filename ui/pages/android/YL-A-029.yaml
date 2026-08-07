@@ -30,8 +30,7 @@ visual_identity:
   - 来源域名
   - 打开来源
   screen_signature: c14bbf0ef3c28977
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -47,8 +46,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -60,7 +58,9 @@ states:
   mockup_id: YL-A-029-S01_DEFAULT
   mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S01_DEFAULT.png
   mockup_status: APPROVED
-  mockup_sha256: 69907b3ad9fb6c7ec410cad3dc27fdca0113512c272e8d68cc2984e39fa535cd
+  mockup_sha256: 40ed8c792aac59878fe237e9ed981b82d086743f74cb4de1bddc5a649f5867f4
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-029-S02_COMPLETED
   code: COMPLETED
   name: 生成完成
@@ -69,7 +69,9 @@ states:
   mockup_id: YL-A-029-S02_COMPLETED
   mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S02_COMPLETED.png
   mockup_status: APPROVED
-  mockup_sha256: 53bf8c719e1eb0bdd65043d635d1fac5e85275174da97f988cd47ae2176ffaf8
+  mockup_sha256: 672aff15655bd798e3bb6fb2c03e969932619324b3878d37edf9bd774d48b7ef
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-029-S03_NOT_FOUND
   code: NOT_FOUND
   name: 内容不存在
@@ -78,7 +80,9 @@ states:
   mockup_id: YL-A-029-S03_NOT_FOUND
   mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S03_NOT_FOUND.png
   mockup_status: APPROVED
-  mockup_sha256: bcc9225fc7a71f82e97456410242c66a92fb537f56c9e6fd8409d018e8a8652b
+  mockup_sha256: 5a499dc61a44e1b893cf6756d6a6205466c729acfa0de1fb318ac69fbc171e92
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-029-S04_OFFLINE
   code: OFFLINE
   name: 离线
@@ -87,14 +91,15 @@ states:
   mockup_id: YL-A-029-S04_OFFLINE
   mockup_path: ui/mockups/android/YL-A-029/YL-A-029-S04_OFFLINE.png
   mockup_status: APPROVED
-  mockup_sha256: 57fcf4c05f37d714547b353a7cf8ed269f3c305361ef6787d0f0eaf52ac89397
+  mockup_sha256: bebdec0b0edd76643e0250e622ea7dd3ace5950e3351318fd25d99906b104551
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

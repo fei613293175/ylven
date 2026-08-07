@@ -268,14 +268,14 @@ def android_identity(page: dict[str,Any], feature_by_id: dict[str,dict[str,Any]]
         'YL-A-003': dict(kind='COMPONENT_BOARD',template='bottom_nav',title='四栏底部导航',subtitle='首页、工作、发现、我的固定导航结构',parent='YL-A-001',profile='component_navigation',items=['首页','工作','发现','我的']),
         'YL-A-004': dict(kind='PAGE',template='splash',title='YLVEN',subtitle='INTELLIGENCE, REFINED.',parent=None,profile='splash',items=[]),
         'YL-A-005': dict(kind='PAGE',template='login',title='登录 YLVEN',subtitle='使用邮箱验证码安全登录',parent=None,profile='auth_login',items=['邮箱地址','获取验证码','创建账户']),
-        'YL-A-006': dict(kind='OVERLAY',template='security_modal_login',title='完成安全验证',subtitle='验证通过后才能发送登录验证码',parent='YL-A-005',profile='auth_security_overlay',items=['Cloudflare Turnstile','取消','继续验证']),
-        'YL-A-007': dict(kind='PAGE',template='turnstile',title='安全验证',subtitle='auth.orbexa.cc · 受控验证页面',parent='YL-A-005',profile='auth_turnstile',items=['安全连接','Turnstile 验证组件','返回应用']),
+        'YL-A-006': dict(kind='OVERLAY',template='security_modal_login',title='请完成小验证',subtitle='为了确认是你本人，请算一算下面这道题',parent='YL-A-005',profile='auth_security_overlay',items=['YLVEN 小验证','请输入答案','取消','确认']),
+        'YL-A-007': dict(kind='PAGE',template='retired_first_party_verification',title='遗留验证承载页（已停用）',subtitle='仅保留历史资产，不会在当前应用中打开',parent='YL-A-005',profile='auth_first_party_retired',items=['历史页面标记','不再导航','当前页弹窗替代说明']),
         'YL-A-008': dict(kind='PAGE',template='login_otp',title='输入登录验证码',subtitle='验证码已发送至 c***@example.com',parent='YL-A-005',profile='auth_otp',items=['六位验证码','倒计时','重新发送','登录']),
         'YL-A-009': dict(kind='PAGE',template='login_success',title='登录成功',subtitle='正在安全恢复你的工作区',parent='YL-A-008',profile='auth_success',items=['令牌安全保存','同步个人设置','进入首页']),
-        'YL-A-010': dict(kind='PAGE',template='register',title='创建 YLVEN 账户',subtitle='使用邮箱和登录密码建立个人工作区',parent=None,profile='auth_register',items=['邮箱地址','登录密码','确认登录密码','密码强度','创建账户']),
-        'YL-A-011': dict(kind='OVERLAY',template='security_modal_register',title='确认注册安全验证',subtitle='验证通过后才会发送注册验证码',parent='YL-A-010',profile='auth_security_overlay',items=['Cloudflare Turnstile','取消','继续验证']),
+        'YL-A-010': dict(kind='PAGE',template='register',title='创建 YLVEN 账户',subtitle='设置好密码，马上开始使用',parent=None,profile='auth_register',items=['邮箱地址','登录密码','确认登录密码','密码强度','创建账户']),
+        'YL-A-011': dict(kind='OVERLAY',template='security_modal_register',title='请完成小验证',subtitle='为了确认是你本人，请算一算下面这道题',parent='YL-A-010',profile='auth_security_overlay',items=['YLVEN 小验证','请输入答案','取消','确认']),
         'YL-A-012': dict(kind='PAGE',template='register_otp',title='验证注册邮箱',subtitle='输入发送至 c***@example.com 的六位验证码',parent='YL-A-010',profile='auth_otp',items=['六位验证码','倒计时','重新发送','确认并创建账户']),
-        'YL-A-013': dict(kind='PAGE',template='register_success',title='账户已创建',subtitle='正在初始化你的 YLVEN 个人工作区',parent='YL-A-012',profile='auth_success',items=['创建用户资料','初始化个人工作区','同步默认 AI 设置','进入 YLVEN']),
+        'YL-A-013': dict(kind='PAGE',template='register_success',title='账户已创建',subtitle='正在准备你的 YLVEN',parent='YL-A-012',profile='auth_success',items=['创建账户','保存个人设置','准备常用功能','进入 YLVEN']),
         'YL-A-014': dict(kind='SYSTEM_OVERLAY',template='session_overlay',title='全局会话状态',subtitle='令牌刷新、会话失效与安全返回登录',parent='YL-A-001',profile='system_session',items=['正在刷新会话','登录状态失效','保留本地草稿']),
         'YL-A-015': dict(kind='OVERLAY',template='logout_modal',title='退出登录',subtitle='确认后将清理本机敏感缓存',parent='YL-A-086',profile='logout_dialog',items=['取消','确认退出']),
         'YL-A-016': dict(kind='PAGE',template='devices',title='登录设备',subtitle='查看并管理当前账号的已授权设备',parent='YL-A-086',profile='device_list',items=['当前设备','Windows · Codex','Android · YLVEN','撤销设备']),
@@ -388,6 +388,7 @@ CUSTOM_PROFILES = {
     'auth_login':['DEFAULT','INPUT_FOCUSED','VALIDATION_ERROR','SUBMITTING','RATE_LIMITED','OFFLINE','SERVER_ERROR'],
     'auth_security_overlay':['DEFAULT','SECURITY_CHALLENGE','SUBMITTING','SUCCESS','SAVE_ERROR','RATE_LIMITED','OFFLINE','SERVER_ERROR'],
     'auth_turnstile':['LOADING','SECURITY_CHALLENGE','SUCCESS','VALIDATION_ERROR','CODE_EXPIRED','OFFLINE','SERVER_ERROR'],
+    'auth_first_party_retired':['LOADING','SECURITY_CHALLENGE','SUCCESS','VALIDATION_ERROR','CODE_EXPIRED','OFFLINE','SERVER_ERROR'],
     'auth_otp':['DEFAULT','INPUT_FOCUSED','CODE_SENT','SUBMITTING','SUCCESS','INVALID_CODE','CODE_EXPIRED','RATE_LIMITED','LOCKED','OFFLINE','SERVER_ERROR'],
     'auth_success':['SUCCESS','SAVE_ERROR','OFFLINE'],
     'auth_register':['DEFAULT','INPUT_FOCUSED','VALIDATION_ERROR','SUBMITTING','DISABLED','OFFLINE','SERVER_ERROR'],
@@ -757,7 +758,26 @@ def render_android_auth(im: Image.Image, spec: dict[str,Any], template: str, cod
     # Soft brand aura.
     d.ellipse((700,-160,1180,320),fill='#ECEEFF'); d.ellipse((-120,1660,420,2200),fill='#EEF6FF')
     icon_circle(d,(96,168),42,'Y',C['brand'],C['surface'],36)
-    text(d,(154,146),'YLVEN',42,C['text'],True); text(d,(154,194),'安全、统一的多模型 AI 工作台',25,C['text3'])
+    text(d,(154,146),'YLVEN',42,C['text'],True); text(d,(154,194),'轻松解决每天的小问题',25,C['text3'])
+    if template=='retired_first_party_verification':
+        draw_android_topbar(im,'请完成小验证','YLVEN',back=True,right=None)
+        shadow_card(im,(72,360,1008,1460),46,C['surface'],C['border'],10,5)
+        d=ImageDraw.Draw(im)
+        icon_circle(d,(540,520),72,'盾',C['brand_soft'],C['brand'],52)
+        text(d,(540,640),'请算一算下面这道题',54,C['text'],True,'ma')
+        text(d,(540,726),'验证会直接在当前页面完成',31,C['text3'],False,'ma')
+        rounded(d,(150,850,930,1065),30,C['surface_subtle'],C['border2'],3)
+        rounded(d,(205,910,275,980),12,C['surface'],C['brand'] if code=='SUCCESS' else C['border2'],4)
+        if code=='SUCCESS': line_icon(d,214,918,'check',52,C['success'],6)
+        elif code in {'LOADING','SECURITY_CHALLENGE'}: draw_spinner(d,(240,945),25,C['brand'],6)
+        text(d,(315,908),'正在核对答案' if code in {'LOADING','SECURITY_CHALLENGE'} else '验证已完成' if code=='SUCCESS' else '验证未完成',36,C['text'],True)
+        text(d,(315,966),'7 + 5 = ?',26,C['text3'])
+        android_button(im,(150,1160,930,1320),'返回 YLVEN' if code=='SUCCESS' else '取消验证',False)
+        if code in {'VALIDATION_ERROR','CODE_EXPIRED','OFFLINE','SERVER_ERROR'}:
+            status_banner(im,'SAVE_ERROR' if code=='VALIDATION_ERROR' else code,'安全验证未通过，请重新尝试。',top=1510,width_ratio=.82)
+        rounded(d,(430,2370,650,2382),7,C['text'])
+        return im.convert('RGB')
+
     if template=='turnstile':
         draw_android_topbar(im,'安全验证','auth.orbexa.cc · 安全连接',back=True,right=None)
         shadow_card(im,(72,360,1008,1460),46,C['surface'],C['border'],10,5)
@@ -771,7 +791,7 @@ def render_android_auth(im: Image.Image, spec: dict[str,Any], template: str, cod
         if code=='SUCCESS': line_icon(d,214,918,'check',52,C['success'],6)
         else: draw_spinner(d,(240,945),25,C['brand'],6) if code in {'LOADING','SECURITY_CHALLENGE'} else None
         text(d,(315,908),'正在验证安全环境' if code in {'LOADING','SECURITY_CHALLENGE'} else '验证已完成' if code=='SUCCESS' else '验证未完成',36,C['text'],True)
-        text(d,(315,966),'Cloudflare Turnstile',26,C['text3'])
+        text(d,(315,966),'安全验证组件',26,C['text3'])
         text(d,(758,998),'隐私 · 帮助',22,C['text3'])
         android_button(im,(150,1160,930,1320),'返回 YLVEN' if code=='SUCCESS' else '取消验证',False)
         if code in {'VALIDATION_ERROR','CODE_EXPIRED','OFFLINE','SERVER_ERROR'}:
@@ -850,7 +870,7 @@ def render_android_dialog(im: Image.Image, spec: dict[str,Any], template: str, c
     if template=='security_modal_login':
         base=render_android_auth(android_canvas(),{'title':'登录 YLVEN','subtitle':'使用邮箱验证码安全登录','required_elements':[]},'login','DEFAULT').convert('RGBA')
     elif template=='security_modal_register':
-        base=render_android_auth(android_canvas(),{'title':'创建 YLVEN 账户','subtitle':'使用邮箱和登录密码建立个人工作区','required_elements':[]},'register','DEFAULT').convert('RGBA')
+        base=render_android_auth(android_canvas(),{'title':'创建 YLVEN 账户','subtitle':'设置好密码，马上开始使用','required_elements':[]},'register','DEFAULT').convert('RGBA')
     elif template=='logout_modal':
         base=android_canvas(); draw_android_topbar(base,'我的','账号、套餐、用量与系统设置',back=False,right='more'); draw_android_bottom_nav(base,'我的'); render_android_general_body(base,{'title':'我的','subtitle':'账号、套餐、用量与系统设置','required_elements':['个人资料','套餐与会员','钱包','AI 设置','安全与数据']},'mine','POPULATED',2140)
     elif template=='file_menu':
@@ -869,8 +889,8 @@ def render_android_dialog(im: Image.Image, spec: dict[str,Any], template: str, c
         if code in {'SUBMITTING','SECURITY_CHALLENGE'}: draw_spinner(d,(235,1200),26,C['brand'],6)
         elif code=='SUCCESS': line_icon(d,210,1175,'check',50,C['success'],6)
         else: rounded(d,(207,1165,263,1221),10,C['surface'],C['border2'],3)
-        text(d,(300,1175),'Cloudflare Turnstile',34,C['text'],True); text(d,(300,1220),'安全验证不会保存聊天内容',24,C['text3'])
-        android_button(im,(170,1330,525,1460),'取消',False); android_button(im,(555,1330,910,1460),'继续验证',True,loading=code=='SUBMITTING')
+        text(d,(300,1175),'7 + 5 = ?',34,C['text'],True); text(d,(300,1220),'请输入答案',24,C['text3'])
+        android_button(im,(170,1330,525,1460),'取消',False); android_button(im,(555,1330,910,1460),'确认',True,loading=code=='SUBMITTING')
         if state_is_error(code): status_banner(im,code,top=1580,width_ratio=.78)
     elif template=='logout_modal':
         shadow_card(im,(120,850,960,1420),44,C['surface'],C['border'],14,6); d=ImageDraw.Draw(im)
@@ -1765,4 +1785,3 @@ def _cli() -> int:
 
 if __name__ == '__main__':
     raise SystemExit(_cli())
-

@@ -25,15 +25,14 @@ parent_page_id: YL-A-005
 visual_identity:
   template: security_modal_login
   title: 请完成小验证
-  subtitle: 输入算式答案后继续
+  subtitle: 为了确认是你本人，请算一算下面这道题
   required_elements:
   - YLVEN 小验证
   - 请输入答案
   - 取消
   - 确认
-  screen_signature: 138c86641854596c
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  screen_signature: 27036cc49c226a52
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -49,8 +48,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -62,16 +60,20 @@ states:
   mockup_id: YL-A-006-S01_DEFAULT
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S01_DEFAULT.png
   mockup_status: APPROVED
-  mockup_sha256: f67f74fa5270411af76739c48d4584ebeb54663862d900ddd96285e6f369c8b2
+  mockup_sha256: 329cd94373fa95efb86d28d5fdd973c9dbf234635af9ce35905f0f2602c479fd
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S02_SECURITY_CHALLENGE
   code: SECURITY_CHALLENGE
   name: 安全验证
-  description: 当前页面已打开小验证弹窗。
+  description: 受控安全验证弹层或 WebView 已打开。
   recovery: complete_or_cancel
   mockup_id: YL-A-006-S02_SECURITY_CHALLENGE
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S02_SECURITY_CHALLENGE.png
   mockup_status: APPROVED
-  mockup_sha256: fc66bb009d2ef3d0f0fb01cad67d3edd9a61788dc89790a1979543342a59761a
+  mockup_sha256: e7e3d5dac5fd2e23b653e1322eb42de7dbc264f4d70745f568cbe78d9bec0202
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S03_SUBMITTING
   code: SUBMITTING
   name: 提交中
@@ -80,7 +82,9 @@ states:
   mockup_id: YL-A-006-S03_SUBMITTING
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S03_SUBMITTING.png
   mockup_status: APPROVED
-  mockup_sha256: 347d5dfeef26ab2929697391dcd76427bf3a09a8145ad00f382360d31460a566
+  mockup_sha256: 5ef8c855df4559aacf9a3baa44be9977ce8a8d4e6c7dbb51b82ff8fb81582fe1
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S04_SUCCESS
   code: SUCCESS
   name: 操作成功
@@ -89,7 +93,9 @@ states:
   mockup_id: YL-A-006-S04_SUCCESS
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S04_SUCCESS.png
   mockup_status: APPROVED
-  mockup_sha256: 97e91aecd562201e883177b835769f22d9204c3fc639d8d522dc646353f96d72
+  mockup_sha256: 42f20063701b28534a0dfee474cb5fb6334e9128222615d2cd295c5d2158fd1c
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S05_SAVE_ERROR
   code: SAVE_ERROR
   name: 保存失败
@@ -98,7 +104,9 @@ states:
   mockup_id: YL-A-006-S05_SAVE_ERROR
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S05_SAVE_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 021b3c3ad7accb6a1834d08c7693f816623f0aadad6e772794e117d7790e2394
+  mockup_sha256: 0f515121f094c53c3ccc8cc871b661d2ce82f19b6fac450248af5ee2a4b85e5a
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S06_RATE_LIMITED
   code: RATE_LIMITED
   name: 请求过于频繁
@@ -107,7 +115,9 @@ states:
   mockup_id: YL-A-006-S06_RATE_LIMITED
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S06_RATE_LIMITED.png
   mockup_status: APPROVED
-  mockup_sha256: 6cac6e2c0fc056b4c8cb41d6cabfb9f2d370bbc3e89d7f9a83605c7ccdd9b74c
+  mockup_sha256: 859b55b403649fa4baceabd99a0aee854f53695a3f82827be0c07ede458ed433
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S07_OFFLINE
   code: OFFLINE
   name: 离线
@@ -116,7 +126,9 @@ states:
   mockup_id: YL-A-006-S07_OFFLINE
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S07_OFFLINE.png
   mockup_status: APPROVED
-  mockup_sha256: b3bb9da590246c18df6f6189476215945245b280c8585de2e0993692b9484dfa
+  mockup_sha256: 596e22a58ec8ee207c9eed693ebc70db4c216b3127cbc01e8ca0b3a8860d258e
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-006-S08_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -125,14 +137,15 @@ states:
   mockup_id: YL-A-006-S08_SERVER_ERROR
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S08_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: fac2ab79c6e8b86eb911f9bcf07d8d027299c092f726f88502126f8e49eea535
+  mockup_sha256: 396cddcf6b5914921e8e041384ba4fc20f109ed55bb49ef531b918bbf7f7c385
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

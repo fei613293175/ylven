@@ -29,8 +29,7 @@ visual_identity:
   required_elements:
   - 删除会话并进入回收策略
   screen_signature: dfe1791ad4af1ae6
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -46,8 +45,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -59,7 +57,9 @@ states:
   mockup_id: YL-M-049-S01_LOADING
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S01_LOADING.png
   mockup_status: APPROVED
-  mockup_sha256: 12befd6798af74ed38a581f67ec340455eac1dd510b850bc1a56b29048733be6
+  mockup_sha256: dc3981fd9cd9bee59443ca21072a57d9f3459474cfe34bdd559fad3a0fec159e
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S02_POPULATED
   code: POPULATED
   name: 有数据
@@ -68,7 +68,9 @@ states:
   mockup_id: YL-M-049-S02_POPULATED
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S02_POPULATED.png
   mockup_status: APPROVED
-  mockup_sha256: 93b4975c13890a8adff41a267add68722052434b8c40f91c0b09f6b8f0e2ef9b
+  mockup_sha256: 6c6fd8fac5f21d1ec4519f752c090d4343aeb725619b3af9cb9b3e8b22a833c0
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S03_EDIT_MODE
   code: EDIT_MODE
   name: 编辑状态
@@ -77,7 +79,9 @@ states:
   mockup_id: YL-M-049-S03_EDIT_MODE
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S03_EDIT_MODE.png
   mockup_status: APPROVED
-  mockup_sha256: 7c0a06bb81f2b77ea3de4d836da24ba37d884a206abb3992dcbf6e1b67389764
+  mockup_sha256: 34529faa635428e4d9c09ca2a0ef758f1addb5496dd8f7998ca7b432d7a205d2
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S04_VALIDATION_ERROR
   code: VALIDATION_ERROR
   name: 表单校验失败
@@ -86,7 +90,9 @@ states:
   mockup_id: YL-M-049-S04_VALIDATION_ERROR
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S04_VALIDATION_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 82a4e86bdda1c8500a711149de2ff3d27e3897881793267a0f0310a00b8fc934
+  mockup_sha256: 7ccf7af86af77ff5b4a059e9760d7168d0029eeb9a4ee2098b2853b2060b4ceb
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S05_DIRTY
   code: DIRTY
   name: 存在未保存修改
@@ -95,7 +101,9 @@ states:
   mockup_id: YL-M-049-S05_DIRTY
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S05_DIRTY.png
   mockup_status: APPROVED
-  mockup_sha256: 09b3c089857239da265c2279cfe56cc60aaf3804ac3d5c6a841610615b271f75
+  mockup_sha256: e19cd8683de8c23db073cb18b4553ca38060addef42c36e28465d3521cb95a89
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S06_SUBMITTING
   code: SUBMITTING
   name: 提交中
@@ -104,7 +112,9 @@ states:
   mockup_id: YL-M-049-S06_SUBMITTING
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S06_SUBMITTING.png
   mockup_status: APPROVED
-  mockup_sha256: e610f5d0b4a2411cf8fae7b29f4cafded98f54f647673844176e1a106bc3a338
+  mockup_sha256: 878bc1eecb647948be6175399bda6c690d43207eb3a4d06b49f07cdccd303f9a
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S07_SAVE_SUCCESS
   code: SAVE_SUCCESS
   name: 保存成功
@@ -113,7 +123,9 @@ states:
   mockup_id: YL-M-049-S07_SAVE_SUCCESS
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S07_SAVE_SUCCESS.png
   mockup_status: APPROVED
-  mockup_sha256: 501ce2885e60837807b97c76dffe4b3d4152f34572bf6941c61680dcce08c4dc
+  mockup_sha256: e6a73f232e176e82870f6eda90e195426bee666c2cafbecdc8cacb6cc5b2d543
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S08_VERSION_CONFLICT
   code: VERSION_CONFLICT
   name: 版本冲突
@@ -122,7 +134,9 @@ states:
   mockup_id: YL-M-049-S08_VERSION_CONFLICT
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S08_VERSION_CONFLICT.png
   mockup_status: APPROVED
-  mockup_sha256: 72f32319bb75d86e816a8c8f7a95791bd2d8ac1d2066f4619538af8e7c1d4cd7
+  mockup_sha256: d29fb55fd3c883671ab193aef7abc71a333387d8f45f1823ca40e3e8b0e49a7b
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S09_ROLLBACK_CONFIRM
   code: ROLLBACK_CONFIRM
   name: 确认回滚
@@ -131,7 +145,9 @@ states:
   mockup_id: YL-M-049-S09_ROLLBACK_CONFIRM
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S09_ROLLBACK_CONFIRM.png
   mockup_status: APPROVED
-  mockup_sha256: 4c3d7010eff8a377bd06db22f31363e5c5dad44574f4d9c1aee24c3f12d431a6
+  mockup_sha256: f622efa930040882837ec99934de1cd39824556ee3f8463fcd32e5dcf07c7e2a
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S10_PERMISSION_DENIED
   code: PERMISSION_DENIED
   name: 权限不足
@@ -140,7 +156,9 @@ states:
   mockup_id: YL-M-049-S10_PERMISSION_DENIED
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S10_PERMISSION_DENIED.png
   mockup_status: APPROVED
-  mockup_sha256: 64186b6afe0eb6ce99d614736a9de1c1a074676798f4d8a5544681eb87e19ee8
+  mockup_sha256: 287b343d22740a402b6f47a300b9c555e6a2d979aabb68e8ca245b672a3180ea
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-049-S11_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -149,14 +167,15 @@ states:
   mockup_id: YL-M-049-S11_SERVER_ERROR
   mockup_path: ui/mockups/admin/YL-M-049/YL-M-049-S11_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: ec9687862c7e97474629dc7a4d3d7008398d53d5f4a208917800dc6606919498
+  mockup_sha256: 0988f4c2b3a3b99eb536d3469ae8071c78d7ee9fb61fec7db3c518c32d97579c
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

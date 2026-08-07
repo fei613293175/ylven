@@ -32,8 +32,7 @@ visual_identity:
   - 重新发送
   - 确认并创建账户
   screen_signature: e3d2ad3af757352a
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -49,8 +48,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -62,7 +60,9 @@ states:
   mockup_id: YL-A-012-S01_DEFAULT
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S01_DEFAULT.png
   mockup_status: APPROVED
-  mockup_sha256: d951d848e8be0e68e2e4747220f619ad2ab3df243b74a947395f318c9646aceb
+  mockup_sha256: 6672ee62b13d2f83e2805b4fa49052f66ef05b6d19ca34dc70583484899e25ae
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S02_INPUT_FOCUSED
   code: INPUT_FOCUSED
   name: 输入聚焦
@@ -71,7 +71,9 @@ states:
   mockup_id: YL-A-012-S02_INPUT_FOCUSED
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S02_INPUT_FOCUSED.png
   mockup_status: APPROVED
-  mockup_sha256: 6a42dda0f0228b588dfd15ac2bba468d3405a2de21ee442575a1b267c6c1bff4
+  mockup_sha256: fe1fcf9bba88e1029cffcdb19bfd77ca931704f3d9b75fffccf704744829e872
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S03_CODE_SENT
   code: CODE_SENT
   name: 验证码已发送
@@ -80,7 +82,9 @@ states:
   mockup_id: YL-A-012-S03_CODE_SENT
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S03_CODE_SENT.png
   mockup_status: APPROVED
-  mockup_sha256: ce41e496012434e125a84aa152c6b97a2a3ff2bafbb9add2380614df1ddb5593
+  mockup_sha256: 740504806e7f7d344e95728af7150b79c0ee8ceb812eb9340fb00fdcb7f1ffb4
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S04_SUBMITTING
   code: SUBMITTING
   name: 提交中
@@ -89,7 +93,9 @@ states:
   mockup_id: YL-A-012-S04_SUBMITTING
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S04_SUBMITTING.png
   mockup_status: APPROVED
-  mockup_sha256: e1e23c6c24e9f4c6149e6b845d1fcd10e434ef4f07d5bf00de4a8f0f4f41ec1a
+  mockup_sha256: dd10e5241163cdf5940de6b98ef58d46e460ad85285fecfda921f42bb4698c34
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S05_SUCCESS
   code: SUCCESS
   name: 操作成功
@@ -98,7 +104,9 @@ states:
   mockup_id: YL-A-012-S05_SUCCESS
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S05_SUCCESS.png
   mockup_status: APPROVED
-  mockup_sha256: 04fa7df500a7968642be98957e20dbd3bb64126553b3c6d1018ae80a5c0a5aa6
+  mockup_sha256: 26327f17ef40cd4fc135b271061ed92faccfd0f5bc297ec9e5f0ac1410835c25
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S06_INVALID_CODE
   code: INVALID_CODE
   name: 验证码错误
@@ -107,7 +115,9 @@ states:
   mockup_id: YL-A-012-S06_INVALID_CODE
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S06_INVALID_CODE.png
   mockup_status: APPROVED
-  mockup_sha256: 7dcc71cbb6ecddb48a1631bd2a67c5a7c8cdf965a6ae7d6e71d17249e5144f51
+  mockup_sha256: 4bba59ed45bd759fddb0294a4f10ff3e050d402e71d5e95301d5e40fedb2a57c
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S07_CODE_EXPIRED
   code: CODE_EXPIRED
   name: 验证码过期
@@ -116,7 +126,9 @@ states:
   mockup_id: YL-A-012-S07_CODE_EXPIRED
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S07_CODE_EXPIRED.png
   mockup_status: APPROVED
-  mockup_sha256: 6cc22f5f35b04b37d26946ab672212ef9780f180e7e544c38fa424e330aaf5b7
+  mockup_sha256: f9d3b01b0a64e755526ee8add69fad6cf15de8e538fd05928b19e9db6bf85693
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S08_RATE_LIMITED
   code: RATE_LIMITED
   name: 请求过于频繁
@@ -125,7 +137,9 @@ states:
   mockup_id: YL-A-012-S08_RATE_LIMITED
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S08_RATE_LIMITED.png
   mockup_status: APPROVED
-  mockup_sha256: fc585dff4c286b2051f67db897f116ac5bed91408dfbab7d6257942cfed60a31
+  mockup_sha256: ff31dc1ddeb0b60b92ebb6f2d993004e8fd653beb3d730bf23b1e4e6d370d04f
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S09_LOCKED
   code: LOCKED
   name: 暂时锁定
@@ -134,7 +148,9 @@ states:
   mockup_id: YL-A-012-S09_LOCKED
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S09_LOCKED.png
   mockup_status: APPROVED
-  mockup_sha256: b47973b7c22d898db7887de9c379ef384f2a3b131d1731c5cdec951d7e2938a0
+  mockup_sha256: 307e08eda3a9fa2d4c6699b71862830e771cbfb32d8027c2aff18da0d29db9fe
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S10_OFFLINE
   code: OFFLINE
   name: 离线
@@ -143,7 +159,9 @@ states:
   mockup_id: YL-A-012-S10_OFFLINE
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S10_OFFLINE.png
   mockup_status: APPROVED
-  mockup_sha256: 7a0014074faa172ce4892c7aa7c203d8edc882a5c1edafbae5091fc230d8227e
+  mockup_sha256: 5cd555ee014010523d49b8260b415301c6f6e94f7dc4d6dab99d19f4a7f93758
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-012-S11_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -152,14 +170,15 @@ states:
   mockup_id: YL-A-012-S11_SERVER_ERROR
   mockup_path: ui/mockups/android/YL-A-012/YL-A-012-S11_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: b144169095f7be121a9d71c035a5aa73f2cdab058a53f91dafc4a08b4a348c79
+  mockup_sha256: e53db349e36be4cb0aaab96710d60568ab4bd49a72f3719e3b43c3c5f74eacfa
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

@@ -620,12 +620,12 @@ features:
     visual_kind: PAGE
     parent_page_id: null
 - feature_id: P02-005
-  name: 在受控 WebView 完成 Turnstile
+  name: 在当前页面完成一次性算式验证
   phase: P02
   ui_bindings:
   - page_id: YL-A-007
     surface: ANDROID
-    page_name: 安全验证 WebView
+    page_name: 遗留验证承载页（已停用）
     visual_kind: PAGE
     parent_page_id: YL-A-005
   - page_id: YL-M-024
@@ -863,12 +863,12 @@ features:
     visual_kind: PAGE
     parent_page_id: null
 - feature_id: P02-022
-  name: 处理安全验证取消、过期和重复令牌
+  name: 处理安全验证取消、过期和重复提交
   phase: P02
   ui_bindings:
   - page_id: YL-A-007
     surface: ANDROID
-    page_name: 安全验证 WebView
+    page_name: 遗留验证承载页（已停用）
     visual_kind: PAGE
     parent_page_id: YL-A-005
   - page_id: YL-M-023
@@ -909,7 +909,7 @@ features:
     visual_kind: SYSTEM_STATE_BOARD
     parent_page_id: null
 - feature_id: P02-026
-  name: 限制 WebView 导航和 JavaScript 桥接面
+  name: 验证过程不向外部页面发送数据
   phase: P02
   ui_bindings:
   - page_id: YL-M-044
@@ -1163,7 +1163,7 @@ features:
   ui_bindings:
   - page_id: YL-A-029
     surface: ANDROID
-    page_name: AI 回复/引用
+    page_name: 通用来源引用组件
     visual_kind: COMPONENT_BOARD
     parent_page_id: YL-A-026
   - page_id: YL-M-055
@@ -1445,7 +1445,7 @@ features:
   ui_bindings:
   - page_id: YL-A-037
     surface: ANDROID
-    page_name: 输入区模型条
+    page_name: 输入区模型状态条
     visual_kind: COMPONENT_BOARD
     parent_page_id: YL-A-024
   - page_id: YL-M-051
@@ -1459,7 +1459,7 @@ features:
   ui_bindings:
   - page_id: YL-A-038
     surface: ANDROID
-    page_name: AI 回复标签
+    page_name: AI 回复来源标签
     visual_kind: COMPONENT_BOARD
     parent_page_id: YL-A-026
   - page_id: YL-M-053
@@ -2135,7 +2135,7 @@ features:
   ui_bindings:
   - page_id: YL-A-060
     surface: ANDROID
-    page_name: AI回复/引用
+    page_name: 项目知识引用组件
     visual_kind: COMPONENT_BOARD
     parent_page_id: YL-A-026
   - page_id: YL-M-096
@@ -2394,7 +2394,7 @@ features:
   ui_bindings:
   - page_id: YL-A-065
     surface: ANDROID
-    page_name: 图片结果
+    page_name: 图片生成结果
     visual_kind: PAGE
     parent_page_id: YL-A-064
   - page_id: YL-M-106
@@ -2408,7 +2408,7 @@ features:
   ui_bindings:
   - page_id: YL-A-066
     surface: ANDROID
-    page_name: 图片详情
+    page_name: 图片作品详情
     visual_kind: PAGE
     parent_page_id: YL-A-065
   - page_id: YL-M-107
@@ -2422,7 +2422,7 @@ features:
   ui_bindings:
   - page_id: YL-A-066
     surface: ANDROID
-    page_name: 图片详情
+    page_name: 图片作品详情
     visual_kind: PAGE
     parent_page_id: YL-A-065
   - page_id: YL-M-108
@@ -2638,7 +2638,7 @@ features:
   ui_bindings:
   - page_id: YL-A-074
     surface: ANDROID
-    page_name: PPT预览
+    page_name: PPT 预览编辑
     visual_kind: PAGE
     parent_page_id: YL-A-073
   - page_id: YL-M-111
@@ -2652,7 +2652,7 @@ features:
   ui_bindings:
   - page_id: YL-A-074
     surface: ANDROID
-    page_name: PPT预览
+    page_name: PPT 预览编辑
     visual_kind: PAGE
     parent_page_id: YL-A-073
   - page_id: YL-M-111
@@ -2717,7 +2717,7 @@ features:
   ui_bindings:
   - page_id: YL-A-076
     surface: ANDROID
-    page_name: PPT详情
+    page_name: PPT 作品详情
     visual_kind: PAGE
     parent_page_id: YL-A-074
   - page_id: YL-M-107
@@ -2736,7 +2736,7 @@ features:
   ui_bindings:
   - page_id: YL-A-076
     surface: ANDROID
-    page_name: PPT详情
+    page_name: PPT 作品详情
     visual_kind: PAGE
     parent_page_id: YL-A-074
   - page_id: YL-M-111
@@ -2786,7 +2786,7 @@ features:
   ui_bindings:
   - page_id: YL-A-077
     surface: ANDROID
-    page_name: 工作
+    page_name: 工作首页
     visual_kind: PAGE
     parent_page_id: null
   - page_id: YL-M-116
@@ -2800,7 +2800,7 @@ features:
   ui_bindings:
   - page_id: YL-A-078
     surface: ANDROID
-    page_name: 工作/工具
+    page_name: AI 工具目录
     visual_kind: PAGE
     parent_page_id: YL-A-077
   - page_id: YL-M-117

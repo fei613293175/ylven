@@ -18,6 +18,11 @@ work_packets:
   - YL-A-001
   - YL-A-002
   - YL-A-003
+  - YL-M-001
+  - YL-M-002
+  - YL-M-003
+  - YL-M-004
+  - YL-M-005
   - YL-DS-001
   - YL-DS-002
   - YL-DS-003
@@ -31,11 +36,6 @@ work_packets:
   - YL-DS-011
   - YL-DS-012
   - YL-DS-013
-  - YL-M-001
-  - YL-M-002
-  - YL-M-003
-  - YL-M-004
-  - YL-M-005
   state_ids:
   - YL-A-001-S01_DEFAULT
   - YL-A-002-S01_DEFAULT
@@ -103,7 +103,8 @@ work_packets:
   - YL-M-005-S10_PERMISSION_DENIED
   - YL-M-005-S11_SERVER_ERROR
   mockup_count: 65
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -165,7 +166,8 @@ work_packets:
   - YL-M-008-S07_NETWORK_ERROR
   - YL-M-008-S08_SERVER_ERROR
   mockup_count: 23
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -252,7 +254,8 @@ work_packets:
   - YL-M-013-S10_PERMISSION_DENIED
   - YL-M-013-S11_SERVER_ERROR
   mockup_count: 46
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -335,7 +338,8 @@ work_packets:
   - YL-M-018-S10_PERMISSION_DENIED
   - YL-M-018-S11_SERVER_ERROR
   mockup_count: 42
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -368,11 +372,11 @@ work_packets:
   spec_kit_scope: Use the phase Spec Kit spec/plan/tasks. Do not regenerate the whole phase for this packet.
   owner_approval_required: false
   page_ids:
-  - YL-D-001
   - YL-M-018
   - YL-M-019
   - YL-M-020
   - YL-M-021
+  - YL-D-001
   state_ids:
   - YL-D-001-S01_LOADING
   - YL-D-001-S02_POPULATED
@@ -420,7 +424,8 @@ work_packets:
   - YL-M-021-S10_PERMISSION_DENIED
   - YL-M-021-S11_SERVER_ERROR
   mockup_count: 45
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -539,7 +544,8 @@ work_packets:
   - YL-W-002-S06_NETWORK_ERROR
   - YL-W-002-S07_SERVER_ERROR
   mockup_count: 74
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -623,7 +629,8 @@ work_packets:
   - YL-M-030-S07_NETWORK_ERROR
   - YL-M-030-S08_SERVER_ERROR
   mockup_count: 42
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -696,7 +703,8 @@ work_packets:
   - YL-M-033-S07_PERMISSION_DENIED
   - YL-M-033-S08_SERVER_ERROR
   mockup_count: 32
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -789,7 +797,8 @@ work_packets:
   - YL-M-036-S10_PERMISSION_DENIED
   - YL-M-036-S11_SERVER_ERROR
   mockup_count: 52
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -873,7 +882,8 @@ work_packets:
   - YL-M-040-S10_PERMISSION_DENIED
   - YL-M-040-S11_SERVER_ERROR
   mockup_count: 43
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1004,7 +1014,8 @@ work_packets:
   - YL-W-001-S06_NETWORK_ERROR
   - YL-W-001-S07_SERVER_ERROR
   mockup_count: 84
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1125,7 +1136,8 @@ work_packets:
   - YL-W-002-S06_NETWORK_ERROR
   - YL-W-002-S07_SERVER_ERROR
   mockup_count: 76
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1244,7 +1256,8 @@ work_packets:
   - YL-W-002-S06_NETWORK_ERROR
   - YL-W-002-S07_SERVER_ERROR
   mockup_count: 74
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1317,7 +1330,8 @@ work_packets:
   - YL-M-031-S07_NETWORK_ERROR
   - YL-M-031-S08_SERVER_ERROR
   mockup_count: 32
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1405,7 +1419,8 @@ work_packets:
   - YL-W-001-S06_NETWORK_ERROR
   - YL-W-001-S07_SERVER_ERROR
   mockup_count: 46
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1544,7 +1559,8 @@ work_packets:
   - YL-M-049-S10_PERMISSION_DENIED
   - YL-M-049-S11_SERVER_ERROR
   mockup_count: 91
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1650,7 +1666,8 @@ work_packets:
   - YL-M-054-S07_NETWORK_ERROR
   - YL-M-054-S08_SERVER_ERROR
   mockup_count: 61
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1745,7 +1762,8 @@ work_packets:
   - YL-M-055-S07_NETWORK_ERROR
   - YL-M-055-S08_SERVER_ERROR
   mockup_count: 49
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1865,7 +1883,8 @@ work_packets:
   - YL-W-006-S06_NETWORK_ERROR
   - YL-W-006-S07_SERVER_ERROR
   mockup_count: 73
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -1967,7 +1986,8 @@ work_packets:
   - YL-M-061-S07_NETWORK_ERROR
   - YL-M-061-S08_SERVER_ERROR
   mockup_count: 56
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2063,7 +2083,8 @@ work_packets:
   - YL-M-063-S10_PERMISSION_DENIED
   - YL-M-063-S11_SERVER_ERROR
   mockup_count: 53
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2184,7 +2205,8 @@ work_packets:
   - YL-M-065-S07_NETWORK_ERROR
   - YL-M-065-S08_SERVER_ERROR
   mockup_count: 74
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2282,7 +2304,8 @@ work_packets:
   - YL-M-067-S06_PERMISSION_DENIED
   - YL-M-067-S07_SERVER_ERROR
   mockup_count: 54
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2379,7 +2402,8 @@ work_packets:
   - YL-M-070-S10_PERMISSION_DENIED
   - YL-M-070-S11_SERVER_ERROR
   mockup_count: 55
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2492,7 +2516,8 @@ work_packets:
   - YL-W-005-S06_NETWORK_ERROR
   - YL-W-005-S07_SERVER_ERROR
   mockup_count: 68
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2612,7 +2637,8 @@ work_packets:
   - YL-M-080-S07_NETWORK_ERROR
   - YL-M-080-S08_SERVER_ERROR
   mockup_count: 73
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2675,7 +2701,8 @@ work_packets:
   - YL-M-082-S10_PERMISSION_DENIED
   - YL-M-082-S11_SERVER_ERROR
   mockup_count: 23
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2806,7 +2833,8 @@ work_packets:
   - YL-M-085-S10_PERMISSION_DENIED
   - YL-M-085-S11_SERVER_ERROR
   mockup_count: 84
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2891,7 +2919,8 @@ work_packets:
   - YL-M-088-S07_NETWORK_ERROR
   - YL-M-088-S08_SERVER_ERROR
   mockup_count: 43
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -2986,7 +3015,8 @@ work_packets:
   - YL-M-090-S10_PERMISSION_DENIED
   - YL-M-090-S11_SERVER_ERROR
   mockup_count: 53
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3092,7 +3122,8 @@ work_packets:
   - YL-M-093-S07_NETWORK_ERROR
   - YL-M-093-S08_SERVER_ERROR
   mockup_count: 62
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3185,7 +3216,8 @@ work_packets:
   - YL-M-096-S07_NETWORK_ERROR
   - YL-M-096-S08_SERVER_ERROR
   mockup_count: 51
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3295,7 +3327,8 @@ work_packets:
   - YL-M-099-S10_PERMISSION_DENIED
   - YL-M-099-S11_SERVER_ERROR
   mockup_count: 67
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3381,7 +3414,8 @@ work_packets:
   - YL-M-101-S07_NETWORK_ERROR
   - YL-M-101-S08_SERVER_ERROR
   mockup_count: 44
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3455,7 +3489,8 @@ work_packets:
   - YL-M-103-S07_NETWORK_ERROR
   - YL-M-103-S08_SERVER_ERROR
   mockup_count: 33
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3561,7 +3596,8 @@ work_packets:
   - YL-M-108-S10_PERMISSION_DENIED
   - YL-M-108-S11_SERVER_ERROR
   mockup_count: 63
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3636,7 +3672,8 @@ work_packets:
   - YL-M-110-S07_NETWORK_ERROR
   - YL-M-110-S08_SERVER_ERROR
   mockup_count: 35
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3758,7 +3795,8 @@ work_packets:
   - YL-M-113-S07_NETWORK_ERROR
   - YL-M-113-S08_SERVER_ERROR
   mockup_count: 75
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3835,7 +3873,8 @@ work_packets:
   - YL-M-115-S07_NETWORK_ERROR
   - YL-M-115-S08_SERVER_ERROR
   mockup_count: 36
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -3931,7 +3970,8 @@ work_packets:
   - YL-M-113-S07_NETWORK_ERROR
   - YL-M-113-S08_SERVER_ERROR
   mockup_count: 53
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4044,7 +4084,8 @@ work_packets:
   - YL-W-006-S06_NETWORK_ERROR
   - YL-W-006-S07_SERVER_ERROR
   mockup_count: 68
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4176,7 +4217,8 @@ work_packets:
   - YL-M-118-S07_NETWORK_ERROR
   - YL-M-118-S08_SERVER_ERROR
   mockup_count: 86
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4299,7 +4341,8 @@ work_packets:
   - YL-M-122-S07_NETWORK_ERROR
   - YL-M-122-S08_SERVER_ERROR
   mockup_count: 78
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4392,7 +4435,8 @@ work_packets:
   - YL-M-123-S07_NETWORK_ERROR
   - YL-M-123-S08_SERVER_ERROR
   mockup_count: 51
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4528,7 +4572,8 @@ work_packets:
   - YL-M-127-S10_PERMISSION_DENIED
   - YL-M-127-S11_SERVER_ERROR
   mockup_count: 90
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4666,7 +4711,8 @@ work_packets:
   - YL-W-005-S06_NETWORK_ERROR
   - YL-W-005-S07_SERVER_ERROR
   mockup_count: 91
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4761,7 +4807,8 @@ work_packets:
   - YL-M-136-S07_NETWORK_ERROR
   - YL-M-136-S08_SERVER_ERROR
   mockup_count: 52
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4856,7 +4903,8 @@ work_packets:
   - YL-M-138-S07_NETWORK_ERROR
   - YL-M-138-S08_SERVER_ERROR
   mockup_count: 52
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -4892,11 +4940,11 @@ work_packets:
   owner_approval_required: false
   page_ids:
   - YL-A-100
-  - YL-D-002
   - YL-M-074
   - YL-M-103
   - YL-M-139
   - YL-M-140
+  - YL-D-002
   state_ids:
   - YL-A-100-S01_LOADING
   - YL-A-100-S02_POPULATED
@@ -4954,7 +5002,8 @@ work_packets:
   - YL-M-140-S10_PERMISSION_DENIED
   - YL-M-140-S11_SERVER_ERROR
   mockup_count: 55
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5068,7 +5117,8 @@ work_packets:
   - YL-W-003-S06_NETWORK_ERROR
   - YL-W-003-S07_SERVER_ERROR
   mockup_count: 70
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5162,7 +5212,8 @@ work_packets:
   - YL-M-151-S10_PERMISSION_DENIED
   - YL-M-151-S11_SERVER_ERROR
   mockup_count: 51
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5198,16 +5249,16 @@ work_packets:
   spec_kit_scope: Use the phase Spec Kit spec/plan/tasks. Do not regenerate the whole phase for this packet.
   owner_approval_required: false
   page_ids:
+  - YL-M-152
+  - YL-M-153
+  - YL-M-154
+  - YL-M-155
   - YL-D-003
   - YL-D-004
   - YL-D-005
   - YL-D-006
   - YL-D-007
   - YL-D-008
-  - YL-M-152
-  - YL-M-153
-  - YL-M-154
-  - YL-M-155
   - YL-W-003
   state_ids:
   - YL-D-003-S01_LOADING
@@ -5310,7 +5361,8 @@ work_packets:
   - YL-W-003-S06_NETWORK_ERROR
   - YL-W-003-S07_SERVER_ERROR
   mockup_count: 99
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5346,15 +5398,15 @@ work_packets:
   spec_kit_scope: Use the phase Spec Kit spec/plan/tasks. Do not regenerate the whole phase for this packet.
   owner_approval_required: false
   page_ids:
-  - YL-D-009
-  - YL-D-010
-  - YL-D-011
   - YL-M-156
   - YL-M-157
   - YL-M-158
   - YL-M-159
   - YL-M-160
   - YL-M-161
+  - YL-D-009
+  - YL-D-010
+  - YL-D-011
   state_ids:
   - YL-D-009-S01_LOADING
   - YL-D-009-S02_POPULATED
@@ -5443,7 +5495,8 @@ work_packets:
   - YL-M-161-S06_PERMISSION_DENIED
   - YL-M-161-S07_SERVER_ERROR
   mockup_count: 86
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5509,7 +5562,8 @@ work_packets:
   - YL-M-162-S07_NETWORK_ERROR
   - YL-M-162-S08_SERVER_ERROR
   mockup_count: 26
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5544,17 +5598,17 @@ work_packets:
   spec_kit_scope: Use the phase Spec Kit spec/plan/tasks. Do not regenerate the whole phase for this packet.
   owner_approval_required: false
   page_ids:
-  - YL-D-012
-  - YL-D-013
-  - YL-D-014
-  - YL-D-015
-  - YL-D-016
   - YL-M-074
   - YL-M-161
   - YL-M-163
   - YL-M-164
   - YL-M-165
   - YL-M-166
+  - YL-D-012
+  - YL-D-013
+  - YL-D-014
+  - YL-D-015
+  - YL-D-016
   state_ids:
   - YL-D-012-S01_LOADING
   - YL-D-012-S02_POPULATED
@@ -5647,7 +5701,8 @@ work_packets:
   - YL-M-166-S07_NETWORK_ERROR
   - YL-M-166-S08_SERVER_ERROR
   mockup_count: 90
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5682,13 +5737,13 @@ work_packets:
   spec_kit_scope: Use the phase Spec Kit spec/plan/tasks. Do not regenerate the whole phase for this packet.
   owner_approval_required: false
   page_ids:
-  - YL-D-010
-  - YL-D-017
   - YL-M-153
   - YL-M-157
   - YL-M-160
   - YL-M-167
   - YL-M-168
+  - YL-D-010
+  - YL-D-017
   state_ids:
   - YL-D-010-S01_LOADING
   - YL-D-010-S02_POPULATED
@@ -5753,7 +5808,8 @@ work_packets:
   - YL-M-168-S07_NETWORK_ERROR
   - YL-M-168-S08_SERVER_ERROR
   mockup_count: 62
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5825,7 +5881,8 @@ work_packets:
   - YL-M-172-S07_PERMISSION_DENIED
   - YL-M-172-S08_SERVER_ERROR
   mockup_count: 32
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5903,7 +5960,8 @@ work_packets:
   - YL-M-177-S06_PERMISSION_DENIED
   - YL-M-177-S07_SERVER_ERROR
   mockup_count: 37
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -5979,7 +6037,8 @@ work_packets:
   - YL-W-007-S06_NETWORK_ERROR
   - YL-W-007-S07_SERVER_ERROR
   mockup_count: 35
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -6051,7 +6110,8 @@ work_packets:
   - YL-M-183-S07_NETWORK_ERROR
   - YL-M-183-S08_SERVER_ERROR
   mockup_count: 32
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -6135,7 +6195,8 @@ work_packets:
   - YL-M-187-S10_PERMISSION_DENIED
   - YL-M-187-S11_SERVER_ERROR
   mockup_count: 43
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -6216,7 +6277,8 @@ work_packets:
   - YL-M-190-S07_PERMISSION_DENIED
   - YL-M-190-S08_SERVER_ERROR
   mockup_count: 40
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -6285,7 +6347,8 @@ work_packets:
   - YL-M-191-S07_NETWORK_ERROR
   - YL-M-191-S08_SERVER_ERROR
   mockup_count: 30
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
@@ -6384,7 +6447,8 @@ work_packets:
   - YL-W-007-S06_NETWORK_ERROR
   - YL-W-007-S07_SERVER_ERROR
   mockup_count: 56
-  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW until reapproved.
+  visual_gate: V1.6 package snapshot requires all listed mockups to be APPROVED with matching SHA-256; regenerated mockups return to GENERATED_PENDING_OWNER_REVIEW
+    until reapproved.
   critical_ui_snapshot:
     design_system_version: YL-DS-1.2.0
     android_canvas: 360x800dp / 1080x2400px @3x
