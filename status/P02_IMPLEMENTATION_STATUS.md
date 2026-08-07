@@ -12,6 +12,7 @@
 
 - 精确 HEAD `7fd3ed6` 的 Android 测试包来自 GitHub Actions run `31136387566` 失败诊断 artifact；Android 构建、单元测试、注册/登录/设备流程和 92 张截图均已完成。
 - APK 已交付至桌面：`%USERPROFILE%\Desktop\YLVEN-Releases\1.2.0-P02-7fd3ed6-test\YLVEN-1.2.0-P02.apk`。SHA-256：`D9B7C91B13DF6F27A112F43E4DAB65934C43B032F9DF458CF1B47BA22E57D4D5`。
+- 2026-08-07 复核发现：桌面正式目录 `YLVEN-Releases\1.2.0` 原先仍保留旧提交 `1335e1b` 的同名 APK（SHA-256 `820e90...`），因此真机显示旧口号、旧 Turnstile 页面并跳转 404；不是 DNS 生效延迟。已将正式目录 APK 替换为精确 Artifact `7fd3ed6`（SHA-256 `D9B7C91B...`），旧包仅保存在 `1.2.0-legacy-1335e1b` 备份目录。新增 `scripts/48_VALIDATE_APK_CONTENT.py`，发布验收现在会拒绝缺少 P02 新界面标识或包含旧验证文案的 APK。
 - Staging 实测 `/health`、`/version` 和 password-policy 均返回 200，版本为 `1.2.0-7fd3ed6`。
 
 ## 外部阻塞
