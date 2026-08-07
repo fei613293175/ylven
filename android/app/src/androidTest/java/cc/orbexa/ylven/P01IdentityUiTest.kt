@@ -47,6 +47,7 @@ class P01IdentityUiTest {
         capture("P01-AUTH-REGISTER")
 
         composeRule.onNodeWithTag("p01-register-submit").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
@@ -62,6 +63,7 @@ class P01IdentityUiTest {
         composeRule.onNodeWithTag("p01-registered-login").performClick()
         composeRule.onNodeWithTag("p01-login-email").performTextInput("owner@example.com")
         composeRule.onNodeWithTag("p01-login-send").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
