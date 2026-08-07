@@ -30,6 +30,18 @@ def parse_manifest(path: Path) -> dict[str, str]:
     return values
 
 
+def parse_properties(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        key, separator, value = line.partition("=")
+        if not separator or not key or key in values:
+            raise ValueError(f"invalid signing migration property: {line!r}")
+        values[key] = value
+    return values
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-dir", required=True)
@@ -74,6 +86,38 @@ def main() -> int:
     for forbidden in ("workflow_run_id", "github_actions", "emulator"):
         if forbidden in provenance:
             errors.append(f"forbidden current-flow provenance field: {forbidden}")
+
+    migration_path = ROOT / "contracts" / "signing-migrations" / f"{args.phase}.properties"
+    if migration_path.is_file():
+        try:
+            migration = parse_properties(migration_path)
+        except (OSError, ValueError) as exc:
+            errors.append(str(exc))
+            migration = {}
+        expected_migration = {
+            "phase": args.phase,
+            "approved": "true",
+            "install_mode": "one_time_uninstall_then_install",
+            "data_preserved": "false",
+        }
+        for key, value in expected_migration.items():
+            if migration.get(key) != value:
+                errors.append(f"signing migration {key} mismatch")
+        if provenance.get("signing_migration") is not True:
+            errors.append("server provenance does not record the approved signing migration")
+        if provenance.get("signing_migration_install_mode") != migration.get("install_mode"):
+            errors.append("server provenance signing migration install mode mismatch")
+        if provenance.get("signing_migration_data_preserved") is not False:
+            errors.append("server provenance must record that signing migration cannot preserve app data")
+        if provenance.get("previous_signing_certificate_sha256") != migration.get("previous_certificate_sha256"):
+            errors.append("server provenance previous signing certificate differs from migration approval")
+        if provenance.get("signing_certificate_sha256") != migration.get("new_certificate_sha256"):
+            errors.append("server provenance new signing certificate differs from migration approval")
+    else:
+        if provenance.get("signing_migration") is not False:
+            errors.append("unapproved signing migration in server provenance")
+        if provenance.get("signing_certificate_sha256") != provenance.get("previous_signing_certificate_sha256"):
+            errors.append("owner signing certificate differs from the previous release")
 
     artifact_fields = {
         "apk": "apk_sha256",

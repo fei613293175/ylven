@@ -162,11 +162,11 @@ try {
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $CurrentApk).Hash.ToLowerInvariant() -ne $provenance.apk_sha256) { throw 'Current APK hash differs from server provenance.' }
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $TestApk).Hash.ToLowerInvariant() -ne $provenance.instrumentation_apk_sha256) { throw 'Instrumentation APK hash differs from server provenance.' }
 
+    $upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
     if (-not $PreviousApk) {
         $previousIndex = [int]$Phase.Substring(1) - 1
         if ($previousIndex -lt 0) { throw 'P00 requires -PreviousApk for same-package reinstall testing.' }
         $previousPhase = 'P{0:D2}' -f $previousIndex
-        $upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
         $PreviousApk = Join-Path $Root "dist\releases\$previousPhase\YLVEN-$upgradeFrom-$previousPhase.apk"
     }
     $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
@@ -195,11 +195,39 @@ try {
     $loginBefore = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
     Invoke-Adb shell run-as $PackageId sh -c 'mkdir -p files; printf physical-upgrade-ok > files/physical-upgrade-marker' | Out-Null
 
-    (Invoke-Adb install -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
-    $marker = ((Invoke-Adb shell run-as $PackageId sh -c 'cat files/physical-upgrade-marker') -join '').Trim()
-    if ($marker -ne 'physical-upgrade-ok') { throw 'Upgrade data marker did not survive adb install -r.' }
-    $loginAfter = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
-    if ($loginBefore -eq 'present' -and $loginAfter -ne 'present') { throw 'Existing login-state preferences did not survive the upgrade.' }
+    $signingMigration = [bool]$provenance.signing_migration
+    if ($signingMigration -and $Phase -ne 'P03') { throw 'Signing migration is only allowed for P03.' }
+    if ($signingMigration) {
+        $preMigration = [ordered]@{
+            previous_version=$upgradeFrom
+            previous_apk=(Split-Path -Leaf $PreviousApk)
+            previous_signing_certificate_sha256=$provenance.previous_signing_certificate_sha256
+            installed_before_uninstall=$true
+            login_state_before=$loginBefore
+            data_marker_before='physical-upgrade-ok'
+            data_preservation_expected=$false
+            install_mode='one_time_uninstall_then_install'
+        }
+        $preMigration | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-pre-uninstall.json') -Encoding UTF8
+        (Invoke-Adb uninstall $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-uninstall.txt') -Encoding UTF8
+        $installedAfterUninstall = (Invoke-Adb shell pm path $PackageId) -join "`n"
+        if ($installedAfterUninstall -match '^package:') { throw 'P03 signing migration uninstall did not remove the old package.' }
+        (Invoke-Adb install $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
+        $marker = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s files/physical-upgrade-marker; then cat files/physical-upgrade-marker; else echo absent; fi') -join '').Trim()
+        if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
+        $loginAfter = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
+        if ($loginAfter -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old login state.' }
+        $oldTestPackage = (Invoke-Adb shell pm path $TestPackageId) -join "`n"
+        if ($oldTestPackage -match '^package:') {
+            (Invoke-Adb uninstall $TestPackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-test-package-uninstall.txt') -Encoding UTF8
+        }
+    } else {
+        (Invoke-Adb install -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
+        $marker = ((Invoke-Adb shell run-as $PackageId sh -c 'cat files/physical-upgrade-marker') -join '').Trim()
+        if ($marker -ne 'physical-upgrade-ok') { throw 'Upgrade data marker did not survive adb install -r.' }
+        $loginAfter = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
+        if ($loginBefore -eq 'present' -and $loginAfter -ne 'present') { throw 'Existing login-state preferences did not survive the upgrade.' }
+    }
     $packageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
     if ($packageDump -notmatch "versionName=$([regex]::Escape($Version))") { throw 'Installed versionName does not match the release contract.' }
 
@@ -209,6 +237,21 @@ try {
     if ($launch -notmatch 'Status:\s*ok') { throw 'The installed APK did not launch successfully.' }
 
     (Invoke-Adb install -r $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
+    $sessionProvisioned = $false
+    if ($loginAfter -ne 'present') {
+        $provisionFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03ProvisionStagingSessionTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+        $provisionFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt') -Encoding UTF8
+        if ($provisionFlow -notmatch '(?m)^OK \(' -or $provisionFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging session provisioning failed on the physical device.' }
+        $loginAfterProvision = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
+        if ($loginAfterProvision -ne 'present') { throw 'P03 real staging session was not persisted after provisioning.' }
+        $sessionProvisioned = $true
+        Invoke-Adb shell am force-stop $PackageId | Out-Null
+        $launchAfterProvision = (Invoke-Adb shell am start -W -n "$PackageId/.MainActivity") -join "`n"
+        $launchAfterProvision | Set-Content -LiteralPath (Join-Path $testResults 'launch-after-staging-session.txt') -Encoding UTF8
+        if ($launchAfterProvision -notmatch 'Status:\s*ok') { throw 'The app did not relaunch after real staging session provisioning.' }
+    } else {
+        $loginAfterProvision = $loginAfter
+    }
     $liveFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03LiveStagingFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
     $liveFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt') -Encoding UTF8
     if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
@@ -298,13 +341,14 @@ try {
 "@
     $logReview | Set-Content -LiteralPath (Join-Path $output '真机日志审查.md') -Encoding UTF8
 
+    $stagingSessionNote = if ($sessionProvisioned) { 'P03ProvisionStagingSessionTest + P03LiveStagingFlowTest: PASS（真实 staging 注册、Android Keystore 会话与 MainActivity 真实 API）' } else { 'P03LiveStagingFlowTest: PASS（MainActivity、已有加密登录态和真实 staging API）' }
     $automationReport = @"
 # 自动化测试报告
 
 - Phase: $Phase
 - Version: $Version
 - Device: $manufacturer $model ($Serial)
-- P03LiveStagingFlowTest: PASS（MainActivity、保留登录态和真实 staging API）
+- $stagingSessionNote
 - P03RealDeviceFlowTest: PASS（物理设备 UI 交互；确定性 Fake 网关，不替代 staging）
 - P03ConversationStateUiTest: PASS（物理设备 93 状态截图）
 - Interaction coverage: PASS
@@ -313,7 +357,27 @@ try {
 "@
     $automationReport | Set-Content -LiteralPath (Join-Path $output '自动化测试报告.md') -Encoding UTF8
 
-    $upgradeEvidence = @"
+    if ($signingMigration) {
+        $upgradeEvidence = @"
+# 签名迁移安装证据
+
+- 阶段：$Phase
+- 当前版本：$Version
+- applicationId：$PackageId
+- 安装模式：项目所有者批准的一次性 P02 -> P03 签名迁移
+- 旧版安装：adb install -r $PreviousApk
+- 迁移安装：adb uninstall $PackageId；adb install $CurrentApk
+- 旧签名证书：$($provenance.previous_signing_certificate_sha256)
+- 新签名证书：$($provenance.signing_certificate_sha256)
+- 旧本地数据/登录态：未保留（迁移合同明确 data_preserved=false）
+- 旧数据标记：卸载前 physical-upgrade-ok；卸载后 absent
+- 新登录态：通过真实 staging 注册流程重新建立并保存到 Android Keystore
+- 新版本启动：已验证
+- P03 之后升级基线：新签名证书，恢复 adb install -r
+- 结果：PASS
+"@
+    } else {
+        $upgradeEvidence = @"
 # 覆盖安装证据
 
 - 阶段：$Phase
@@ -326,6 +390,7 @@ try {
 - 登录态文件：安装前 $loginBefore；安装后 $loginAfter
 - 结果：PASS
 "@
+    }
     $upgradeEvidence | Set-Content -LiteralPath (Join-Path $output '覆盖安装证据.md') -Encoding UTF8
 
     $deviceEvidence = [ordered]@{
@@ -334,7 +399,9 @@ try {
         device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density=$density }
         selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
         queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
-        paths=@('upgrade install','launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
+        paths=@($(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
+        install_transition=[ordered]@{ mode=if ($signingMigration) { 'one_time_uninstall_then_install' } else { 'adb_install_r' }; data_preserved=(-not $signingMigration); old_login_state=$loginBefore; login_state_immediately_after_install=$loginAfter; staging_session_provisioned=$sessionProvisioned; final_login_state=$loginAfterProvision }
+        signing_migration=[ordered]@{ applied=$signingMigration; previous_certificate_sha256=$provenance.previous_signing_certificate_sha256; new_certificate_sha256=$provenance.signing_certificate_sha256; approved_contract=if ($signingMigration) { 'contracts/signing-migrations/P03.properties' } else { $null } }
         state_screenshot_count=@($stateRows).Count
         production_page_screenshot_count=$productionPages.Count
         real_device_ui_flow='PASS'

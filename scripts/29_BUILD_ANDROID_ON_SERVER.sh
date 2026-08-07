@@ -67,10 +67,38 @@ previous_certificate="$(certificate_digest "$YLVEN_PREVIOUS_APK")"
   echo "could not read APK signing certificate" >&2
   exit 3
 }
-[[ "$current_certificate" == "$previous_certificate" ]] || {
-  echo "owner signing certificate mismatch: current=$current_certificate previous=$previous_certificate" >&2
-  exit 3
-}
+signing_migration=false
+signing_migration_install_mode="adb_install_r"
+signing_migration_data_preserved=true
+if [[ "$current_certificate" != "$previous_certificate" ]]; then
+  migration_file="contracts/signing-migrations/$YLVEN_PHASE.properties"
+  [[ -f "$migration_file" ]] || {
+    echo "owner signing certificate mismatch without an approved phase migration: current=$current_certificate previous=$previous_certificate" >&2
+    exit 3
+  }
+  migration_property() {
+    sed -n "s/^$1=//p" "$migration_file" | head -n 1
+  }
+  [[ "$(migration_property phase)" == "$YLVEN_PHASE" && "$(migration_property approved)" == "true" ]] || {
+    echo "invalid signing migration approval for $YLVEN_PHASE" >&2
+    exit 3
+  }
+  [[ "$(migration_property previous_certificate_sha256)" == "$previous_certificate" ]] || {
+    echo "signing migration previous certificate differs from the owner APK" >&2
+    exit 3
+  }
+  [[ "$(migration_property new_certificate_sha256)" == "$current_certificate" ]] || {
+    echo "signing migration new certificate differs from the configured owner keystore" >&2
+    exit 3
+  }
+  [[ "$(migration_property install_mode)" == "one_time_uninstall_then_install" && "$(migration_property data_preserved)" == "false" ]] || {
+    echo "signing migration must explicitly record destructive one-time installation" >&2
+    exit 3
+  }
+  signing_migration=true
+  signing_migration_install_mode="one_time_uninstall_then_install"
+  signing_migration_data_preserved=false
+fi
 
 owner_name="YLVEN-${YLVEN_VERSION}-${YLVEN_PHASE}.apk"
 test_name="YLVEN-${YLVEN_VERSION}-${YLVEN_PHASE}-androidTest.apk"
@@ -109,6 +137,9 @@ cat >"$YLVEN_ARTIFACT_ROOT/服务器构建来源证明.json" <<EOF
   "signing_certificate_sha256": "$current_certificate",
   "previous_apk_sha256": "$previous_sha",
   "previous_signing_certificate_sha256": "$previous_certificate",
+  "signing_migration": $signing_migration,
+  "signing_migration_install_mode": "$signing_migration_install_mode",
+  "signing_migration_data_preserved": $signing_migration_data_preserved,
   "apk": "$owner_name",
   "apk_sha256": "$owner_sha",
   "instrumentation_apk": "$test_name",

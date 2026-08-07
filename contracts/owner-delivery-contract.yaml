@@ -15,6 +15,12 @@ hard_gates:
     required: true
     method: adb install -r
     clear_data_forbidden: true
+    approved_signing_migrations:
+      P03:
+        approval_file: contracts/signing-migrations/P03.properties
+        install_mode: one_time_uninstall_then_install
+        data_preserved: false
+        future_upgrade_baseline: P03
     checks:
       - fixed_application_id
       - fixed_signing_certificate

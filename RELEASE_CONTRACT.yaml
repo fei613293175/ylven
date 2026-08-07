@@ -58,6 +58,12 @@ upgrade_install:
   method: adb install -r
   clear_data_forbidden: true
   login_state_and_data_migration_required: true
+  approved_signing_migrations:
+    P03:
+      approval_file: contracts/signing-migrations/P03.properties
+      install_mode: one_time_uninstall_then_install
+      data_preserved: false
+      future_upgrade_baseline: P03
 admin_real_test:
   required_for_every_phase: true
   evidence_file: 管理后台实测证据.md

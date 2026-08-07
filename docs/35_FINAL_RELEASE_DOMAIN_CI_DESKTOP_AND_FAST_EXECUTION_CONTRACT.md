@@ -46,7 +46,7 @@ GitHub Actions、Android Emulator 和任何其他模拟器不得用于当前 APK
 | P12 | `1.12.0` | `1120000` | 高并发、安全、可观测性与运维 |
 | P13 | `1.13.0` | `1130000` | 最终回归、官方 API 迁移验证与商业验收 |
 
-同一 applicationId、同一正式签名证书和单调递增 versionCode 是覆盖更新安装的硬条件。P01 起必须先安装上一 owner release，再使用 `adb install -r` 安装本版，并验证数据标记、数据库迁移和登录态恢复。不得卸载或清除数据绕过签名/迁移失败。
+同一 applicationId、同一正式签名证书和单调递增 versionCode 是覆盖更新安装的硬条件。P01 起必须先安装上一 owner release，再使用 `adb install -r` 安装本版，并验证数据标记、数据库迁移和登录态恢复。不得卸载或清除数据绕过签名/迁移失败。项目所有者于 2026-08-08 批准 P02 -> P03 一次性签名迁移，因为 P02 的 GitHub 托管 runner 临时 debug 私钥不可恢复；该例外必须匹配 `contracts/signing-migrations/P03.properties`，执行卸载后安装并如实记录本地数据/登录态丢失。P03 新证书是 P04 及以后版本的固定升级基线。
 
 ## 4. 线上服务器构建
 
@@ -60,7 +60,7 @@ APK 只能在项目所有者本机连接的物理 Android 手机测试：
 
 1. `adb devices -l` 中所选序列号状态严格为 `device`，并验证不是 qemu/模拟器；
 2. 设备不可用立即停止，禁止回退模拟器；多台合格真机在线时优先选择空闲设备，全部占用时选择队列最短的 `%USERPROFILE%/.codex/android-device-queue/<serial>/` 共享 FIFO 持续等待；允许显式指定序列号且不得中断其他项目；
-3. 持锁覆盖上一版安装、数据/登录标记、`adb install -r`、启动、全部测试、截图和日志采集；
+3. 持锁执行上一版安装、升级或已批准的一次性签名迁移、启动、全部测试、截图和日志采集；P03 必须记录卸载后安装及数据不保留，不得伪称 `adb install -r`；
 4. 对本阶段每个页面真实执行点击、输入、返回、滚动和关键成功/失败/取消/恢复流程；
 5. 每个 Android Interaction ID 必须有 testTag/semantics 和真机测试；
 6. 每个 Page State ID 必须由物理手机生成截图并与 APPROVED 效果图逐页比较；

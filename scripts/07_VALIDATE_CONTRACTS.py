@@ -172,6 +172,32 @@ def main() -> int:
         upgrade = global_requirements.get('overlay_install') or {}
         if upgrade.get('command') != 'adb install -r' or upgrade.get('clear_data_forbidden') is not True:
             errors.append('release-version-matrix must require adb install -r without clearing data')
+        migrations = version_matrix.get('approved_signing_migrations') or {}
+        p03_migration = migrations.get('P03') or {}
+        migration_path = ROOT / 'contracts' / 'signing-migrations' / 'P03.properties'
+        if p03_migration.get('approval_file') != 'contracts/signing-migrations/P03.properties':
+            errors.append('release-version-matrix must point P03 to the canonical signing migration approval')
+        if p03_migration.get('install_mode') != 'one_time_uninstall_then_install' or p03_migration.get('data_preserved') is not False:
+            errors.append('P03 signing migration must explicitly record destructive one-time installation')
+        if not migration_path.is_file():
+            errors.append('P03 signing migration approval file is missing')
+        else:
+            props = {}
+            for line in migration_path.read_text(encoding='utf-8').splitlines():
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    props[key] = value
+            expected_props = {
+                'phase': 'P03', 'approved': 'true', 'approved_by': 'project_owner',
+                'install_mode': 'one_time_uninstall_then_install', 'data_preserved': 'false',
+                'future_upgrade_baseline': 'P03',
+            }
+            for key, value in expected_props.items():
+                if props.get(key) != value:
+                    errors.append(f'P03 signing migration property {key} mismatch')
+            for key in ('previous_certificate_sha256', 'new_certificate_sha256'):
+                if not re.fullmatch(r'[0-9a-f]{64}', props.get(key, '')):
+                    errors.append(f'P03 signing migration property {key} is not a SHA-256 digest')
         chinese = global_requirements.get('chinese_delivery_files') or {}
         required_chinese = {
             'original_features': '原功能清单.md',

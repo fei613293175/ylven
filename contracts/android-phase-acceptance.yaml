@@ -75,6 +75,13 @@ upgrade_install:
   package_data_marker_must_survive: true
   login_state_or_migration_must_survive: true
   failure_blocks_release: true
+  approved_signing_migrations:
+    P03:
+      approval_file: contracts/signing-migrations/P03.properties
+      install_mode: one_time_uninstall_then_install
+      data_preserved: false
+      old_application_data_and_login_state_loss_expected: true
+      future_upgrade_baseline: P03
 admin_real_test:
   required_for_every_phase: true
   evidence_file: 管理后台实测证据.md
@@ -98,7 +105,8 @@ required_stages:
 - id: upgrade_install
   requirements:
   - P01 以后先安装上一 owner release，再使用 adb install -r 安装本版；P00 也必须执行同包名重装校验
-  - 不得卸载或清除应用数据
+  - 除 contracts/signing-migrations 中项目所有者明确批准的单阶段签名迁移外，不得卸载或清除应用数据
+  - P03 签名迁移必须记录旧/新证书摘要、卸载后安装、数据不保留和从 P03 开始的新固定签名基线
   - applicationId、签名证书和 versionCode 必须满足覆盖更新条件
   - 安装前写入应用数据标记，安装后标记必须存在
   - 数据库迁移和登录态恢复测试通过

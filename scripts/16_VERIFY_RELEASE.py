@@ -333,6 +333,12 @@ def main() -> int:
                 errors.append("physical-device/staging acceptance is not PASS")
             if device.get("production_page_visual_review") != "PASS":
                 errors.append("production-page direct visual review is not PASS")
+            transition = device.get("install_transition") or {}
+            if phase == "P03":
+                if transition.get("mode") != "one_time_uninstall_then_install" or transition.get("data_preserved") is not False:
+                    errors.append("P03 device evidence does not prove the approved signing migration")
+            elif transition and (transition.get("mode") != "adb_install_r" or transition.get("data_preserved") is not True):
+                errors.append("non-P03 device evidence does not prove same-signature adb install -r")
             review_path = release_dir / "真实页面视觉审查.json"
             if not review_path.is_file():
                 errors.append("production-page direct visual review is missing")

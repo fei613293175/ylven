@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "result": "PASS",
-  "generated_at_utc": "2026-08-07T22:09:48Z",
+  "generated_at_utc": "2026-08-07T23:13:42Z",
   "method": "deterministic_static_lexical_delimiter_encoding_and_structure_validation",
   "official_powershell_ast_executed": false,
   "official_ast_note": "PowerShell runtime was not installed in the Linux packaging sandbox; Windows bootstrap remains the executable interpreter check.",
@@ -170,14 +170,14 @@
     {
       "path": "scripts/50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1",
       "passed": true,
-      "byte_length": 21951,
-      "line_count": 362,
+      "byte_length": 27487,
+      "line_count": 429,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 331,
+      "delimiter_pairs": 400,
       "issues": []
     },
     {

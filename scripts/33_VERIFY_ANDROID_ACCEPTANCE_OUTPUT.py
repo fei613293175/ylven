@@ -38,6 +38,23 @@ def load_json(path: Path, errors: list[str]) -> dict:
     if not path.is_file():
         errors.append(f"missing {path.name}")
         return {}
+
+
+def load_properties(path: Path, errors: list[str]) -> dict[str, str]:
+    if not path.is_file():
+        errors.append(f"missing {path.name}")
+        return {}
+    values: dict[str, str] = {}
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                if key in values:
+                    errors.append(f"duplicate signing migration property: {key}")
+                values[key] = value
+    except OSError as exc:
+        errors.append(f"invalid {path.name}: {exc}")
+    return values
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -80,6 +97,26 @@ def main() -> int:
         errors.append("APK was not proven to come from the connected online server")
     if server.get("build_coordinator") != "shared_cross_project_fifo":
         errors.append("server build did not prove shared queue ownership")
+    migration = load_properties(ROOT / "contracts" / "signing-migrations" / f"{phase}.properties", errors) if phase == "P03" else {}
+    if phase == "P03":
+        for key, expected_value in {
+            "phase": "P03", "approved": "true", "install_mode": "one_time_uninstall_then_install",
+            "data_preserved": "false", "future_upgrade_baseline": "P03",
+        }.items():
+            if migration.get(key) != expected_value:
+                errors.append(f"P03 signing migration property {key} mismatch")
+        if server.get("signing_migration") is not True:
+            errors.append("server provenance does not record P03 signing migration")
+        if server.get("signing_migration_install_mode") != migration.get("install_mode"):
+            errors.append("server provenance signing migration mode mismatch")
+        if server.get("signing_migration_data_preserved") is not False:
+            errors.append("server provenance must record P03 app data was not preserved")
+        if server.get("previous_signing_certificate_sha256") != migration.get("previous_certificate_sha256"):
+            errors.append("P03 previous certificate does not match migration approval")
+        if server.get("signing_certificate_sha256") != migration.get("new_certificate_sha256"):
+            errors.append("P03 new certificate does not match migration approval")
+    elif server.get("signing_migration") is not False or server.get("signing_certificate_sha256") != server.get("previous_signing_certificate_sha256"):
+        errors.append("non-P03 release contains an unapproved signing migration")
     if apk.is_file() and server.get("apk_sha256") != sha256(apk):
         errors.append("owner APK SHA-256 differs from server provenance")
     downloaded = download.get("downloaded_files_sha256") or {}
@@ -104,6 +141,12 @@ def main() -> int:
         errors.append("physical-device state-matrix visual comparison did not pass")
     if device.get("production_page_visual_review") != "PASS":
         errors.append("direct production-page visual review did not pass")
+    transition = device.get("install_transition") or {}
+    if phase == "P03":
+        if transition.get("mode") != "one_time_uninstall_then_install" or transition.get("data_preserved") is not False:
+            errors.append("P03 device evidence does not prove the approved destructive signing migration")
+    elif transition and (transition.get("mode") != "adb_install_r" or transition.get("data_preserved") is not True):
+        errors.append("non-P03 device evidence does not prove same-signature adb install -r")
 
     expected = phase_android_screenshots(phase)
     actual = {path.name for path in (root / "截图").glob("*.png")}

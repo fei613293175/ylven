@@ -18,15 +18,16 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Uses MainActivity, its retained encrypted login session and the configured
- * public staging API. No Fake gateway is involved in this test.
+ * Uses MainActivity, an encrypted session established through the real public
+ * staging registration flow, and the configured public API. No Fake gateway
+ * is involved in this test.
  */
 class P03LiveStagingFlowTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun retainedOwnerSessionCompletesARealConversationJourney() {
+    fun authenticatedStagingSessionCompletesARealConversationJourney() {
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
         val marker = "device-${Instant.now().epochSecond}"
 
