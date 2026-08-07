@@ -105,6 +105,19 @@ def main() -> int:
         errors.append(f'scripts must be exactly 00..52; found {sorted(scripts)}')
     checks['numbered_script_count'] = len(scripts)
 
+    online_build_script = (ROOT / 'scripts' / '49_RUN_ONLINE_SERVER_BUILD.sh').read_text(encoding='utf-8')
+    mount_destinations = re.findall(r'--mount "type=bind,src=[^,]+,dst=([^,"]+)', online_build_script)
+    duplicate_mount_destinations = sorted({
+        destination for destination in mount_destinations if mount_destinations.count(destination) > 1
+    })
+    if duplicate_mount_destinations:
+        errors.append(f'online-server Docker mount destinations must be unique: {duplicate_mount_destinations}')
+    if '/artifacts' in mount_destinations:
+        errors.append('online-server build must not reuse coordinator-reserved Docker mount destination /artifacts')
+    if 'container_artifact_dir="/ylven-artifacts"' not in online_build_script:
+        errors.append('online-server build must isolate YLVEN release outputs under /ylven-artifacts')
+    checks['online_server_mount_destinations'] = mount_destinations
+
     for phase in PHASES:
         if len(list((ROOT / 'phases').glob(f'{phase}_*.md'))) != 1:
             errors.append(f'{phase}: expected exactly one phase document')

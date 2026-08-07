@@ -30,10 +30,11 @@ chmod 0600 "$signing_dir/owner-signing.env"
 mkdir -p "$artifact_dir" "$gradle_cache"
 source_sha="$(tr -d '\r\n ' < "$workspace/source-archive.sha256")"
 builder_image="orbexa/android-builder:gradle8.9-api35-v1"
+container_artifact_dir="/ylven-artifacts"
 
 android-build docker-run --project ylven --kind build --queue-timeout 21600 -- \
   --mount "type=bind,src=$workspace,dst=/workspace" \
-  --mount "type=bind,src=$artifact_dir,dst=/artifacts" \
+  --mount "type=bind,src=$artifact_dir,dst=$container_artifact_dir" \
   --mount "type=bind,src=$gradle_cache,dst=/root/.gradle" \
   --mount "type=bind,src=$signing_dir,dst=/run/ylven-signing,readonly" \
   --mount "type=bind,src=$previous_apk,dst=/inputs/previous.apk,readonly" \
@@ -45,7 +46,7 @@ android-build docker-run --project ylven --kind build --queue-timeout 21600 -- \
   --env YLVEN_COMMIT="$commit" \
   --env YLVEN_SOURCE_ARCHIVE_SHA256="$source_sha" \
   --env YLVEN_PREVIOUS_APK=/inputs/previous.apk \
-  --env YLVEN_ARTIFACT_ROOT=/artifacts \
+  --env YLVEN_ARTIFACT_ROOT="$container_artifact_dir" \
   --env YLVEN_SIGNING_STORE_FILE=/run/ylven-signing/owner.keystore \
   --env YLVEN_BUILDER_IMAGE="$builder_image" \
   --workdir /workspace \
