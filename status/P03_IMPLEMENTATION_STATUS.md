@@ -1,16 +1,16 @@
 # P03 实施状态
 
 - 阶段：P03 — 核心会话、流式聊天与消息数据模型
-- 当前状态：IN_PROGRESS
+- 当前状态：READY_FOR_RELEASE（P03-W01 至 P03-W05 已由控制器关闭；等待精确 GitHub Actions、Artifact、部署证据与所有者验收）
 - 最后更新：2026-08-07
 
 ## 已完成的纵向切片
 
-P03-W01 已实现会话实体、消息搜索边界、首页聚合、会话新建/分页/搜索/重命名/归档/回收以及 Android 和管理后台真实 API 入口；后端单元/API 与 Android CI 编译仍待本次提交后的远程验证。
+P03-W01 至 P03-W05 已实现会话实体、搜索与回收、provider-backed 异步 run/SSE/取消、消息持久化与元数据、Room 缓存、安全 Markdown、导出/反馈/重答/临时会话、系统语音、草稿、所有权隔离、聊天指标与后台诊断。后端/API/Web 验证已在本机通过；Android 编译、模拟器、APK 和截图仍待精确远程 CI。
 
-## 当前进行中
+## 发布前待完成
 
-当前工作包：P03-W02。P03-W01 已由控制器关闭；P03-W02 的 P03-008..P03-014 已完成代码与后端/API 测试证据，Android 构建仍需 CI 验证。
+当前工作包：无。控制器记录为 `PHASE_COMPLETE`。必须以当前远端提交运行 Android Phase Acceptance，下载同一 run 的 Artifact，核验 APK SHA-256、截图和 provenance；随后完成真实部署、后台数据回读和项目所有者验收。
 
 ## 外部阻塞
 
@@ -18,4 +18,4 @@ P03-W01 已实现会话实体、消息搜索边界、首页聚合、会话新建
 
 ## 关键命令与证据
 
-本机 Web Admin npm test：PASS（3 tests）；npm run build：PASS。后端 go test ./...：PASS；Android 构建工具缺失，必须由 GitHub Actions 对当前提交执行 Android 编译/验收。
+本机 Web Admin `npm test`、`npm run build`：PASS。后端 `go test ./...`：PASS。合同 `scripts/07_VALIDATE_CONTRACTS.py --phase P03`、视觉门禁 `scripts/20_CHECK_UI_VISUAL_GATE.py --packet P03-W05`、状态连续性：PASS。Android 构建工具缺失，必须由 GitHub Actions 对当前提交执行 Android 编译/验收。
