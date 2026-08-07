@@ -804,7 +804,13 @@ func (a *API) mobileConversations(w http.ResponseWriter, r *http.Request) {
 			writeError(w, 400, "invalid_json", "Invalid JSON")
 			return
 		}
-		item, err := a.Store.CreateConversation(bearer(r), in.Title)
+		var item Conversation
+		var err error
+		if r.URL.Query().Get("temporary") == "true" {
+			item, err = a.Store.CreateTemporaryConversation(bearer(r), in.Title)
+		} else {
+			item, err = a.Store.CreateConversation(bearer(r), in.Title)
+		}
 		if err != nil {
 			if err.Error() == "session_invalid" {
 				writeError(w, 401, "session_invalid", "Session is invalid")
@@ -1160,19 +1166,33 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
 			return
 		}
-		answer, err := a.ChatResponder.Respond(r.Context(), "ylven-default", "重新生成："+m.Body)
-		if err == nil {
-			var run MessageRun
-			run, err = a.Store.CreateRun(bearer(r), m.ConversationID, "重新生成："+m.Body, "ylven-default", answer)
-			if err == nil {
-				writeJSON(w, http.StatusCreated, run)
-				return
-			}
-		}
+		access := bearer(r)
+		run, err := a.Store.StartRun(access, m.ConversationID, "重新生成："+m.Body, "ylven-default")
 		if err != nil {
 			writeError(w, 422, err.Error(), "Regeneration unavailable")
 			return
 		}
+		writeJSON(w, http.StatusAccepted, run)
+		go func(runID, accessToken string) {
+			started := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			a.runMu.Lock()
+			a.runCancels[runID] = cancel
+			a.runMu.Unlock()
+			defer func() { cancel(); a.runMu.Lock(); delete(a.runCancels, runID); a.runMu.Unlock() }()
+			answer, providerErr := a.ChatResponder.Respond(ctx, "ylven-default", "重新生成："+m.Body)
+			if providerErr != nil {
+				_, _ = a.Store.FailRun(accessToken, runID, providerErr.Error())
+			} else {
+				_, _ = a.Store.CompleteRun(accessToken, runID, answer)
+			}
+			a.Store.RecordMetric("chat.regenerate", time.Since(started).Seconds(), func() string {
+				if providerErr != nil {
+					return "chat_provider_error"
+				}
+				return ""
+			}())
+		}(run.ID, access)
 	default:
 		writeError(w, 404, "not_found", "Endpoint not found")
 	}

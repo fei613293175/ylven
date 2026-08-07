@@ -83,6 +83,7 @@ interface IdentityGateway {
     suspend fun listConversations(bearer: String, cursor: String? = null, includeArchived: Boolean = false): Pair<List<Conversation>, String?> = Pair(emptyList(), null)
     suspend fun searchConversations(bearer: String, query: String): List<Conversation> = emptyList()
     suspend fun createConversation(bearer: String, title: String = ""): Conversation = error("会话功能尚未配置")
+    suspend fun createTemporaryConversation(bearer: String, title: String = ""): Conversation = error("临时会话功能尚未配置")
     suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = error("会话功能尚未配置")
     suspend fun archiveConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
     suspend fun deleteConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
@@ -93,6 +94,9 @@ interface IdentityGateway {
     suspend fun exportConversation(bearer: String, conversationId: String): String = error("导出功能尚未配置")
     suspend fun saveDraft(bearer: String, conversationId: String, body: String): String = error("草稿功能尚未配置")
     suspend fun loadDraft(bearer: String, conversationId: String): String = error("草稿功能尚未配置")
+    suspend fun submitFeedback(bearer: String, messageId: String, value: String): Boolean = false
+    suspend fun regenerate(bearer: String, messageId: String): MessageRun = error("重答功能尚未配置")
+    suspend fun speak(bearer: String, messageId: String): Boolean = false
     suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = emptyList()
 
     suspend fun restore(session: AuthSession): AuthSession = session
@@ -284,6 +288,7 @@ class HttpIdentityGateway(
     }
 
     override suspend fun createConversation(bearer: String, title: String): Conversation = request("POST", "/api/mobile/v1/conversations", JSONObject().put("title", title), bearer).toConversation()
+    override suspend fun createTemporaryConversation(bearer: String, title: String): Conversation = request("POST", "/api/mobile/v1/conversations?temporary=true", JSONObject().put("title", title), bearer).toConversation()
     override suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = request("PATCH", "/api/mobile/v1/conversations/$id", JSONObject().put("title", title), bearer).toConversation()
     override suspend fun archiveConversation(bearer: String, id: String): Conversation = request("POST", "/api/mobile/v1/conversations/$id/archive", bearer = bearer).toConversation()
     override suspend fun deleteConversation(bearer: String, id: String): Conversation = request("DELETE", "/api/mobile/v1/conversations/$id", bearer = bearer).getJSONObject("conversation").toConversation()
@@ -323,6 +328,9 @@ class HttpIdentityGateway(
 
     override suspend fun loadDraft(bearer: String, conversationId: String): String =
         request("GET", "/api/mobile/v1/conversations/$conversationId/draft", bearer = bearer).optString("body")
+    override suspend fun submitFeedback(bearer: String, messageId: String, value: String): Boolean { request("POST", "/api/mobile/v1/messages/$messageId/feedback", JSONObject().put("value", value), bearer); return true }
+    override suspend fun regenerate(bearer: String, messageId: String): MessageRun = request("POST", "/api/mobile/v1/messages/$messageId/regenerate", bearer = bearer).toMessageRun()
+    override suspend fun speak(bearer: String, messageId: String): Boolean { request("POST", "/api/mobile/v1/messages/$messageId/speech", bearer = bearer); return true }
 
     private fun parseConversations(items: org.json.JSONArray): List<Conversation> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toConversation()) }
     private fun parseMessages(items: org.json.JSONArray): List<MessageRecord> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toMessageRecord()) }

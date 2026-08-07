@@ -890,6 +890,21 @@ func (s *Store) CreateConversation(access, title string) (Conversation, error) {
 	return item, s.persistLocked()
 }
 
+func (s *Store) CreateTemporaryConversation(access, title string) (Conversation, error) {
+	item, err := s.CreateConversation(access, title)
+	if err != nil {
+		return Conversation{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	item.Temporary = true
+	item.Status = "temporary"
+	item.UpdatedAt = time.Now().UTC()
+	s.data.Conversations[item.ID] = item
+	s.appendAuditLocked("conversation_temporary_created", item.UserID, item.ID)
+	return item, s.persistLocked()
+}
+
 func (s *Store) ListConversations(access string, cursor string, limit int, includeArchived bool) ([]Conversation, string, error) {
 	if limit <= 0 {
 		limit = 20

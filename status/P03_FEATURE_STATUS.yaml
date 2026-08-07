@@ -156,33 +156,47 @@ features:
   - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::citation cards'
   - 'backend/internal/identity/identity_test.go::TestP03TemporaryConversationAndCitationEndpoint'
 - feature_id: P03-022
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::assistant copy action'
 - feature_id: P03-023
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::POST /api/mobile/v1/messages/{messageId}/exports'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::export action'
 - feature_id: P03-024
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::asynchronous regenerate run'
+  - 'backend/internal/identity/identity_test.go::TestP03W04TemporaryFeedbackExportAndAsyncRegenerate'
 - feature_id: P03-025
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::feedback persistence and audit'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::feedback actions'
 - feature_id: P03-026
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::run lifecycle states'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::generation status display'
 - feature_id: P03-027
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::stable provider error code'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::retry draft action'
 - feature_id: P03-028
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.CreateTemporaryConversation'
+  - 'backend/internal/identity/identity_test.go::TestP03W04TemporaryFeedbackExportAndAsyncRegenerate'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::temporary conversation action'
 - feature_id: P03-029
   status: PLANNED
   reason: ''

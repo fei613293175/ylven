@@ -678,6 +678,39 @@ func TestP03CitationEndpointUsesPersistedAssistantContent(t *testing.T) {
 	}
 }
 
+func TestP03W04TemporaryFeedbackExportAndAsyncRegenerate(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w04@example.com")
+	access := createAuthenticatedTestSession(t, s, "w04@example.com")
+	api := NewAPI(s)
+	temporary := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations?temporary=true", map[string]string{"title": "临时"}, access, "")
+	if temporary.Code != http.StatusCreated || !strings.Contains(temporary.Body.String(), "temporary") {
+		t.Fatalf("temporary=%d %s", temporary.Code, temporary.Body.String())
+	}
+	var conversation Conversation
+	if err := json.Unmarshal(temporary.Body.Bytes(), &conversation); err != nil {
+		t.Fatal(err)
+	}
+	message, err := s.AppendMessage(access, conversation.ID, "assistant", "回答")
+	if err != nil {
+		t.Fatal(err)
+	}
+	feedback := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/feedback", map[string]string{"value": "up"}, access, "")
+	if feedback.Code != http.StatusOK || !strings.Contains(feedback.Body.String(), "saved") {
+		t.Fatalf("feedback=%d %s", feedback.Code, feedback.Body.String())
+	}
+	export := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/exports", nil, access, "")
+	if export.Code != http.StatusCreated || !strings.Contains(export.Body.String(), "markdown") {
+		t.Fatalf("export=%d %s", export.Code, export.Body.String())
+	}
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticChatResponder{value: "重答结果"}
+	regenerated := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/regenerate", nil, access, "")
+	if regenerated.Code != http.StatusAccepted {
+		t.Fatalf("regenerate=%d %s", regenerated.Code, regenerated.Body.String())
+	}
+}
+
 type staticErrorChatResponder struct{}
 
 func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {
