@@ -48,6 +48,24 @@ data class DeviceSession(
     val revoked: Boolean,
 )
 
+data class Conversation(
+    val id: String,
+    val title: String,
+    val status: String,
+    val updatedAt: String,
+    val archivedAt: String? = null,
+)
+
+data class HomeSnapshot(
+    val conversations: List<Conversation>,
+    val modelCatalog: List<String>,
+)
+
+data class MessageRecord(val id: String, val conversationId: String, val role: String, val body: String, val createdAt: String)
+data class MessageRun(val id: String, val conversationId: String, val status: String, val cursor: Long, val assistantMessageId: String? = null)
+data class RunEvent(val id: Long, val type: String, val delta: String)
+data class MessageCitation(val url: String, val title: String)
+
 interface IdentityGateway {
     suspend fun startRegistration(email: String): OtpChallenge
     suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String)
@@ -61,6 +79,25 @@ interface IdentityGateway {
     suspend fun devices(bearer: String): List<DeviceSession>
     suspend fun revokeDevice(bearer: String, sessionId: String)
     suspend fun logout(bearer: String, allDevices: Boolean)
+    suspend fun home(bearer: String): HomeSnapshot = HomeSnapshot(emptyList(), emptyList())
+    suspend fun listConversations(bearer: String, cursor: String? = null, includeArchived: Boolean = false): Pair<List<Conversation>, String?> = Pair(emptyList(), null)
+    suspend fun searchConversations(bearer: String, query: String): List<Conversation> = emptyList()
+    suspend fun createConversation(bearer: String, title: String = ""): Conversation = error("会话功能尚未配置")
+    suspend fun createTemporaryConversation(bearer: String, title: String = ""): Conversation = error("临时会话功能尚未配置")
+    suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = error("会话功能尚未配置")
+    suspend fun archiveConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
+    suspend fun deleteConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
+    suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String = ""): MessageRun = error("消息功能尚未配置")
+    suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> = error("运行状态尚未配置")
+    suspend fun runEvents(bearer: String, runId: String, after: Long = 0): Pair<MessageRun, List<RunEvent>> = error("流式事件尚未配置")
+    suspend fun cancelRun(bearer: String, runId: String): MessageRun = error("取消功能尚未配置")
+    suspend fun exportConversation(bearer: String, conversationId: String): String = error("导出功能尚未配置")
+    suspend fun saveDraft(bearer: String, conversationId: String, body: String): String = error("草稿功能尚未配置")
+    suspend fun loadDraft(bearer: String, conversationId: String): String = error("草稿功能尚未配置")
+    suspend fun submitFeedback(bearer: String, messageId: String, value: String): Boolean = false
+    suspend fun regenerate(bearer: String, messageId: String): MessageRun = error("重答功能尚未配置")
+    suspend fun speak(bearer: String, messageId: String): Boolean = false
+    suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = emptyList()
 
     suspend fun restore(session: AuthSession): AuthSession = session
 
@@ -233,6 +270,72 @@ class HttpIdentityGateway(
         request("POST", if (allDevices) "/api/v1/auth/logout-all" else "/api/v1/auth/logout", JSONObject(), bearer)
     }
 
+    override suspend fun home(bearer: String): HomeSnapshot {
+        val body = request("GET", "/api/mobile/v1/home", bearer = bearer)
+        val items = body.optJSONArray("conversations") ?: org.json.JSONArray()
+        return HomeSnapshot(parseConversations(items), parseModelCatalog(body.optJSONArray("model_catalog")))
+    }
+
+    override suspend fun listConversations(bearer: String, cursor: String?, includeArchived: Boolean): Pair<List<Conversation>, String?> {
+        val suffix = buildString { if (!cursor.isNullOrBlank()) append("&cursor=").append(java.net.URLEncoder.encode(cursor, "UTF-8")); if (includeArchived) append("&include_archived=true") }
+        val body = request("GET", "/api/mobile/v1/conversations?limit=30${suffix}", bearer = bearer)
+        return Pair(parseConversations(body.optJSONArray("items") ?: org.json.JSONArray()), body.optString("next_cursor").ifBlank { null })
+    }
+
+    override suspend fun searchConversations(bearer: String, query: String): List<Conversation> {
+        val body = request("GET", "/api/mobile/v1/conversations/search?q=${java.net.URLEncoder.encode(query, "UTF-8")}", bearer = bearer)
+        return parseConversations(body.optJSONArray("items") ?: org.json.JSONArray())
+    }
+
+    override suspend fun createConversation(bearer: String, title: String): Conversation = request("POST", "/api/mobile/v1/conversations", JSONObject().put("title", title), bearer).toConversation()
+    override suspend fun createTemporaryConversation(bearer: String, title: String): Conversation = request("POST", "/api/mobile/v1/conversations?temporary=true", JSONObject().put("title", title), bearer).toConversation()
+    override suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = request("PATCH", "/api/mobile/v1/conversations/$id", JSONObject().put("title", title), bearer).toConversation()
+    override suspend fun archiveConversation(bearer: String, id: String): Conversation = request("POST", "/api/mobile/v1/conversations/$id/archive", bearer = bearer).toConversation()
+    override suspend fun deleteConversation(bearer: String, id: String): Conversation = request("DELETE", "/api/mobile/v1/conversations/$id", bearer = bearer).getJSONObject("conversation").toConversation()
+
+    override suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String): MessageRun {
+        return request("POST", "/api/mobile/v1/conversations/$conversationId/runs", JSONObject().put("body", body).put("model", model), bearer).toMessageRun()
+    }
+
+    override suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> {
+        val body = request("GET", "/api/mobile/v1/runs/$runId", bearer = bearer)
+        val items = body.optJSONArray("messages") ?: org.json.JSONArray()
+        return Pair(body.getJSONObject("run").toMessageRun(), parseMessages(items))
+    }
+
+    override suspend fun runEvents(bearer: String, runId: String, after: Long): Pair<MessageRun, List<RunEvent>> {
+        val stream = requestSse("/api/mobile/v1/runs/$runId/events?after=$after", bearer)
+        val events = buildList { stream.forEach { item -> add(RunEvent(item.optLong("id"), item.optString("type"), item.optString("delta"))) } }
+        val status = runStatus(bearer, runId).first
+        return Pair(status, events)
+    }
+
+    override suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = withContext(Dispatchers.IO) {
+        val response = request("GET", "/api/mobile/v1/messages/$messageId/citations", bearer = bearer)
+        val values = response.getJSONArray("citations")
+        buildList { for (index in 0 until values.length()) { val item = values.getJSONObject(index); add(MessageCitation(item.optString("url"), item.optString("title"))) } }
+    }
+
+
+    override suspend fun cancelRun(bearer: String, runId: String): MessageRun =
+        request("POST", "/api/mobile/v1/runs/$runId/cancel", bearer = bearer).toMessageRun()
+
+    override suspend fun exportConversation(bearer: String, conversationId: String): String =
+        request("POST", "/api/mobile/v1/conversations/$conversationId/exports", bearer = bearer).optString("content")
+
+    override suspend fun saveDraft(bearer: String, conversationId: String, body: String): String =
+        request("PUT", "/api/mobile/v1/conversations/$conversationId/draft", JSONObject().put("body", body), bearer).optString("body")
+
+    override suspend fun loadDraft(bearer: String, conversationId: String): String =
+        request("GET", "/api/mobile/v1/conversations/$conversationId/draft", bearer = bearer).optString("body")
+    override suspend fun submitFeedback(bearer: String, messageId: String, value: String): Boolean { request("POST", "/api/mobile/v1/messages/$messageId/feedback", JSONObject().put("value", value), bearer); return true }
+    override suspend fun regenerate(bearer: String, messageId: String): MessageRun = request("POST", "/api/mobile/v1/messages/$messageId/regenerate", bearer = bearer).toMessageRun()
+    override suspend fun speak(bearer: String, messageId: String): Boolean { request("POST", "/api/mobile/v1/messages/$messageId/speech", bearer = bearer); return true }
+
+    private fun parseConversations(items: org.json.JSONArray): List<Conversation> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toConversation()) }
+    private fun parseMessages(items: org.json.JSONArray): List<MessageRecord> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toMessageRecord()) }
+    private fun parseModelCatalog(items: org.json.JSONArray?): List<String> = buildList { if (items != null) for (index in 0 until items.length()) items.optJSONObject(index)?.optString("name")?.takeIf { it.isNotBlank() }?.let(::add) }
+
     private suspend fun request(
         method: String,
         path: String,
@@ -295,6 +398,30 @@ class HttpIdentityGateway(
         renewal = getString("refresh_token"),
         deviceId = optString("device_id"),
     )
+
+    private fun JSONObject.toConversation() = Conversation(
+        id = getString("id"),
+        title = optString("title", "新对话"),
+        status = optString("status", "active"),
+        updatedAt = optString("updated_at"),
+        archivedAt = optString("archived_at").ifBlank { null },
+    )
+    private fun JSONObject.toMessageRun() = MessageRun(getString("id"), optString("conversation_id"), optString("status"), optLong("cursor"), optString("assistant_message_id").ifBlank { null })
+    private fun JSONObject.toMessageRecord() = MessageRecord(getString("id"), optString("conversation_id"), optString("role"), optString("body"), optString("created_at"))
+
+    private suspend fun requestSse(path: String, bearer: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"; connectTimeout = 10_000; readTimeout = 20_000
+            setRequestProperty("Accept", "text/event-stream"); setRequestProperty("Cache-Control", "no-cache")
+            setRequestProperty("Authorization", "Bearer $bearer")
+        }
+        try {
+            val status = connection.responseCode
+            val raw = (if (status in 200..299) connection.inputStream else connection.errorStream)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            if (status !in 200..299) throw ApiException(status, "http_$status", "流式连接失败")
+            raw.split("\n\n").mapNotNull { block -> block.lineSequence().firstOrNull { it.startsWith("data:") }?.removePrefix("data:")?.trim()?.takeIf { it.isNotBlank() }?.let(::JSONObject) }
+        } finally { connection.disconnect() }
+    }
 
 }
 

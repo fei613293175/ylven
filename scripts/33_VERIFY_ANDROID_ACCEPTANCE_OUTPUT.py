@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import argparse,csv,hashlib,json
+import subprocess
+import sys
 from pathlib import Path
 from PIL import Image, ImageChops, ImageStat
 
@@ -68,6 +70,12 @@ def main()->int:
    if digest in digests: errors.append(f'P02 runtime screenshots are byte-identical: {digests[digest]}, {name}')
    else: digests[digest]=name
  if errors: print('\n'.join(errors)); return 1
+ content_gate = subprocess.run(
+  [sys.executable, str(ROOT / 'scripts' / '48_VALIDATE_APK_CONTENT.py'), '--apk', str(apks[0]), '--phase', a.phase],
+  capture_output=True, text=True,
+ )
+ if content_gate.returncode:
+  print(content_gate.stdout or content_gate.stderr); return 1
  info={'phase':a.phase,'version':a.version,'commit_sha':a.commit,'apk':apks[0].name,'apk_sha256':sha(apks[0])}
  (root/'CI来源证明.json').write_text(json.dumps(info,indent=2)+'\n',encoding='utf-8'); print('PASS'); return 0
 if __name__=='__main__': raise SystemExit(main())

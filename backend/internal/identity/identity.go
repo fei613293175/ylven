@@ -14,11 +14,28 @@ import (
 	"net/mail"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+var citationURLPattern = regexp.MustCompile(`https?://[^\s)\]}>]+`)
+
+func extractCitations(body string) []map[string]string {
+	seen := map[string]bool{}
+	out := make([]map[string]string, 0)
+	for _, value := range citationURLPattern.FindAllString(body, -1) {
+		value = strings.TrimRight(value, ".,")
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		out = append(out, map[string]string{"url": value, "title": value})
+	}
+	return out
+}
 
 const passwordIterations = 210000
 
@@ -156,6 +173,103 @@ type NotificationDelivery struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// Conversation, Message and HomeConfig are the P03 conversation-domain
+// records. They intentionally live behind the authenticated Store boundary so
+// callers can never address another user's records by guessing an ID.
+type Conversation struct {
+	ID         string     `json:"id"`
+	UserID     string     `json:"user_id"`
+	Title      string     `json:"title"`
+	Status     string     `json:"status"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	ArchivedAt *time.Time `json:"archived_at,omitempty"`
+	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
+	Temporary  bool       `json:"temporary,omitempty"`
+}
+
+type Message struct {
+	ID             string    `json:"id"`
+	ConversationID string    `json:"conversation_id"`
+	UserID         string    `json:"user_id"`
+	Role           string    `json:"role"`
+	Body           string    `json:"body"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type ModelCatalogEntry struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+
+type HomeConfig struct {
+	Announcement       string    `json:"announcement"`
+	FeaturedProjectIDs []string  `json:"featured_project_ids"`
+	Version            int64     `json:"version"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+type MessageRun struct {
+	ID                 string     `json:"id"`
+	ConversationID     string     `json:"conversation_id"`
+	UserID             string     `json:"user_id"`
+	UserMessageID      string     `json:"user_message_id"`
+	AssistantMessageID string     `json:"assistant_message_id"`
+	Model              string     `json:"model"`
+	Status             string     `json:"status"`
+	ErrorCode          string     `json:"error_code,omitempty"`
+	Provider           string     `json:"provider,omitempty"`
+	StartedAt          time.Time  `json:"started_at"`
+	CompletedAt        *time.Time `json:"completed_at,omitempty"`
+	LatencyMs          int64      `json:"latency_ms,omitempty"`
+	Cursor             int64      `json:"cursor"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+}
+
+type RunEvent struct {
+	ID        int64     `json:"id"`
+	RunID     string    `json:"run_id"`
+	Type      string    `json:"type"`
+	Delta     string    `json:"delta,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ExportJob struct {
+	ID             string    `json:"id"`
+	ConversationID string    `json:"conversation_id"`
+	MessageID      string    `json:"message_id,omitempty"`
+	UserID         string    `json:"user_id"`
+	Format         string    `json:"format"`
+	Status         string    `json:"status"`
+	Content        string    `json:"content,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Draft struct {
+	ConversationID string    `json:"conversation_id"`
+	UserID         string    `json:"user_id"`
+	Body           string    `json:"body"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type MessageFeedback struct {
+	MessageID string    `json:"message_id"`
+	UserID    string    `json:"user_id"`
+	Value     string    `json:"value"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type SpeechJob struct {
+	ID        string    `json:"id"`
+	MessageID string    `json:"message_id"`
+	UserID    string    `json:"user_id"`
+	Status    string    `json:"status"`
+	Provider  string    `json:"provider"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type state struct {
 	Challenges             map[string]Challenge         `json:"challenges"`
 	OTPs                   map[string]OTP               `json:"otps"`
@@ -171,6 +285,17 @@ type state struct {
 	EmailTemplates         map[string]EmailTemplate     `json:"email_templates"`
 	NotificationDeliveries []NotificationDelivery       `json:"notification_deliveries"`
 	Workspaces             map[string]Workspace         `json:"workspaces"`
+	Conversations          map[string]Conversation      `json:"conversations"`
+	Messages               map[string]Message           `json:"messages"`
+	ModelCatalog           []ModelCatalogEntry          `json:"model_catalog"`
+	HomeConfig             HomeConfig                   `json:"home_config"`
+	Runs                   map[string]MessageRun        `json:"runs"`
+	RunEvents              map[string][]RunEvent        `json:"run_events"`
+	Exports                map[string]ExportJob         `json:"exports"`
+	Drafts                 map[string]Draft             `json:"drafts"`
+	Metrics                []map[string]any             `json:"chat_metrics"`
+	Feedback               map[string]MessageFeedback   `json:"message_feedback"`
+	SpeechJobs             map[string]SpeechJob         `json:"speech_jobs"`
 }
 
 type Store struct {
@@ -180,7 +305,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, Messages: map[string]Message{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
 	if path == "" {
 		return s, nil
 	}
@@ -232,6 +357,18 @@ func NewStore(path string) (*Store, error) {
 	}
 	if s.data.Workspaces == nil {
 		s.data.Workspaces = map[string]Workspace{}
+	}
+	if s.data.Conversations == nil {
+		s.data.Conversations = map[string]Conversation{}
+	}
+	if s.data.Messages == nil {
+		s.data.Messages = map[string]Message{}
+	}
+	if s.data.ModelCatalog == nil {
+		s.data.ModelCatalog = []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}
+	}
+	if s.data.HomeConfig.UpdatedAt.IsZero() {
+		s.data.HomeConfig = HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}
 	}
 	return s, nil
 }
@@ -723,6 +860,618 @@ func (s *Store) CurrentAccount(access string) (UserView, SessionView, error) {
 		return UserView{}, SessionView{}, errors.New("session_invalid")
 	}
 	return userView(user), sessionView(item), nil
+}
+
+func (s *Store) authenticatedUserLocked(access string) (User, Session, error) {
+	item, ok := s.sessionByAccessLocked(access)
+	if !ok {
+		return User{}, Session{}, errors.New("session_invalid")
+	}
+	for _, user := range s.data.Users {
+		if user.ID == item.UserID && user.Status == "active" {
+			return user, item, nil
+		}
+	}
+	return User{}, Session{}, errors.New("session_invalid")
+}
+
+func (s *Store) CreateConversation(access, title string) (Conversation, error) {
+	title = strings.TrimSpace(title)
+	if len([]rune(title)) > 160 {
+		return Conversation{}, errors.New("title_too_long")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Conversation{}, err
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return Conversation{}, err
+	}
+	now := time.Now().UTC()
+	if title == "" {
+		title = "新对话"
+	}
+	item := Conversation{ID: id, UserID: user.ID, Title: title, Status: "active", CreatedAt: now, UpdatedAt: now}
+	s.data.Conversations[id] = item
+	s.appendAuditLocked("conversation_created", user.Email, id)
+	return item, s.persistLocked()
+}
+
+func (s *Store) CreateTemporaryConversation(access, title string) (Conversation, error) {
+	item, err := s.CreateConversation(access, title)
+	if err != nil {
+		return Conversation{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	item.Temporary = true
+	item.Status = "temporary"
+	item.UpdatedAt = time.Now().UTC()
+	s.data.Conversations[item.ID] = item
+	s.appendAuditLocked("conversation_temporary_created", item.UserID, item.ID)
+	return item, s.persistLocked()
+}
+
+func (s *Store) ListConversations(access string, cursor string, limit int, includeArchived bool) ([]Conversation, string, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return nil, "", err
+	}
+	items := make([]Conversation, 0)
+	for _, item := range s.data.Conversations {
+		if item.UserID != user.ID || item.DeletedAt != nil || (!includeArchived && item.ArchivedAt != nil) {
+			continue
+		}
+		items = append(items, item)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].UpdatedAt.Equal(items[j].UpdatedAt) {
+			return items[i].ID < items[j].ID
+		}
+		return items[i].UpdatedAt.After(items[j].UpdatedAt)
+	})
+	start := 0
+	if cursor != "" {
+		for i, item := range items {
+			if item.ID == cursor {
+				start = i + 1
+				break
+			}
+		}
+	}
+	if start > len(items) {
+		start = len(items)
+	}
+	end := start + limit
+	if end > len(items) {
+		end = len(items)
+	}
+	next := ""
+	if end < len(items) {
+		next = items[end-1].ID
+	}
+	return items[start:end], next, nil
+}
+
+func (s *Store) SearchConversations(access, query string, limit int) ([]Conversation, error) {
+	query = strings.ToLower(strings.TrimSpace(query))
+	if query == "" {
+		return nil, errors.New("query_required")
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return nil, err
+	}
+	matched := make([]Conversation, 0)
+	for _, item := range s.data.Conversations {
+		if item.UserID != user.ID || item.DeletedAt != nil {
+			continue
+		}
+		hit := strings.Contains(strings.ToLower(item.Title), query)
+		if !hit {
+			for _, m := range s.data.Messages {
+				if m.ConversationID == item.ID && strings.Contains(strings.ToLower(m.Body), query) {
+					hit = true
+					break
+				}
+			}
+		}
+		if hit {
+			matched = append(matched, item)
+		}
+	}
+	sort.Slice(matched, func(i, j int) bool { return matched[i].UpdatedAt.After(matched[j].UpdatedAt) })
+	if len(matched) > limit {
+		matched = matched[:limit]
+	}
+	return matched, nil
+}
+
+// AppendMessage persists a user or assistant message after checking that the
+// caller owns the conversation. It is the storage boundary used by the chat
+// runtime and makes message-body search operate on real persisted records.
+func (s *Store) AppendMessage(access, conversationID, role, body string) (Message, error) {
+	role = strings.TrimSpace(strings.ToLower(role))
+	body = strings.TrimSpace(body)
+	if role != "user" && role != "assistant" {
+		return Message{}, errors.New("message_role_invalid")
+	}
+	if body == "" {
+		return Message{}, errors.New("message_body_required")
+	}
+	if len([]rune(body)) > 200000 {
+		return Message{}, errors.New("message_body_too_long")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Message{}, err
+	}
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return Message{}, errors.New("conversation_not_found")
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return Message{}, err
+	}
+	now := time.Now().UTC()
+	message := Message{ID: id, ConversationID: conversationID, UserID: user.ID, Role: role, Body: body, CreatedAt: now}
+	s.data.Messages[id] = message
+	conversation.UpdatedAt = now
+	s.data.Conversations[conversationID] = conversation
+	s.appendAuditLocked("message_persisted:"+role, user.Email, id)
+	return message, s.persistLocked()
+}
+
+func (s *Store) StartRun(access, conversationID, body, model string) (MessageRun, error) {
+	model = strings.TrimSpace(model)
+	if model == "" {
+		model = "ylven-default"
+	}
+	userMessage, err := s.AppendMessage(access, conversationID, "user", body)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	runID, err := randomToken(16)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	now := time.Now().UTC()
+	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
+	s.data.Runs[runID] = run
+	s.data.RunEvents[runID] = []RunEvent{}
+	s.appendAuditLocked("message_run_started", user.Email, runID)
+	return run, s.persistLocked()
+}
+
+func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, error) {
+	assistantBody = strings.TrimSpace(assistantBody)
+	if assistantBody == "" {
+		return MessageRun{}, errors.New("chat_provider_empty_response")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, errors.New("run_not_found")
+	}
+	if run.Status == "cancelled" {
+		return run, errors.New("run_cancelled")
+	}
+	if run.Status != "streaming" {
+		return run, errors.New("run_not_streaming")
+	}
+	now := time.Now().UTC()
+	assistantID, err := randomToken(16)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, Role: "assistant", Body: assistantBody, CreatedAt: now}
+	s.data.Messages[assistantID] = assistant
+	run.AssistantMessageID = assistantID
+	events := []RunEvent{}
+	for i, runeValue := range []rune(assistantBody) {
+		eventID := int64(i + 1)
+		events = append(events, RunEvent{ID: eventID, RunID: runID, Type: "delta", Delta: string(runeValue), CreatedAt: now})
+	}
+	events = append(events, RunEvent{ID: int64(len(events) + 1), RunID: runID, Type: "completed", CreatedAt: now})
+	run.Cursor = int64(len(events))
+	run.Status = "completed"
+	run.UpdatedAt = time.Now().UTC()
+	completedAt := run.UpdatedAt
+	run.CompletedAt = &completedAt
+	run.LatencyMs = completedAt.Sub(run.StartedAt).Milliseconds()
+	s.data.Runs[runID] = run
+	s.data.RunEvents[runID] = events
+	s.appendAuditLocked("message_run_completed", user.Email, runID)
+	return run, s.persistLocked()
+}
+
+func (s *Store) FailRun(access, runID, code string) (MessageRun, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, errors.New("run_not_found")
+	}
+	if run.Status == "cancelled" {
+		return run, nil
+	}
+	_ = code // provider details are intentionally not persisted or exposed
+	run.Status = "failed"
+	run.ErrorCode = "chat_provider_error"
+	run.UpdatedAt = time.Now().UTC()
+	run.Cursor++
+	s.data.Runs[runID] = run
+	s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "failed", CreatedAt: run.UpdatedAt})
+	s.appendAuditLocked("message_run_failed", user.Email, runID)
+	return run, s.persistLocked()
+}
+
+func (s *Store) CreateRun(access, conversationID, body, model, assistantBody string) (MessageRun, error) {
+	run, err := s.StartRun(access, conversationID, body, model)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	return s.CompleteRun(access, run.ID, assistantBody)
+}
+
+func (s *Store) Run(access, runID string) (MessageRun, []Message, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, nil, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, nil, errors.New("run_not_found")
+	}
+	messages := []Message{}
+	if m, ok := s.data.Messages[run.UserMessageID]; ok {
+		messages = append(messages, m)
+	}
+	if m, ok := s.data.Messages[run.AssistantMessageID]; ok {
+		messages = append(messages, m)
+	}
+	return run, messages, nil
+}
+
+func (s *Store) Events(access, runID string, after int64) (MessageRun, []RunEvent, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, nil, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, nil, errors.New("run_not_found")
+	}
+	events := []RunEvent{}
+	for _, event := range s.data.RunEvents[runID] {
+		if event.ID > after {
+			events = append(events, event)
+		}
+	}
+	return run, events, nil
+}
+
+func (s *Store) CancelRun(access, runID string) (MessageRun, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, errors.New("run_not_found")
+	}
+	if run.Status == "streaming" {
+		run.Status = "cancelled"
+		run.UpdatedAt = time.Now().UTC()
+		run.Cursor++
+		s.data.Runs[runID] = run
+		s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "cancelled", CreatedAt: run.UpdatedAt})
+		_ = s.persistLocked()
+	}
+	return run, nil
+}
+
+func (s *Store) SaveDraft(access, conversationID, body string) (Draft, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Draft{}, err
+	}
+	c, ok := s.data.Conversations[conversationID]
+	if !ok || c.UserID != user.ID || c.DeletedAt != nil {
+		return Draft{}, errors.New("conversation_not_found")
+	}
+	draft := Draft{ConversationID: conversationID, UserID: user.ID, Body: body, UpdatedAt: time.Now().UTC()}
+	s.data.Drafts[conversationID] = draft
+	return draft, s.persistLocked()
+}
+func (s *Store) GetDraft(access, conversationID string) (Draft, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Draft{}, err
+	}
+	d, ok := s.data.Drafts[conversationID]
+	if !ok || d.UserID != user.ID {
+		return Draft{}, errors.New("draft_not_found")
+	}
+	return d, nil
+}
+func (s *Store) ExportConversation(access, conversationID, messageID string) (ExportJob, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ExportJob{}, err
+	}
+	c, ok := s.data.Conversations[conversationID]
+	if !ok || c.UserID != user.ID || c.DeletedAt != nil {
+		return ExportJob{}, errors.New("conversation_not_found")
+	}
+	content := "# " + c.Title + "\n\n"
+	for _, m := range s.data.Messages {
+		if m.ConversationID == conversationID && (messageID == "" || m.ID == messageID) {
+			content += "## " + m.Role + "\n\n" + m.Body + "\n\n"
+		}
+	}
+	id, _ := randomToken(16)
+	job := ExportJob{ID: id, ConversationID: conversationID, MessageID: messageID, UserID: user.ID, Format: "markdown", Status: "ready", Content: content, CreatedAt: time.Now().UTC()}
+	s.data.Exports[id] = job
+	s.appendAuditLocked("conversation_export_created", user.Email, id)
+	return job, s.persistLocked()
+}
+
+func (s *Store) RecordMetric(name string, value float64, errCode string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data.Metrics = append(s.data.Metrics, map[string]any{"name": name, "value": value, "error_code": errCode, "created_at": time.Now().UTC()})
+	if len(s.data.Metrics) > 1000 {
+		s.data.Metrics = s.data.Metrics[len(s.data.Metrics)-1000:]
+	}
+	_ = s.persistLocked()
+}
+func (s *Store) MetricsSnapshot() []map[string]any {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]map[string]any(nil), s.data.Metrics...)
+}
+
+func (s *Store) UpdateConversation(access, id, title string) (Conversation, error) {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return Conversation{}, errors.New("title_required")
+	}
+	if len([]rune(title)) > 160 {
+		return Conversation{}, errors.New("title_too_long")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Conversation{}, err
+	}
+	item, ok := s.data.Conversations[id]
+	if !ok || item.UserID != user.ID || item.DeletedAt != nil {
+		return Conversation{}, errors.New("conversation_not_found")
+	}
+	item.Title = title
+	item.UpdatedAt = time.Now().UTC()
+	s.data.Conversations[id] = item
+	s.appendAuditLocked("conversation_renamed", user.Email, id)
+	return item, s.persistLocked()
+}
+
+func (s *Store) ArchiveConversation(access, id string) (Conversation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Conversation{}, err
+	}
+	item, ok := s.data.Conversations[id]
+	if !ok || item.UserID != user.ID || item.DeletedAt != nil {
+		return Conversation{}, errors.New("conversation_not_found")
+	}
+	now := time.Now().UTC()
+	item.ArchivedAt = &now
+	item.Status = "archived"
+	item.UpdatedAt = now
+	s.data.Conversations[id] = item
+	s.appendAuditLocked("conversation_archived", user.Email, id)
+	return item, s.persistLocked()
+}
+
+func (s *Store) DeleteConversation(access, id string) (Conversation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Conversation{}, err
+	}
+	item, ok := s.data.Conversations[id]
+	if !ok || item.UserID != user.ID || item.DeletedAt != nil {
+		return Conversation{}, errors.New("conversation_not_found")
+	}
+	now := time.Now().UTC().Add(30 * 24 * time.Hour)
+	item.DeletedAt = &now
+	item.Status = "recycle_pending"
+	item.UpdatedAt = time.Now().UTC()
+	s.data.Conversations[id] = item
+	s.appendAuditLocked("conversation_recycle_scheduled", user.Email, id)
+	return item, s.persistLocked()
+}
+
+func (s *Store) Home(access string) (map[string]any, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return nil, err
+	}
+	conversations := make([]Conversation, 0)
+	for _, item := range s.data.Conversations {
+		if item.UserID == user.ID && item.DeletedAt == nil && item.ArchivedAt == nil {
+			conversations = append(conversations, item)
+		}
+	}
+	sort.Slice(conversations, func(i, j int) bool { return conversations[i].UpdatedAt.After(conversations[j].UpdatedAt) })
+	if len(conversations) > 5 {
+		conversations = conversations[:5]
+	}
+	return map[string]any{"conversations": conversations, "projects": []any{}, "model_catalog": s.data.ModelCatalog, "config": s.data.HomeConfig}, nil
+}
+
+func (s *Store) ListAllConversations() []Conversation {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]Conversation, 0, len(s.data.Conversations))
+	for _, item := range s.data.Conversations {
+		out = append(out, item)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].UpdatedAt.After(out[j].UpdatedAt) })
+	return out
+}
+func (s *Store) ConversationDetail(id string) (Conversation, []Message, []MessageRun, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c, ok := s.data.Conversations[id]
+	if !ok {
+		return Conversation{}, nil, nil, false
+	}
+	messages := []Message{}
+	for _, m := range s.data.Messages {
+		if m.ConversationID == id {
+			messages = append(messages, m)
+		}
+	}
+	runs := []MessageRun{}
+	for _, run := range s.data.Runs {
+		if run.ConversationID == id {
+			runs = append(runs, run)
+		}
+	}
+	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
+	sort.Slice(runs, func(i, j int) bool { return runs[i].CreatedAt.Before(runs[j].CreatedAt) })
+	return c, messages, runs, true
+}
+func (s *Store) MessageOwned(access, messageID string) (Message, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Message{}, err
+	}
+	m, ok := s.data.Messages[messageID]
+	if !ok || m.UserID != user.ID {
+		return Message{}, errors.New("message_not_found")
+	}
+	return m, nil
+}
+
+func (s *Store) CreateSpeechJob(access, messageID string) (SpeechJob, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return SpeechJob{}, err
+	}
+	message, ok := s.data.Messages[messageID]
+	if !ok || message.UserID != user.ID || message.Role != "assistant" {
+		return SpeechJob{}, errors.New("message_not_found")
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return SpeechJob{}, err
+	}
+	if s.data.SpeechJobs == nil {
+		s.data.SpeechJobs = map[string]SpeechJob{}
+	}
+	job := SpeechJob{ID: id, MessageID: messageID, UserID: user.ID, Status: "accepted", Provider: "android_system_tts", CreatedAt: time.Now().UTC()}
+	s.data.SpeechJobs[id] = job
+	s.appendAuditLocked("speech_requested", user.Email, id)
+	return job, s.persistLocked()
+}
+
+func (s *Store) RunForMessage(access, messageID string) (MessageRun, Message, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, Message{}, err
+	}
+	m, ok := s.data.Messages[messageID]
+	if !ok || m.UserID != user.ID {
+		return MessageRun{}, Message{}, errors.New("message_not_found")
+	}
+	for _, run := range s.data.Runs {
+		if run.AssistantMessageID == messageID || run.UserMessageID == messageID {
+			return run, m, nil
+		}
+	}
+	return MessageRun{}, m, errors.New("run_not_found")
+}
+
+func (s *Store) UpdateHomeConfig(value HomeConfig, actorID string) (HomeConfig, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(value.Announcement) > 500 {
+		return HomeConfig{}, errors.New("announcement_too_long")
+	}
+	value.Version = s.data.HomeConfig.Version + 1
+	value.UpdatedAt = time.Now().UTC()
+	s.data.HomeConfig = value
+	s.appendAuditLocked("home_config_updated", "", actorID)
+	return value, s.persistLocked()
+}
+func (s *Store) HomeConfigSnapshot() HomeConfig {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.data.HomeConfig
 }
 func (s *Store) RevokeSession(access, targetID string) error {
 	s.mu.Lock()

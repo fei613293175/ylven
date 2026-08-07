@@ -1,5 +1,9 @@
 package cc.orbexa.ylven.ui
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +29,12 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,9 +59,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
@@ -59,11 +74,16 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cc.orbexa.ylven.identity.AuthSession
+import cc.orbexa.ylven.identity.Conversation
+import cc.orbexa.ylven.identity.HomeSnapshot
 import cc.orbexa.ylven.identity.DeviceSession
 import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.OtpChallenge
 import cc.orbexa.ylven.identity.PasswordPolicy
 import cc.orbexa.ylven.identity.SecurityChallenge
+import cc.orbexa.ylven.identity.MessageRecord
+import cc.orbexa.ylven.identity.MessageCitation
+import cc.orbexa.ylven.identity.ConversationCache
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import cc.orbexa.ylven.ui.theme.YlvenLightColors
 import kotlinx.coroutines.launch
@@ -78,6 +98,8 @@ private enum class IdentityScreen {
     REGISTER_OTP,
     REGISTERED,
     ACCOUNT,
+    HOME,
+    CHAT,
 }
 
 @Composable
@@ -88,6 +110,7 @@ fun YlvenApp(
 ) {
     var screen by rememberSaveable { mutableStateOf(if (initialSession == null) IdentityScreen.LOGIN else IdentityScreen.RESTORING) }
     var session by remember { mutableStateOf(initialSession) }
+    var activeConversation by remember { mutableStateOf<Conversation?>(null) }
     var challenge by remember { mutableStateOf<OtpChallenge?>(null) }
     var securityChallenge by remember { mutableStateOf<SecurityChallenge?>(null) }
     var pendingPassword by rememberSaveable { mutableStateOf("") }
@@ -103,13 +126,13 @@ fun YlvenApp(
         val local = initialSession ?: return@LaunchedEffect
         try {
             session = gateway.restore(local)
-            screen = IdentityScreen.ACCOUNT
+            screen = IdentityScreen.HOME
         } catch (first: Exception) {
             runCatching { gateway.refresh(local) }
                 .onSuccess { refreshed ->
                     session = refreshed
                     onSessionChange(refreshed)
-                    screen = IdentityScreen.ACCOUNT
+                    screen = IdentityScreen.HOME
                 }
                 .onFailure {
                     session = null
@@ -212,12 +235,12 @@ fun YlvenApp(
                                 session = registeredSession
                                 onSessionChange(registeredSession)
                                 gateway.initializeWorkspace(registeredSession)
-                                screen = IdentityScreen.ACCOUNT
+                                screen = IdentityScreen.HOME
                             } else screen = IdentityScreen.REGISTERED
                         } else {
                             session = gateway.finishLogin(active, code)
                             onSessionChange(session)
-                            screen = IdentityScreen.ACCOUNT
+                            screen = IdentityScreen.HOME
                         }
                     }
                 },
@@ -229,6 +252,8 @@ fun YlvenApp(
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
             )
+            IdentityScreen.HOME -> HomePage(gateway, requireNotNull(session), onSessionChange) { conversation -> activeConversation = conversation; screen = IdentityScreen.CHAT }
+            IdentityScreen.CHAT -> ChatPage(gateway, requireNotNull(session), requireNotNull(activeConversation), onBack = { screen = IdentityScreen.HOME })
         }
 
         if (securityAction != null) {
@@ -500,6 +525,174 @@ private fun OtpPage(
             PrimaryAction(if (registering) "确认并创建账户" else "验证并登录", loading, "p01-otp-submit") {
                 if (code.length == 6) onSubmit(code)
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionChange: (AuthSession?) -> Unit, onOpenConversation: (Conversation) -> Unit) {
+    var snapshot by remember { mutableStateOf<HomeSnapshot?>(null) }
+    var conversations by remember { mutableStateOf<List<Conversation>>(emptyList()) }
+    var cursor by remember { mutableStateOf<String?>(null) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var loading by remember { mutableStateOf(true) }
+    var drawerOpen by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var renameTarget by remember { mutableStateOf<Conversation?>(null) }
+    var renameText by rememberSaveable { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    fun loadHome() {
+        scope.launch {
+            loading = true; error = null
+            try { snapshot = gateway.home(session.bearer); conversations = snapshot?.conversations.orEmpty() }
+            catch (e: Exception) { error = e.message ?: "首页加载失败，请重试" }
+            finally { loading = false }
+        }
+    }
+    fun loadDrawer(reset: Boolean = false) {
+        scope.launch {
+            loading = true; error = null
+            try {
+                val result = gateway.listConversations(session.bearer, if (reset) null else cursor)
+                conversations = if (reset) result.first else conversations + result.first
+                cursor = result.second
+            } catch (e: Exception) { error = e.message ?: "会话历史加载失败，请重试" }
+            finally { loading = false }
+        }
+    }
+    LaunchedEffect(session.bearer) { loadHome() }
+    LaunchedEffect(query, drawerOpen) {
+        if (drawerOpen && query.isNotBlank()) {
+            try { conversations = gateway.searchConversations(session.bearer, query) }
+            catch (e: Exception) { error = e.message ?: "搜索失败" }
+        }
+    }
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("YLVEN") }, actions = {
+            IconButton(onClick = { drawerOpen = true; loadDrawer(true) }) { Icon(Icons.Default.Search, "会话") }
+            IconButton(onClick = { loadHome() }) { Icon(Icons.Default.Refresh, "刷新") }
+        })
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=16.dp), verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { Card(Modifier.fillMaxWidth(), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primaryContainer)){ Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ Text("今天想解决什么？",style=MaterialTheme.typography.titleLarge); Text("你的会话和模型已准备好",color=MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick={ scope.launch { loading=true; try { val item=gateway.createConversation(session.bearer); conversations=listOf(item)+conversations } catch(e:Exception){error=e.message?:"无法新建会话"} finally{loading=false} } },modifier=Modifier.fillMaxWidth().height(52.dp)){Icon(Icons.Default.Add,null);Spacer(Modifier.size(8.dp));Text("新建对话")}; OutlinedButton(onClick={ scope.launch { loading=true; try { val item=gateway.createTemporaryConversation(session.bearer); conversations=listOf(item)+conversations } catch(e:Exception){error=e.message?:"无法创建临时会话"} finally{loading=false} } },modifier=Modifier.fillMaxWidth().height(52.dp)){Text("临时对话（不长期保留）")}} } }
+            snapshot?.modelCatalog?.takeIf{it.isNotEmpty()}?.let { models -> item { Text("可用模型：${models.joinToString("、")}",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant) } }
+            item { Text("最近会话",style=MaterialTheme.typography.titleLarge) }
+            if(loading && conversations.isEmpty()) item { CircularProgressIndicator(Modifier.testTag("yl-a-018-loading")) }
+            error?.let { item { InlineError(it) } }
+            items(conversations,key={it.id}) { item -> Card(onClick = { onOpenConversation(item) }, modifier = Modifier.fillMaxWidth(), border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline)){ Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){ Column(Modifier.weight(1f)){Text(item.title,style=MaterialTheme.typography.titleMedium);Text(item.status,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)} IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")} } } }
+            item { OutlinedButton(onClick={drawerOpen=true;loadDrawer(true)},modifier=Modifier.fillMaxWidth().height(52.dp)){Text("查看全部会话") } }
+        }
+    }
+    if(drawerOpen) AlertDialog(onDismissRequest={drawerOpen=false},title={Text("会话抽屉")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){OutlinedTextField(query,{query=it},label={Text("搜索会话")},singleLine=true,modifier=Modifier.fillMaxWidth()); conversations.forEach{item->Row(verticalAlignment=Alignment.CenterVertically){Text(item.title,Modifier.weight(1f));IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")};IconButton(onClick={ scope.launch { try { gateway.archiveConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "归档失败" } } }){Icon(Icons.Default.Archive,"归档")};IconButton(onClick={ scope.launch { try { gateway.deleteConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "删除失败" } } }){Icon(Icons.Default.Delete,"删除")}}}; if(cursor!=null)TextButton(onClick={loadDrawer()}){Text("加载更多")} }},confirmButton={TextButton(onClick={drawerOpen=false}){Text("关闭")}})
+    renameTarget?.let { target -> AlertDialog(onDismissRequest={renameTarget=null},title={Text("重命名会话")},text={OutlinedTextField(renameText,{renameText=it},singleLine=true,label={Text("标题")})},confirmButton={TextButton(onClick={ scope.launch { try { val updated=gateway.renameConversation(session.bearer,target.id,renameText); conversations=conversations.map{if(it.id==updated.id)updated else it}; renameTarget=null } catch(e:Exception){ error=e.message ?: "重命名失败" } } }){Text("保存")} },dismissButton={TextButton(onClick={renameTarget=null}){Text("取消")}}) }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversation: Conversation, onBack: () -> Unit) {
+    var draft by rememberSaveable(conversation.id) { mutableStateOf("") }
+    var messages by remember { mutableStateOf<List<cc.orbexa.ylven.identity.MessageRecord>>(emptyList()) }
+    var run by remember { mutableStateOf<cc.orbexa.ylven.identity.MessageRun?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var sending by remember { mutableStateOf(false) }
+    var citations by remember { mutableStateOf<Map<String, List<MessageCitation>>>(emptyMap()) }
+    var retryBody by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    val cache = remember { ConversationCache(context) }
+    val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { draft = it }
+    }
+    val tts = remember(context) { TextToSpeech(context, null) }
+    androidx.compose.runtime.DisposableEffect(tts) { onDispose { tts.shutdown() } }
+    LaunchedEffect(conversation.id) { messages = cache.load(conversation.id); runCatching { val snapshot = gateway.loadDraft(session.bearer, conversation.id); draft = snapshot } }
+    LaunchedEffect(messages) {
+        messages.filter { it.role == "assistant" && !citations.containsKey(it.id) }.forEach { message ->
+            runCatching { gateway.messageCitations(session.bearer, message.id) }.getOrNull()?.let { loaded -> citations = citations + (message.id to loaded) }
+        }
+    }
+
+    fun refreshRun(runId: String) {
+        scope.launch {
+            try {
+                val snapshot = gateway.runStatus(session.bearer, runId)
+                run = snapshot.first
+                messages = snapshot.second
+                cache.save(conversation.id, messages)
+            } catch (reason: Exception) { error = reason.message ?: "无法恢复生成状态" }
+        }
+    }
+
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text(conversation.title) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } },
+            actions = {
+                run?.takeIf { it.status == "streaming" }?.let { active ->
+                    TextButton(onClick = { scope.launch { run = gateway.cancelRun(session.bearer, active.id) } }) { Text("停止") }
+                }
+            },
+        )
+    }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(messages, key = { it.id }) { message ->
+                    Card(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(if (message.role == "user") "你" else "AI", style = MaterialTheme.typography.labelLarge)
+                            MessageContent(message.body, Modifier.fillMaxWidth()) { code -> clipboard.setText(AnnotatedString(code)) }
+                            if (message.role == "assistant") {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    TextButton(onClick = { clipboard.setText(AnnotatedString(message.body)) }) { Text("复制") }
+                                    TextButton(onClick = { scope.launch { try { clipboard.setText(AnnotatedString(gateway.exportConversation(session.bearer, conversation.id))) } catch (reason: Exception) { error = reason.message ?: "导出失败" } } }) { Text("导出") }
+                                    TextButton(onClick = { scope.launch { try { gateway.submitFeedback(session.bearer, message.id, "up") } catch (reason: Exception) { error = reason.message ?: "反馈失败" } } }) { Text("赞") }
+                                    TextButton(onClick = { scope.launch { try { gateway.submitFeedback(session.bearer, message.id, "down") } catch (reason: Exception) { error = reason.message ?: "反馈失败" } } }) { Text("踩") }
+                                    TextButton(onClick = { scope.launch { try { val regenerated = gateway.regenerate(session.bearer, message.id); run = regenerated; refreshRun(regenerated.id) } catch (reason: Exception) { error = reason.message ?: "重答失败" } } }) { Text("重答") }
+                                    TextButton(onClick = { scope.launch { try { gateway.speak(session.bearer, message.id); tts.speak(message.body, TextToSpeech.QUEUE_FLUSH, null, message.id) } catch (reason: Exception) { error = reason.message ?: "朗读失败" } } }) { Text("朗读") }
+                                }
+                                citations[message.id]?.forEach { citation -> Text("来源：${citation.title}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            }
+                        }
+                    }
+                }
+                if (sending) item { Text("正在连接并接收回答…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                run?.let { item { Text("生成状态：${it.status}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+                error?.let { message -> item { InlineError(message) } }
+                retryBody?.let { body -> item { TextButton(onClick = { draft = body; retryBody = null }) { Text("将失败内容放回输入框") } } }
+            }
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                label = { Text("输入消息") },
+                minLines = 1,
+                maxLines = 6,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            )
+            OutlinedButton(onClick = { voiceLauncher.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply { putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM) }) }, modifier = Modifier.fillMaxWidth().height(52.dp)) { Icon(Icons.Default.Mic, null); Spacer(Modifier.size(8.dp)); Text("语音输入") }
+            Button(
+                onClick = {
+                    val body = draft.trim()
+                    if (body.isEmpty()) return@Button
+                    scope.launch {
+                        sending = true; error = null
+                        messages = messages + MessageRecord("optimistic-${System.currentTimeMillis()}", conversation.id, "user", body, "")
+                        try {
+                            val created = gateway.sendMessage(session.bearer, conversation.id, body)
+                            draft = ""; run = created
+                            val stream = gateway.runEvents(session.bearer, created.id)
+                            run = stream.first
+                            refreshRun(created.id)
+                            cache.save(conversation.id, messages)
+                        } catch (reason: Exception) { error = reason.message ?: "发送失败，请重试"; retryBody = body }
+                        finally { runCatching { gateway.saveDraft(session.bearer, conversation.id, draft) }; sending = false }
+                    }
+                },
+                enabled = !sending && draft.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) { Text(if (sending) "发送中…" else "发送") }
         }
     }
 }

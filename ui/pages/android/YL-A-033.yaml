@@ -32,8 +32,7 @@ visual_identity:
   - Claude Opus
   - Grok
   screen_signature: 7d2f682246da6b41
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -49,8 +48,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -62,7 +60,9 @@ states:
   mockup_id: YL-A-033-S01_POPULATED
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S01_POPULATED.png
   mockup_status: APPROVED
-  mockup_sha256: 7a02bb599961f0a4ea1b2da2535d0095bde8c2a318e3821c44e6e9f991888bd7
+  mockup_sha256: 54953b65f4585ad703860e45a3b29721f394d14cded10a3b24bc62d36113dc26
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-033-S02_FILTER_ACTIVE
   code: FILTER_ACTIVE
   name: 筛选生效
@@ -71,7 +71,9 @@ states:
   mockup_id: YL-A-033-S02_FILTER_ACTIVE
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S02_FILTER_ACTIVE.png
   mockup_status: APPROVED
-  mockup_sha256: efbc733bf45b9cb3637018140da84797b7878711b8184e87e792a5cc6a094572
+  mockup_sha256: 393354861488b0d79bc73b5ae5730330c62bff9524c6e56856377bb81a0ac7d3
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-033-S03_EMPTY
   code: EMPTY
   name: 空数据
@@ -80,7 +82,9 @@ states:
   mockup_id: YL-A-033-S03_EMPTY
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S03_EMPTY.png
   mockup_status: APPROVED
-  mockup_sha256: 1f5281cb7adf6aced3ffe75a95eabea0c7f26b95d8ae2f2d3106f016bc6723ed
+  mockup_sha256: ccc700eb769a6f79e292d2932392cae63538571f92ac6bb333eccbf80e229cab
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-033-S04_DISABLED
   code: DISABLED
   name: 不可用
@@ -89,7 +93,9 @@ states:
   mockup_id: YL-A-033-S04_DISABLED
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S04_DISABLED.png
   mockup_status: APPROVED
-  mockup_sha256: cda8ba2648dc7f84f3293b3517023bf653f5fc305302f663e850bc4bc263b15e
+  mockup_sha256: 8c2841a2d4e9dc272a30c24f9571859781679edf006effee04b9cbfa7085ebc6
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-033-S05_SERVICE_DEGRADED
   code: SERVICE_DEGRADED
   name: 服务降级
@@ -98,7 +104,9 @@ states:
   mockup_id: YL-A-033-S05_SERVICE_DEGRADED
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S05_SERVICE_DEGRADED.png
   mockup_status: APPROVED
-  mockup_sha256: 514832519d56ecf5625607b8b9a41607ea97da811e813921ff63a6d73c1d0f8e
+  mockup_sha256: df4e8a93c96952848c008588c3770ef0ac95b8318b98d27f5316eca029abecc5
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-033-S06_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -107,14 +115,15 @@ states:
   mockup_id: YL-A-033-S06_SERVER_ERROR
   mockup_path: ui/mockups/android/YL-A-033/YL-A-033-S06_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 0965bcc74fc510c2176a158999a3f5555c3cd1157634b535b944ab727487a408
+  mockup_sha256: 67601ebc58bb020047de644dc544e4c7683b51c1a625f6284bf27c0b9264b04c
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

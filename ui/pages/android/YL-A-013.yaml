@@ -24,15 +24,14 @@ parent_page_id: YL-A-012
 visual_identity:
   template: register_success
   title: 账户已创建
-  subtitle: 正在初始化你的 YLVEN 个人工作区
+  subtitle: 正在准备你的 YLVEN
   required_elements:
-  - 创建用户资料
-  - 初始化个人工作区
-  - 同步默认 AI 设置
+  - 创建账户
+  - 保存个人设置
+  - 准备常用功能
   - 进入 YLVEN
-  screen_signature: be0897617ee6cbf6
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  screen_signature: 9cbc1574187c34cd
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -48,8 +47,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -61,7 +59,9 @@ states:
   mockup_id: YL-A-013-S01_SUCCESS
   mockup_path: ui/mockups/android/YL-A-013/YL-A-013-S01_SUCCESS.png
   mockup_status: APPROVED
-  mockup_sha256: e208f1a3c7a02368d95edfce1de4dcab6862e2f68d365445d1c1abea931fd608
+  mockup_sha256: 340ccf648217761e1c2bb2052bb2904ce0f341d59f8f46782ae95245c76c76f7
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-013-S02_SAVE_ERROR
   code: SAVE_ERROR
   name: 保存失败
@@ -70,7 +70,9 @@ states:
   mockup_id: YL-A-013-S02_SAVE_ERROR
   mockup_path: ui/mockups/android/YL-A-013/YL-A-013-S02_SAVE_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 29d874664ead1e60292d52eaab4e2838fc2f49befb3ef5432f13c3f8521a8a5f
+  mockup_sha256: a89b955e8169c2521684f70aac5ef2f94684acda906f7bef0e031600f319ddf8
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-013-S03_OFFLINE
   code: OFFLINE
   name: 离线
@@ -79,14 +81,15 @@ states:
   mockup_id: YL-A-013-S03_OFFLINE
   mockup_path: ui/mockups/android/YL-A-013/YL-A-013-S03_OFFLINE.png
   mockup_status: APPROVED
-  mockup_sha256: a757b2ba6d24b15becb865c2feddf30e6e9afa30dacb44940748ab86f801838e
+  mockup_sha256: 39a1e9d24efff1b2408d8eba078138081670a157732dbffcf057e97647c1ac4d
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

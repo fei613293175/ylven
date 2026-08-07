@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-07T02:30:21+08:00`
-- Current phase: `P02`
+- Generated: `2026-08-07T16:42:54+08:00`
+- Current phase: `P03`
 - Phase status: `READY_FOR_RELEASE`
 - Current Work Packet: `NONE`
 - Work Packet status: `PHASE_COMPLETE`
-- Last closed Work Packet: `P02-W05`
-- Last closed phase: `P01`
-- Last closed version: `1.1.0`
-- Closed/deferred Work Packets recorded: `15`
-- Closed releases recorded: `2`
-- Git branch: `phase/p01-identity-backend-email-auth-and-admin`
-- Git HEAD: `9af79bc165cbb25d631dd9d8a2ce3b28efd532f1`
+- Last closed Work Packet: `P03-W05`
+- Last closed phase: `P02`
+- Last closed version: `1.2.0`
+- Closed/deferred Work Packets recorded: `20`
+- Closed releases recorded: `3`
+- Git branch: `phase/p03-conversations-streaming-chat-and-messages`
+- Git HEAD: `c60f59de80a016d2113c79ef028991dd061f129a`
 
 ## Exact next action
 
-All Work Packets in `P02` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, obtain `所有者验收.md: APPROVED`, then close `P02` through the release controller. Do not start the next phase yet.
+Every Work Packet in `P03` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
 
 ## New-conversation rule
 

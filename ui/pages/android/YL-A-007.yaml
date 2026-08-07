@@ -23,20 +23,17 @@ resolved_layout:
   action_gap_dp: 20
 design_system_version: YL-DS-1.2.0
 visual_kind: PAGE
-lifecycle_status: RETIRED
-retirement_reason: P02 已改为登录或注册当前页面内的 YLVEN 算式验证弹窗；此 Page ID 仅保留历史验收资产，不再由应用导航。
 parent_page_id: YL-A-005
 visual_identity:
   template: retired_first_party_verification
-  title: 安全验证
+  title: 遗留验证承载页（已停用）
   subtitle: 仅保留历史资产，不会在当前应用中打开
   required_elements:
   - 历史页面标记
   - 不再导航
   - 当前页弹窗替代说明
-  screen_signature: 7b8ecad911d120c2
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  screen_signature: 763ab44c621cfba6
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -52,8 +49,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -65,16 +61,20 @@ states:
   mockup_id: YL-A-007-S01_LOADING
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S01_LOADING.png
   mockup_status: APPROVED
-  mockup_sha256: 0e5684791f90b6a25e2cb3360370e19c5e706401af29636da883e0372483fa46
+  mockup_sha256: 29d1a903bdd9cbec444237d6db4ca3d3d2482b1cb23600a9256a92bf9e88f3c2
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S02_SECURITY_CHALLENGE
   code: SECURITY_CHALLENGE
   name: 安全验证
-  description: 历史状态资产；当前应用使用登录或注册页内的算式验证弹窗。
+  description: 受控安全验证弹层或 WebView 已打开。
   recovery: complete_or_cancel
   mockup_id: YL-A-007-S02_SECURITY_CHALLENGE
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S02_SECURITY_CHALLENGE.png
   mockup_status: APPROVED
-  mockup_sha256: 6d1ebf21e6613649a6f4e560d89f2d93df8f3d96900ee4112879674f1bb8c505
+  mockup_sha256: 943141b9e4c73c266e85fc1a7f96fef36e93b8c9880417d1d09d73a47cc77aea
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S03_SUCCESS
   code: SUCCESS
   name: 操作成功
@@ -83,7 +83,9 @@ states:
   mockup_id: YL-A-007-S03_SUCCESS
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S03_SUCCESS.png
   mockup_status: APPROVED
-  mockup_sha256: bcfcbef067eb5717b04ef58115ec2be59d560e727e9500de3f0fba481e92f983
+  mockup_sha256: 914fdc2c5b7b34ccd04ff9aa35751badd987283da9877c79b8ad208be10560e6
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S04_VALIDATION_ERROR
   code: VALIDATION_ERROR
   name: 表单校验失败
@@ -92,7 +94,9 @@ states:
   mockup_id: YL-A-007-S04_VALIDATION_ERROR
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S04_VALIDATION_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 2ca2291096d7abebc3af55cb7ae8b713e5765b22b2d204e168bd59317ea171d9
+  mockup_sha256: 5032106ff1927887b35e1790ea813a73a5baa2e04a44f936d937e1dd866c5f4e
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S05_CODE_EXPIRED
   code: CODE_EXPIRED
   name: 验证码过期
@@ -101,7 +105,9 @@ states:
   mockup_id: YL-A-007-S05_CODE_EXPIRED
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S05_CODE_EXPIRED.png
   mockup_status: APPROVED
-  mockup_sha256: b37eacd8f921308d68bbda6a4ff42d7db622e4228b15662a10b79f4d2a89efd9
+  mockup_sha256: 3779c1d367d864d684e3b4b76b45f7d576df9fe1558619c64fd5d0389bdeb38c
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S06_OFFLINE
   code: OFFLINE
   name: 离线
@@ -110,7 +116,9 @@ states:
   mockup_id: YL-A-007-S06_OFFLINE
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S06_OFFLINE.png
   mockup_status: APPROVED
-  mockup_sha256: 3f19e4b6f0fe09cb2ba303e4dae072717542c0203d6e82a2d67309d4a779b2c4
+  mockup_sha256: d4bf3547c4550b6fa0f89425dad5d734c2e6d323f19b714f0c27deefb0e3cac2
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-A-007-S07_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -119,14 +127,15 @@ states:
   mockup_id: YL-A-007-S07_SERVER_ERROR
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S07_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: d68edb670dec3f3aaae1e6ab3ca762b64ea8bee76e9641e2bc1d1cc0c2ec789e
+  mockup_sha256: 3c1a72b78a5f5d86c1a0267094656b8bd7a27ef2a6ee27ff980ef23eecf7f1af
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

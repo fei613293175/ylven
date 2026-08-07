@@ -2,7 +2,9 @@ package identity
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -436,4 +438,410 @@ func TestP02OTPCooldownPreventsImmediateResend(t *testing.T) {
 	if _, err := s.CreateOTP(c.ID, "654321"); err == nil || err.Error() != "otp_cooldown" {
 		t.Fatalf("cooldown error=%v", err)
 	}
+}
+
+func TestP03ConversationOwnershipPaginationSearchAndRecycle(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "p03@example.com")
+	login := createAuthenticatedTestSession(t, s, "p03@example.com")
+	first, err := s.CreateConversation(login, "项目 Alpha")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := s.CreateConversation(login, "周报")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UpdateConversation(login, first.ID, "项目 Alpha 重命名"); err != nil {
+		t.Fatal(err)
+	}
+	// Messages are persisted by the next work packet. Insert a real stored
+	// message here so this work packet verifies that P03-004 searches the
+	// message body as well as the conversation title.
+	if _, err := s.AppendMessage(login, second.ID, "user", "正文关键词 needle"); err != nil {
+		t.Fatal(err)
+	}
+	items, cursor, err := s.ListConversations(login, "", 1, false)
+	if err != nil || len(items) != 1 || cursor == "" {
+		t.Fatalf("page=%+v cursor=%q err=%v", items, cursor, err)
+	}
+	next, _, err := s.ListConversations(login, cursor, 10, false)
+	if err != nil || len(next) != 1 || next[0].ID == items[0].ID {
+		t.Fatalf("next page=%+v err=%v", next, err)
+	}
+	if _, err := s.SearchConversations(login, "重命名", 10); err != nil {
+		t.Fatal(err)
+	}
+	matched, err := s.SearchConversations(login, "needle", 10)
+	if err != nil || len(matched) != 1 || matched[0].ID != second.ID {
+		t.Fatalf("message-body search=%+v err=%v", matched, err)
+	}
+	if _, err := s.ArchiveConversation(login, second.ID); err != nil {
+		t.Fatal(err)
+	}
+	visible, _, err := s.ListConversations(login, "", 10, false)
+	if err != nil || len(visible) != 1 {
+		t.Fatalf("archived still visible: %+v %v", visible, err)
+	}
+	deleted, err := s.DeleteConversation(login, first.ID)
+	if err != nil || deleted.DeletedAt == nil || deleted.Status != "recycle_pending" {
+		t.Fatalf("recycle=%+v err=%v", deleted, err)
+	}
+	other := createAuthenticatedTestSession(t, s, "other@example.com")
+	if _, err := s.UpdateConversation(other, first.ID, "越权"); err == nil {
+		t.Fatal("cross-user conversation access accepted")
+	}
+}
+
+func TestP03RunEndpointRejectsUnconfiguredProvider(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime-api@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime-api@example.com")
+	conversation, err := s.CreateConversation(access, "运行 API")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "unconfigured"
+	response := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "hello"}, access, "")
+	if response.Code != http.StatusServiceUnavailable || !strings.Contains(response.Body.String(), "chat_runtime_unavailable") {
+		t.Fatalf("unconfigured runtime response=%d body=%s", response.Code, response.Body.String())
+	}
+}
+
+func TestP03RunEndpointPersistsProviderResponseAndResumesSSE(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime-upstream@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime-upstream@example.com")
+	conversation, err := s.CreateConversation(access, "上游运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/chat/completions" || r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Fatalf("unexpected provider request %s %q", r.URL.Path, r.Header.Get("Authorization"))
+		}
+		_, _ = w.Write([]byte("{\"choices\":[{\"message\":{\"content\":\"来自受控上游的回答\"}}]}"))
+	}))
+	defer provider.Close()
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = OpenAICompatibleResponder{Endpoint: provider.URL, APIKey: "test-key", Client: provider.Client()}
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "测试正文", "model": "ylven-default"}, access, "")
+	if created.Code != http.StatusAccepted {
+		t.Fatalf("run create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 50; i++ {
+		current, _, err := s.Run(access, run.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if current.Status == "completed" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "completed" {
+		t.Fatalf("run did not complete: %+v", run)
+	}
+	events := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/runs/"+run.ID+"/events?after=1", nil, access, "")
+	if events.Code != http.StatusOK || !strings.Contains(events.Body.String(), "delta\":\"自") || !strings.Contains(events.Body.String(), "delta\":\"受") || strings.Contains(events.Body.String(), "id: 1\ndata:") {
+		t.Fatalf("events status=%d body=%s", events.Code, events.Body.String())
+	}
+}
+
+type blockingChatResponder struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (r blockingChatResponder) Respond(ctx context.Context, _ string, _ string) (string, error) {
+	close(r.started)
+	select {
+	case <-r.release:
+		return "late answer", nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func TestP03RunCancellationPreventsLateAssistantPersistence(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "cancel-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "cancel-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "取消运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider := blockingChatResponder{started: make(chan struct{}), release: make(chan struct{})}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = provider
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "stop me"}, access, "")
+	if created.Code != http.StatusAccepted {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-provider.started:
+	case <-time.After(time.Second):
+		t.Fatal("provider did not start")
+	}
+	cancelled := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/runs/"+run.ID+"/cancel", nil, access, "")
+	if cancelled.Code != http.StatusOK {
+		t.Fatalf("cancel status=%d body=%s", cancelled.Code, cancelled.Body.String())
+	}
+	close(provider.release)
+	for i := 0; i < 50; i++ {
+		current, _, _ := s.Run(access, run.ID)
+		if current.Status != "streaming" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "cancelled" || run.AssistantMessageID != "" {
+		t.Fatalf("late completion changed run: %+v", run)
+	}
+	_, messages, err := s.Run(access, run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(messages) != 1 {
+		t.Fatalf("messages after cancellation=%+v", messages)
+	}
+}
+
+func TestP03RunProviderFailurePersistsStableFailedState(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "failure-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "failure-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "失败运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticErrorChatResponder{}
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "fail"}, access, "")
+	if created.Code != http.StatusAccepted {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 50; i++ {
+		current, _, _ := s.Run(access, run.ID)
+		if current.Status != "streaming" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "failed" || run.ErrorCode == "" {
+		t.Fatalf("failed run=%+v", run)
+	}
+	_, events, err := s.Events(access, run.ID, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != "failed" {
+		t.Fatalf("failure events=%+v", events)
+	}
+}
+
+func TestP03CitationEndpointUsesPersistedAssistantContent(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w03@example.com")
+	access := createAuthenticatedTestSession(t, s, "w03@example.com")
+	api := NewAPI(s)
+	conversation, err := s.CreateConversation(access, "引用会话")
+	if err != nil {
+		t.Fatal(err)
+	}
+	message, err := s.AppendMessage(access, conversation.ID, "assistant", "参考 https://example.com/docs。")
+	if err != nil {
+		t.Fatal(err)
+	}
+	citations := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/messages/"+message.ID+"/citations", nil, access, "")
+	if citations.Code != http.StatusOK || !strings.Contains(citations.Body.String(), "https://example.com/docs") {
+		t.Fatalf("citations=%d %s", citations.Code, citations.Body.String())
+	}
+}
+
+func TestP03W04TemporaryFeedbackExportAndAsyncRegenerate(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w04@example.com")
+	access := createAuthenticatedTestSession(t, s, "w04@example.com")
+	api := NewAPI(s)
+	temporary := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations?temporary=true", map[string]string{"title": "临时"}, access, "")
+	if temporary.Code != http.StatusCreated || !strings.Contains(temporary.Body.String(), "temporary") {
+		t.Fatalf("temporary=%d %s", temporary.Code, temporary.Body.String())
+	}
+	var conversation Conversation
+	if err := json.Unmarshal(temporary.Body.Bytes(), &conversation); err != nil {
+		t.Fatal(err)
+	}
+	message, err := s.AppendMessage(access, conversation.ID, "assistant", "回答")
+	if err != nil {
+		t.Fatal(err)
+	}
+	feedback := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/feedback", map[string]string{"value": "up"}, access, "")
+	if feedback.Code != http.StatusOK || !strings.Contains(feedback.Body.String(), "saved") {
+		t.Fatalf("feedback=%d %s", feedback.Code, feedback.Body.String())
+	}
+	export := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/exports", nil, access, "")
+	if export.Code != http.StatusCreated || !strings.Contains(export.Body.String(), "markdown") {
+		t.Fatalf("export=%d %s", export.Code, export.Body.String())
+	}
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticChatResponder{value: "重答结果"}
+	regenerated := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+message.ID+"/regenerate", nil, access, "")
+	if regenerated.Code != http.StatusAccepted {
+		t.Fatalf("regenerate=%d %s", regenerated.Code, regenerated.Body.String())
+	}
+}
+
+func TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w05@example.com")
+	access := createAuthenticatedTestSession(t, s, "w05@example.com")
+	conversation, err := s.CreateConversation(access, "诊断")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assistant, err := s.AppendMessage(access, conversation.ID, "assistant", "可朗读的回答")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	speech := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+assistant.ID+"/speech", nil, access, "")
+	if speech.Code != http.StatusAccepted || !strings.Contains(speech.Body.String(), "android_system_tts") {
+		t.Fatalf("speech=%d %s", speech.Code, speech.Body.String())
+	}
+	other := createAuthenticatedTestSession(t, s, "other@example.com")
+	if response := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+assistant.ID+"/speech", nil, other, ""); response.Code != http.StatusNotFound {
+		t.Fatalf("cross-user speech=%d", response.Code)
+	}
+	s.RecordMetric("chat.run", 0.12, "")
+	if _, err := s.BootstrapAdmin("owner@example.com", "long admin password"); err != nil {
+		t.Fatal(err)
+	}
+	_, adminToken, err := s.AdminLogin("owner@example.com", "long admin password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics := requestJSON(t, api.Handler(), http.MethodGet, "/internal/metrics/chat", nil, adminToken, "")
+	if metrics.Code != http.StatusOK || !strings.Contains(metrics.Body.String(), "chat.run") {
+		t.Fatalf("metrics=%d %s", metrics.Code, metrics.Body.String())
+	}
+	detail := requestJSON(t, api.Handler(), http.MethodGet, "/admin/v1/conversations/"+conversation.ID, nil, adminToken, "")
+	if detail.Code != http.StatusOK || !strings.Contains(detail.Body.String(), conversation.ID) {
+		t.Fatalf("detail=%d %s", detail.Code, detail.Body.String())
+	}
+}
+
+type staticErrorChatResponder struct{}
+
+func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {
+	return "", errors.New("provider_secret_detail")
+}
+
+func TestP03GeneratedTitleUsesProviderAndPersists(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "title-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "title-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticChatResponder{value: "项目周报"}
+	response := requestJSON(t, api.Handler(), http.MethodPost, "/internal/v1/conversations/"+conversation.ID+"/title", map[string]string{}, access, "")
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "项目周报") {
+		t.Fatalf("title response=%d body=%s", response.Code, response.Body.String())
+	}
+	items, _, err := s.ListConversations(access, "", 10, false)
+	if err != nil || len(items) != 1 || items[0].Title != "项目周报" {
+		t.Fatalf("persisted title=%+v err=%v", items, err)
+	}
+}
+
+type staticChatResponder struct{ value string }
+
+func (r staticChatResponder) Respond(context.Context, string, string) (string, error) {
+	return r.value, nil
+}
+
+func TestP03RunLifecycleEventsDraftAndExport(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime@example.com")
+	conversation, err := s.CreateConversation(access, "运行测试")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := s.CreateRun(access, conversation.ID, "请解释 SSE", "ylven-default", "SSE 会按事件 ID 恢复。")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.Status != "completed" || run.AssistantMessageID == "" || run.Cursor < 2 {
+		t.Fatalf("run=%+v", run)
+	}
+	_, events, err := s.Events(access, run.ID, 0)
+	if err != nil || len(events) != int(run.Cursor) || events[len(events)-1].Type != "completed" {
+		t.Fatalf("events=%+v err=%v", events, err)
+	}
+	_, resumed, err := s.Events(access, run.ID, events[0].ID)
+	if err != nil || len(resumed) != len(events)-1 {
+		t.Fatalf("resumed=%+v err=%v", resumed, err)
+	}
+	stored, messages, err := s.Run(access, run.ID)
+	if err != nil || stored.ID != run.ID || len(messages) != 2 {
+		t.Fatalf("run=%+v messages=%+v err=%v", stored, messages, err)
+	}
+	draft, err := s.SaveDraft(access, conversation.ID, "未发送内容")
+	if err != nil || draft.Body != "未发送内容" {
+		t.Fatalf("draft=%+v err=%v", draft, err)
+	}
+	loaded, err := s.GetDraft(access, conversation.ID)
+	if err != nil || loaded.Body != draft.Body {
+		t.Fatalf("loaded=%+v err=%v", loaded, err)
+	}
+	export, err := s.ExportConversation(access, conversation.ID, "")
+	if err != nil || export.Status != "ready" || !strings.Contains(export.Content, "请解释 SSE") {
+		t.Fatalf("export=%+v err=%v", export, err)
+	}
+}
+
+func createAuthenticatedTestSession(t *testing.T, s *Store, email string) string {
+	t.Helper()
+	if email == "other@example.com" {
+		createTestUser(t, s, email)
+	}
+	c, _ := s.CreateChallenge(email, "login")
+	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateOTP(c.ID, "654321"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyOTP(c.ID, "654321"); err != nil {
+		t.Fatal(err)
+	}
+	_, access, _, err := s.CreateSession(c.ID, email)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return access
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.4",
-  "package_version": "1.4.0",
+  "package_version": "1.5.0",
   "design_system_version": "YL-DS-1.2.0",
   "page_count": 332,
   "state_count": 2671,
@@ -27,5 +27,5 @@
     "SYSTEM_OVERLAY": 1,
     "SYSTEM_STATE_BOARD": 2
   },
-  "correction": "V1.4 rebuilds page identity, overlay/component bindings and state profiles to remove false duplicates."
+  "correction": "V1.5 rebuilds page identity, overlay/component bindings and state profiles to remove false duplicates."
 }

@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P02
 phase_title: Android 注册登录与账号安全体验
-overall_status: IN_PROGRESS
-updated_at: '2026-08-07T08:30:00+08:00'
+overall_status: READY_FOR_RELEASE
+updated_at: '2026-08-07T11:20:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS

@@ -31,8 +31,7 @@ visual_identity:
   - 生成过期上传会话和孤儿对象清理任务
   - 清理过期上游文件引用
   screen_signature: b0679356001ad826
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
-    folder.
+  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 critical_token_snapshot:
   design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
@@ -48,8 +47,7 @@ critical_token_snapshot:
   android_icon_and_touch: 24dp icon / 48dp minimum touch
   android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
   android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC
-    border'
+  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
   admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
   developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
 states:
@@ -61,7 +59,9 @@ states:
   mockup_id: YL-M-087-S01_LOADING
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S01_LOADING.png
   mockup_status: APPROVED
-  mockup_sha256: cbd0a8e6b45c3948a6038f69aeb7781088ab24c7bc039f923fc05dc83398359c
+  mockup_sha256: 0754fb375a3fd7f96cab50209a0f6b85c2b6109f5ddf6bd3b266fcb23e5bbc54
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S02_POPULATED
   code: POPULATED
   name: 有数据
@@ -70,7 +70,9 @@ states:
   mockup_id: YL-M-087-S02_POPULATED
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S02_POPULATED.png
   mockup_status: APPROVED
-  mockup_sha256: e1e388ac6697c60d80887f56aadb2a7db28848a4f6f73c80e819afc779474ea4
+  mockup_sha256: 9939ea5fd880218aab5da164033c46989c61d73aafec880fbbc81b6e075b2c08
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S03_EMPTY
   code: EMPTY
   name: 空数据
@@ -79,7 +81,9 @@ states:
   mockup_id: YL-M-087-S03_EMPTY
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S03_EMPTY.png
   mockup_status: APPROVED
-  mockup_sha256: 02a4bcd4350bea2424320cb2c897b8550735483043e595d68fe9d374d3f853b6
+  mockup_sha256: 3f27bb9cc0e7b130580db0fa04eed5aa735bd978f49108ebffea19a5c18519a8
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S04_FILTER_ACTIVE
   code: FILTER_ACTIVE
   name: 筛选生效
@@ -88,7 +92,9 @@ states:
   mockup_id: YL-M-087-S04_FILTER_ACTIVE
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S04_FILTER_ACTIVE.png
   mockup_status: APPROVED
-  mockup_sha256: 8534faeecfa9ee525d3a52975654aa17d860900e5ce847f31642c26c7d998e43
+  mockup_sha256: 0360232b8f3cb9bebb1b58d76b5330b741999eb4762bd559abbcd4d61a81d1c6
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S05_BULK_SELECTED
   code: BULK_SELECTED
   name: 批量选择
@@ -97,7 +103,9 @@ states:
   mockup_id: YL-M-087-S05_BULK_SELECTED
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S05_BULK_SELECTED.png
   mockup_status: APPROVED
-  mockup_sha256: 029e93b595119e21c92b869965568f3ee1fb586e13995a22de587cfd81134905
+  mockup_sha256: fe741a188146b8cc8e13b8c7c36f52a92ff592b3089a64cc80827c4e0cc04205
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S06_PERMISSION_DENIED
   code: PERMISSION_DENIED
   name: 权限不足
@@ -106,7 +114,9 @@ states:
   mockup_id: YL-M-087-S06_PERMISSION_DENIED
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S06_PERMISSION_DENIED.png
   mockup_status: APPROVED
-  mockup_sha256: fbe2a1cdb0c18d3b9963847a4e79ca855a4fc6c1a4c11ce7e6f82c924a5da8ec
+  mockup_sha256: d353aa3d19ff2d7265a38862dc9ab7b1a4ecef89e4be1dfc7fd21778c120ccbc
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S07_NETWORK_ERROR
   code: NETWORK_ERROR
   name: 网络连接失败
@@ -115,7 +125,9 @@ states:
   mockup_id: YL-M-087-S07_NETWORK_ERROR
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S07_NETWORK_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 0e15ee4ee66c775aec57937a50c4e6bba4262d33d4ca724555c187d77a958d84
+  mockup_sha256: 5152376d082d3798264efccfea28bfaa5deb3b18270f4e11ee2701101da709ca
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 - state_id: YL-M-087-S08_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -124,14 +136,15 @@ states:
   mockup_id: YL-M-087-S08_SERVER_ERROR
   mockup_path: ui/mockups/admin/YL-M-087/YL-M-087-S08_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 3bd0bee8de8df4b22c0fb5acd2ff323142023bd73801987f579993d3410b051f
+  mockup_sha256: c6f1ae3105889ac10f3dd71e637400cb6abad72c1558c8eac0d4b20bfb4a3d2d
+  approved_by: P02_OWNER_APPROVED_2026-08-07
+  approved_at: '2026-08-07T01:22:18Z'
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes
-    this page.
+  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal
-    surface and reference their parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content;
-    conflicts require an ADR and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
+    parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
+    and updated mockup.

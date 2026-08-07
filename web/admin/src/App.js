@@ -10,7 +10,11 @@ const pages = [
   { path: '/admin/037', title: '角色', group: '管理员与权限', pageId: 'YL-M-037', detail: '角色和细粒度权限', endpoint: '/admin/v1/rbac/roles' },
   { path: '/admin/038', title: '管理员', group: '管理员与权限', pageId: 'YL-M-038', detail: '管理员账号与会话', endpoint: '/admin/v1/auth/sessions' },
   { path: '/admin/039', title: '高风险操作', group: '安全与审计', pageId: 'YL-M-039', detail: '高风险配置二次确认' },
-  { path: '/admin/040', title: '邮件模板', group: '通知中心', pageId: 'YL-M-040', detail: '版本化模板与发送记录', endpoint: '/admin/v1/notifications/email-templates' }
+  { path: '/admin/040', title: '邮件模板', group: '通知中心', pageId: 'YL-M-040', detail: '版本化模板与发送记录', endpoint: '/admin/v1/notifications/email-templates' },
+  { path: '/admin/p03-home', title: '首页配置', group: '内容运营', pageId: 'YL-M-045', detail: '首页聚合数据与可变运营配置', endpoint: '/admin/v1/content/home' },
+  { path: '/admin/p03-conversations', title: '会话列表', group: '对话与内容', pageId: 'YL-M-046', detail: '会话、归档状态和回收策略', endpoint: '/admin/v1/conversations' },
+  { path: '/admin/p03-exports', title: '导出记录', group: '对话与内容', pageId: 'YL-M-056', detail: '会话与消息 Markdown 导出状态', endpoint: '/admin/v1/conversations' },
+  { path: '/admin/p03-metrics', title: 'AI 运行', group: '可观测性', pageId: 'YL-M-061', detail: '聊天延迟与稳定错误指标', endpoint: '/internal/metrics/chat' }
 ]
 
 const navItems = [
@@ -18,7 +22,10 @@ const navItems = [
   { label: '管理员与权限', path: '/admin/037' },
   { label: '安全与审计', path: '/admin/039' },
   { label: '系统设置', path: '/admin/034' },
-  { label: '通知中心', path: '/admin/040' }
+  { label: '通知中心', path: '/admin/040' },
+  { label: '内容运营', path: '/admin/p03-home' },
+  { label: '对话与内容', path: '/admin/p03-conversations' },
+  { label: '可观测性', path: '/admin/p03-metrics' }
 ]
 
 export default {
@@ -44,7 +51,7 @@ export default {
     const notice = ref('')
     const current = computed(() => pages.find((page) => page.path === path.value) || pages[0])
     const allowed = computed(() => canAccess(path.value, permissions.value))
-    const actionLabel = computed(() => path.value === '/admin/037' ? '新增角色' : path.value === '/admin/040' ? '编辑模板' : path.value === '/admin/039' ? '安全确认' : ['/admin/026','/admin/034','/admin/035'].includes(path.value) ? '编辑配置' : '')
+    const actionLabel = computed(() => path.value === '/admin/037' ? '新增角色' : path.value === '/admin/040' ? '编辑模板' : path.value === '/admin/039' ? '安全确认' : ['/admin/026','/admin/034','/admin/035','/admin/p03-home'].includes(path.value) ? '编辑配置' : '')
 
     function navigate(next) { path.value = next; window.location.hash = next }
     function navActive(item) { return current.value.group === item.label }
@@ -67,7 +74,7 @@ export default {
       data.value = null; error.value = ''; notice.value = ''; roleEditor.value = false; templateDraft.value = null; settingDraft.value = null; settingEditor.value = false; selectedUser.value = null
       if (!token.value || !current.value.endpoint) return
       loading.value = true
-      try { data.value = await parseResponse(await fetch(current.value.endpoint, { headers: authHeaders() })); if (data.value.templates?.length) templateDraft.value = { ...data.value.templates[0] }; if (data.value.value) settingDraft.value = { ...data.value.value } }
+      try { data.value = await parseResponse(await fetch(current.value.endpoint, { headers: authHeaders() })); if (data.value.templates?.length) templateDraft.value = { ...data.value.templates[0] }; if (data.value.value) settingDraft.value = { ...data.value.value }; if (data.value.config) settingDraft.value = { ...data.value.config } }
       catch (reason) { error.value = reason.message }
       finally { loading.value = false }
     }
@@ -103,10 +110,13 @@ export default {
           <section v-if="!allowed" class="empty-state"><h2>权限不足</h2><p>当前管理员没有访问此资源的权限。</p></section>
           <section v-else-if="loading" class="loading-panel"><div class="skeleton"></div><div class="skeleton short"></div></section>
           <template v-else>
-            <div v-if="['/admin/027','/admin/037','/admin/038'].includes(path)" class="filter-bar"><input placeholder="搜索名称或 ID"><button>状态：全部</button><button>类型：全部</button><button>最近 30 天</button></div>
+            <div v-if="['/admin/027','/admin/037','/admin/038','/admin/p03-conversations'].includes(path)" class="filter-bar"><input placeholder="搜索名称或 ID"><button>状态：全部</button><button>类型：全部</button><button>最近 30 天</button></div>
             <div v-if="path==='/admin/027'" class="data-table"><div class="table-head"><span>用户/对象</span><span>ID</span><span>状态</span><span>创建时间</span><span>操作</span></div><div v-for="user in data?.users || []" :key="user.id" class="table-row"><button class="link-button user-link" @click="openUser(user)"><b>{{ user.email }}</b></button><span>{{ user.id }}</span><span :class="['state-label',user.status]">{{ user.status === 'active' ? '正常' : '已禁用' }}</span><span>{{ user.created_at ? new Date(user.created_at).toLocaleString() : '—' }}</span><button class="link-button" @click="updateUser(user)" :disabled="saving">{{ user.status === 'active' ? '禁用' : '恢复' }}</button></div><p v-if="!data?.users?.length" class="empty-row">暂无用户</p></div>
             <div v-else-if="path==='/admin/037'" class="data-table"><form v-if="roleEditor" class="inline-editor" @submit.prevent="createRole"><input v-model="role.id" placeholder="角色 ID" required><input v-model="role.name" placeholder="角色名称" required><input v-model="role.permissions" placeholder="权限，逗号分隔" required><button class="primary" :disabled="saving">保存</button></form><div class="table-head"><span>名称</span><span>ID</span><span>状态</span><span>权限</span><span>操作</span></div><div v-for="item in data?.roles || []" :key="item.id" class="table-row"><span><b>{{ item.name }}</b></span><span>{{ item.id }}</span><span class="state-label active">正常</span><span><code>{{ item.permissions.join(', ') }}</code></span><button class="link-button" @click="stepUpOpen=true">配置</button></div><p v-if="!data?.roles?.length" class="empty-row">暂无角色</p></div>
             <div v-else-if="path==='/admin/038'" class="data-table"><div class="table-head"><span>管理员</span><span>ID</span><span>状态</span><span>角色</span><span>会话</span></div><div v-for="admin in data?.admins || []" :key="admin.id" class="table-row"><span><b>{{ admin.email }}</b></span><span>{{ admin.id }}</span><span class="state-label active">{{ admin.status }}</span><span>{{ admin.role_ids.join(', ') }}</span><span>{{ data?.sessions?.filter((session) => session.admin_user_id === admin.id).length || 0 }}</span></div><p v-if="!data?.admins?.length" class="empty-row">暂无管理员</p></div>
+            <div v-else-if="path==='/admin/p03-conversations'" class="data-table"><div class="table-head"><span>会话标题</span><span>ID</span><span>状态</span><span>更新时间</span><span>回收时间</span></div><div v-for="item in data?.conversations || []" :key="item.id" class="table-row"><span><b>{{ item.title }}</b></span><span>{{ item.id }}</span><span :class="['state-label', item.status === 'active' ? 'active' : 'disabled']">{{ item.status }}</span><span>{{ item.updated_at ? new Date(item.updated_at).toLocaleString() : '—' }}</span><span>{{ item.deleted_at ? new Date(item.deleted_at).toLocaleString() : '—' }}</span></div><p v-if="!data?.conversations?.length" class="empty-row">暂无会话</p></div>
+            <div v-else-if="path==='/admin/p03-exports'" class="config-panel"><div class="config-title"><h2>导出与保留诊断</h2><span>YL-M-056</span></div><pre class="api-data">{{ JSON.stringify(data, null, 2) }}</pre></div>
+            <div v-else-if="path==='/admin/p03-metrics'" class="config-panel"><div class="config-title"><h2>AI 运行指标</h2><span>YL-M-061</span></div><div class="data-table"><div class="table-head"><span>指标</span><span>值</span><span>错误码</span><span>时间</span></div><div v-for="item in data?.metrics || []" :key="item.created_at" class="table-row"><span>{{ item.name }}</span><span>{{ item.value }}</span><span>{{ item.error_code || '—' }}</span><span>{{ item.created_at }}</span></div><p v-if="!data?.metrics?.length" class="empty-row">暂无运行指标</p></div></div>
             <div v-else-if="path==='/admin/039'" class="approval-list"><article v-for="item in ['账号状态变更','角色权限调整','邮件模板发布']" :key="item"><div><span class="risk-tag">高风险</span><h2>{{ item }}需要二次确认</h2><p>确认结果将绑定当前管理员会话并写入审计记录</p></div><button class="outline-danger">拒绝</button><button class="primary" @click="stepUpOpen=true">确认</button></article></div>
             <div v-else-if="path==='/admin/040' && templateDraft" class="config-panel"><div class="config-title"><h2>配置与策略</h2><span>版本 {{ templateDraft.version }}</span></div><form @submit.prevent="saveTemplate"><label><span>模板键</span><input v-model="templateDraft.key" readonly></label><label><span>主题</span><input class="template-subject" v-model="templateDraft.subject" required></label><label><span>正文</span><textarea v-model="templateDraft.body" required></textarea></label><div class="config-footer"><small>发送记录 {{ data.deliveries.length }} 条</small><button class="primary" :disabled="saving">保存配置</button></div></form></div>
             <div v-else-if="settingDraft" class="config-panel"><div class="config-title"><h2>{{ current.title }}</h2><span>{{ current.pageId }}</span></div><form @submit.prevent="saveSetting"><label v-for="(_, key) in settingDraft" :key="key"><span>{{ key }}</span><input v-model="settingDraft[key]" :readonly="!settingEditor" required></label><div class="config-footer"><small>Secret 仅保存引用，不回显明文</small><button v-if="settingEditor" class="primary" :disabled="saving">保存配置</button></div></form></div>
