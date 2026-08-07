@@ -57,6 +57,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
@@ -71,6 +74,9 @@ import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.OtpChallenge
 import cc.orbexa.ylven.identity.PasswordPolicy
 import cc.orbexa.ylven.identity.SecurityChallenge
+import cc.orbexa.ylven.identity.MessageRecord
+import cc.orbexa.ylven.identity.MessageCitation
+import cc.orbexa.ylven.identity.ConversationCache
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import cc.orbexa.ylven.ui.theme.YlvenLightColors
 import kotlinx.coroutines.launch
@@ -584,7 +590,17 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
     var run by remember { mutableStateOf<cc.orbexa.ylven.identity.MessageRun?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var sending by remember { mutableStateOf(false) }
+    var citations by remember { mutableStateOf<Map<String, List<MessageCitation>>>(emptyMap()) }
+    var retryBody by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboardManager.current
+    val cache = remember { ConversationCache(LocalContext.current) }
+    LaunchedEffect(conversation.id) { messages = cache.load(conversation.id); runCatching { val snapshot = gateway.loadDraft(session.bearer, conversation.id); draft = snapshot } }
+    LaunchedEffect(messages) {
+        messages.filter { it.role == "assistant" && !citations.containsKey(it.id) }.forEach { message ->
+            runCatching { gateway.messageCitations(session.bearer, message.id) }.getOrNull()?.let { loaded -> citations = citations + (message.id to loaded) }
+        }
+    }
 
     fun refreshRun(runId: String) {
         scope.launch {
@@ -592,6 +608,7 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                 val snapshot = gateway.runStatus(session.bearer, runId)
                 run = snapshot.first
                 messages = snapshot.second
+                cache.save(conversation.id, messages)
             } catch (reason: Exception) { error = reason.message ?: "无法恢复生成状态" }
         }
     }
@@ -613,12 +630,20 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                     Card(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(if (message.role == "user") "你" else "AI", style = MaterialTheme.typography.labelLarge)
-                            Text(message.body)
+                            MessageContent(message.body, Modifier.fillMaxWidth()) { code -> clipboard.setText(AnnotatedString(code)) }
+                            if (message.role == "assistant") {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    TextButton(onClick = { clipboard.setText(AnnotatedString(message.body)) }) { Text("复制") }
+                                }
+                                citations[message.id]?.forEach { citation -> Text("来源：${citation.title}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            }
                         }
                     }
                 }
                 if (sending) item { Text("正在连接并接收回答…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                run?.let { item { Text("生成状态：${it.status}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
                 error?.let { message -> item { InlineError(message) } }
+                retryBody?.let { body -> item { TextButton(onClick = { draft = body; retryBody = null }) { Text("将失败内容放回输入框") } } }
             }
             OutlinedTextField(
                 value = draft,
@@ -634,14 +659,16 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                     if (body.isEmpty()) return@Button
                     scope.launch {
                         sending = true; error = null
+                        messages = messages + MessageRecord("optimistic-${System.currentTimeMillis()}", conversation.id, "user", body, "")
                         try {
                             val created = gateway.sendMessage(session.bearer, conversation.id, body)
                             draft = ""; run = created
                             val stream = gateway.runEvents(session.bearer, created.id)
                             run = stream.first
                             refreshRun(created.id)
-                        } catch (reason: Exception) { error = reason.message ?: "发送失败，请重试" }
-                        finally { sending = false }
+                            cache.save(conversation.id, messages)
+                        } catch (reason: Exception) { error = reason.message ?: "发送失败，请重试"; retryBody = body }
+                        finally { runCatching { gateway.saveDraft(session.bearer, conversation.id, draft) }; sending = false }
                     }
                 },
                 enabled = !sending && draft.isNotBlank(),

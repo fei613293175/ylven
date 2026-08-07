@@ -64,6 +64,7 @@ data class HomeSnapshot(
 data class MessageRecord(val id: String, val conversationId: String, val role: String, val body: String, val createdAt: String)
 data class MessageRun(val id: String, val conversationId: String, val status: String, val cursor: Long, val assistantMessageId: String? = null)
 data class RunEvent(val id: Long, val type: String, val delta: String)
+data class MessageCitation(val url: String, val title: String)
 
 interface IdentityGateway {
     suspend fun startRegistration(email: String): OtpChallenge
@@ -92,6 +93,7 @@ interface IdentityGateway {
     suspend fun exportConversation(bearer: String, conversationId: String): String = error("导出功能尚未配置")
     suspend fun saveDraft(bearer: String, conversationId: String, body: String): String = error("草稿功能尚未配置")
     suspend fun loadDraft(bearer: String, conversationId: String): String = error("草稿功能尚未配置")
+    suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = emptyList()
 
     suspend fun restore(session: AuthSession): AuthSession = session
 
@@ -302,6 +304,13 @@ class HttpIdentityGateway(
         val status = runStatus(bearer, runId).first
         return Pair(status, events)
     }
+
+    override suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = withContext(Dispatchers.IO) {
+        val response = request("GET", "/api/mobile/v1/messages/$messageId/citations", bearer = bearer)
+        val values = response.getJSONArray("citations")
+        buildList { for (index in 0 until values.length()) { val item = values.getJSONObject(index); add(MessageCitation(item.optString("url"), item.optString("title"))) } }
+    }
+
 
     override suspend fun cancelRun(bearer: String, runId: String): MessageRun =
         request("POST", "/api/mobile/v1/runs/$runId/cancel", bearer = bearer).toMessageRun()

@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -29,10 +30,12 @@ type API struct {
 	configurationErrs []string
 	ChatRuntimeMode   string
 	ChatResponder     ChatResponder
+	runMu             sync.Mutex
+	runCancels        map[string]context.CancelFunc
 }
 
 func NewAPI(store *Store) *API {
-	api := &API{Store: store}
+	api := &API{Store: store, runCancels: map[string]context.CancelFunc{}}
 	api.ChatRuntimeMode = strings.ToLower(strings.TrimSpace(os.Getenv("CHAT_RUNTIME_MODE")))
 	if api.ChatRuntimeMode == "" {
 		api.ChatRuntimeMode = "unconfigured"
@@ -871,7 +874,15 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		go func(runID, accessToken, model, prompt string) {
 			started := time.Now()
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-			defer cancel()
+			a.runMu.Lock()
+			a.runCancels[runID] = cancel
+			a.runMu.Unlock()
+			defer func() {
+				cancel()
+				a.runMu.Lock()
+				delete(a.runCancels, runID)
+				a.runMu.Unlock()
+			}()
 			answer, providerErr := a.ChatResponder.Respond(ctx, model, prompt)
 			if providerErr != nil {
 				_, _ = a.Store.FailRun(accessToken, runID, providerErr.Error())
@@ -880,7 +891,7 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 			}
 			a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
 				if providerErr != nil {
-					return providerErr.Error()
+					return "chat_provider_error"
 				}
 				return ""
 			}())
@@ -1029,6 +1040,11 @@ func (a *API) mobileRunByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, 404, "run_not_found", "Run not found")
 			return
 		}
+		a.runMu.Lock()
+		if cancel := a.runCancels[runID]; cancel != nil {
+			cancel()
+		}
+		a.runMu.Unlock()
 		writeJSON(w, http.StatusOK, run)
 		return
 	}
@@ -1086,7 +1102,17 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodGet) {
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"message_id": m.ID, "citations": []any{}})
+		writeJSON(w, http.StatusOK, map[string]any{"message_id": m.ID, "citations": extractCitations(m.Body)})
+	case "run-metadata":
+		if !requireMethod(w, r, http.MethodGet) {
+			return
+		}
+		run, _, err := a.Store.RunForMessage(bearer(r), m.ID)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "run_not_found", "Run metadata not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, run)
 	case "exports":
 		if !requireMethod(w, r, http.MethodPost) {
 			return

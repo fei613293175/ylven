@@ -117,33 +117,44 @@ features:
   - 'backend/db/migrations/0004_p03_conversations.sql::messages'
   - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport + TestP03RunProviderFailurePersistsStableFailedState'
 - feature_id: P03-015
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::MessageRun provider/start/completed/latency metadata'
+  - 'backend/internal/identity/http.go::GET /api/mobile/v1/messages/{messageId}/run-metadata'
+  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
 - feature_id: P03-016
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/identity/ConversationCache.kt::Room database and DAO'
 - feature_id: P03-017
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::optimistic message and server refresh reconciliation'
 - feature_id: P03-018
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/MessageContent.kt::safe Markdown structural renderer'
 - feature_id: P03-019
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/MessageContent.kt::fenced code rendering and copy action'
 - feature_id: P03-020
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/MessageContent.kt::horizontal-scroll table renderer'
 - feature_id: P03-021
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::message citations endpoint extracts persisted URLs'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::citation cards'
+  - 'backend/internal/identity/identity_test.go::TestP03TemporaryConversationAndCitationEndpoint'
 - feature_id: P03-022
   status: PLANNED
   reason: ''
@@ -177,7 +188,7 @@ features:
   reason: ''
   evidence: []
 - feature_id: P03-030
-  status: PLANNED
+  status: BLOCKED_EXTERNAL
   reason: ''
   evidence: []
 - feature_id: P03-031

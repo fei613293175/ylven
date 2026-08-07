@@ -21,6 +21,22 @@ import (
 	"time"
 )
 
+var citationURLPattern = regexp.MustCompile(`https?://[^\s)\]}>]+`)
+
+func extractCitations(body string) []map[string]string {
+	seen := map[string]bool{}
+	out := make([]map[string]string, 0)
+	for _, value := range citationURLPattern.FindAllString(body, -1) {
+		value = strings.TrimRight(value, ".,")
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		out = append(out, map[string]string{"url": value, "title": value})
+	}
+	return out
+}
+
 const passwordIterations = 210000
 
 var emailPattern = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
@@ -195,17 +211,21 @@ type HomeConfig struct {
 }
 
 type MessageRun struct {
-	ID                 string    `json:"id"`
-	ConversationID     string    `json:"conversation_id"`
-	UserID             string    `json:"user_id"`
-	UserMessageID      string    `json:"user_message_id"`
-	AssistantMessageID string    `json:"assistant_message_id"`
-	Model              string    `json:"model"`
-	Status             string    `json:"status"`
-	ErrorCode          string    `json:"error_code,omitempty"`
-	Cursor             int64     `json:"cursor"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	ID                 string     `json:"id"`
+	ConversationID     string     `json:"conversation_id"`
+	UserID             string     `json:"user_id"`
+	UserMessageID      string     `json:"user_message_id"`
+	AssistantMessageID string     `json:"assistant_message_id"`
+	Model              string     `json:"model"`
+	Status             string     `json:"status"`
+	ErrorCode          string     `json:"error_code,omitempty"`
+	Provider           string     `json:"provider,omitempty"`
+	StartedAt          time.Time  `json:"started_at"`
+	CompletedAt        *time.Time `json:"completed_at,omitempty"`
+	LatencyMs          int64      `json:"latency_ms,omitempty"`
+	Cursor             int64      `json:"cursor"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 type RunEvent struct {
@@ -890,7 +910,12 @@ func (s *Store) ListConversations(access string, cursor string, limit int, inclu
 		}
 		items = append(items, item)
 	}
-	sort.Slice(items, func(i, j int) bool { return items[i].UpdatedAt.After(items[j].UpdatedAt) })
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].UpdatedAt.Equal(items[j].UpdatedAt) {
+			return items[i].ID < items[j].ID
+		}
+		return items[i].UpdatedAt.After(items[j].UpdatedAt)
+	})
 	start := 0
 	if cursor != "" {
 		for i, item := range items {
@@ -1014,7 +1039,7 @@ func (s *Store) StartRun(access, conversationID, body, model string) (MessageRun
 		return MessageRun{}, err
 	}
 	now := time.Now().UTC()
-	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Status: "streaming", CreatedAt: now, UpdatedAt: now}
+	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = []RunEvent{}
 	s.appendAuditLocked("message_run_started", user.Email, runID)
@@ -1059,6 +1084,9 @@ func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, er
 	run.Cursor = int64(len(events))
 	run.Status = "completed"
 	run.UpdatedAt = time.Now().UTC()
+	completedAt := run.UpdatedAt
+	run.CompletedAt = &completedAt
+	run.LatencyMs = completedAt.Sub(run.StartedAt).Milliseconds()
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = events
 	s.appendAuditLocked("message_run_completed", user.Email, runID)
@@ -1358,6 +1386,25 @@ func (s *Store) MessageOwned(access, messageID string) (Message, error) {
 		return Message{}, errors.New("message_not_found")
 	}
 	return m, nil
+}
+
+func (s *Store) RunForMessage(access, messageID string) (MessageRun, Message, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, Message{}, err
+	}
+	m, ok := s.data.Messages[messageID]
+	if !ok || m.UserID != user.ID {
+		return MessageRun{}, Message{}, errors.New("message_not_found")
+	}
+	for _, run := range s.data.Runs {
+		if run.AssistantMessageID == messageID || run.UserMessageID == messageID {
+			return run, m, nil
+		}
+	}
+	return MessageRun{}, m, errors.New("run_not_found")
 }
 
 func (s *Store) UpdateHomeConfig(value HomeConfig, actorID string) (HomeConfig, error) {

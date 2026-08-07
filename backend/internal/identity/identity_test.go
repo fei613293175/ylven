@@ -659,6 +659,25 @@ func TestP03RunProviderFailurePersistsStableFailedState(t *testing.T) {
 	}
 }
 
+func TestP03CitationEndpointUsesPersistedAssistantContent(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w03@example.com")
+	access := createAuthenticatedTestSession(t, s, "w03@example.com")
+	api := NewAPI(s)
+	conversation, err := s.CreateConversation(access, "引用会话")
+	if err != nil {
+		t.Fatal(err)
+	}
+	message, err := s.AppendMessage(access, conversation.ID, "assistant", "参考 https://example.com/docs。")
+	if err != nil {
+		t.Fatal(err)
+	}
+	citations := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/messages/"+message.ID+"/citations", nil, access, "")
+	if citations.Code != http.StatusOK || !strings.Contains(citations.Body.String(), "https://example.com/docs") {
+		t.Fatalf("citations=%d %s", citations.Code, citations.Body.String())
+	}
+}
+
 type staticErrorChatResponder struct{}
 
 func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {
