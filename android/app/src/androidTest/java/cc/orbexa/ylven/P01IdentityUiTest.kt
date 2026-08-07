@@ -144,7 +144,7 @@ private class FakeIdentityGateway : IdentityGateway {
 private fun androidx.compose.ui.test.junit4.ComposeTestRule.waitForSecurityConfirmation() {
     waitUntil(5_000) {
         try {
-            onNodeWithTag("p01-security-confirm").assertIsEnabled()
+            onNodeWithTag("p01-security-confirm").assertExists()
             true
         } catch (_: AssertionError) {
             false

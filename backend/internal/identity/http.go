@@ -524,6 +524,7 @@ func (a *API) complete(w http.ResponseWriter, r *http.Request) {
 		ChallengeID string `json:"challenge_id"`
 		Email       string `json:"email"`
 		Password    string `json:"password"`
+		DeviceID    string `json:"device_id"`
 	}
 	if !decode(r, &in) {
 		writeError(w, 400, "invalid_json", "Invalid JSON")
@@ -543,7 +544,7 @@ func (a *API) complete(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "workspace_unavailable", "Workspace could not be initialized")
 		return
 	}
-	session, access, refresh, sessionErr := a.Store.CreateSessionForUser(user.Email)
+	session, access, refresh, sessionErr := a.Store.CreateSessionForUser(user.Email, in.DeviceID)
 	if sessionErr != nil {
 		writeError(w, http.StatusInternalServerError, "session_unavailable", "Session could not be created")
 		return
@@ -629,12 +630,13 @@ func (a *API) sessions(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		ChallengeID string `json:"challenge_id"`
 		Email       string `json:"email"`
+		DeviceID    string `json:"device_id"`
 	}
 	if !decode(r, &in) {
 		writeError(w, 400, "invalid_json", "Invalid JSON")
 		return
 	}
-	session, access, refresh, err := a.Store.CreateSession(in.ChallengeID, in.Email)
+	session, access, refresh, err := a.Store.CreateSession(in.ChallengeID, in.Email, in.DeviceID)
 	if err != nil {
 		writeError(w, 401, "login_not_verified", "Unable to authenticate")
 		return

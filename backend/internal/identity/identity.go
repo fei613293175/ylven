@@ -526,7 +526,7 @@ func (s *Store) EnsureWorkspace(userID string) (Workspace, error) {
 	return workspace, s.persistLocked()
 }
 
-func (s *Store) CreateSessionForUser(email string) (Session, string, string, error) {
+func (s *Store) CreateSessionForUser(email string, deviceIDs ...string) (Session, string, string, error) {
 	normalized, err := NormalizeEmail(email)
 	if err != nil {
 		return Session{}, "", "", err
@@ -537,10 +537,10 @@ func (s *Store) CreateSessionForUser(email string) (Session, string, string, err
 	if !ok || u.Status != "active" {
 		return Session{}, "", "", errors.New("login_not_verified")
 	}
-	return s.createSessionLocked(u, normalized)
+	return s.createSessionLocked(u, normalized, deviceIDs...)
 }
 
-func (s *Store) createSessionLocked(u User, email string) (Session, string, string, error) {
+func (s *Store) createSessionLocked(u User, email string, deviceIDs ...string) (Session, string, string, error) {
 	id, err := randomToken(16)
 	if err != nil {
 		return Session{}, "", "", err
@@ -554,13 +554,23 @@ func (s *Store) createSessionLocked(u User, email string) (Session, string, stri
 		return Session{}, "", "", err
 	}
 	now := time.Now().UTC()
-	session := Session{ID: id, UserID: u.ID, AccessDigest: digestToken(access), RefreshDigest: digestToken(refresh), AccessExpiresAt: now.Add(15 * time.Minute), RefreshExpiresAt: now.Add(30 * 24 * time.Hour), DeviceID: "device-" + id[:8], CreatedAt: now}
+	deviceID := ""
+	if len(deviceIDs) > 0 {
+		deviceID = strings.TrimSpace(deviceIDs[0])
+		if len(deviceID) > 128 {
+			deviceID = deviceID[:128]
+		}
+	}
+	if deviceID == "" {
+		deviceID = "device-" + id[:8]
+	}
+	session := Session{ID: id, UserID: u.ID, AccessDigest: digestToken(access), RefreshDigest: digestToken(refresh), AccessExpiresAt: now.Add(15 * time.Minute), RefreshExpiresAt: now.Add(30 * 24 * time.Hour), DeviceID: deviceID, CreatedAt: now}
 	s.data.Sessions[id] = session
 	s.appendAuditLocked("user_login", email, id)
 	return session, access, refresh, s.persistLocked()
 }
 
-func (s *Store) CreateSession(challengeID, email string) (Session, string, string, error) {
+func (s *Store) CreateSession(challengeID, email string, deviceIDs ...string) (Session, string, string, error) {
 	normalized, err := NormalizeEmail(email)
 	if err != nil {
 		return Session{}, "", "", err
@@ -575,7 +585,7 @@ func (s *Store) CreateSession(challengeID, email string) (Session, string, strin
 	if !ok || u.Status != "active" {
 		return Session{}, "", "", errors.New("login_not_verified")
 	}
-	session, access, refresh, err := s.createSessionLocked(u, normalized)
+	session, access, refresh, err := s.createSessionLocked(u, normalized, deviceIDs...)
 	if err != nil {
 		return Session{}, "", "", err
 	}

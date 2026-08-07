@@ -103,6 +103,7 @@ class ApiException(
 
 class HttpIdentityGateway(
     private val baseUrl: String = BuildConfig.API_BASE_URL.trimEnd('/'),
+    private val deviceId: String = "android-test-device",
 ) : IdentityGateway {
     override suspend fun startRegistration(email: String): OtpChallenge {
         val security = createRegistrationChallenge(email)
@@ -119,13 +120,13 @@ class HttpIdentityGateway(
         request(
             "POST",
             "/api/v1/auth/register/complete",
-            JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("password", password),
+            JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("password", password).put("device_id", deviceId),
         )
     }
 
     override suspend fun finishRegistrationSession(challenge: OtpChallenge, code: String, password: String): AuthSession {
         request("POST", "/api/v1/auth/register/otp/verify", JSONObject().put("challenge_id", challenge.id).put("code", code))
-        val body = request("POST", "/api/v1/auth/register/complete", JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("password", password))
+        val body = request("POST", "/api/v1/auth/register/complete", JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("password", password).put("device_id", deviceId))
         return body.toSession(challenge.email)
     }
 
@@ -193,7 +194,7 @@ class HttpIdentityGateway(
         val body = request(
             "POST",
             "/api/v1/auth/sessions",
-            JSONObject().put("challenge_id", challenge.id).put("email", challenge.email),
+            JSONObject().put("challenge_id", challenge.id).put("email", challenge.email).put("device_id", deviceId),
         )
         return body.toSession(challenge.email)
     }
