@@ -26,10 +26,24 @@ type API struct {
 	AdminUsername     string
 	BootstrapError    error
 	configurationErrs []string
+	ChatRuntimeMode   string
+	ChatResponder     ChatResponder
 }
 
 func NewAPI(store *Store) *API {
 	api := &API{Store: store}
+	api.ChatRuntimeMode = strings.ToLower(strings.TrimSpace(os.Getenv("CHAT_RUNTIME_MODE")))
+	if api.ChatRuntimeMode == "" {
+		api.ChatRuntimeMode = "unconfigured"
+	}
+	if api.ChatRuntimeMode == "upstream" {
+		endpoint, _ := envOrFile("SUB2API_ENDPOINT")
+		apiKey, _ := envOrFile("SUB2API_API_KEY")
+		api.ChatResponder = OpenAICompatibleResponder{Endpoint: endpoint, APIKey: apiKey}
+		if endpoint == "" || apiKey == "" {
+			api.ChatRuntimeMode = "unconfigured"
+		}
+	}
 	api.TurnstileSiteKey = strings.TrimSpace(os.Getenv("TURNSTILE_SITE_KEY"))
 	api.TurnstileMode = strings.ToLower(strings.TrimSpace(os.Getenv("TURNSTILE_MODE")))
 	// P02 uses YLVEN's own short arithmetic check. The legacy fields and
@@ -830,6 +844,10 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
 		}
+		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
+			return
+		}
 		var in struct {
 			Body  string `json:"body"`
 			Model string `json:"model"`
@@ -839,7 +857,14 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		started := time.Now()
-		run, err := a.Store.CreateRun(bearer(r), id, in.Body, in.Model)
+		answer, err := a.ChatResponder.Respond(r.Context(), in.Model, in.Body)
+		if err == nil {
+			var run MessageRun
+			run, err = a.Store.CreateRun(bearer(r), id, in.Body, in.Model, answer)
+			if err == nil {
+				writeJSON(w, http.StatusCreated, run)
+			}
+		}
 		a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
 			if err != nil {
 				return err.Error()
@@ -849,12 +874,13 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if err.Error() == "session_invalid" {
 				writeError(w, 401, "session_invalid", "Session is invalid")
+			} else if strings.HasPrefix(err.Error(), "chat_provider_") || err.Error() == "chat_runtime_unavailable" {
+				writeError(w, http.StatusBadGateway, "chat_provider_unavailable", "AI provider is temporarily unavailable")
 			} else {
 				writeError(w, 422, err.Error(), "Unable to create run")
 			}
 			return
 		}
-		writeJSON(w, http.StatusCreated, run)
 		return
 	}
 	if len(parts) > 1 && parts[1] == "exports" {
@@ -957,7 +983,20 @@ func (a *API) internalConversationByID(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 400, "invalid_json", "Invalid JSON")
 		return
 	}
-	item, err := a.Store.UpdateConversation(bearer(r), id, in.Title)
+	title := strings.TrimSpace(in.Title)
+	if title == "" {
+		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
+			return
+		}
+		generated, generateErr := a.ChatResponder.Respond(r.Context(), "ylven-default", "请为这段会话生成一个简洁标题："+id)
+		if generateErr != nil {
+			writeError(w, http.StatusBadGateway, "chat_provider_unavailable", "Unable to generate title")
+			return
+		}
+		title = strings.TrimSpace(generated)
+	}
+	item, err := a.Store.UpdateConversation(bearer(r), id, title)
 	if err != nil {
 		if err.Error() == "session_invalid" {
 			writeError(w, 401, "session_invalid", "Session is invalid")
@@ -1087,12 +1126,23 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
 		}
-		run, err := a.Store.CreateRun(bearer(r), m.ConversationID, "重新生成："+m.Body, "ylven-default")
+		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
+			return
+		}
+		answer, err := a.ChatResponder.Respond(r.Context(), "ylven-default", "重新生成："+m.Body)
+		if err == nil {
+			var run MessageRun
+			run, err = a.Store.CreateRun(bearer(r), m.ConversationID, "重新生成："+m.Body, "ylven-default", answer)
+			if err == nil {
+				writeJSON(w, http.StatusCreated, run)
+				return
+			}
+		}
 		if err != nil {
 			writeError(w, 422, err.Error(), "Regeneration unavailable")
 			return
 		}
-		writeJSON(w, http.StatusCreated, run)
 	default:
 		writeError(w, 404, "not_found", "Endpoint not found")
 	}

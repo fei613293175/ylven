@@ -94,6 +94,69 @@ type OTPMailer interface {
 	SendOTP(context.Context, string, string, string, string) error
 }
 
+// ChatResponder is deliberately server-side only. Android clients use the
+// stable YLVEN run API and never receive provider addresses or credentials.
+type ChatResponder interface {
+	Respond(context.Context, string, string) (string, error)
+}
+
+type OpenAICompatibleResponder struct {
+	Endpoint string
+	APIKey   string
+	Client   *http.Client
+}
+
+func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt string) (string, error) {
+	if strings.TrimSpace(r.Endpoint) == "" || strings.TrimSpace(r.APIKey) == "" {
+		return "", errors.New("chat_runtime_unavailable")
+	}
+	endpoint := strings.TrimRight(r.Endpoint, "/")
+	if !strings.HasSuffix(endpoint, "/chat/completions") {
+		endpoint += "/v1/chat/completions"
+	}
+	payload := map[string]any{"model": model, "messages": []map[string]string{{"role": "user", "content": prompt}}, "stream": false}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+r.APIKey)
+	client := r.Client
+	if client == nil {
+		client = &http.Client{Timeout: 45 * time.Second}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("chat_provider_unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("chat_provider_http_%d", resp.StatusCode)
+	}
+	var decoded struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return "", errors.New("chat_provider_response_invalid")
+	}
+	if len(decoded.Choices) == 0 || strings.TrimSpace(decoded.Choices[0].Message.Content) == "" {
+		return "", errors.New("chat_provider_empty_response")
+	}
+	return strings.TrimSpace(decoded.Choices[0].Message.Content), nil
+}
+
 type SMTPMailer struct {
 	Host     string
 	Port     int

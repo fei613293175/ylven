@@ -993,10 +993,14 @@ func (s *Store) AppendMessage(access, conversationID, role, body string) (Messag
 	return message, s.persistLocked()
 }
 
-func (s *Store) CreateRun(access, conversationID, body, model string) (MessageRun, error) {
+func (s *Store) CreateRun(access, conversationID, body, model, assistantBody string) (MessageRun, error) {
 	model = strings.TrimSpace(model)
 	if model == "" {
 		model = "ylven-default"
+	}
+	assistantBody = strings.TrimSpace(assistantBody)
+	if assistantBody == "" {
+		return MessageRun{}, errors.New("chat_provider_empty_response")
 	}
 	userMessage, err := s.AppendMessage(access, conversationID, "user", body)
 	if err != nil {
@@ -1014,16 +1018,15 @@ func (s *Store) CreateRun(access, conversationID, body, model string) (MessageRu
 	}
 	now := time.Now().UTC()
 	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Status: "streaming", CreatedAt: now, UpdatedAt: now}
-	answer := "已收到：" + userMessage.Body
 	assistantID, err := randomToken(16)
 	if err != nil {
 		return MessageRun{}, err
 	}
-	assistant := Message{ID: assistantID, ConversationID: conversationID, UserID: user.ID, Role: "assistant", Body: answer, CreatedAt: now}
+	assistant := Message{ID: assistantID, ConversationID: conversationID, UserID: user.ID, Role: "assistant", Body: assistantBody, CreatedAt: now}
 	s.data.Messages[assistantID] = assistant
 	run.AssistantMessageID = assistantID
 	events := []RunEvent{}
-	for i, runeValue := range []rune(answer) {
+	for i, runeValue := range []rune(assistantBody) {
 		eventID := int64(i + 1)
 		events = append(events, RunEvent{ID: eventID, RunID: runID, Type: "delta", Delta: string(runeValue), CreatedAt: now})
 	}

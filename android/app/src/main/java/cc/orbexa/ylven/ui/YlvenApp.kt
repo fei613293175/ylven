@@ -86,6 +86,7 @@ private enum class IdentityScreen {
     REGISTERED,
     ACCOUNT,
     HOME,
+    CHAT,
 }
 
 @Composable
@@ -96,6 +97,7 @@ fun YlvenApp(
 ) {
     var screen by rememberSaveable { mutableStateOf(if (initialSession == null) IdentityScreen.LOGIN else IdentityScreen.RESTORING) }
     var session by remember { mutableStateOf(initialSession) }
+    var activeConversation by remember { mutableStateOf<Conversation?>(null) }
     var challenge by remember { mutableStateOf<OtpChallenge?>(null) }
     var securityChallenge by remember { mutableStateOf<SecurityChallenge?>(null) }
     var pendingPassword by rememberSaveable { mutableStateOf("") }
@@ -237,7 +239,8 @@ fun YlvenApp(
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
             )
-            IdentityScreen.HOME -> HomePage(gateway, requireNotNull(session), onSessionChange)
+            IdentityScreen.HOME -> HomePage(gateway, requireNotNull(session), onSessionChange) { conversation -> activeConversation = conversation; screen = IdentityScreen.CHAT }
+            IdentityScreen.CHAT -> ChatPage(gateway, requireNotNull(session), requireNotNull(activeConversation), onBack = { screen = IdentityScreen.HOME })
         }
 
         if (securityAction != null) {
@@ -515,7 +518,7 @@ private fun OtpPage(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionChange: (AuthSession?) -> Unit) {
+private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionChange: (AuthSession?) -> Unit, onOpenConversation: (Conversation) -> Unit) {
     var snapshot by remember { mutableStateOf<HomeSnapshot?>(null) }
     var conversations by remember { mutableStateOf<List<Conversation>>(emptyList()) }
     var cursor by remember { mutableStateOf<String?>(null) }
@@ -565,12 +568,87 @@ private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionCh
             item { Text("最近会话",style=MaterialTheme.typography.titleLarge) }
             if(loading && conversations.isEmpty()) item { CircularProgressIndicator(Modifier.testTag("yl-a-018-loading")) }
             error?.let { item { InlineError(it) } }
-            items(conversations,key={it.id}) { item -> Card(Modifier.fillMaxWidth(),border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline)){ Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){ Column(Modifier.weight(1f)){Text(item.title,style=MaterialTheme.typography.titleMedium);Text(item.status,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)} IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")} } } }
+            items(conversations,key={it.id}) { item -> Card(onClick = { onOpenConversation(item) }, modifier = Modifier.fillMaxWidth(), border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline)){ Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){ Column(Modifier.weight(1f)){Text(item.title,style=MaterialTheme.typography.titleMedium);Text(item.status,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)} IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")} } } }
             item { OutlinedButton(onClick={drawerOpen=true;loadDrawer(true)},modifier=Modifier.fillMaxWidth().height(52.dp)){Text("查看全部会话") } }
         }
     }
     if(drawerOpen) AlertDialog(onDismissRequest={drawerOpen=false},title={Text("会话抽屉")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){OutlinedTextField(query,{query=it},label={Text("搜索会话")},singleLine=true,modifier=Modifier.fillMaxWidth()); conversations.forEach{item->Row(verticalAlignment=Alignment.CenterVertically){Text(item.title,Modifier.weight(1f));IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")};IconButton(onClick={ scope.launch { try { gateway.archiveConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "归档失败" } } }){Icon(Icons.Default.Archive,"归档")};IconButton(onClick={ scope.launch { try { gateway.deleteConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "删除失败" } } }){Icon(Icons.Default.Delete,"删除")}}}; if(cursor!=null)TextButton(onClick={loadDrawer()}){Text("加载更多")} }},confirmButton={TextButton(onClick={drawerOpen=false}){Text("关闭")}})
     renameTarget?.let { target -> AlertDialog(onDismissRequest={renameTarget=null},title={Text("重命名会话")},text={OutlinedTextField(renameText,{renameText=it},singleLine=true,label={Text("标题")})},confirmButton={TextButton(onClick={ scope.launch { try { val updated=gateway.renameConversation(session.bearer,target.id,renameText); conversations=conversations.map{if(it.id==updated.id)updated else it}; renameTarget=null } catch(e:Exception){ error=e.message ?: "重命名失败" } } }){Text("保存")} },dismissButton={TextButton(onClick={renameTarget=null}){Text("取消")}}) }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversation: Conversation, onBack: () -> Unit) {
+    var draft by rememberSaveable(conversation.id) { mutableStateOf("") }
+    var messages by remember { mutableStateOf<List<cc.orbexa.ylven.identity.MessageRecord>>(emptyList()) }
+    var run by remember { mutableStateOf<cc.orbexa.ylven.identity.MessageRun?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var sending by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    fun refreshRun(runId: String) {
+        scope.launch {
+            try {
+                val snapshot = gateway.runStatus(session.bearer, runId)
+                run = snapshot.first
+                messages = snapshot.second
+            } catch (reason: Exception) { error = reason.message ?: "无法恢复生成状态" }
+        }
+    }
+
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text(conversation.title) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } },
+            actions = {
+                run?.takeIf { it.status == "streaming" }?.let { active ->
+                    TextButton(onClick = { scope.launch { run = gateway.cancelRun(session.bearer, active.id) } }) { Text("停止") }
+                }
+            },
+        )
+    }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(messages, key = { it.id }) { message ->
+                    Card(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(if (message.role == "user") "你" else "AI", style = MaterialTheme.typography.labelLarge)
+                            Text(message.body)
+                        }
+                    }
+                }
+                if (sending) item { Text("正在连接并接收回答…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                error?.let { message -> item { InlineError(message) } }
+            }
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                label = { Text("输入消息") },
+                minLines = 1,
+                maxLines = 6,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            )
+            Button(
+                onClick = {
+                    val body = draft.trim()
+                    if (body.isEmpty()) return@Button
+                    scope.launch {
+                        sending = true; error = null
+                        try {
+                            val created = gateway.sendMessage(session.bearer, conversation.id, body)
+                            draft = ""; run = created
+                            val stream = gateway.runEvents(session.bearer, created.id)
+                            run = stream.first
+                            refreshRun(created.id)
+                        } catch (reason: Exception) { error = reason.message ?: "发送失败，请重试" }
+                        finally { sending = false }
+                    }
+                },
+                enabled = !sending && draft.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) { Text(if (sending) "发送中…" else "发送") }
+        }
+    }
 }
 
 @Composable

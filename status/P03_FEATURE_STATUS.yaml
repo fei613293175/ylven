@@ -22,7 +22,6 @@ features:
   - 'backend/internal/identity/identity.go::Store.Home'
   - 'backend/db/migrations/0004_p03_conversations.sql'
   - 'backend/internal/identity/identity_test.go::TestP03ConversationOwnershipPaginationSearchAndRecycle'
-  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
 - feature_id: P03-002
   status: IMPLEMENTED
   reason: ''
@@ -69,33 +68,54 @@ features:
   - 'backend/internal/identity/identity.go::Store.DeleteConversation'
   - 'backend/db/migrations/0004_p03_conversations.sql'
 - feature_id: P03-008
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::POST /internal/v1/conversations/{conversationId}/title'
+  - 'backend/internal/identity/integrations.go::ChatResponder'
+  - 'backend/internal/identity/identity_test.go::TestP03GeneratedTitleUsesProviderAndPersists'
 - feature_id: P03-009
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::POST /api/mobile/v1/conversations/{conversationId}/runs'
+  - 'backend/internal/identity/identity.go::Store.CreateRun'
+  - 'backend/internal/identity/identity_test.go::TestP03RunEndpointPersistsProviderResponseAndResumesSSE'
 - feature_id: P03-010
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::GET /api/mobile/v1/runs/{runId}/events'
+  - 'android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::runEvents'
+  - 'backend/internal/identity/identity_test.go::TestP03RunEndpointPersistsProviderResponseAndResumesSSE'
 - feature_id: P03-011
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::POST /api/mobile/v1/runs/{runId}/cancel'
+  - 'backend/internal/identity/identity.go::Store.CancelRun'
+  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
 - feature_id: P03-012
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::GET /api/mobile/v1/runs/{runId}/events?after={eventId}'
+  - 'backend/internal/identity/identity.go::Store.Events'
+  - 'backend/internal/identity/identity_test.go::TestP03RunEndpointPersistsProviderResponseAndResumesSSE'
 - feature_id: P03-013
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::GET /api/mobile/v1/runs/{runId}'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::ChatPage refreshRun'
+  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
 - feature_id: P03-014
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.AppendMessage'
+  - 'backend/db/migrations/0004_p03_conversations.sql::messages'
+  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
 - feature_id: P03-015
   status: PLANNED
   reason: ''

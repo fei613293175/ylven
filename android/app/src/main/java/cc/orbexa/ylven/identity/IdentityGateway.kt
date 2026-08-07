@@ -297,14 +297,10 @@ class HttpIdentityGateway(
     }
 
     override suspend fun runEvents(bearer: String, runId: String, after: Long): Pair<MessageRun, List<RunEvent>> {
-        val body = request("GET", "/api/mobile/v1/runs/$runId/events?after=$after", bearer = bearer)
-        val items = body.optJSONArray("events") ?: org.json.JSONArray()
-        return Pair(body.getJSONObject("run").toMessageRun(), buildList {
-            for (index in 0 until items.length()) {
-                val item = items.getJSONObject(index)
-                add(RunEvent(item.optLong("id"), item.optString("type"), item.optString("delta")))
-            }
-        })
+        val stream = requestSse("/api/mobile/v1/runs/$runId/events?after=$after", bearer)
+        val events = buildList { stream.forEach { item -> add(RunEvent(item.optLong("id"), item.optString("type"), item.optString("delta"))) } }
+        val status = runStatus(bearer, runId).first
+        return Pair(status, events)
     }
 
     override suspend fun cancelRun(bearer: String, runId: String): MessageRun =
@@ -395,6 +391,20 @@ class HttpIdentityGateway(
     )
     private fun JSONObject.toMessageRun() = MessageRun(getString("id"), optString("conversation_id"), optString("status"), optLong("cursor"), optString("assistant_message_id").ifBlank { null })
     private fun JSONObject.toMessageRecord() = MessageRecord(getString("id"), optString("conversation_id"), optString("role"), optString("body"), optString("created_at"))
+
+    private suspend fun requestSse(path: String, bearer: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"; connectTimeout = 10_000; readTimeout = 20_000
+            setRequestProperty("Accept", "text/event-stream"); setRequestProperty("Cache-Control", "no-cache")
+            setRequestProperty("Authorization", "Bearer $bearer")
+        }
+        try {
+            val status = connection.responseCode
+            val raw = (if (status in 200..299) connection.inputStream else connection.errorStream)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            if (status !in 200..299) throw ApiException(status, "http_$status", "流式连接失败")
+            raw.split("\n\n").mapNotNull { block -> block.lineSequence().firstOrNull { it.startsWith("data:") }?.removePrefix("data:")?.trim()?.takeIf { it.isNotBlank() }?.let(::JSONObject) }
+        } finally { connection.disconnect() }
+    }
 
 }
 

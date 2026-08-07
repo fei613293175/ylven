@@ -10,7 +10,7 @@ P03-W01 已实现会话实体、消息搜索边界、首页聚合、会话新建
 
 ## 当前进行中
 
-当前工作包：P03-W01。已绑定 P03-001..P03-007；未开始 P03-W02 及后续包。
+当前工作包：P03-W02。P03-W01 已由控制器关闭；P03-W02 的 P03-008..P03-014 已完成代码与后端/API 测试证据，Android 构建仍需 CI 验证。
 
 ## 外部阻塞
 
@@ -18,4 +18,4 @@ P03-W01 已实现会话实体、消息搜索边界、首页聚合、会话新建
 
 ## 关键命令与证据
 
-本机 Web Admin npm test：PASS（3 tests）；npm run build：PASS。Go/Android 工具链本机缺失，必须由 GitHub Actions 对当前提交执行 go test ./... 与 Android 编译/验收。
+本机 Web Admin npm test：PASS（3 tests）；npm run build：PASS。后端 go test ./...：PASS；Android 构建工具缺失，必须由 GitHub Actions 对当前提交执行 Android 编译/验收。

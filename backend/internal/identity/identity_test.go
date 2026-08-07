@@ -2,6 +2,7 @@ package identity
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -491,6 +492,81 @@ func TestP03ConversationOwnershipPaginationSearchAndRecycle(t *testing.T) {
 	}
 }
 
+func TestP03RunEndpointRejectsUnconfiguredProvider(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime-api@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime-api@example.com")
+	conversation, err := s.CreateConversation(access, "运行 API")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "unconfigured"
+	response := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "hello"}, access, "")
+	if response.Code != http.StatusServiceUnavailable || !strings.Contains(response.Body.String(), "chat_runtime_unavailable") {
+		t.Fatalf("unconfigured runtime response=%d body=%s", response.Code, response.Body.String())
+	}
+}
+
+func TestP03RunEndpointPersistsProviderResponseAndResumesSSE(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime-upstream@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime-upstream@example.com")
+	conversation, err := s.CreateConversation(access, "上游运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/chat/completions" || r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Fatalf("unexpected provider request %s %q", r.URL.Path, r.Header.Get("Authorization"))
+		}
+		_, _ = w.Write([]byte("{\"choices\":[{\"message\":{\"content\":\"来自受控上游的回答\"}}]}"))
+	}))
+	defer provider.Close()
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = OpenAICompatibleResponder{Endpoint: provider.URL, APIKey: "test-key", Client: provider.Client()}
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "测试正文", "model": "ylven-default"}, access, "")
+	if created.Code != http.StatusCreated {
+		t.Fatalf("run create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	events := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/runs/"+run.ID+"/events?after=1", nil, access, "")
+	if events.Code != http.StatusOK || !strings.Contains(events.Body.String(), "delta\":\"自") || !strings.Contains(events.Body.String(), "delta\":\"受") || strings.Contains(events.Body.String(), "id: 1\ndata:") {
+		t.Fatalf("events status=%d body=%s", events.Code, events.Body.String())
+	}
+}
+
+func TestP03GeneratedTitleUsesProviderAndPersists(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "title-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "title-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticChatResponder{value: "项目周报"}
+	response := requestJSON(t, api.Handler(), http.MethodPost, "/internal/v1/conversations/"+conversation.ID+"/title", map[string]string{}, access, "")
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "项目周报") {
+		t.Fatalf("title response=%d body=%s", response.Code, response.Body.String())
+	}
+	items, _, err := s.ListConversations(access, "", 10, false)
+	if err != nil || len(items) != 1 || items[0].Title != "项目周报" {
+		t.Fatalf("persisted title=%+v err=%v", items, err)
+	}
+}
+
+type staticChatResponder struct{ value string }
+
+func (r staticChatResponder) Respond(context.Context, string, string) (string, error) {
+	return r.value, nil
+}
+
 func TestP03RunLifecycleEventsDraftAndExport(t *testing.T) {
 	s, _ := NewStore("")
 	createTestUser(t, s, "runtime@example.com")
@@ -499,7 +575,7 @@ func TestP03RunLifecycleEventsDraftAndExport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := s.CreateRun(access, conversation.ID, "请解释 SSE", "ylven-default")
+	run, err := s.CreateRun(access, conversation.ID, "请解释 SSE", "ylven-default", "SSE 会按事件 ID 恢复。")
 	if err != nil {
 		t.Fatal(err)
 	}
