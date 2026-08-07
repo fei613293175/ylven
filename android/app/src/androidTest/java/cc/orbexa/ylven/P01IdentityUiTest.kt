@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
@@ -47,8 +48,9 @@ class P01IdentityUiTest {
         capture("P01-AUTH-REGISTER")
 
         composeRule.onNodeWithTag("p01-register-submit").performClick()
-        composeRule.waitForIdle()
+        composeRule.waitForSecurityConfirmation()
         composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
+        composeRule.onNodeWithTag("p01-security-confirm").assertIsEnabled()
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("验证注册邮箱").assertExists()
@@ -63,8 +65,9 @@ class P01IdentityUiTest {
         composeRule.onNodeWithTag("p01-registered-login").performClick()
         composeRule.onNodeWithTag("p01-login-email").performTextInput("owner@example.com")
         composeRule.onNodeWithTag("p01-login-send").performClick()
-        composeRule.waitForIdle()
+        composeRule.waitForSecurityConfirmation()
         composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
+        composeRule.onNodeWithTag("p01-security-confirm").assertIsEnabled()
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("p01-otp-submit").performClick()
@@ -129,9 +132,22 @@ private class FakeIdentityGateway : IdentityGateway {
     override suspend fun verifyAnswer(challenge: SecurityChallenge, answer: String) {
         check(answer == "3") { "unexpected security answer" }
     }
+    override suspend fun requestRegistrationOtp(challenge: SecurityChallenge) = OtpChallenge(challenge.id, challenge.email, "123456")
+    override suspend fun requestLoginOtp(challenge: SecurityChallenge) = OtpChallenge(challenge.id, challenge.email, "654321")
     override suspend fun finishLogin(challenge: OtpChallenge, code: String) = session
     override suspend fun refresh(session: AuthSession) = session.copy(bearer = "access-rotated", renewal = "refresh-rotated")
     override suspend fun devices(bearer: String) = listOf(DeviceSession(session.deviceId, "2026-08-05T00:00:00Z", "2026-09-04T00:00:00Z", false))
     override suspend fun revokeDevice(bearer: String, sessionId: String) = Unit
     override suspend fun logout(bearer: String, allDevices: Boolean) = Unit
+}
+
+private fun androidx.compose.ui.test.junit4.ComposeTestRule.waitForSecurityConfirmation() {
+    waitUntil(5_000) {
+        try {
+            onNodeWithTag("p01-security-confirm").assertIsEnabled()
+            true
+        } catch (_: AssertionError) {
+            false
+        }
+    }
 }
