@@ -1,6 +1,6 @@
 # Project State Summary
 
-- Generated: `2026-08-07T16:42:54+08:00`
+- Generated: `2026-08-07T20:31:47+08:00`
 - Current phase: `P03`
 - Phase status: `READY_FOR_RELEASE`
 - Current Work Packet: `NONE`
@@ -11,11 +11,11 @@
 - Closed/deferred Work Packets recorded: `20`
 - Closed releases recorded: `3`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `c60f59de80a016d2113c79ef028991dd061f129a`
+- Git HEAD: `8bd987abbf30b3986d547f9d25d39ecc4b6481f0`
 
 ## Exact next action
 
-Every Work Packet in `P03` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
+All Work Packets in `P03` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, obtain `所有者验收.md: APPROVED`, then close `P03` through the release controller. Do not start the next phase yet.
 
 ## New-conversation rule
 
