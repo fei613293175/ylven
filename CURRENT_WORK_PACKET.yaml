@@ -1,9 +1,8 @@
 schema_version: '1.0'
 phase_id: P03
-work_packet_id: P03-W03
-status: DOING
-started_at: '2026-08-07T15:56:21+08:00'
-started_commit: 35d44b33d484f00b6f1b69ea030b9e81afaf43df
-last_closed_work_packet: P03-W02
-updated_at: '2026-08-07T15:56:21+08:00'
-blocked_reason: null
+work_packet_id: P03-W04
+status: TODO
+started_at: null
+started_commit: null
+last_closed_work_packet: P03-W03
+updated_at: '2026-08-07T16:24:48+08:00'
