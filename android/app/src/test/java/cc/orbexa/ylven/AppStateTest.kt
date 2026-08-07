@@ -2,6 +2,7 @@ package cc.orbexa.ylven
 
 import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.OtpChallenge
+import cc.orbexa.ylven.identity.userFacingMessage
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -28,5 +29,11 @@ class AppStateTest {
         assertEquals(24f, YlvenDimensions.SectionGap.value)
         assertEquals(24f, YlvenDimensions.Icon.value)
         assertEquals(48f, YlvenDimensions.MinimumTouchTarget.value)
+    }
+
+    @Test
+    fun internalErrorCodesAreNeverShownToUsers() {
+        assertEquals("这个邮箱已经注册过了，可以直接登录", userFacingMessage("email_already_registered", "email_already_registered", 409))
+        assertEquals("暂时无法完成，请稍后再试 (500)", userFacingMessage("unknown_failure", "Unknown failure", 500))
     }
 }

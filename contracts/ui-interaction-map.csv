@@ -65,9 +65,9 @@ YL-M-041-C-P02_002-02,P02-002,YL-M-041,ADMIN,ADMIN_CONTROL,展示邮箱验证码
 YL-A-005-C-P02_003-01,P02-003,YL-A-005,ANDROID,PRIMARY_VISIBLE,校验登录邮箱输入,android://validate-email,authenticated_user,none,approved mockup states for YL-A-005,contracts/feature-map.yaml,PLANNED
 YL-A-006-C-P02_004-01,P02-004,YL-A-006,ANDROID,PRIMARY_VISIBLE,弹出登录安全验证对话框,/api/v1/auth/login/challenge,authenticated_user,none,approved mockup states for YL-A-006,contracts/feature-map.yaml,PLANNED
 YL-M-023-C-P02_004-02,P02-004,YL-M-023,ADMIN,ADMIN_CONTROL,弹出登录安全验证对话框,/api/v1/auth/login/challenge,authenticated_user,none,approved mockup states for YL-M-023,contracts/feature-map.yaml,PLANNED
-YL-A-007-C-P02_005-01,P02-005,YL-A-007,ANDROID,PRIMARY_VISIBLE,在受控 WebView 完成 Turnstile,https://auth.orbexa.cc/security/turnstile,authenticated_user,none,approved mockup states for YL-A-007,contracts/feature-map.yaml,PLANNED
-YL-M-024-C-P02_005-02,P02-005,YL-M-024,ADMIN,ADMIN_CONTROL,在受控 WebView 完成 Turnstile,https://auth.orbexa.cc/security/turnstile,authenticated_user,none,approved mockup states for YL-M-024,contracts/feature-map.yaml,PLANNED
-YL-W-001-C-P02_005-03,P02-005,YL-W-001,WEB,PUBLIC_SUPPORT,在受控 WebView 完成 Turnstile,https://auth.orbexa.cc/security/turnstile,authenticated_user,none,approved mockup states for YL-W-001,contracts/feature-map.yaml,PLANNED
+YL-A-006-C-P02_005-01,P02-005,YL-A-006,ANDROID,PRIMARY_VISIBLE,在当前页面输入算式答案,/api/v1/auth/challenge/verify,authenticated_user,none,当前页面小验证弹窗,contracts/feature-map.yaml,PLANNED
+YL-M-024-C-P02_005-02,P02-005,YL-M-024,ADMIN,ADMIN_CONTROL,查看验证配置,/admin/v1/settings/turnstile,authenticated_user,none,认证与用户/安全验证,contracts/feature-map.yaml,PLANNED
+YL-W-001-C-P02_005-03,P02-005,YL-W-001,WEB,PUBLIC_SUPPORT,查看验证失败提示,/api/v1/auth/challenge/verify,authenticated_user,none,普通中文提示,contracts/feature-map.yaml,PLANNED
 YL-A-005-C-P02_006-01,P02-006,YL-A-005,ANDROID,PRIMARY_VISIBLE,安全验证后请求登录验证码,/api/v1/auth/login/otp/send,authenticated_user,none,approved mockup states for YL-A-005,contracts/feature-map.yaml,PLANNED
 YL-M-026-C-P02_006-02,P02-006,YL-M-026,ADMIN,ADMIN_CONTROL,安全验证后请求登录验证码,/api/v1/auth/login/otp/send,authenticated_user,none,approved mockup states for YL-M-026,contracts/feature-map.yaml,PLANNED
 YL-A-008-C-P02_007-01,P02-007,YL-A-008,ANDROID,PRIMARY_VISIBLE,输入六位登录验证码,/api/v1/auth/login/otp/verify,authenticated_user,none,approved mockup states for YL-A-008,contracts/feature-map.yaml,PLANNED
@@ -100,13 +100,13 @@ YL-A-016-C-P02_020-01,P02-020,YL-A-016,ANDROID,PRIMARY_VISIBLE,展示当前账�
 YL-M-031-C-P02_020-02,P02-020,YL-M-031,ADMIN,ADMIN_CONTROL,展示当前账号登录设备,/api/v1/account/devices,authenticated_user,none,approved mockup states for YL-M-031,contracts/feature-map.yaml,PLANNED
 YL-A-016-C-P02_021-01,P02-021,YL-A-016,ANDROID,PRIMARY_VISIBLE,远程撤销指定设备,/api/v1/account/devices/{deviceId}/sessions,authenticated_user,none,approved mockup states for YL-A-016,contracts/feature-map.yaml,PLANNED
 YL-M-031-C-P02_021-02,P02-021,YL-M-031,ADMIN,ADMIN_CONTROL,远程撤销指定设备,/api/v1/account/devices/{deviceId}/sessions,authenticated_user,none,approved mockup states for YL-M-031,contracts/feature-map.yaml,PLANNED
-YL-A-007-C-P02_022-01,P02-022,YL-A-007,ANDROID,PRIMARY_VISIBLE,处理安全验证取消、过期和重复令牌,/internal/v1/security/turnstile/verify,authenticated_user,none,approved mockup states for YL-A-007,contracts/feature-map.yaml,PLANNED
-YL-M-023-C-P02_022-02,P02-022,YL-M-023,ADMIN,ADMIN_CONTROL,处理安全验证取消、过期和重复令牌,/internal/v1/security/turnstile/verify,authenticated_user,none,approved mockup states for YL-M-023,contracts/feature-map.yaml,PLANNED
-YL-W-001-C-P02_022-03,P02-022,YL-W-001,WEB,PUBLIC_SUPPORT,处理安全验证取消、过期和重复令牌,/internal/v1/security/turnstile/verify,authenticated_user,none,approved mockup states for YL-W-001,contracts/feature-map.yaml,PLANNED
+YL-A-006-C-P02_022-01,P02-022,YL-A-006,ANDROID,PRIMARY_VISIBLE,处理验证取消过期和重复提交,/api/v1/auth/challenge/verify,authenticated_user,none,当前页面小验证弹窗,contracts/feature-map.yaml,PLANNED
+YL-M-023-C-P02_022-02,P02-022,YL-M-023,ADMIN,ADMIN_CONTROL,查看验证失败记录,/api/v1/auth/challenge/verify,authenticated_user,none,认证与用户/安全验证,contracts/feature-map.yaml,PLANNED
+YL-W-001-C-P02_022-03,P02-022,YL-W-001,WEB,PUBLIC_SUPPORT,显示验证过期或重复提交提示,/api/v1/auth/challenge/verify,authenticated_user,none,普通中文提示,contracts/feature-map.yaml,PLANNED
 YL-A-017-C-P02_023-01,P02-023,YL-A-017,ANDROID,PRIMARY_VISIBLE,处理弱网、离线和请求重试,android://auth-network-recovery,authenticated_user,none,approved mockup states for YL-A-017,contracts/feature-map.yaml,PLANNED
 YL-A-008-C-P02_024-01,P02-024,YL-A-008,ANDROID,PRIMARY_VISIBLE,适配验证码键盘、粘贴和自动填充,android://otp-input,authenticated_user,none,approved mockup states for YL-A-008,contracts/feature-map.yaml,PLANNED
 YL-A-017-C-P02_025-01,P02-025,YL-A-017,ANDROID,PRIMARY_VISIBLE,完成认证页面无障碍和小屏适配,android://auth-accessibility,authenticated_user,none,approved mockup states for YL-A-017,contracts/feature-map.yaml,PLANNED
-YL-M-044-C-P02_026-01,P02-026,YL-M-044,ADMIN,ADMIN_CONTROL,限制 WebView 导航和 JavaScript 桥接面,policy://turnstile-webview,authenticated_user,none,approved mockup states for YL-M-044,contracts/feature-map.yaml,PLANNED
+YL-M-044-C-P02_026-01,P02-026,YL-M-044,ADMIN,ADMIN_CONTROL,查看应用内验证策略,policy://first-party-verification,authenticated_user,none,不加载外部验证页面,contracts/feature-map.yaml,PLANNED
 YL-A-018-C-P03_001-01,P03-001,YL-A-018,ANDROID,PRIMARY_VISIBLE,加载 AI 首页聚合数据,/api/mobile/v1/home,authenticated_user,none,approved mockup states for YL-A-018,contracts/feature-map.yaml,PLANNED
 YL-M-045-C-P03_001-02,P03-001,YL-M-045,ADMIN,ADMIN_CONTROL,加载 AI 首页聚合数据,/api/mobile/v1/home,authenticated_user,none,approved mockup states for YL-M-045,contracts/feature-map.yaml,PLANNED
 YL-A-019-C-P03_002-01,P03-002,YL-A-019,ANDROID,PRIMARY_VISIBLE,新建独立会话 ID,/api/mobile/v1/conversations,authenticated_user,none,approved mockup states for YL-A-019,contracts/feature-map.yaml,PLANNED

@@ -260,10 +260,10 @@ pages:
       the folder.
 - page_id: YL-A-007
   surface: ANDROID
-  name: 安全验证 WebView
+  name: 遗留验证承载页（已停用）
   route: android://007
   layout_profile: android_auth
-  state_profile: auth_turnstile
+  state_profile: retired_first_party_verification
   feature_ids:
   - P02-005
   - P02-022
@@ -278,6 +278,8 @@ pages:
   functional_authority: contracts/feature-map.yaml
   visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  lifecycle_status: RETIRED
+  retirement_reason: P02 已改为当前登录或注册页面内的算式验证弹窗；保留本 Page ID 仅用于历史验收资产追踪。
   state_count: 7
   state_ids:
   - YL-A-007-S01_LOADING

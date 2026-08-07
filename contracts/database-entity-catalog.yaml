@@ -290,7 +290,10 @@ entities:
   - P01-005
   - P01-008
   - P02-004
+  - P02-005
   - P02-013
+  - P02-022
+  - P02-026
 - entity: auth_identities
   phases:
   - P01
@@ -1711,14 +1714,10 @@ entities:
 - entity: security_challenge_results
   phases:
   - P01
-  - P02
   services:
   - Security Service
-  - Security Web
   feature_ids:
   - P01-003
-  - P02-005
-  - P02-022
 - entity: security_events
   phases:
   - P01
@@ -1737,13 +1736,6 @@ entities:
   - P05-004
   - P11-031
   - P12-006
-- entity: security_policies
-  phases:
-  - P02
-  services:
-  - Android Security
-  feature_ids:
-  - P02-026
 - entity: security_scan_runs
   phases:
   - P12

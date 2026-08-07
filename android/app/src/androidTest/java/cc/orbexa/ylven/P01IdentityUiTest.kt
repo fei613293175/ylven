@@ -18,6 +18,7 @@ import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.DeviceSession
 import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.OtpChallenge
+import cc.orbexa.ylven.identity.SecurityChallenge
 import cc.orbexa.ylven.ui.YlvenApp
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import java.io.File
@@ -33,6 +34,8 @@ class P01IdentityUiTest {
     fun registrationLoginAndAccountScreensAreOperableAndCaptured() {
         val gateway = FakeIdentityGateway()
         composeRule.setContent { YlvenTheme(darkTheme = false) { YlvenApp(gateway = gateway) } }
+        composeRule.mainClock.advanceTimeBy(3_000)
+        composeRule.waitForIdle()
 
         composeRule.onNodeWithText("登录 YLVEN").assertExists()
         capture("P01-AUTH-LOGIN")
@@ -44,6 +47,7 @@ class P01IdentityUiTest {
         capture("P01-AUTH-REGISTER")
 
         composeRule.onNodeWithTag("p01-register-submit").performClick()
+        composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("验证注册邮箱").assertExists()
@@ -58,6 +62,7 @@ class P01IdentityUiTest {
         composeRule.onNodeWithTag("p01-registered-login").performClick()
         composeRule.onNodeWithTag("p01-login-email").performTextInput("owner@example.com")
         composeRule.onNodeWithTag("p01-login-send").performClick()
+        composeRule.onNodeWithTag("p02-security-answer").performTextInput("3")
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("p01-otp-submit").performClick()
@@ -113,13 +118,18 @@ class P01IdentityUiTest {
 }
 
 private class FakeIdentityGateway : IdentityGateway {
-    private val session = AuthSession("owner@example.com", "session-current-1234", "access", "refresh")
+    private val session = AuthSession("owner@example.com", "session-current-1234", "access", "refresh", "device-current")
     override suspend fun startRegistration(email: String) = OtpChallenge("register-challenge", email, "123456")
     override suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String) = Unit
     override suspend fun startLogin(email: String) = OtpChallenge("login-challenge", email, "654321")
+    override suspend fun createRegistrationChallenge(email: String) = SecurityChallenge("register-challenge", email, "register", "1 + 2 = ?")
+    override suspend fun createLoginChallenge(email: String) = SecurityChallenge("login-challenge", email, "login", "1 + 2 = ?")
+    override suspend fun verifyAnswer(challenge: SecurityChallenge, answer: String) {
+        check(answer == "3") { "unexpected security answer" }
+    }
     override suspend fun finishLogin(challenge: OtpChallenge, code: String) = session
     override suspend fun refresh(session: AuthSession) = session.copy(bearer = "access-rotated", renewal = "refresh-rotated")
-    override suspend fun devices(bearer: String) = listOf(DeviceSession(session.sessionId, "2026-08-05T00:00:00Z", "2026-09-04T00:00:00Z", false))
+    override suspend fun devices(bearer: String) = listOf(DeviceSession(session.deviceId, "2026-08-05T00:00:00Z", "2026-09-04T00:00:00Z", false))
     override suspend fun revokeDevice(bearer: String, sessionId: String) = Unit
     override suspend fun logout(bearer: String, allDevices: Boolean) = Unit
 }

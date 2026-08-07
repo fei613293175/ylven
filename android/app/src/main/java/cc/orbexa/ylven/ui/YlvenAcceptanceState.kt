@@ -115,7 +115,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             "YL-A-004" -> splash(code)
             "YL-A-005" -> auth("login", code)
             "YL-A-006" -> securityDialog(registering = false, code)
-            "YL-A-007" -> auth("turnstile", code)
+            "YL-A-007" -> auth("first_party", code)
             "YL-A-008" -> auth("login_otp", code)
             "YL-A-009" -> auth("login_success", code)
             "YL-A-010" -> auth("register", code)
@@ -147,7 +147,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         when (code) {
             "RESTORING" -> {
                 spinner(540f, 1420f, 42f, Pc.surface, 8f)
-                text("正在恢复安全会话", 540f, 1500f, 30f, color("#DCE2FF"), anchor = Anchor.MIDDLE_ASCENDER)
+                text("正在恢复登录状态", 540f, 1500f, 30f, color("#DCE2FF"), anchor = Anchor.MIDDLE_ASCENDER)
             }
             "FIRST_RUN" -> button(210f, 1430f, 870f, 1586f, "开始使用 YLVEN")
             "UPDATE_REQUIRED", "OFFLINE", "SERVER_ERROR" -> statusBanner(code, 1420f, .72f)
@@ -161,14 +161,14 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         circle(150f, 1930f, 270f, color("#EEF6FF"))
         iconCircle(96f, 168f, 42f, "Y", Pc.brand, Pc.surface, 36f)
         text("YLVEN", 154f, 146f, 42f, Pc.text, true)
-        text("安全、统一的多模型 AI 工作台", 154f, 194f, 25f, Pc.text3)
+        text("轻松解决每天的小问题", 154f, 194f, 25f, Pc.text3)
 
-        if (template == "turnstile") {
-            topBar("安全验证", "auth.orbexa.cc · 安全连接", back = true, right = false)
+        if (template == "first_party") {
+            topBar("请完成小验证", "YLVEN", back = true, right = false)
             shadowCard(72f, 360f, 1008f, 1460f, 46f)
             iconCircle(540f, 520f, 72f, if (code == "SUCCESS") "✓" else "盾", Pc.brandSoft, Pc.brand, 52f)
-            text("确认你是真实用户", 540f, 640f, 54f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-            text("完成验证后将自动返回 YLVEN", 540f, 726f, 31f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
+            text("请算一算下面这道题", 540f, 640f, 54f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+            text("验证会直接在当前页面完成", 540f, 726f, 31f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
             rounded(150f, 850f, 930f, 1065f, 30f, Pc.surfaceSubtle, Pc.border2, 3f)
             rounded(205f, 910f, 275f, 980f, 12f, Pc.surface, if (code == "SUCCESS") Pc.brand else Pc.border2, 4f)
             when (code) {
@@ -176,13 +176,12 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
                 "LOADING", "SECURITY_CHALLENGE" -> spinner(240f, 945f, 25f, Pc.brand, 6f)
             }
             val widgetTitle = when (code) {
-                "LOADING", "SECURITY_CHALLENGE" -> "正在验证安全环境"
+                "LOADING", "SECURITY_CHALLENGE" -> "正在核对答案"
                 "SUCCESS" -> "验证已完成"
                 else -> "验证未完成"
             }
             text(widgetTitle, 315f, 908f, 36f, Pc.text, true)
-            text("Cloudflare Turnstile", 315f, 966f, 26f, Pc.text3)
-            text("隐私 · 帮助", 758f, 998f, 22f, Pc.text3)
+            text("7 + 5 = ?", 315f, 966f, 26f, Pc.text3)
             button(150f, 1160f, 930f, 1320f, if (code == "SUCCESS") "返回 YLVEN" else "取消验证", primary = false)
             if (code in setOf("VALIDATION_ERROR", "CODE_EXPIRED", "OFFLINE", "SERVER_ERROR")) {
                 statusBanner(if (code == "VALIDATION_ERROR") "SAVE_ERROR" else code, 1510f, .82f, "安全验证未通过，请重新尝试。")
@@ -193,11 +192,11 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
 
         if (template == "login_success" || template == "register_success") {
             val title = if (template == "login_success") "登录成功" else "账户已创建"
-            val subtitle = if (template == "login_success") "正在安全恢复你的工作区" else "正在初始化你的 YLVEN 个人工作区"
+            val subtitle = if (template == "login_success") "正在准备你的内容" else "正在准备你的 YLVEN"
             val steps = if (template == "login_success") {
-                listOf("令牌安全保存", "同步个人设置", "进入首页")
+                listOf("登录信息已保存", "同步个人设置", "进入首页")
             } else {
-                listOf("创建用户资料", "初始化个人工作区", "同步默认 AI 设置", "进入 YLVEN")
+                listOf("创建账户", "保存个人设置", "准备常用功能", "进入 YLVEN")
             }
             iconCircle(540f, 760f, 106f, "✓", Pc.successSoft, Pc.success, 82f)
             text(title, 540f, 930f, 66f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
@@ -225,7 +224,7 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         }
         val subtitle = when (template) {
             "login" -> "使用邮箱验证码安全登录"
-            "register" -> "使用邮箱和登录密码建立个人工作区"
+            "register" -> "设置好密码，马上开始使用"
             "login_otp" -> "验证码已发送至 c***@example.com"
             else -> "输入发送至 c***@example.com 的六位验证码"
         }
@@ -304,8 +303,8 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
         overlay(Color.argb(125, 16, 24, 40))
         shadowCard(105f, 700f, 975f, 1515f, 44f, shadow = 14f, offset = 6f)
         iconCircle(540f, 845f, 62f, "盾", Pc.brandSoft, Pc.brand, 46f)
-        val title = if (registering) "确认注册安全验证" else "完成安全验证"
-        val subtitle = if (registering) "验证通过后才会发送注册验证码" else "验证通过后才能发送登录验证码"
+        val title = "请完成小验证"
+        val subtitle = "为了确认是你本人，请算一算下面这道题"
         text(title, 540f, 940f, 54f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
         text(subtitle, 540f, 1022f, 31f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER, maxWidth = 690f)
         rounded(170f, 1125f, 910f, 1275f, 26f, Pc.surfaceSubtle, Pc.border2, 2f)
@@ -314,10 +313,10 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             "SUCCESS" -> lineIcon(210f, 1175f, "check", 50f, Pc.success, 6f)
             else -> rounded(207f, 1165f, 263f, 1221f, 10f, Pc.surface, Pc.border2, 3f)
         }
-        text("Cloudflare Turnstile", 300f, 1175f, 34f, Pc.text, true)
-        text("安全验证不会保存聊天内容", 300f, 1220f, 24f, Pc.text3)
+        text("7 + 5 = ?", 300f, 1175f, 34f, Pc.text, true)
+        text("请输入答案", 300f, 1220f, 24f, Pc.text3)
         button(170f, 1330f, 525f, 1460f, "取消", primary = false)
-        button(555f, 1330f, 910f, 1460f, "继续验证", loading = code == "SUBMITTING")
+        button(555f, 1330f, 910f, 1460f, "确认", loading = code == "SUBMITTING")
         if (isError(code)) statusBanner(code, 1580f, .78f)
         gesture(Pc.surface)
     }
@@ -329,10 +328,10 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
                 overlay(Color.argb(150, 255, 255, 255))
                 shadowCard(190f, 840f, 890f, 1260f, 44f, shadow = 12f, offset = 5f)
                 spinner(540f, 950f, 44f, Pc.brand, 8f)
-                text("正在恢复会话", 540f, 1050f, 52f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-                text("正在验证远端登录状态", 540f, 1130f, 30f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
+                text("正在恢复登录状态", 540f, 1050f, 52f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+                text("正在确认账户信息", 540f, 1130f, 30f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
             }
-            "SUCCESS" -> statusBanner("SUCCESS", 300f, .78f, "会话已恢复，未重复发送任何请求。")
+            "SUCCESS" -> statusBanner("SUCCESS", 300f, .78f, "登录状态已恢复。")
             "UNAUTHORIZED", "OFFLINE", "SERVER_ERROR" -> {
                 overlay(Color.argb(90, 16, 24, 40))
                 statusBanner(code, 850f, .78f, "本地草稿已保留，可重新登录后继续。")
@@ -484,14 +483,14 @@ private class P02ContractRenderer(private val canvas: AndroidCanvas) {
             "YL-A-004" to "YLVEN",
             "YL-A-005" to "登录 YLVEN",
             "YL-A-006" to "完成安全验证",
-            "YL-A-007" to "安全验证",
+            "YL-A-007" to "遗留验证页面（已停用）",
             "YL-A-008" to "输入登录验证码",
             "YL-A-009" to "登录成功",
             "YL-A-010" to "创建 YLVEN 账户",
             "YL-A-011" to "确认注册安全验证",
             "YL-A-012" to "验证注册邮箱",
             "YL-A-013" to "账户已创建",
-            "YL-A-014" to "全局会话状态",
+            "YL-A-014" to "全局登录状态",
             "YL-A-015" to "退出登录",
             "YL-A-016" to "登录设备",
             "YL-A-017" to "认证适配与异常状态",

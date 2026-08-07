@@ -28,7 +28,8 @@ data class SecurityChallenge(
     val id: String,
     val email: String,
     val purpose: String,
-    /** Only populated by legacy test gateways; production always verifies in WebView. */
+    val question: String = "",
+    /** Only populated by lightweight test gateways. */
     val legacyOtp: OtpChallenge? = null,
 )
 
@@ -37,6 +38,7 @@ data class AuthSession(
     val sessionId: String,
     val bearer: String,
     val renewal: String,
+    val deviceId: String = "",
 )
 
 data class DeviceSession(
@@ -64,15 +66,15 @@ interface IdentityGateway {
 
     suspend fun createLoginChallenge(email: String): SecurityChallenge {
         val otp = startLogin(email)
-        return SecurityChallenge(otp.id, otp.email, "login", otp)
+        return SecurityChallenge(otp.id, otp.email, "login", legacyOtp = otp)
     }
 
     suspend fun createRegistrationChallenge(email: String): SecurityChallenge {
         val otp = startRegistration(email)
-        return SecurityChallenge(otp.id, otp.email, "register", otp)
+        return SecurityChallenge(otp.id, otp.email, "register", legacyOtp = otp)
     }
 
-    suspend fun verifyTurnstile(challenge: SecurityChallenge, token: String) {
+    suspend fun verifyAnswer(challenge: SecurityChallenge, answer: String) {
         require(challenge.legacyOtp != null) { "当前网关未实现安全验证" }
     }
 
@@ -101,18 +103,11 @@ class ApiException(
 
 class HttpIdentityGateway(
     private val baseUrl: String = BuildConfig.API_BASE_URL.trimEnd('/'),
-    private val turnstileToken: () -> String? = {
-        BuildConfig.STAGING_TURNSTILE_TOKEN.trim().ifBlank { null }
-    },
 ) : IdentityGateway {
     override suspend fun startRegistration(email: String): OtpChallenge {
-        val normalized = request("POST", "/api/v1/auth/email/normalize", JSONObject().put("email", email)).getString("email")
-        val payload = JSONObject().put("email", normalized).put("purpose", "register")
-        turnstileToken()?.let { payload.put("turnstile_token", it) }
-        val challenge = request("POST", "/api/v1/auth/register/challenge", payload)
-        val challengeId = challenge.getString("challenge_id")
-        val delivery = request("POST", "/api/v1/auth/register/otp/send", JSONObject().put("challenge_id", challengeId))
-        return OtpChallenge(challengeId, normalized, delivery.optString("debug_code").ifBlank { null }, delivery.optString("expires_at"), delivery.optInt("resend_after_seconds", 60))
+        val security = createRegistrationChallenge(email)
+        verifyAnswer(security, answerFor(security.question))
+        return requestRegistrationOtp(security)
     }
 
     override suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String) {
@@ -136,8 +131,14 @@ class HttpIdentityGateway(
 
     override suspend fun startLogin(email: String): OtpChallenge {
         val challenge = createLoginChallenge(email)
-        turnstileToken()?.let { verifyTurnstile(challenge, it) }
+        verifyAnswer(challenge, answerFor(challenge.question))
         return requestLoginOtp(challenge)
+    }
+
+    private fun answerFor(question: String): String {
+        val numbers = Regex("\\d+").findAll(question).map { it.value.toInt() }.toList()
+        require(numbers.size == 2) { "验证题目格式不正确" }
+        return (numbers[0] + numbers[1]).toString()
     }
 
     override suspend fun restore(session: AuthSession): AuthSession {
@@ -151,21 +152,17 @@ class HttpIdentityGateway(
         if (!challenge.has("challenge_id")) {
             throw ApiException(401, "login_unavailable", "无法为该账户创建登录验证")
         }
-        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "login")
+        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "login", challenge.optString("verification_question"))
     }
 
     override suspend fun createRegistrationChallenge(email: String): SecurityChallenge {
         val normalized = request("POST", "/api/v1/auth/email/normalize", JSONObject().put("email", email)).getString("email")
         val challenge = request("POST", "/api/v1/auth/register/challenge", JSONObject().put("email", normalized).put("purpose", "register"))
-        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "register")
+        return SecurityChallenge(challenge.getString("challenge_id"), normalized, "register", challenge.optString("verification_question"))
     }
 
-    override suspend fun verifyTurnstile(challenge: SecurityChallenge, token: String) {
-        request(
-            "POST",
-            "/internal/v1/security/turnstile/verify",
-            JSONObject().put("challenge_id", challenge.id).put("token", token),
-        )
+    override suspend fun verifyAnswer(challenge: SecurityChallenge, answer: String) {
+        request("POST", "/api/v1/auth/challenge/verify", JSONObject().put("challenge_id", challenge.id).put("answer", answer))
     }
 
     override suspend fun requestLoginOtp(challenge: SecurityChallenge): OtpChallenge {
@@ -217,7 +214,7 @@ class HttpIdentityGateway(
                 val item = items.getJSONObject(index)
                 add(
                     DeviceSession(
-                        id = item.getString("id"),
+                        id = item.optString("id").ifBlank { item.optString("device_id") },
                         createdAt = item.optString("created_at"),
                         expiresAt = item.optString("refresh_expires_at"),
                         revoked = item.optBoolean("revoked"),
@@ -281,7 +278,7 @@ class HttpIdentityGateway(
                 throw ApiException(
                     status,
                     error?.optString("code").orEmpty().ifBlank { "http_$status" },
-                    error?.optString("message").orEmpty().ifBlank { "服务请求失败 ($status)" },
+                    userFacingMessage(error?.optString("code").orEmpty(), error?.optString("message").orEmpty(), status),
                 )
             }
             json
@@ -295,7 +292,23 @@ class HttpIdentityGateway(
         sessionId = getString("session_id"),
         bearer = getString("access_token"),
         renewal = getString("refresh_token"),
+        deviceId = optString("device_id"),
     )
+
+}
+
+internal fun userFacingMessage(code: String, serverMessage: String, status: Int): String = when (code) {
+    "email_already_registered" -> "这个邮箱已经注册过了，可以直接登录"
+    "invalid_email" -> "请输入正确的邮箱地址"
+    "otp_invalid" -> "验证码不正确，请重新输入"
+    "otp_expired", "otp_expired_or_locked" -> "验证码已过期，请重新获取"
+    "auth_rate_limited" -> "操作太频繁了，请稍后再试"
+    "session_invalid", "refresh_token_invalid" -> "登录状态已失效，请重新登录"
+    "email_delivery_failed", "email_unconfigured" -> "验证码暂时发送失败，请稍后再试"
+    "verification_incorrect" -> "答案不正确，请再试一次"
+    "verification_locked" -> "尝试次数过多，请重新开始"
+    "challenge_expired", "challenge_not_found" -> "验证已过期，请重新开始"
+    else -> serverMessage.takeIf { it.any { character -> character.code > 127 } } ?: "暂时无法完成，请稍后再试 ($status)"
 }
 
 class SessionStore(context: Context) {
@@ -315,6 +328,7 @@ class SessionStore(context: Context) {
                 sessionId = json.getString("session_id"),
                 bearer = json.getString("access_token"),
                 renewal = json.getString("refresh_token"),
+                deviceId = json.optString("device_id"),
             )
         }.getOrElse {
             preferences.edit().clear().commit()
@@ -332,6 +346,7 @@ class SessionStore(context: Context) {
             .put("session_id", session.sessionId)
             .put("access_token", session.bearer)
             .put("refresh_token", session.renewal)
+            .put("device_id", session.deviceId)
             .toString()
             .toByteArray(Charsets.UTF_8)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")

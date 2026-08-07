@@ -24,11 +24,13 @@ class P01LiveBackendTest {
         assertFalse(login.debugCode.isNullOrBlank())
         val session = gateway.finishLogin(login, requireNotNull(login.debugCode))
         assertEquals(email, session.email)
-        assertTrue(gateway.devices(session.bearer).any { it.id == session.sessionId })
+        assertTrue(gateway.devices(session.bearer).any { it.id == session.deviceId })
 
         val rotated = gateway.refresh(session)
         assertNotEquals(session.renewal, rotated.renewal)
-        assertTrue(gateway.devices(rotated.bearer).any { it.id == rotated.sessionId })
+        val devices = gateway.devices(rotated.bearer)
+        assertEquals(1, devices.size)
+        assertTrue(devices.any { it.id == rotated.deviceId })
         gateway.logout(rotated.bearer, allDevices = true)
     }
 }

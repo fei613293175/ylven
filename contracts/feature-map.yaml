@@ -1066,20 +1066,20 @@ features:
   status: PLANNED
 - phase: P02
   feature_id: P02-005
-  name: 在受控 WebView 完成 Turnstile
+  name: 在当前页面完成一次性算式验证
   surface: Android
-  screen_or_menu: 安全验证 WebView
-  user_action: 在受控 WebView 完成 Turnstile
+  screen_or_menu: 登录页/安全验证
+  user_action: 在当前页面输入算式答案
   ui_states: idle|loading|success|empty|error
-  http_method: N/A
-  endpoint_or_event: https://auth.orbexa.cc/security/turnstile
-  backend_service: Security Web
-  data_entities: security_challenge_results
-  admin_control: 认证与用户/Turnstile配置
+  http_method: POST
+  endpoint_or_event: /api/v1/auth/challenge/verify
+  backend_service: Identity Service
+  data_entities: auth_challenges
+  admin_control: 认证与用户/安全验证
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“安全验证 WebView”完成“在受控 WebView 完成 Turnstile”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“认证与用户/Turnstile配置”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在登录或注册页面的弹窗内完成一次性算式验证，不跳转外部页面；答案不以明文保存，验证限时且最多允许五次错误，完成后不能重复使用；失败时显示普通用户可理解的中文文案。
   test_ids: P02-005-UNIT|P02-005-API|P02-005-E2E
   implementation_notes: ''
   status: PLANNED
@@ -1389,20 +1389,20 @@ features:
   status: PLANNED
 - phase: P02
   feature_id: P02-022
-  name: 处理安全验证取消、过期和重复令牌
+  name: 处理安全验证取消、过期和重复提交
   surface: Android
-  screen_or_menu: 安全验证 WebView
-  user_action: 处理安全验证取消、过期和重复令牌
+  screen_or_menu: 登录与注册安全验证弹窗
+  user_action: 处理安全验证取消、过期和重复提交
   ui_states: idle|loading|success|empty|error
   http_method: POST
-  endpoint_or_event: /internal/v1/security/turnstile/verify
-  backend_service: Security Service
-  data_entities: security_challenge_results
+  endpoint_or_event: /api/v1/auth/challenge/verify
+  backend_service: Identity Service
+  data_entities: auth_challenges
   admin_control: 认证与用户/安全验证
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“安全验证 WebView”完成“处理安全验证取消、过期和重复令牌”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“认证与用户/安全验证”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在当前页面取消并返回登录或注册表单；过期、错误次数过多和重复提交均返回稳定错误码与自然中文提示，且不会发送邮箱验证码。
   test_ids: P02-022-UNIT|P02-022-API|P02-022-E2E
   implementation_notes: ''
   status: PLANNED
@@ -1465,20 +1465,20 @@ features:
   status: PLANNED
 - phase: P02
   feature_id: P02-026
-  name: 限制 WebView 导航和 JavaScript 桥接面
+  name: 验证过程不向外部页面发送数据
   surface: Security
-  screen_or_menu: 安全验证 WebView
-  user_action: 限制 WebView 导航和 JavaScript 桥接面
+  screen_or_menu: 登录与注册安全验证弹窗
+  user_action: 在应用内完成验证
   ui_states: idle|loading|success|empty|error
   http_method: N/A
-  endpoint_or_event: policy://turnstile-webview
-  backend_service: Android Security
-  data_entities: security_policies
+  endpoint_or_event: policy://first-party-verification
+  backend_service: Identity Service
+  data_entities: auth_challenges
   admin_control: 安全与审计/移动端安全
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“安全验证 WebView”完成“限制 WebView 导航和 JavaScript 桥接面”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“安全与审计/移动端安全”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: Android 不加载安全验证 WebView、不注入 JavaScript 桥接、不调用第三方验证脚本；验证题目和答案只通过 YLVEN API 传输，网络错误可在当前弹窗恢复。
   test_ids: P02-026-UNIT|P02-026-API|P02-026-E2E
   implementation_notes: ''
   status: PLANNED

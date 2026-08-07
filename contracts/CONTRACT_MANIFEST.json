@@ -3,10 +3,10 @@
   "generated_at": "SOURCE_DERIVED",
   "source_of_truth": "feature-map.yaml",
   "feature_count": 362,
-  "api_inventory_row_count": 235,
-  "api_feature_mapping_count": 248,
-  "openapi_operation_count": 225,
-  "database_entity_count": 201,
+  "api_inventory_row_count": 236,
+  "api_feature_mapping_count": 249,
+  "openapi_operation_count": 226,
+  "database_entity_count": 200,
   "admin_menu_count": 195,
   "test_count": 1086,
   "ui_page_count": 332,
@@ -21,13 +21,13 @@
     },
     {
       "path": "android-phase-acceptance.yaml",
-      "size": 2037,
-      "sha256": "8537b7a1adcd68d94da7483de85b7b50f4dfed00cf7518bd3a6ad225154db74f"
+      "size": 3485,
+      "sha256": "495d970dffcf7d70e8dde1bdcef838f01768118fc2b45d42e993838826cddeb3"
     },
     {
       "path": "api-inventory.csv",
-      "size": 37012,
-      "sha256": "66c5251961c02fd07f3399b818512cc440038373e8b6a96592d1388ef5612c16"
+      "size": 37139,
+      "sha256": "5a3625c159665dde82d82670cbb613415ad90ecfe55099f2458aa1c95e1ca057"
     },
     {
       "path": "contract-authority-map.yaml",
@@ -41,13 +41,13 @@
     },
     {
       "path": "database-entity-catalog.yaml",
-      "size": 31573,
-      "sha256": "f5cb41bfa7900ed90ee0c1b5e2580153b388ee5a738392a8dbca2937bd640386"
+      "size": 31446,
+      "sha256": "66031e810df1f6ba48356c91e0d73e1c16f0caea983b079e00f79db6dadb4827"
     },
     {
       "path": "domain-delivery-map.yaml",
-      "size": 5684,
-      "sha256": "576a5dc9c3ca24294144fb68a68afa4943c1116e46bfb6fc0fa6a3804a5f3b04"
+      "size": 5687,
+      "sha256": "824cbf00302febd7e4a05c88f0e6c53bca69204f3c3c1bf1164d347b3cdad673"
     },
     {
       "path": "entitlement-catalog.yaml",
@@ -61,8 +61,8 @@
     },
     {
       "path": "execution-environment.yaml",
-      "size": 1640,
-      "sha256": "07251b9ca41a57ed48225fc42bb059e3bee683d620a036e5e251b351640b9f3b"
+      "size": 1977,
+      "sha256": "17373c82f3fcad9b36bf40b50980e57e95a09e43fffe3f635d0cbf19596a9323"
     },
     {
       "path": "execution-mode.yaml",
@@ -71,8 +71,8 @@
     },
     {
       "path": "feature-map.csv",
-      "size": 248621,
-      "sha256": "540bc0e1174e75a02d93c60fbf194ba90cb9c97cf626b239bea2017ff50f0dec"
+      "size": 248112,
+      "sha256": "f1ce638bfd1a520fcfaa9fd24a8c18a4cb45392ad43f0bb83d7b29ba5b6245d5"
     },
     {
       "path": "feature-map.schema.json",
@@ -81,8 +81,8 @@
     },
     {
       "path": "feature-map.yaml",
-      "size": 353590,
-      "sha256": "24a0d595657ce5d560e29da3d80e77092934cbbb5bbcd27db5f876e22665ee55"
+      "size": 353081,
+      "sha256": "d877bbf8d2b8e50436695eb765342ded186a45a74fadbff5918b34d076ee20ba"
     },
     {
       "path": "feature-ui-map.yaml",
@@ -91,8 +91,8 @@
     },
     {
       "path": "FEATURE_MATRIX.md",
-      "size": 86688,
-      "sha256": "ae6e9b258dcbaaf8a8047cea40bfb4329469dabb7634ae425f788c2fad513663"
+      "size": 86685,
+      "sha256": "c32d83c21ea7a3120611f41c0b5a45e47ade4150cf4065270bf5e022c153465e"
     },
     {
       "path": "interaction-test-bindings.csv",
@@ -111,23 +111,28 @@
     },
     {
       "path": "openapi-skeleton.yaml",
-      "size": 221190,
-      "sha256": "ab0f8a96ba1d7460afbcff8d7a976fd6296be9c9129b13e16d6afee0a3e14a6c"
+      "size": 222131,
+      "sha256": "48e94db9270c5141ee0c02c8b37a5d94a2cba4f291a38310f44d294c492817fe"
+    },
+    {
+      "path": "owner-delivery-contract.yaml",
+      "size": 2009,
+      "sha256": "09fb97c6d73a7da5b53e1ba882a5055d919f4852d0beb2ac4309dec730fa66c2"
     },
     {
       "path": "release-contract.yaml",
-      "size": 899,
-      "sha256": "96e5823bf27b88966cd097468f6321edf5c0fd0889938d8e2092c0bb4ce03a8f"
+      "size": 2017,
+      "sha256": "a805b94b3c441f4c31e2604abca9b003de579ff3fb535f0d31a44bbc89538421"
     },
     {
       "path": "release-version-matrix.yaml",
-      "size": 7806,
-      "sha256": "6db76f5c7fba4356e4bd59aec831e031ec4f2416abb362046111688a7874d683"
+      "size": 8774,
+      "sha256": "61df860b3778cd6b674e215df4b62e3182caf94e92e5c563a88f834bf2599115"
     },
     {
       "path": "repository-policy.yaml",
-      "size": 1823,
-      "sha256": "f1df2f6d8551df9086e9d13b5a0fbdbb27efb3ac67ddeab63d674954a8be1563"
+      "size": 2199,
+      "sha256": "9e7aea07614faa821cbf156d68b79639ec6137b7c8a83ecd44492bfef89cf16c"
     },
     {
       "path": "state-transition-contract.yaml",

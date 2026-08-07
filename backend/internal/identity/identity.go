@@ -10,9 +10,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/mail"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -23,13 +25,16 @@ const passwordIterations = 210000
 var emailPattern = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 
 type Challenge struct {
-	ID                string    `json:"id"`
-	Email             string    `json:"email"`
-	Purpose           string    `json:"purpose"`
-	TurnstileVerified bool      `json:"turnstile_verified"`
-	OTPVerified       bool      `json:"otp_verified"`
-	ExpiresAt         time.Time `json:"expires_at"`
-	Consumed          bool      `json:"consumed"`
+	ID                   string    `json:"id"`
+	Email                string    `json:"email"`
+	Purpose              string    `json:"purpose"`
+	TurnstileVerified    bool      `json:"turnstile_verified"`
+	VerificationQuestion string    `json:"verification_question"`
+	VerificationDigest   string    `json:"verification_digest"`
+	VerificationAttempts int       `json:"verification_attempts"`
+	OTPVerified          bool      `json:"otp_verified"`
+	ExpiresAt            time.Time `json:"expires_at"`
+	Consumed             bool      `json:"consumed"`
 }
 
 type OTP struct {
@@ -81,6 +86,7 @@ type Workspace struct {
 
 type SessionView struct {
 	ID               string    `json:"id"`
+	SessionID        string    `json:"session_id"`
 	UserID           string    `json:"user_id"`
 	AccessExpiresAt  time.Time `json:"access_expires_at"`
 	RefreshExpiresAt time.Time `json:"refresh_expires_at"`
@@ -164,7 +170,7 @@ type state struct {
 	StepUpChallenges       map[string]StepUpChallenge   `json:"step_up_challenges"`
 	EmailTemplates         map[string]EmailTemplate     `json:"email_templates"`
 	NotificationDeliveries []NotificationDelivery       `json:"notification_deliveries"`
-	Workspaces             map[string]Workspace          `json:"workspaces"`
+	Workspaces             map[string]Workspace         `json:"workspaces"`
 }
 
 type Store struct {
@@ -265,6 +271,17 @@ func randomToken(bytes int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+func randomInt(max int) (int, error) {
+	if max <= 0 {
+		return 0, errors.New("invalid random range")
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0, err
+	}
+	return int(n.Int64()), nil
+}
+
 func (s *Store) appendAuditLocked(eventType, email, sessionID string) {
 	id, _ := randomToken(8)
 	s.data.Audit = append(s.data.Audit, AuditEvent{
@@ -281,12 +298,60 @@ func (s *Store) CreateChallenge(email, purpose string) (Challenge, error) {
 	if err != nil {
 		return Challenge{}, err
 	}
-	c := Challenge{ID: id, Email: normalized, Purpose: purpose, ExpiresAt: time.Now().Add(10 * time.Minute)}
+	left, err := randomInt(8)
+	if err != nil {
+		return Challenge{}, err
+	}
+	right, err := randomInt(8)
+	if err != nil {
+		return Challenge{}, err
+	}
+	answer := left + right
+	salt, err := randomToken(16)
+	if err != nil {
+		return Challenge{}, err
+	}
+	c := Challenge{ID: id, Email: normalized, Purpose: purpose, ExpiresAt: time.Now().Add(10 * time.Minute), VerificationQuestion: fmt.Sprintf("%d + %d = ?", left, right), VerificationDigest: salt + ":" + hashSecret(strconv.Itoa(answer), salt)}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data.Challenges[id] = c
 	s.appendAuditLocked("auth_challenge_created:"+purpose, normalized, id)
 	return c, s.persistLocked()
+}
+
+// VerifyAnswer checks the first-party arithmetic verification. It is short-lived,
+// single-use and locked after five wrong answers. The answer is never persisted.
+func (s *Store) VerifyAnswer(challengeID, answer string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c, ok := s.data.Challenges[challengeID]
+	if !ok {
+		return errors.New("challenge_not_found")
+	}
+	if c.ExpiresAt.Before(time.Now()) {
+		return errors.New("challenge_expired")
+	}
+	if c.Consumed {
+		return errors.New("challenge_consumed")
+	}
+	if c.TurnstileVerified {
+		return errors.New("verification_already_verified")
+	}
+	if c.VerificationAttempts >= 5 {
+		return errors.New("verification_locked")
+	}
+	c.VerificationAttempts++
+	parts := strings.SplitN(c.VerificationDigest, ":", 2)
+	valid := len(parts) == 2 && subtle.ConstantTimeCompare([]byte(hashSecret(strings.TrimSpace(answer), parts[0])), []byte(parts[1])) == 1
+	if !valid {
+		s.data.Challenges[challengeID] = c
+		_ = s.persistLocked()
+		return errors.New("verification_incorrect")
+	}
+	c.TurnstileVerified = true
+	s.data.Challenges[challengeID] = c
+	s.appendAuditLocked("verification_completed:"+c.Purpose, c.Email, challengeID)
+	return s.persistLocked()
 }
 
 func (s *Store) VerifyTurnstile(challengeID, token string, valid bool) error {
@@ -477,11 +542,17 @@ func (s *Store) CreateSessionForUser(email string) (Session, string, string, err
 
 func (s *Store) createSessionLocked(u User, email string) (Session, string, string, error) {
 	id, err := randomToken(16)
-	if err != nil { return Session{}, "", "", err }
+	if err != nil {
+		return Session{}, "", "", err
+	}
 	access, err := randomToken(32)
-	if err != nil { return Session{}, "", "", err }
+	if err != nil {
+		return Session{}, "", "", err
+	}
 	refresh, err := randomToken(32)
-	if err != nil { return Session{}, "", "", err }
+	if err != nil {
+		return Session{}, "", "", err
+	}
 	now := time.Now().UTC()
 	session := Session{ID: id, UserID: u.ID, AccessDigest: digestToken(access), RefreshDigest: digestToken(refresh), AccessExpiresAt: now.Add(15 * time.Minute), RefreshExpiresAt: now.Add(30 * 24 * time.Hour), DeviceID: "device-" + id[:8], CreatedAt: now}
 	s.data.Sessions[id] = session
@@ -505,7 +576,9 @@ func (s *Store) CreateSession(challengeID, email string) (Session, string, strin
 		return Session{}, "", "", errors.New("login_not_verified")
 	}
 	session, access, refresh, err := s.createSessionLocked(u, normalized)
-	if err != nil { return Session{}, "", "", err }
+	if err != nil {
+		return Session{}, "", "", err
+	}
 	c.Consumed = true
 	s.data.Challenges[challengeID] = c
 	return session, access, refresh, s.persistLocked()
@@ -586,7 +659,7 @@ func (s *Store) LogoutAll(access string) error {
 	return s.persistLocked()
 }
 func sessionView(session Session) SessionView {
-	return SessionView{ID: session.ID, UserID: session.UserID, AccessExpiresAt: session.AccessExpiresAt, RefreshExpiresAt: session.RefreshExpiresAt, DeviceID: session.DeviceID, CreatedAt: session.CreatedAt, Revoked: session.Revoked}
+	return SessionView{ID: session.ID, SessionID: session.ID, UserID: session.UserID, AccessExpiresAt: session.AccessExpiresAt, RefreshExpiresAt: session.RefreshExpiresAt, DeviceID: session.DeviceID, CreatedAt: session.CreatedAt, Revoked: session.Revoked}
 }
 
 func userView(user User) UserView {
@@ -600,11 +673,22 @@ func (s *Store) ListSessions(access string) ([]SessionView, error) {
 	if !ok {
 		return nil, errors.New("session_invalid")
 	}
-	result := []SessionView{}
+	latest := map[string]Session{}
 	for _, session := range s.data.Sessions {
-		if session.UserID == item.UserID && !session.Revoked {
-			result = append(result, sessionView(session))
+		if session.UserID != item.UserID || session.Revoked {
+			continue
 		}
+		previous, exists := latest[session.DeviceID]
+		if !exists || (previous.RefreshConsumed && !session.RefreshConsumed) ||
+			(previous.RefreshConsumed == session.RefreshConsumed && session.CreatedAt.After(previous.CreatedAt)) {
+			latest[session.DeviceID] = session
+		}
+	}
+	result := make([]SessionView, 0, len(latest))
+	for _, session := range latest {
+		view := sessionView(session)
+		view.ID = session.DeviceID
+		result = append(result, view)
 	}
 	return result, nil
 }
@@ -638,12 +722,25 @@ func (s *Store) RevokeSession(access, targetID string) error {
 		return errors.New("session_invalid")
 	}
 	target, exists := s.data.Sessions[targetID]
-	if !exists || target.UserID != item.UserID {
+	if exists && target.UserID == item.UserID {
+		target.Revoked = true
+		target.RefreshConsumed = true
+		s.data.Sessions[targetID] = target
+		s.data.Audit = append(s.data.Audit, AuditEvent{ID: targetID, Type: "session_revoked", SessionID: targetID, CreatedAt: time.Now().UTC()})
+		return s.persistLocked()
+	}
+	found := false
+	for id, candidate := range s.data.Sessions {
+		if candidate.UserID == item.UserID && candidate.DeviceID == targetID {
+			candidate.Revoked = true
+			candidate.RefreshConsumed = true
+			s.data.Sessions[id] = candidate
+			found = true
+		}
+	}
+	if !found {
 		return errors.New("session_not_found")
 	}
-	target.Revoked = true
-	target.RefreshConsumed = true
-	s.data.Sessions[targetID] = target
 	s.data.Audit = append(s.data.Audit, AuditEvent{ID: targetID, Type: "session_revoked", SessionID: targetID, CreatedAt: time.Now().UTC()})
 	return s.persistLocked()
 }

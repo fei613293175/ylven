@@ -1,6 +1,6 @@
 # YLVEN 前端—后端—后台—数据—测试功能追踪矩阵
 
-> 版本：1.4.0；总功能数：**362**；HTTP/API 功能数：**235**。
+> 版本：1.4.0；总功能数：**362**；HTTP/API 功能数：**236**。
 
 本文件是可读索引；机器校验使用 `feature-map.yaml`、`feature-map.schema.json`、`feature-map.csv`、`api-inventory.csv` 与 `test-catalog.csv`。任何前端功能、后台菜单、收费能力或异步任务都必须具有 Feature ID。
 
@@ -97,7 +97,7 @@
 | `P02-002` | 展示邮箱验证码登录页 | Android / 登录页 | `N/A android://login-screen` | Android Auth | ui_state | 认证与用户/登录配置 | none / none |
 | `P02-003` | 校验登录邮箱输入 | Android / 登录页 | `N/A android://validate-email` | Android Auth | local_form_state | — | none / none |
 | `P02-004` | 弹出登录安全验证对话框 | Android / 登录页/安全验证 | `POST /api/v1/auth/login/challenge` | Identity Service | auth_challenges | 认证与用户/安全验证 | none / none |
-| `P02-005` | 在受控 WebView 完成 Turnstile | Android / 安全验证 WebView | `N/A https://auth.orbexa.cc/security/turnstile` | Security Web | security_challenge_results | 认证与用户/Turnstile配置 | none / none |
+| `P02-005` | 在当前页面完成一次性算式验证 | Android / 登录页/安全验证 | `POST /api/v1/auth/challenge/verify` | Identity Service | auth_challenges | 认证与用户/安全验证 | none / none |
 | `P02-006` | 安全验证后请求登录验证码 | Android / 登录页 | `POST /api/v1/auth/login/otp/send` | Identity Service | email_otps | 认证与用户/验证码策略 | none / none |
 | `P02-007` | 输入六位登录验证码 | Android / 验证码页 | `POST /api/v1/auth/login/otp/verify` | Identity Service | email_otps、auth_attempts | 认证与用户/登录日志 | none / none |
 | `P02-008` | 显示验证码倒计时和重新发送 | Android / 验证码页 | `POST /api/v1/auth/login/otp/send` | Identity Service | email_otps | 认证与用户/验证码策略 | none / none |
@@ -114,11 +114,11 @@
 | `P02-019` | 执行退出登录并清理敏感缓存 | Android / 我的/退出登录 | `POST /api/v1/auth/logout` | Session Service | sessions | 认证与用户/会话管理 | none / none |
 | `P02-020` | 展示当前账号登录设备 | Android / 我的/登录设备 | `GET /api/v1/account/devices` | Device Service | user_devices、sessions | 认证与用户/设备管理 | none / none |
 | `P02-021` | 远程撤销指定设备 | Android / 我的/登录设备 | `DELETE /api/v1/account/devices/{deviceId}/sessions` | Device Service | sessions | 认证与用户/设备管理 | none / none |
-| `P02-022` | 处理安全验证取消、过期和重复令牌 | Android / 安全验证 WebView | `POST /internal/v1/security/turnstile/verify` | Security Service | security_challenge_results | 认证与用户/安全验证 | none / none |
+| `P02-022` | 处理安全验证取消、过期和重复提交 | Android / 登录与注册安全验证弹窗 | `POST /api/v1/auth/challenge/verify` | Identity Service | auth_challenges | 认证与用户/安全验证 | none / none |
 | `P02-023` | 处理弱网、离线和请求重试 | Android / 登录与注册 | `N/A android://auth-network-recovery` | Android Network | local_retry_state | — | none / none |
 | `P02-024` | 适配验证码键盘、粘贴和自动填充 | Android / 验证码页 | `N/A android://otp-input` | Android Auth | local_form_state | — | none / none |
 | `P02-025` | 完成认证页面无障碍和小屏适配 | Android / 登录与注册 | `N/A android://auth-accessibility` | Android UI | ui_accessibility_checks | — | none / none |
-| `P02-026` | 限制 WebView 导航和 JavaScript 桥接面 | Security / 安全验证 WebView | `N/A policy://turnstile-webview` | Android Security | security_policies | 安全与审计/移动端安全 | none / none |
+| `P02-026` | 验证过程不向外部页面发送数据 | Security / 登录与注册安全验证弹窗 | `N/A policy://first-party-verification` | Identity Service | auth_challenges | 安全与审计/移动端安全 | none / none |
 
 ### P02 统一验收要求
 

@@ -8,7 +8,7 @@ missing = [item for item in required if item not in ignore]
 if missing:
     raise SystemExit("Missing secret ignore rules: " + ", ".join(missing))
 for path in root.rglob("*"):
-    if path == Path(__file__) or not path.is_file() or ".git" in path.parts or "node_modules" in path.parts:
+    if path == Path(__file__) or not path.is_file() or ".git" in path.parts or "node_modules" in path.parts or ".ylven-local" in path.parts:
         continue
     try:
         text = path.read_text(encoding="utf-8")

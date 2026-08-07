@@ -3,6 +3,7 @@ package identity
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -312,6 +313,61 @@ func TestP02TurnstileReplayIsRejected(t *testing.T) {
 	}
 }
 
+func TestP02FirstPartyVerificationIsHashedLimitedAndOneTime(t *testing.T) {
+	s, _ := NewStore("")
+	c, err := s.CreateChallenge("p02-answer@example.com", "login")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.VerificationQuestion == "" || c.VerificationDigest == "" || strings.Contains(c.VerificationDigest, c.VerificationQuestion) {
+		t.Fatalf("unsafe challenge: %+v", c)
+	}
+	var left, right int
+	if _, err := fmt.Sscanf(c.VerificationQuestion, "%d + %d = ?", &left, &right); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyAnswer(c.ID, "999"); err == nil || err.Error() != "verification_incorrect" {
+		t.Fatalf("wrong answer error=%v", err)
+	}
+	if err := s.VerifyAnswer(c.ID, fmt.Sprint(left+right)); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyAnswer(c.ID, fmt.Sprint(left+right)); err == nil || err.Error() != "verification_already_verified" {
+		t.Fatalf("replay error=%v", err)
+	}
+}
+
+func TestP02SessionRefreshKeepsSingleDevice(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "one-device@example.com")
+	c, _ := s.CreateChallenge("one-device@example.com", "login")
+	_ = s.VerifyTurnstile(c.ID, "token", true)
+	_, _ = s.CreateOTP(c.ID, "123456")
+	_ = s.VerifyOTP(c.ID, "123456")
+	first, _, refresh, err := s.CreateSession(c.ID, "one-device@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rotated, access, refresh, err := s.RotateSession(refresh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rotatedAgain, access, _, err := s.RotateSession(refresh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	devices, err := s.ListSessions(access)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(devices) != 1 {
+		t.Fatalf("devices=%d want 1: %+v", len(devices), devices)
+	}
+	if devices[0].ID != first.DeviceID || devices[0].SessionID != rotatedAgain.ID || rotated.DeviceID != first.DeviceID {
+		t.Fatalf("device continuity lost: %+v", devices[0])
+	}
+}
+
 func TestP02AccountSessionEndpointReturnsSafeAuthenticatedView(t *testing.T) {
 	s, _ := NewStore("")
 	createTestUser(t, s, "restore@example.com")
@@ -337,27 +393,47 @@ func TestP02AccountSessionEndpointReturnsSafeAuthenticatedView(t *testing.T) {
 func TestP02RegistrationReturnsSessionAndInitializesWorkspace(t *testing.T) {
 	s, _ := NewStore("")
 	c, err := s.CreateChallenge("workspace@example.com", "register")
-	if err != nil { t.Fatal(err) }
-	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil { t.Fatal(err) }
-	if _, err := s.CreateOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
-	if err := s.VerifyOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateOTP(c.ID, "123456"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyOTP(c.ID, "123456"); err != nil {
+		t.Fatal(err)
+	}
 	handler := NewAPI(s).Handler()
 	completed := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/register/complete", map[string]string{"challenge_id": c.ID, "email": "workspace@example.com", "password": "correct horse battery"}, "", "")
 	if completed.Code != http.StatusCreated || !strings.Contains(completed.Body.String(), "access_token") || !strings.Contains(completed.Body.String(), "个人工作区") {
 		t.Fatalf("registration completion status=%d body=%s", completed.Code, completed.Body.String())
 	}
-	var body struct { AccessToken string `json:"access_token"` }
-	if err := json.Unmarshal(completed.Body.Bytes(), &body); err != nil { t.Fatal(err) }
+	var body struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(completed.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
 	workspace := requestJSON(t, handler, http.MethodPost, "/api/v1/onboarding/personal-workspace", nil, body.AccessToken, "")
-	if workspace.Code != http.StatusOK || !strings.Contains(workspace.Body.String(), "initialized") { t.Fatalf("workspace status=%d body=%s", workspace.Code, workspace.Body.String()) }
+	if workspace.Code != http.StatusOK || !strings.Contains(workspace.Body.String(), "initialized") {
+		t.Fatalf("workspace status=%d body=%s", workspace.Code, workspace.Body.String())
+	}
 	policy := requestJSON(t, handler, http.MethodGet, "/api/v1/auth/password-policy", nil, "", "")
-	if policy.Code != http.StatusOK || !strings.Contains(policy.Body.String(), "min_length") { t.Fatalf("policy status=%d body=%s", policy.Code, policy.Body.String()) }
+	if policy.Code != http.StatusOK || !strings.Contains(policy.Body.String(), "min_length") {
+		t.Fatalf("policy status=%d body=%s", policy.Code, policy.Body.String())
+	}
 }
 
 func TestP02OTPCooldownPreventsImmediateResend(t *testing.T) {
 	s, _ := NewStore("")
 	c, _ := s.CreateChallenge("cooldown@example.com", "login")
 	_ = s.VerifyTurnstile(c.ID, "token", true)
-	if _, err := s.CreateOTP(c.ID, "123456"); err != nil { t.Fatal(err) }
-	if _, err := s.CreateOTP(c.ID, "654321"); err == nil || err.Error() != "otp_cooldown" { t.Fatalf("cooldown error=%v", err) }
+	if _, err := s.CreateOTP(c.ID, "123456"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateOTP(c.ID, "654321"); err == nil || err.Error() != "otp_cooldown" {
+		t.Fatalf("cooldown error=%v", err)
+	}
 }

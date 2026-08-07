@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P02
 phase_title: Android 注册登录与账号安全体验
-overall_status: READY_FOR_RELEASE
-updated_at: '2026-08-06T08:15:00+08:00'
+overall_status: IN_PROGRESS
+updated_at: '2026-08-07T08:30:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -33,7 +33,7 @@ features:
 - feature_id: P02-005
   status: IMPLEMENTED
   reason: ''
-  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::ControlledTurnstileWebView]
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::p02-security-answer, backend/internal/identity/http.go::POST /api/v1/auth/challenge/verify, backend/internal/identity/identity_test.go::TestP02FirstPartyVerificationIsHashedLimitedAndOneTime]
 - feature_id: P02-006
   status: IMPLEMENTED
   reason: ''
@@ -57,7 +57,7 @@ features:
 - feature_id: P02-011
   status: IMPLEMENTED
   reason: ''
-  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::passwordStrength, backend/internal/identity/http.go::GET /api/v1/auth/password-policy]
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::PasswordRuleRow, backend/internal/identity/http.go::GET /api/v1/auth/password-policy]
 - feature_id: P02-012
   status: IMPLEMENTED
   reason: ''
@@ -93,7 +93,7 @@ features:
 - feature_id: P02-020
   status: IMPLEMENTED
   reason: ''
-  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::AccountPage devices]
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::AccountPage devices, backend/internal/identity/identity.go::ListSessions, backend/internal/identity/identity_test.go::TestP02SessionRefreshKeepsSingleDevice]
 - feature_id: P02-021
   status: IMPLEMENTED
   reason: ''
@@ -101,7 +101,7 @@ features:
 - feature_id: P02-022
   status: IMPLEMENTED
   reason: ''
-  evidence: [backend/internal/identity/identity.go::challenge_expired and turnstile_already_verified, Android cancel]
+  evidence: [backend/internal/identity/identity.go::VerifyAnswer expiration/replay/attempt limit, android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::security dialog cancel]
 - feature_id: P02-023
   status: IMPLEMENTED
   reason: ''
@@ -117,4 +117,4 @@ features:
 - feature_id: P02-026
   status: IMPLEMENTED
   reason: ''
-  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::isAllowedSecurityUrl and restricted JS bridge]
+  evidence: [android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::native security dialog, backend/internal/identity/integrations_test.go::legacy page returns 404]

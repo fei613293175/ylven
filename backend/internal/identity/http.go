@@ -32,10 +32,14 @@ func NewAPI(store *Store) *API {
 	api := &API{Store: store}
 	api.TurnstileSiteKey = strings.TrimSpace(os.Getenv("TURNSTILE_SITE_KEY"))
 	api.TurnstileMode = strings.ToLower(strings.TrimSpace(os.Getenv("TURNSTILE_MODE")))
-	if api.TurnstileMode == "" {
-		api.TurnstileMode = "external"
+	// P02 uses YLVEN's own short arithmetic check. The legacy fields and
+	// endpoint remain readable for old data, but no hosted widget is loaded.
+	if api.TurnstileMode == "" || api.TurnstileMode == "external" {
+		api.TurnstileMode = "first_party"
 	}
 	switch api.TurnstileMode {
+	case "first_party":
+		// No external secret or browser widget is required.
 	case "mock":
 		mockToken, err := envOrFile("TURNSTILE_MOCK_TOKEN")
 		if err != nil || mockToken == "" {
@@ -120,10 +124,9 @@ func (a *API) ConfigurationOK() bool { return len(a.configurationErrs) == 0 }
 
 func (a *API) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/security/turnstile", a.turnstilePage)
 	mux.HandleFunc("/api/v1/auth/email/normalize", a.normalize)
 	mux.HandleFunc("/api/v1/auth/register/challenge", a.challenge)
-	mux.HandleFunc("/internal/v1/security/turnstile/verify", a.turnstile)
+	mux.HandleFunc("/api/v1/auth/challenge/verify", a.verifyAnswer)
 	mux.HandleFunc("/api/v1/auth/register/otp/send", a.otpSend)
 	mux.HandleFunc("/api/v1/auth/register/otp/verify", a.otpVerify)
 	mux.HandleFunc("/api/v1/auth/register/complete", a.complete)
@@ -184,6 +187,21 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
+	if friendly, ok := map[string]string{
+		"email_already_registered": "这个邮箱已经注册过了，可以直接登录",
+		"invalid_email":            "请输入正确的邮箱地址",
+		"otp_invalid":              "验证码不正确，请重新输入",
+		"otp_expired_or_locked":    "验证码已过期，请重新获取",
+		"auth_rate_limited":        "操作太频繁了，请稍后再试",
+		"session_invalid":          "登录状态已失效，请重新登录",
+		"email_delivery_failed":    "验证码暂时发送失败，请稍后再试",
+		"turnstile_failed":         "验证没有完成，请再试一次",
+		"verification_incorrect":   "答案不正确，请再试一次",
+		"verification_locked":      "尝试次数过多，请重新开始",
+		"challenge_expired":        "验证已过期，请重新开始",
+	}[code]; ok {
+		message = friendly
+	}
 	writeJSON(w, status, map[string]any{"error": map[string]string{"code": code, "message": message}})
 }
 
@@ -346,7 +364,41 @@ func (a *API) challenge(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, 201, map[string]any{"challenge_id": challenge.ID, "email": challenge.Email, "expires_at": challenge.ExpiresAt.UTC()})
+	writeJSON(w, 201, map[string]any{"challenge_id": challenge.ID, "email": challenge.Email, "verification_question": challenge.VerificationQuestion, "expires_at": challenge.ExpiresAt.UTC()})
+}
+
+func (a *API) verifyAnswer(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	var in struct {
+		ChallengeID string `json:"challenge_id"`
+		Answer      string `json:"answer"`
+	}
+	if !decode(r, &in) {
+		writeError(w, 400, "invalid_json", "请求内容不完整，请再试一次")
+		return
+	}
+	if strings.TrimSpace(in.Answer) == "" {
+		writeError(w, 422, "verification_incorrect", "请输入答案")
+		return
+	}
+	if err := a.Store.VerifyAnswer(in.ChallengeID, in.Answer); err != nil {
+		status := 422
+		if err.Error() == "challenge_not_found" || err.Error() == "challenge_expired" {
+			status = 410
+		}
+		if err.Error() == "verification_locked" {
+			status = 429
+		}
+		message := map[string]string{"verification_incorrect": "答案不正确，请再试一次", "verification_locked": "尝试次数过多，请重新开始", "challenge_expired": "验证已过期，请重新开始", "challenge_consumed": "验证已完成，请继续操作"}[err.Error()]
+		if message == "" {
+			message = "验证没有完成，请再试一次"
+		}
+		writeError(w, status, err.Error(), message)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"verified": true})
 }
 
 func (a *API) turnstile(w http.ResponseWriter, r *http.Request) {
@@ -498,7 +550,7 @@ func (a *API) complete(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 201, map[string]any{
 		"user_id": user.ID, "email": user.Email, "workspace": workspace,
-		"session_id": session.ID, "access_token": access, "refresh_token": refresh,
+		"session_id": session.ID, "device_id": session.DeviceID, "access_token": access, "refresh_token": refresh,
 		"access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt,
 	})
 }
@@ -560,7 +612,7 @@ func (a *API) loginChallenge(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, 201, map[string]any{"challenge_id": challenge.ID, "accepted": true, "expires_at": challenge.ExpiresAt.UTC()})
+	writeJSON(w, 201, map[string]any{"challenge_id": challenge.ID, "accepted": true, "verification_question": challenge.VerificationQuestion, "expires_at": challenge.ExpiresAt.UTC()})
 }
 
 func (a *API) loginOTPSend(w http.ResponseWriter, r *http.Request)   { a.otpSend(w, r) }
@@ -587,7 +639,7 @@ func (a *API) sessions(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "login_not_verified", "Unable to authenticate")
 		return
 	}
-	writeJSON(w, 201, map[string]any{"session_id": session.ID, "access_token": access, "refresh_token": refresh, "access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt})
+	writeJSON(w, 201, map[string]any{"session_id": session.ID, "device_id": session.DeviceID, "access_token": access, "refresh_token": refresh, "access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt})
 }
 
 func (a *API) accountSession(w http.ResponseWriter, r *http.Request) {
@@ -618,7 +670,7 @@ func (a *API) refreshSession(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 401, "refresh_token_invalid", "Refresh token is invalid or expired")
 		return
 	}
-	writeJSON(w, 200, map[string]any{"session_id": session.ID, "access_token": access, "refresh_token": refresh, "access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt})
+	writeJSON(w, 200, map[string]any{"session_id": session.ID, "device_id": session.DeviceID, "access_token": access, "refresh_token": refresh, "access_expires_at": session.AccessExpiresAt, "refresh_expires_at": session.RefreshExpiresAt})
 }
 
 func bearer(r *http.Request) string {

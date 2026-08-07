@@ -14,9 +14,7 @@ services:
       APP_VERSION: "1.2.0-${YLVEN_IMAGE_TAG}"
       HTTP_ADDR: ":8080"
       IDENTITY_STORE_PATH: /data/identity.json
-      TURNSTILE_MODE: external
-      TURNSTILE_SITE_KEY: 1x00000000000000000000AA
-      TURNSTILE_SECRET_FILE: /run/secrets/turnstile_secret
+      TURNSTILE_MODE: first_party
       EMAIL_MODE: mock
       IDENTITY_DEBUG_OTP: "1"
       OWNER_ADMIN_USERNAME: admin
@@ -25,7 +23,6 @@ services:
     volumes:
       - /opt/ylven-p01/data:/data
       - /opt/ylven-p01/secrets/admin_credential:/run/secrets/admin_credential:ro
-      - /opt/ylven-p01/secrets/turnstile_secret:/run/secrets/turnstile_secret:ro
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=16m

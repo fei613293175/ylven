@@ -24,13 +24,7 @@ android {
             .get()
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
-        val stagingTurnstileToken = providers.gradleProperty("ylvenStagingTurnstileToken")
-            .orElse("")
-            .get()
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-        buildConfigField("String", "STAGING_TURNSTILE_TOKEN", "\"$stagingTurnstileToken\"")
     }
 
     buildTypes {

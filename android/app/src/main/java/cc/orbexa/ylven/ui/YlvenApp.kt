@@ -1,13 +1,5 @@
 package cc.orbexa.ylven.ui
 
-import android.annotation.SuppressLint
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
-import android.webkit.JavascriptInterface
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,9 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +65,7 @@ import cc.orbexa.ylven.identity.OtpChallenge
 import cc.orbexa.ylven.identity.PasswordPolicy
 import cc.orbexa.ylven.identity.SecurityChallenge
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
+import cc.orbexa.ylven.ui.theme.YlvenLightColors
 import kotlinx.coroutines.launch
 
 private enum class IdentityScreen {
@@ -83,7 +74,6 @@ private enum class IdentityScreen {
     REGISTER,
     LOGIN_SECURITY,
     REGISTER_SECURITY,
-    TURNSTILE,
     LOGIN_OTP,
     REGISTER_OTP,
     REGISTERED,
@@ -104,7 +94,9 @@ fun YlvenApp(
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var securityAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var securityAnswer by rememberSaveable { mutableStateOf("") }
     var passwordPolicy by remember { mutableStateOf(PasswordPolicy()) }
+    var splashVisible by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(initialSession) {
@@ -129,6 +121,10 @@ fun YlvenApp(
     }
 
     LaunchedEffect(Unit) { runCatching { passwordPolicy = gateway.passwordPolicy() } }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(3_000)
+        splashVisible = false
+    }
 
     fun runRequest(block: suspend () -> Unit) {
         loading = true
@@ -145,7 +141,7 @@ fun YlvenApp(
     }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).testTag("p01-auth-root")) {
-        when (screen) {
+        if (splashVisible) SplashPage() else when (screen) {
             IdentityScreen.RESTORING -> SessionRestorePage(error)
             IdentityScreen.LOGIN -> LoginPage(
                 loading = loading,
@@ -155,10 +151,16 @@ fun YlvenApp(
                     runRequest {
                         securityChallenge = gateway.createLoginChallenge(email)
                         securityAction = {
-                            securityAction = null
-                            challenge = securityChallenge?.legacyOtp
-                            screen = if (securityChallenge?.legacyOtp != null) IdentityScreen.LOGIN_OTP else IdentityScreen.TURNSTILE
+                            val active = requireNotNull(securityChallenge)
+                            runRequest {
+                                gateway.verifyAnswer(active, securityAnswer)
+                                challenge = gateway.requestLoginOtp(active)
+                                securityAction = null
+                                securityAnswer = ""
+                                screen = IdentityScreen.LOGIN_OTP
+                            }
                         }
+                        securityAnswer = ""
                         screen = IdentityScreen.LOGIN_SECURITY
                     }
                 },
@@ -173,33 +175,21 @@ fun YlvenApp(
                     runRequest {
                         securityChallenge = gateway.createRegistrationChallenge(email)
                         securityAction = {
-                            securityAction = null
-                            challenge = securityChallenge?.legacyOtp
-                            screen = if (securityChallenge?.legacyOtp != null) IdentityScreen.REGISTER_OTP else IdentityScreen.TURNSTILE
+                            val active = requireNotNull(securityChallenge)
+                            runRequest {
+                                gateway.verifyAnswer(active, securityAnswer)
+                                challenge = gateway.requestRegistrationOtp(active)
+                                securityAction = null
+                                securityAnswer = ""
+                                screen = IdentityScreen.REGISTER_OTP
+                            }
                         }
+                        securityAnswer = ""
                         screen = IdentityScreen.REGISTER_SECURITY
                     }
                 },
             )
             IdentityScreen.LOGIN_SECURITY, IdentityScreen.REGISTER_SECURITY -> Unit
-            IdentityScreen.TURNSTILE -> TurnstilePage(
-                challenge = requireNotNull(securityChallenge),
-                error = error,
-                onCancel = {
-                    val destination = if (securityChallenge?.purpose == "register") IdentityScreen.REGISTER else IdentityScreen.LOGIN
-                    error = null
-                    securityChallenge = null
-                    screen = destination
-                },
-                onToken = { token ->
-                    val active = requireNotNull(securityChallenge)
-                    runRequest {
-                        gateway.verifyTurnstile(active, token)
-                        challenge = if (active.purpose == "register") gateway.requestRegistrationOtp(active) else gateway.requestLoginOtp(active)
-                        screen = if (active.purpose == "register") IdentityScreen.REGISTER_OTP else IdentityScreen.LOGIN_OTP
-                    }
-                },
-            )
             IdentityScreen.LOGIN_OTP, IdentityScreen.REGISTER_OTP -> OtpPage(
                 registering = screen == IdentityScreen.REGISTER_OTP,
                 challenge = requireNotNull(challenge),
@@ -244,13 +234,55 @@ fun YlvenApp(
         if (securityAction != null) {
             AlertDialog(
                 modifier = Modifier.testTag("p01-security-dialog"),
-                onDismissRequest = { securityAction = null },
+                onDismissRequest = {
+                    securityAction = null
+                    error = null
+                    screen = if (securityChallenge?.purpose == "register") IdentityScreen.REGISTER else IdentityScreen.LOGIN
+                },
                 icon = { Icon(Icons.Default.Security, contentDescription = null) },
-                title = { Text(if (screen == IdentityScreen.REGISTER_SECURITY) "注册安全验证" else "登录安全验证") },
-                text = { Text("继续后将在受控安全页面完成 Turnstile 验证，验证通过后才会发送邮箱验证码。") },
-                confirmButton = { Button(onClick = { securityAction?.invoke() }, modifier = Modifier.testTag("p01-security-confirm")) { Text("继续验证") } },
-                dismissButton = { TextButton(onClick = { securityAction = null }) { Text("取消") } },
+                title = { Text("请完成小验证") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("为了确认是你本人，请算一算下面这道题。")
+                        Text(securityChallenge?.question ?: "请按提示完成验证", style = MaterialTheme.typography.titleMedium)
+                        OutlinedTextField(
+                            value = securityAnswer,
+                            onValueChange = { securityAnswer = it.filter(Char::isDigit).take(3) },
+                            label = { Text("请输入答案") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth().testTag("p02-security-answer"),
+                        )
+                        InlineError(error)
+                    }
+                },
+                confirmButton = { Button(onClick = { securityAction?.invoke() }, enabled = securityAnswer.isNotBlank() && !loading, modifier = Modifier.testTag("p01-security-confirm")) { Text(if (loading) "正在验证…" else "确认") } },
+                dismissButton = { TextButton(onClick = {
+                    securityAction = null
+                    error = null
+                    screen = if (securityChallenge?.purpose == "register") IdentityScreen.REGISTER else IdentityScreen.LOGIN
+                }) { Text("取消") } },
             )
+        }
+    }
+}
+
+@Composable
+private fun SplashPage() {
+    Box(Modifier.fillMaxSize().testTag("p02-brand-splash")) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(cc.orbexa.ylven.R.drawable.ylven_splash),
+            contentDescription = "YLVEN",
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 72.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(30.dp), strokeWidth = 3.dp, color = androidx.compose.ui.graphics.Color.White)
+            Text("正在准备你的 YLVEN", color = androidx.compose.ui.graphics.Color.White)
         }
     }
 }
@@ -270,112 +302,16 @@ internal fun SessionRestorePage(error: String?) {
 }
 
 @Composable
-private fun TurnstilePage(
-    challenge: SecurityChallenge,
-    error: String?,
-    onCancel: () -> Unit,
-    onToken: (String) -> Unit,
-) {
-    var submitted by remember(challenge.id) { mutableStateOf(false) }
-    Column(
-        Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onCancel, modifier = Modifier.testTag("p02-turnstile-cancel")) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-            }
-            Text("安全验证", style = MaterialTheme.typography.titleLarge)
-        }
-        Text("请在受控安全页面完成验证。验证令牌仅用于当前登录请求。", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        ControlledTurnstileWebView(
-            challenge = challenge,
-            modifier = Modifier.fillMaxWidth().weight(1f).testTag("p02-turnstile-webview"),
-            onToken = { token ->
-                if (!submitted) {
-                    submitted = true
-                    onToken(token)
-                }
-            },
-        )
-        InlineError(error)
-        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("取消验证") }
-    }
-}
-
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-private fun ControlledTurnstileWebView(
-    challenge: SecurityChallenge,
-    modifier: Modifier,
-    onToken: (String) -> Unit,
-) {
-    var webView: WebView? = null
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            WebView(context).apply {
-                webView = this
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.allowFileAccess = false
-                settings.allowContentAccess = false
-                settings.setSupportMultipleWindows(false)
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                        return !isAllowedSecurityUrl(request.url)
-                    }
-
-                    @Deprecated("Deprecated in API 24")
-                    override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                        return !isAllowedSecurityUrl(Uri.parse(url))
-                    }
-                }
-                addJavascriptInterface(object {
-                    @JavascriptInterface
-                    fun onTurnstileToken(token: String) {
-                        val trimmed = token.trim()
-                        if (trimmed.isNotEmpty()) Handler(Looper.getMainLooper()).post { onToken(trimmed) }
-                    }
-                }, "YlvenSecurity")
-                val target = Uri.Builder()
-                    .scheme("https")
-                    .authority("auth.orbexa.cc")
-                    .path("/security/turnstile")
-                    .appendQueryParameter("challenge_id", challenge.id)
-                    .appendQueryParameter("action", challenge.purpose)
-                    .build()
-                loadUrl(target.toString())
-            }
-        },
-    )
-    DisposableEffect(challenge.id) {
-        onDispose {
-            webView?.apply {
-                stopLoading()
-                removeJavascriptInterface("YlvenSecurity")
-                destroy()
-            }
-            webView = null
-        }
-    }
-}
-
-private fun isAllowedSecurityUrl(uri: Uri): Boolean {
-    if (uri.scheme != "https") return false
-    return uri.host.equals("auth.orbexa.cc", ignoreCase = true) ||
-        uri.host.equals("challenges.cloudflare.com", ignoreCase = true)
-}
-
-@Composable
 internal fun BrandHeader() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary, CircleShape), contentAlignment = Alignment.Center) {
-            Text("Y", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-        }
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(cc.orbexa.ylven.R.drawable.ylven_logo),
+            contentDescription = "YLVEN",
+            modifier = Modifier.size(40.dp),
+        )
         Column {
             Text("YLVEN", style = MaterialTheme.typography.titleLarge)
-            Text("安全、统一的多模型 AI 工作台", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("轻松解决每天的小问题", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -447,30 +383,43 @@ private fun RegisterPage(
     var password by rememberSaveable { mutableStateOf("") }
     var confirmation by rememberSaveable { mutableStateOf("") }
     var validation by remember { mutableStateOf<String?>(null) }
-    AuthLayout("创建 YLVEN 账户", "使用邮箱和登录密码建立个人工作区", onBack) {
+    AuthLayout("创建 YLVEN 账户", "设置好密码，马上开始使用", onBack) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             AuthField(email, { email = it; validation = null }, "邮箱地址", "p01-register-email", KeyboardType.Email, false)
             AuthField(password, { password = it; validation = null }, "登录密码", "p01-register-password", KeyboardType.Password, true)
             AuthField(confirmation, { confirmation = it; validation = null }, "确认登录密码", "p01-register-confirm", KeyboardType.Password, true)
             Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("p02-password-policy")) {
-                val strength = passwordStrength(password, policy)
-                Text("密码强度：$strength", style = MaterialTheme.typography.bodySmall, color = if (strength == "强") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("· 至少 ${policy.minLength} 个字符", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (policy.requiresLetter) Text("· 包含字母", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (policy.requiresDigit) Text("· 包含数字", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("· 两次密码一致", style = MaterialTheme.typography.bodySmall, color = if (confirmation.isNotEmpty() && password != confirmation) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                val meetsLength = password.length >= policy.minLength
+                val meetsLetter = !policy.requiresLetter || password.any(Char::isLetter)
+                val meetsDigit = !policy.requiresDigit || password.any(Char::isDigit)
+                val matches = confirmation.isNotEmpty() && password == confirmation
+                Text("密码要求", style = MaterialTheme.typography.labelLarge)
+                PasswordRuleRow(meetsLength, "至少 ${policy.minLength} 个字符", showPending = password.isEmpty())
+                if (policy.requiresLetter) PasswordRuleRow(meetsLetter, "包含字母", showPending = password.isEmpty())
+                if (policy.requiresDigit) PasswordRuleRow(meetsDigit, "包含数字", showPending = password.isEmpty())
+                PasswordRuleRow(matches, "两次输入一致", showPending = confirmation.isEmpty())
             }
             InlineError(validation ?: error)
             PrimaryAction("创建账户", loading, "p01-register-submit") {
                 validation = when {
                     !email.looksLikeEmail() -> "请输入有效的邮箱地址"
-                    password.length < policy.minLength || (policy.requiresLetter && password.none(Char::isLetter)) || (policy.requiresDigit && password.none(Char::isDigit)) -> "密码不符合安全策略"
+                    password.length < policy.minLength || (policy.requiresLetter && password.none(Char::isLetter)) || (policy.requiresDigit && password.none(Char::isDigit)) -> "密码还没有满足上面的要求"
                     password != confirmation -> "两次输入的密码不一致"
                     else -> null
                 }
                 if (validation == null) onCreate(email.trim(), password)
             }
         }
+    }
+}
+
+@Composable
+private fun PasswordRuleRow(satisfied: Boolean, label: String, showPending: Boolean = false) {
+    val successColor = YlvenLightColors.Success
+    val color = when { satisfied -> successColor; showPending -> MaterialTheme.colorScheme.onSurfaceVariant; else -> MaterialTheme.colorScheme.error }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(if (satisfied) "✓" else "•", color = color, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = color)
     }
 }
 
@@ -524,7 +473,7 @@ private fun OtpPage(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("验证码已发送至", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(masked, style = MaterialTheme.typography.titleMedium)
-                    challenge.debugCode?.let { Text("联调验证码：$it", color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("p01-debug-otp")) }
+                    challenge.debugCode?.let { Text("本次验证码：$it", color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("p01-debug-otp")) }
                 }
             }
             OutlinedTextField(
@@ -567,7 +516,7 @@ private fun RegisteredPage(onLogin: () -> Unit) {
         }
         Spacer(Modifier.height(24.dp))
         Text("账户已创建", style = MaterialTheme.typography.headlineSmall)
-        Text("邮箱身份已写入 YLVEN 服务", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("现在可以开始使用 YLVEN", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(32.dp))
         PrimaryAction("去登录", false, "p01-registered-login", onLogin)
     }
@@ -609,7 +558,7 @@ private fun AccountPage(
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("已登录", style = MaterialTheme.typography.titleMedium)
                         Text(session.email)
-                        Text("会话 ${session.sessionId.take(12)}…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("登录状态正常", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -619,20 +568,20 @@ private fun AccountPage(
             items(devices, key = { it.id }) { device ->
                 Card(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(if (device.id == session.sessionId) "当前设备" else "Android 设备", fontWeight = FontWeight.SemiBold)
-                        Text(device.id.take(16), style = MaterialTheme.typography.bodySmall)
-                        Text(if (device.revoked) "已撤销" else "会话有效", color = if (device.revoked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                        if (device.id != session.sessionId && !device.revoked) {
+                        val isCurrent = session.deviceId.isNotBlank() && device.id == session.deviceId
+                        Text(if (isCurrent) "当前设备" else "其他登录设备", fontWeight = FontWeight.SemiBold)
+                        Text(if (device.revoked) "已退出" else "正在使用", color = if (device.revoked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                        if (!isCurrent && !device.revoked) {
                             TextButton(onClick = {
                                 scope.launch {
                                     try {
                                         gateway.revokeDevice(session.bearer, device.id)
                                         loadDevices()
                                     } catch (reason: Exception) {
-                                        error = reason.message ?: "设备撤销失败，请重试"
+                                        error = reason.message ?: "无法退出这台设备，请重试"
                                     }
                                 }
-                            }) { Text("撤销此设备") }
+                            }) { Text("退出这台设备") }
                         }
                     }
                 }
@@ -641,7 +590,7 @@ private fun AccountPage(
                 OutlinedButton(
                     onClick = { scope.launch { try { onSessionUpdated(gateway.refresh(session)) } catch (reason: Exception) { error = reason.message } } },
                     modifier = Modifier.fillMaxWidth().height(52.dp).testTag("p01-refresh-session"),
-                ) { Icon(Icons.Default.Refresh, null); Spacer(Modifier.size(8.dp)); Text("刷新登录会话") }
+                ) { Icon(Icons.Default.Refresh, null); Spacer(Modifier.size(8.dp)); Text("更新登录状态") }
             }
             item {
                 OutlinedButton(
@@ -680,16 +629,6 @@ private fun PrimaryAction(label: String, loading: Boolean, tag: String, onClick:
 @Composable
 private fun InlineError(message: String?) {
     if (!message.isNullOrBlank()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("p01-inline-error"))
-}
-
-private fun passwordStrength(password: String, policy: PasswordPolicy): String {
-    val checks = listOf(
-        password.length >= policy.minLength,
-        !policy.requiresLetter || password.any(Char::isLetter),
-        !policy.requiresDigit || password.any(Char::isDigit),
-        password.any { !it.isLetterOrDigit() },
-    )
-    return when (checks.count { it }) { 4 -> "强"; 2, 3 -> "中"; else -> "弱" }
 }
 
 private fun String.looksLikeEmail() = trim().matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))

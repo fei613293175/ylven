@@ -1,6 +1,6 @@
 schema_version: '1.4'
 page_id: YL-A-007
-name: 安全验证 WebView
+name: 遗留验证承载页（已停用）
 surface: ANDROID
 route: android://007
 primary_phase: P02
@@ -23,15 +23,17 @@ resolved_layout:
   action_gap_dp: 20
 design_system_version: YL-DS-1.2.0
 visual_kind: PAGE
+lifecycle_status: RETIRED
+retirement_reason: P02 已改为登录或注册当前页面内的 YLVEN 算式验证弹窗；此 Page ID 仅保留历史验收资产，不再由应用导航。
 parent_page_id: YL-A-005
 visual_identity:
-  template: turnstile
+  template: retired_first_party_verification
   title: 安全验证
-  subtitle: auth.orbexa.cc · 受控验证页面
+  subtitle: 仅保留历史资产，不会在当前应用中打开
   required_elements:
-  - 安全连接
-  - Turnstile 验证组件
-  - 返回应用
+  - 历史页面标记
+  - 不再导航
+  - 当前页弹窗替代说明
   screen_signature: 7b8ecad911d120c2
   identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
     folder.
@@ -67,7 +69,7 @@ states:
 - state_id: YL-A-007-S02_SECURITY_CHALLENGE
   code: SECURITY_CHALLENGE
   name: 安全验证
-  description: 受控安全验证弹层或 WebView 已打开。
+  description: 历史状态资产；当前应用使用登录或注册页内的算式验证弹窗。
   recovery: complete_or_cancel
   mockup_id: YL-A-007-S02_SECURITY_CHALLENGE
   mockup_path: ui/mockups/android/YL-A-007/YL-A-007-S02_SECURITY_CHALLENGE.png

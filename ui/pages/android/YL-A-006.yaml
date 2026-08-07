@@ -24,12 +24,13 @@ visual_kind: OVERLAY
 parent_page_id: YL-A-005
 visual_identity:
   template: security_modal_login
-  title: 完成安全验证
-  subtitle: 验证通过后才能发送登录验证码
+  title: 请完成小验证
+  subtitle: 输入算式答案后继续
   required_elements:
-  - Cloudflare Turnstile
+  - YLVEN 小验证
+  - 请输入答案
   - 取消
-  - 继续验证
+  - 确认
   screen_signature: 138c86641854596c
   identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the
     folder.
@@ -65,7 +66,7 @@ states:
 - state_id: YL-A-006-S02_SECURITY_CHALLENGE
   code: SECURITY_CHALLENGE
   name: 安全验证
-  description: 受控安全验证弹层或 WebView 已打开。
+  description: 当前页面已打开小验证弹窗。
   recovery: complete_or_cancel
   mockup_id: YL-A-006-S02_SECURITY_CHALLENGE
   mockup_path: ui/mockups/android/YL-A-006/YL-A-006-S02_SECURITY_CHALLENGE.png

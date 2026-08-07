@@ -34,6 +34,7 @@ P01,P01-027,Admin,POST,/admin/v1/security/step-up,Admin Identity Service,authent
 P01,P01-028,Admin,GET|PUT,/admin/v1/notifications/email-templates,Notification Service,authenticated_user,none,none,notification_templates|notification_deliveries,通知中心/邮件模板
 P02,P02-001,Android,GET,/api/v1/account/session,Session Service,authenticated_user,none,none,sessions|user_devices,认证与用户/会话管理
 P02,P02-004,Android,POST,/api/v1/auth/login/challenge,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
+P02,P02-005,Android,POST,/api/v1/auth/challenge/verify,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
 P02,P02-006,Android,POST,/api/v1/auth/login/otp/send,Identity Service,authenticated_user,none,none,email_otps,认证与用户/验证码策略
 P02,P02-007,Android,POST,/api/v1/auth/login/otp/verify,Identity Service,authenticated_user,none,none,email_otps|auth_attempts,认证与用户/登录日志
 P02,P02-008,Android,POST,/api/v1/auth/login/otp/send,Identity Service,authenticated_user,none,none,email_otps,认证与用户/验证码策略
@@ -47,7 +48,7 @@ P02,P02-017,Android,POST,/api/v1/auth/token/refresh,Session Service,authenticate
 P02,P02-019,Android,POST,/api/v1/auth/logout,Session Service,authenticated_user,none,none,sessions,认证与用户/会话管理
 P02,P02-020,Android,GET,/api/v1/account/devices,Device Service,authenticated_user,none,none,user_devices|sessions,认证与用户/设备管理
 P02,P02-021,Android,DELETE,/api/v1/account/devices/{deviceId}/sessions,Device Service,authenticated_user,none,none,sessions,认证与用户/设备管理
-P02,P02-022,Android,POST,/internal/v1/security/turnstile/verify,Security Service,authenticated_user,none,none,security_challenge_results,认证与用户/安全验证
+P02,P02-022,Android,POST,/api/v1/auth/challenge/verify,Identity Service,authenticated_user,none,none,auth_challenges,认证与用户/安全验证
 P03,P03-001,Android,GET,/api/mobile/v1/home,Mobile BFF,authenticated_user,none,none,conversations|projects|model_catalog,内容运营/首页配置
 P03,P03-002,Android,POST,/api/mobile/v1/conversations,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话列表
 P03,P03-003,Android,GET,/api/mobile/v1/conversations,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话列表

@@ -3,9 +3,9 @@ package identity
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -79,51 +79,65 @@ func TestHTTPRegistrationUsesExplicitStagingMocks(t *testing.T) {
 	}
 }
 
-func TestTurnstilePageBindsExistingChallengeAndSecurityPolicy(t *testing.T) {
+func TestFirstPartyVerificationEndpointDoesNotExposeAnswer(t *testing.T) {
 	store, err := NewStore("")
 	if err != nil {
 		t.Fatal(err)
 	}
-	challenge, err := store.CreateChallenge("turnstile-page@example.com", "login")
+	api := &API{Store: store}
+	handler := api.Handler()
+	created := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/login/challenge", map[string]string{"email": "answer@example.com"}, "", "")
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var body struct {
+		ChallengeID string `json:"challenge_id"`
+		Question    string `json:"verification_question"`
+	}
+	if err := json.Unmarshal(created.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.ChallengeID == "" || body.Question == "" || strings.Contains(created.Body.String(), "verification_digest") {
+		t.Fatalf("unsafe response: %s", created.Body.String())
+	}
+	challenge, ok := store.ChallengeSnapshot(body.ChallengeID)
+	if !ok {
+		t.Fatal("challenge was not persisted")
+	}
+	var left, right int
+	if _, err := fmt.Sscanf(challenge.VerificationQuestion, "%d + %d = ?", &left, &right); err != nil {
+		t.Fatal(err)
+	}
+	verified := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/challenge/verify", map[string]string{"challenge_id": challenge.ID, "answer": fmt.Sprint(left + right)}, "", "")
+	if verified.Code != http.StatusOK {
+		t.Fatalf("verify status=%d body=%s", verified.Code, verified.Body.String())
+	}
+	legacy := httptest.NewRecorder()
+	handler.ServeHTTP(legacy, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id="+challenge.ID, nil))
+	if legacy.Code != http.StatusNotFound {
+		t.Fatalf("legacy page still exposed: %d", legacy.Code)
+	}
+}
+
+func TestFirstPartyVerificationLocksAfterFiveFailures(t *testing.T) {
+	store, err := NewStore("")
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := &API{Store: store, TurnstileSiteKey: "site-key"}
+	challenge, err := store.CreateChallenge("limited@example.com", "login")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := &API{Store: store}
 	handler := api.Handler()
-
-	page := httptest.NewRecorder()
-	handler.ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id="+challenge.ID+"&action=login", nil))
-	if page.Code != http.StatusOK {
-		t.Fatalf("page status=%d body=%s", page.Code, page.Body.String())
+	for attempt := 0; attempt < 5; attempt++ {
+		failed := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/challenge/verify", map[string]string{"challenge_id": challenge.ID, "answer": "999"}, "", "")
+		if failed.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("attempt %d status=%d", attempt+1, failed.Code)
+		}
 	}
-	if contentType := page.Header().Get("Content-Type"); contentType != "text/html; charset=utf-8" {
-		t.Fatalf("content type=%q", contentType)
-	}
-	csp := page.Header().Get("Content-Security-Policy")
-	if csp == "" || !strings.Contains(csp, "frame-ancestors 'none'") {
-		t.Fatalf("missing strict CSP: %q", csp)
-	}
-	body := page.Body.String()
-	nonceMatch := regexp.MustCompile(`nonce="([a-f0-9]+)"`).FindStringSubmatch(body)
-	if len(nonceMatch) != 2 || !strings.Contains(csp, "script-src 'nonce-"+nonceMatch[1]+"'") || !strings.Contains(csp, "style-src 'nonce-"+nonceMatch[1]+"'") {
-		t.Fatalf("CSP nonce does not authorize page scripts/styles: csp=%q body=%s", csp, body)
-	}
-	if externalScript := strings.Index(body, `src="https://challenges.cloudflare.com/turnstile/v0/api.js"`); externalScript < 0 || strings.Index(body, "window.turnstileSuccess") > externalScript {
-		t.Fatalf("Turnstile API must execute after callback registration: %s", body)
-	}
-	if !strings.Contains(body, `data-sitekey="site-key"`) || !strings.Contains(body, `data-action="login"`) || !strings.Contains(body, "YlvenSecurity.onTurnstileToken") {
-		t.Fatalf("unexpected page body: %s", body)
-	}
-
-	mismatch := httptest.NewRecorder()
-	handler.ServeHTTP(mismatch, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id="+challenge.ID+"&action=register", nil))
-	if mismatch.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("mismatch status=%d body=%s", mismatch.Code, mismatch.Body.String())
-	}
-
-	missing := httptest.NewRecorder()
-	handler.ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/security/turnstile?challenge_id=missing&action=login", nil))
-	if missing.Code != http.StatusNotFound {
-		t.Fatalf("missing status=%d body=%s", missing.Code, missing.Body.String())
+	locked := requestJSON(t, handler, http.MethodPost, "/api/v1/auth/challenge/verify", map[string]string{"challenge_id": challenge.ID, "answer": "0"}, "", "")
+	if locked.Code != http.StatusTooManyRequests {
+		t.Fatalf("locked status=%d body=%s", locked.Code, locked.Body.String())
 	}
 }
