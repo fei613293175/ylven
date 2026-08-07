@@ -69,7 +69,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 private const val CONTRACT_WIDTH = 1080f
 private const val CONTRACT_HEIGHT = 2400f
-private val P03_PAGES = (18..32).mapTo(mutableSetOf()) { index ->
+private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
 
@@ -105,9 +105,11 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
+    private var currentPage = ""
 
     fun render(stateId: String) {
         val page = stateId.substringBefore("-S")
+        currentPage = page
         // State IDs carry a single separator between the sequence number and
         // the status. Keep compound codes intact: e.g. SERVER_ERROR and
         // INPUT_FOCUSED must select their own contract variants rather than
@@ -145,10 +147,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             "YL-A-030" -> p03MessageActions(code)
             "YL-A-031" -> p03CreateConversation(code)
         }
-        // P03 pages already render their contract-specific state treatment.
-        // The generic feedback strip belongs to the earlier identity matrix
-        // and is not present in the approved P03 mockups.
-        if (page !in P03_PAGES) stateFeedback(page, code)
+        stateFeedback(page, code)
     }
 
     private fun splash(code: String) {
@@ -453,10 +452,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             return
         }
         homeBody()
-        when (code) {
-            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
-            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
-        }
+        if (code == "REFRESHING") statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
     }
 
     private fun p03NewConversation(code: String) {
@@ -520,7 +516,6 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         when (code) {
             "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
             "FILTER_ACTIVE" -> pill(72f, 282f, 340f, 354f, "筛选已生效", Pc.brandSoft, Pc.brand, 28f, Pc.brand)
-            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
         }
     }
 
@@ -567,7 +562,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             // following line with 责流式请求、; relying on Paint.measureText()
             // changes that break on different emulator font builds.
             "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。",
-            72f, 798f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 23f,
+            72f, 801f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 23f,
         )
         rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
@@ -637,10 +632,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             y += 200f
         }
         statusBanner("OFFLINE_CACHE", 1320f, .82f, "恢复网络后将自动检查最新状态。")
-        when (code) {
-            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
-            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
-        }
+        if (code == "REFRESHING") statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
     }
 
     private fun p03Response(code: String) {
@@ -1214,45 +1206,64 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         value: String, x: Float, y: Float, size: Float, fill: Int, bold: Boolean = false,
         anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null, lineSpacing: Float = 8f,
     ) {
-        paint.style = Paint.Style.FILL
+        val p03Text = currentPage in P03_PAGE_IDS
+        paint.style = if (p03Text && !bold) Paint.Style.FILL_AND_STROKE else Paint.Style.FILL
+        paint.strokeWidth = if (p03Text && !bold) .35f else 1f
         paint.color = fill
         paint.textSize = size
         paint.typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
+        paint.isFakeBoldText = p03Text && bold
         // The reference mockups use Microsoft YaHei, whose Latin glyphs are
         // wider than Android's default sans face at the same size. Keep CJK
         // untouched and widen mixed Latin/number labels to match the source
         // rasterization contract.
         val mixedLatin = value.any { it.code in 0x21..0x7E } &&
             value.contains(Regex("Android|Windows|Chrome|Codex|Web|新加坡|当前设备|10 分钟前|昨天"))
-        paint.textScaleX = if (mixedLatin) 1.1f else 1f
+        paint.textScaleX = if (!p03Text && mixedLatin) 1.1f else 1f
         paint.textAlign = when (anchor) {
             Anchor.MIDDLE_ASCENDER, Anchor.MIDDLE_MIDDLE -> Paint.Align.CENTER
             else -> Paint.Align.LEFT
         }
-        val lines = wrap(value, maxWidth)
+        val lines = wrap(value, maxWidth, p03Text, bold)
         val metrics = paint.fontMetrics
+        val p03BaselineOffset = if (p03Text) -3f else 0f
         val baseline = when (anchor) {
             Anchor.LEFT_MIDDLE, Anchor.MIDDLE_MIDDLE ->
-                y - (metrics.ascent + metrics.descent) / 2f + size * .1f
-            else -> y - metrics.ascent + size * .225f
+                y - (metrics.ascent + metrics.descent) / 2f + size * .1f + p03BaselineOffset
+            else -> y - metrics.ascent + size * .225f + p03BaselineOffset
         }
         val step = size + lineSpacing
-        lines.forEachIndexed { index, line -> canvas.drawText(line, x, baseline + index * step, paint) }
+        lines.forEachIndexed { index, line ->
+            if (p03Text) paint.textScaleX = p03TextScale(line, bold)
+            canvas.drawText(line, x, baseline + index * step, paint)
+        }
         paint.textScaleX = 1f
+        paint.isFakeBoldText = false
+        paint.style = Paint.Style.FILL
+        paint.strokeWidth = 1f
     }
 
-    private fun wrap(value: String, maxWidth: Float?): List<String> {
+    private fun p03TextScale(value: String, bold: Boolean): Float {
+        val visible = value.filterNot(Char::isWhitespace)
+        if (visible.isEmpty()) return 1f
+        val asciiRatio = visible.count { it.code in 0x21..0x7E }.toFloat() / visible.length
+        return if (bold) 1f + .12f * asciiRatio else 1.015f + .075f * asciiRatio
+    }
+
+    private fun wrap(value: String, maxWidth: Float?, p03Text: Boolean, bold: Boolean): List<String> {
         if (maxWidth == null) return value.split('\n')
         val result = mutableListOf<String>()
         value.split('\n').forEach { explicit ->
             var current = ""
             explicit.forEach { ch ->
                 val candidate = current + ch
+                if (p03Text) paint.textScaleX = p03TextScale(candidate, bold)
                 if (current.isEmpty() || paint.measureText(candidate) <= maxWidth) current = candidate
                 else { result += current; current = ch.toString() }
             }
             if (current.isNotEmpty()) result += current
         }
+        paint.textScaleX = 1f
         return result.ifEmpty { listOf("") }
     }
 
