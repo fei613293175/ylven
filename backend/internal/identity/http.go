@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -856,31 +857,34 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, 400, "invalid_json", "Invalid JSON")
 			return
 		}
-		started := time.Now()
-		answer, err := a.ChatResponder.Respond(r.Context(), in.Model, in.Body)
-		if err == nil {
-			var run MessageRun
-			run, err = a.Store.CreateRun(bearer(r), id, in.Body, in.Model, answer)
-			if err == nil {
-				writeJSON(w, http.StatusCreated, run)
-			}
-		}
-		a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
-			if err != nil {
-				return err.Error()
-			}
-			return ""
-		}())
+		access := bearer(r)
+		run, err := a.Store.StartRun(access, id, in.Body, in.Model)
 		if err != nil {
 			if err.Error() == "session_invalid" {
 				writeError(w, 401, "session_invalid", "Session is invalid")
-			} else if strings.HasPrefix(err.Error(), "chat_provider_") || err.Error() == "chat_runtime_unavailable" {
-				writeError(w, http.StatusBadGateway, "chat_provider_unavailable", "AI provider is temporarily unavailable")
 			} else {
 				writeError(w, 422, err.Error(), "Unable to create run")
 			}
 			return
 		}
+		writeJSON(w, http.StatusAccepted, run)
+		go func(runID, accessToken, model, prompt string) {
+			started := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+			answer, providerErr := a.ChatResponder.Respond(ctx, model, prompt)
+			if providerErr != nil {
+				_, _ = a.Store.FailRun(accessToken, runID, providerErr.Error())
+			} else {
+				_, _ = a.Store.CompleteRun(accessToken, runID, answer)
+			}
+			a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
+				if providerErr != nil {
+					return providerErr.Error()
+				}
+				return ""
+			}())
+		}(run.ID, access, in.Model, in.Body)
 		return
 	}
 	if len(parts) > 1 && parts[1] == "exports" {

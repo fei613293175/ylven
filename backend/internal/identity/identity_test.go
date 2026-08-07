@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -527,17 +528,141 @@ func TestP03RunEndpointPersistsProviderResponseAndResumesSSE(t *testing.T) {
 	api.ChatRuntimeMode = "upstream"
 	api.ChatResponder = OpenAICompatibleResponder{Endpoint: provider.URL, APIKey: "test-key", Client: provider.Client()}
 	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "测试正文", "model": "ylven-default"}, access, "")
-	if created.Code != http.StatusCreated {
+	if created.Code != http.StatusAccepted {
 		t.Fatalf("run create status=%d body=%s", created.Code, created.Body.String())
 	}
 	var run MessageRun
 	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
 		t.Fatal(err)
 	}
+	for i := 0; i < 50; i++ {
+		current, _, err := s.Run(access, run.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if current.Status == "completed" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "completed" {
+		t.Fatalf("run did not complete: %+v", run)
+	}
 	events := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/runs/"+run.ID+"/events?after=1", nil, access, "")
 	if events.Code != http.StatusOK || !strings.Contains(events.Body.String(), "delta\":\"自") || !strings.Contains(events.Body.String(), "delta\":\"受") || strings.Contains(events.Body.String(), "id: 1\ndata:") {
 		t.Fatalf("events status=%d body=%s", events.Code, events.Body.String())
 	}
+}
+
+type blockingChatResponder struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (r blockingChatResponder) Respond(ctx context.Context, _ string, _ string) (string, error) {
+	close(r.started)
+	select {
+	case <-r.release:
+		return "late answer", nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func TestP03RunCancellationPreventsLateAssistantPersistence(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "cancel-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "cancel-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "取消运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider := blockingChatResponder{started: make(chan struct{}), release: make(chan struct{})}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = provider
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "stop me"}, access, "")
+	if created.Code != http.StatusAccepted {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-provider.started:
+	case <-time.After(time.Second):
+		t.Fatal("provider did not start")
+	}
+	cancelled := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/runs/"+run.ID+"/cancel", nil, access, "")
+	if cancelled.Code != http.StatusOK {
+		t.Fatalf("cancel status=%d body=%s", cancelled.Code, cancelled.Body.String())
+	}
+	close(provider.release)
+	for i := 0; i < 50; i++ {
+		current, _, _ := s.Run(access, run.ID)
+		if current.Status != "streaming" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "cancelled" || run.AssistantMessageID != "" {
+		t.Fatalf("late completion changed run: %+v", run)
+	}
+	_, messages, err := s.Run(access, run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(messages) != 1 {
+		t.Fatalf("messages after cancellation=%+v", messages)
+	}
+}
+
+func TestP03RunProviderFailurePersistsStableFailedState(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "failure-runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "failure-runtime@example.com")
+	conversation, err := s.CreateConversation(access, "失败运行")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	api.ChatRuntimeMode = "upstream"
+	api.ChatResponder = staticErrorChatResponder{}
+	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "fail"}, access, "")
+	if created.Code != http.StatusAccepted {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err := json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 50; i++ {
+		current, _, _ := s.Run(access, run.ID)
+		if current.Status != "streaming" {
+			run = current
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "failed" || run.ErrorCode == "" {
+		t.Fatalf("failed run=%+v", run)
+	}
+	_, events, err := s.Events(access, run.ID, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Type != "failed" {
+		t.Fatalf("failure events=%+v", events)
+	}
+}
+
+type staticErrorChatResponder struct{}
+
+func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {
+	return "", errors.New("provider_secret_detail")
 }
 
 func TestP03GeneratedTitleUsesProviderAndPersists(t *testing.T) {

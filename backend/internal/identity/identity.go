@@ -202,6 +202,7 @@ type MessageRun struct {
 	AssistantMessageID string    `json:"assistant_message_id"`
 	Model              string    `json:"model"`
 	Status             string    `json:"status"`
+	ErrorCode          string    `json:"error_code,omitempty"`
 	Cursor             int64     `json:"cursor"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
@@ -993,14 +994,10 @@ func (s *Store) AppendMessage(access, conversationID, role, body string) (Messag
 	return message, s.persistLocked()
 }
 
-func (s *Store) CreateRun(access, conversationID, body, model, assistantBody string) (MessageRun, error) {
+func (s *Store) StartRun(access, conversationID, body, model string) (MessageRun, error) {
 	model = strings.TrimSpace(model)
 	if model == "" {
 		model = "ylven-default"
-	}
-	assistantBody = strings.TrimSpace(assistantBody)
-	if assistantBody == "" {
-		return MessageRun{}, errors.New("chat_provider_empty_response")
 	}
 	userMessage, err := s.AppendMessage(access, conversationID, "user", body)
 	if err != nil {
@@ -1018,11 +1015,39 @@ func (s *Store) CreateRun(access, conversationID, body, model, assistantBody str
 	}
 	now := time.Now().UTC()
 	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Status: "streaming", CreatedAt: now, UpdatedAt: now}
+	s.data.Runs[runID] = run
+	s.data.RunEvents[runID] = []RunEvent{}
+	s.appendAuditLocked("message_run_started", user.Email, runID)
+	return run, s.persistLocked()
+}
+
+func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, error) {
+	assistantBody = strings.TrimSpace(assistantBody)
+	if assistantBody == "" {
+		return MessageRun{}, errors.New("chat_provider_empty_response")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, errors.New("run_not_found")
+	}
+	if run.Status == "cancelled" {
+		return run, errors.New("run_cancelled")
+	}
+	if run.Status != "streaming" {
+		return run, errors.New("run_not_streaming")
+	}
+	now := time.Now().UTC()
 	assistantID, err := randomToken(16)
 	if err != nil {
 		return MessageRun{}, err
 	}
-	assistant := Message{ID: assistantID, ConversationID: conversationID, UserID: user.ID, Role: "assistant", Body: assistantBody, CreatedAt: now}
+	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, Role: "assistant", Body: assistantBody, CreatedAt: now}
 	s.data.Messages[assistantID] = assistant
 	run.AssistantMessageID = assistantID
 	events := []RunEvent{}
@@ -1038,6 +1063,39 @@ func (s *Store) CreateRun(access, conversationID, body, model, assistantBody str
 	s.data.RunEvents[runID] = events
 	s.appendAuditLocked("message_run_completed", user.Email, runID)
 	return run, s.persistLocked()
+}
+
+func (s *Store) FailRun(access, runID, code string) (MessageRun, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return MessageRun{}, errors.New("run_not_found")
+	}
+	if run.Status == "cancelled" {
+		return run, nil
+	}
+	_ = code // provider details are intentionally not persisted or exposed
+	run.Status = "failed"
+	run.ErrorCode = "chat_provider_error"
+	run.UpdatedAt = time.Now().UTC()
+	run.Cursor++
+	s.data.Runs[runID] = run
+	s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "failed", CreatedAt: run.UpdatedAt})
+	s.appendAuditLocked("message_run_failed", user.Email, runID)
+	return run, s.persistLocked()
+}
+
+func (s *Store) CreateRun(access, conversationID, body, model, assistantBody string) (MessageRun, error) {
+	run, err := s.StartRun(access, conversationID, body, model)
+	if err != nil {
+		return MessageRun{}, err
+	}
+	return s.CompleteRun(access, run.ID, assistantBody)
 }
 
 func (s *Store) Run(access, runID string) (MessageRun, []Message, error) {
@@ -1095,9 +1153,9 @@ func (s *Store) CancelRun(access, runID string) (MessageRun, error) {
 	if run.Status == "streaming" {
 		run.Status = "cancelled"
 		run.UpdatedAt = time.Now().UTC()
-		s.data.Runs[runID] = run
-		s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor + 1, RunID: runID, Type: "cancelled", CreatedAt: time.Now().UTC()})
 		run.Cursor++
+		s.data.Runs[runID] = run
+		s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "cancelled", CreatedAt: run.UpdatedAt})
 		_ = s.persistLocked()
 	}
 	return run, nil

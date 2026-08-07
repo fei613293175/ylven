@@ -79,8 +79,8 @@ features:
   reason: ''
   evidence:
   - 'backend/internal/identity/http.go::POST /api/mobile/v1/conversations/{conversationId}/runs'
-  - 'backend/internal/identity/identity.go::Store.CreateRun'
-  - 'backend/internal/identity/identity_test.go::TestP03RunEndpointPersistsProviderResponseAndResumesSSE'
+  - 'backend/internal/identity/identity.go::Store.StartRun + Store.CompleteRun'
+  - 'backend/internal/identity/identity_test.go::TestP03RunEndpointPersistsProviderResponseAndResumesSSE + TestP03RunCancellationPreventsLateAssistantPersistence'
 - feature_id: P03-010
   status: IMPLEMENTED
   reason: ''
@@ -94,7 +94,7 @@ features:
   evidence:
   - 'backend/internal/identity/http.go::POST /api/mobile/v1/runs/{runId}/cancel'
   - 'backend/internal/identity/identity.go::Store.CancelRun'
-  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
+  - 'backend/internal/identity/identity_test.go::TestP03RunCancellationPreventsLateAssistantPersistence'
 - feature_id: P03-012
   status: IMPLEMENTED
   reason: ''
@@ -115,7 +115,7 @@ features:
   evidence:
   - 'backend/internal/identity/identity.go::Store.AppendMessage'
   - 'backend/db/migrations/0004_p03_conversations.sql::messages'
-  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport'
+  - 'backend/internal/identity/identity_test.go::TestP03RunLifecycleEventsDraftAndExport + TestP03RunProviderFailurePersistsStableFailedState'
 - feature_id: P03-015
   status: PLANNED
   reason: ''
