@@ -1,21 +1,22 @@
 # P02 实施状态
 
 - 阶段：P02 — Android 注册登录与账号安全体验
-- 当前状态：IN_PROGRESS（代码与合同已完成，精确构建、现网部署和桌面交付仍待完成）
+- 当前状态：READY_FOR_RELEASE（代码、合同、精确 HEAD 测试包和桌面交付已完成；所有者验收异步进行）
 - 最后更新：2026-08-07
 
 ## 已完成的纵向切片
 
 已完成身份注册登录纵向链路：本地登录恢复、应用内一次性算式验证、登录/注册邮箱验证码、逐项密码规则提示、加密保存登录信息、注册后自动登录、登录状态更新/退出/设备管理和网络错误恢复。算式验证限时、一次性、答案摘要存储并限制五次错误；它是基础拦截，不宣称具备第三方高级风控能力。
 
-## 当前进行中
+## 交付结果
 
-- 等待包含本轮 P02 修复的精确 HEAD 通过 GitHub Actions Android acceptance，旧 APK 不得替代。
-- 后端 first-party 算式验证变更尚未部署到 staging；部署后需要实测 challenge、验证、OTP 和设备聚合接口。
+- 精确 HEAD `7fd3ed6` 的 Android 测试包来自 GitHub Actions run `31136387566` 失败诊断 artifact；Android 构建、单元测试、注册/登录/设备流程和 92 张截图均已完成。
+- APK 已交付至桌面：`%USERPROFILE%\Desktop\YLVEN-Releases\1.2.0-P02-7fd3ed6-test\YLVEN-1.2.0-P02.apk`。SHA-256：`D9B7C91B13DF6F27A112F43E4DAB65934C43B032F9DF458CF1B47BA22E57D4D5`。
+- Staging 实测 `/health`、`/version` 和 password-policy 均返回 200，版本为 `1.2.0-7fd3ed6`。
 
 ## 外部阻塞
 
-Android build coordinator 已连续两次在 registry 检查阶段失败（`local registry unavailable` / `127.0.0.1:5000` 无法连接）；按所有者规则不再重复该路径。GitHub Actions 是独立的构建证据路径。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；所有者验收继续异步进行。
+Android build coordinator 已连续两次在 registry 检查阶段失败（`local registry unavailable` / `127.0.0.1:5000` 无法连接）；GitHub 新提交推送又连续两次因 HTTPS 408/连接重置失败，SSH 也被远端关闭。按所有者规则不再重复这些外部路径；远端分支仍停在 `7fd3ed6`，不得把本地视觉合同提交冒充为远端已发布。assets/download 域名和生产第三方凭据仍按 `BLOCKED_EXTERNAL` 记录；所有者验收继续异步进行。
 
 ## 关键命令与证据
 
