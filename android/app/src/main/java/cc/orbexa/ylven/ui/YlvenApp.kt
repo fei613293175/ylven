@@ -581,7 +581,33 @@ private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionCh
             item { Text("最近会话",style=MaterialTheme.typography.titleLarge) }
             if(loading && conversations.isEmpty()) item { CircularProgressIndicator(Modifier.testTag("yl-a-018-loading")) }
             error?.let { item { InlineError(it) } }
-            items(conversations,key={it.id}) { item -> Card(onClick = { onOpenConversation(item) }, modifier = Modifier.fillMaxWidth(), border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline)){ Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){ Column(Modifier.weight(1f)){Text(item.title,style=MaterialTheme.typography.titleMedium);Text(item.status,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)} IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")} } } }
+            items(conversations, key = { it.id }) { item ->
+                Card(
+                    onClick = { onOpenConversation(item) },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(item.title, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                item.status,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        IconButton(onClick = {
+                            renameTarget = item
+                            renameText = item.title
+                        }) {
+                            Icon(Icons.Default.Edit, "重命名")
+                        }
+                    }
+                }
+            }
             item { OutlinedButton(onClick={drawerOpen=true;loadDrawer(true)},modifier=Modifier.fillMaxWidth().height(52.dp)){Text("查看全部会话") } }
         }
     }
