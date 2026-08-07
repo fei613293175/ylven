@@ -25,6 +25,11 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +64,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cc.orbexa.ylven.identity.AuthSession
+import cc.orbexa.ylven.identity.Conversation
+import cc.orbexa.ylven.identity.HomeSnapshot
 import cc.orbexa.ylven.identity.DeviceSession
 import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.OtpChallenge
@@ -78,6 +85,7 @@ private enum class IdentityScreen {
     REGISTER_OTP,
     REGISTERED,
     ACCOUNT,
+    HOME,
 }
 
 @Composable
@@ -103,13 +111,13 @@ fun YlvenApp(
         val local = initialSession ?: return@LaunchedEffect
         try {
             session = gateway.restore(local)
-            screen = IdentityScreen.ACCOUNT
+            screen = IdentityScreen.HOME
         } catch (first: Exception) {
             runCatching { gateway.refresh(local) }
                 .onSuccess { refreshed ->
                     session = refreshed
                     onSessionChange(refreshed)
-                    screen = IdentityScreen.ACCOUNT
+                    screen = IdentityScreen.HOME
                 }
                 .onFailure {
                     session = null
@@ -212,12 +220,12 @@ fun YlvenApp(
                                 session = registeredSession
                                 onSessionChange(registeredSession)
                                 gateway.initializeWorkspace(registeredSession)
-                                screen = IdentityScreen.ACCOUNT
+                                screen = IdentityScreen.HOME
                             } else screen = IdentityScreen.REGISTERED
                         } else {
                             session = gateway.finishLogin(active, code)
                             onSessionChange(session)
-                            screen = IdentityScreen.ACCOUNT
+                            screen = IdentityScreen.HOME
                         }
                     }
                 },
@@ -229,6 +237,7 @@ fun YlvenApp(
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
             )
+            IdentityScreen.HOME -> HomePage(gateway, requireNotNull(session), onSessionChange)
         }
 
         if (securityAction != null) {
@@ -502,6 +511,66 @@ private fun OtpPage(
             }
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionChange: (AuthSession?) -> Unit) {
+    var snapshot by remember { mutableStateOf<HomeSnapshot?>(null) }
+    var conversations by remember { mutableStateOf<List<Conversation>>(emptyList()) }
+    var cursor by remember { mutableStateOf<String?>(null) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var loading by remember { mutableStateOf(true) }
+    var drawerOpen by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var renameTarget by remember { mutableStateOf<Conversation?>(null) }
+    var renameText by rememberSaveable { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    fun loadHome() {
+        scope.launch {
+            loading = true; error = null
+            try { snapshot = gateway.home(session.bearer); conversations = snapshot?.conversations.orEmpty() }
+            catch (e: Exception) { error = e.message ?: "首页加载失败，请重试" }
+            finally { loading = false }
+        }
+    }
+    fun loadDrawer(reset: Boolean = false) {
+        scope.launch {
+            loading = true; error = null
+            try {
+                val result = gateway.listConversations(session.bearer, if (reset) null else cursor)
+                conversations = if (reset) result.first else conversations + result.first
+                cursor = result.second
+            } catch (e: Exception) { error = e.message ?: "会话历史加载失败，请重试" }
+            finally { loading = false }
+        }
+    }
+    LaunchedEffect(session.bearer) { loadHome() }
+    LaunchedEffect(query, drawerOpen) {
+        if (drawerOpen && query.isNotBlank()) {
+            try { conversations = gateway.searchConversations(session.bearer, query) }
+            catch (e: Exception) { error = e.message ?: "搜索失败" }
+        }
+    }
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("YLVEN") }, actions = {
+            IconButton(onClick = { drawerOpen = true; loadDrawer(true) }) { Icon(Icons.Default.Search, "会话") }
+            IconButton(onClick = { loadHome() }) { Icon(Icons.Default.Refresh, "刷新") }
+        })
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=16.dp), verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            item { Card(Modifier.fillMaxWidth(), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primaryContainer)){ Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ Text("今天想解决什么？",style=MaterialTheme.typography.titleLarge); Text("你的会话和模型已准备好",color=MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick={ scope.launch { loading=true; try { val item=gateway.createConversation(session.bearer); conversations=listOf(item)+conversations } catch(e:Exception){error=e.message?:"无法新建会话"} finally{loading=false} } },modifier=Modifier.fillMaxWidth().height(52.dp)){Icon(Icons.Default.Add,null);Spacer(Modifier.size(8.dp));Text("新建对话")}} } }
+            snapshot?.modelCatalog?.takeIf{it.isNotEmpty()}?.let { models -> item { Text("可用模型：${models.joinToString("、")}",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant) } }
+            item { Text("最近会话",style=MaterialTheme.typography.titleLarge) }
+            if(loading && conversations.isEmpty()) item { CircularProgressIndicator(Modifier.testTag("yl-a-018-loading")) }
+            error?.let { item { InlineError(it) } }
+            items(conversations,key={it.id}) { item -> Card(Modifier.fillMaxWidth(),border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline)){ Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){ Column(Modifier.weight(1f)){Text(item.title,style=MaterialTheme.typography.titleMedium);Text(item.status,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)} IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")} } } }
+            item { OutlinedButton(onClick={drawerOpen=true;loadDrawer(true)},modifier=Modifier.fillMaxWidth().height(52.dp)){Text("查看全部会话") } }
+        }
+    }
+    if(drawerOpen) AlertDialog(onDismissRequest={drawerOpen=false},title={Text("会话抽屉")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){OutlinedTextField(query,{query=it},label={Text("搜索会话")},singleLine=true,modifier=Modifier.fillMaxWidth()); conversations.forEach{item->Row(verticalAlignment=Alignment.CenterVertically){Text(item.title,Modifier.weight(1f));IconButton(onClick={renameTarget=item;renameText=item.title}){Icon(Icons.Default.Edit,"重命名")};IconButton(onClick={ scope.launch { try { gateway.archiveConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "归档失败" } } }){Icon(Icons.Default.Archive,"归档")};IconButton(onClick={ scope.launch { try { gateway.deleteConversation(session.bearer,item.id); loadDrawer(true) } catch(e:Exception){ error=e.message ?: "删除失败" } } }){Icon(Icons.Default.Delete,"删除")}}}; if(cursor!=null)TextButton(onClick={loadDrawer()}){Text("加载更多")} }},confirmButton={TextButton(onClick={drawerOpen=false}){Text("关闭")}})
+    renameTarget?.let { target -> AlertDialog(onDismissRequest={renameTarget=null},title={Text("重命名会话")},text={OutlinedTextField(renameText,{renameText=it},singleLine=true,label={Text("标题")})},confirmButton={TextButton(onClick={ scope.launch { try { val updated=gateway.renameConversation(session.bearer,target.id,renameText); conversations=conversations.map{if(it.id==updated.id)updated else it}; renameTarget=null } catch(e:Exception){ error=e.message ?: "重命名失败" } } }){Text("保存")} },dismissButton={TextButton(onClick={renameTarget=null}){Text("取消")}}) }
 }
 
 @Composable

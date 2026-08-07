@@ -437,3 +437,119 @@ func TestP02OTPCooldownPreventsImmediateResend(t *testing.T) {
 		t.Fatalf("cooldown error=%v", err)
 	}
 }
+
+func TestP03ConversationOwnershipPaginationSearchAndRecycle(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "p03@example.com")
+	login := createAuthenticatedTestSession(t, s, "p03@example.com")
+	first, err := s.CreateConversation(login, "项目 Alpha")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := s.CreateConversation(login, "周报")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UpdateConversation(login, first.ID, "项目 Alpha 重命名"); err != nil {
+		t.Fatal(err)
+	}
+	// Messages are persisted by the next work packet. Insert a real stored
+	// message here so this work packet verifies that P03-004 searches the
+	// message body as well as the conversation title.
+	if _, err := s.AppendMessage(login, second.ID, "user", "正文关键词 needle"); err != nil {
+		t.Fatal(err)
+	}
+	items, cursor, err := s.ListConversations(login, "", 1, false)
+	if err != nil || len(items) != 1 || cursor == "" {
+		t.Fatalf("page=%+v cursor=%q err=%v", items, cursor, err)
+	}
+	next, _, err := s.ListConversations(login, cursor, 10, false)
+	if err != nil || len(next) != 1 || next[0].ID == items[0].ID {
+		t.Fatalf("next page=%+v err=%v", next, err)
+	}
+	if _, err := s.SearchConversations(login, "重命名", 10); err != nil {
+		t.Fatal(err)
+	}
+	matched, err := s.SearchConversations(login, "needle", 10)
+	if err != nil || len(matched) != 1 || matched[0].ID != second.ID {
+		t.Fatalf("message-body search=%+v err=%v", matched, err)
+	}
+	if _, err := s.ArchiveConversation(login, second.ID); err != nil {
+		t.Fatal(err)
+	}
+	visible, _, err := s.ListConversations(login, "", 10, false)
+	if err != nil || len(visible) != 1 {
+		t.Fatalf("archived still visible: %+v %v", visible, err)
+	}
+	deleted, err := s.DeleteConversation(login, first.ID)
+	if err != nil || deleted.DeletedAt == nil || deleted.Status != "recycle_pending" {
+		t.Fatalf("recycle=%+v err=%v", deleted, err)
+	}
+	other := createAuthenticatedTestSession(t, s, "other@example.com")
+	if _, err := s.UpdateConversation(other, first.ID, "越权"); err == nil {
+		t.Fatal("cross-user conversation access accepted")
+	}
+}
+
+func TestP03RunLifecycleEventsDraftAndExport(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "runtime@example.com")
+	access := createAuthenticatedTestSession(t, s, "runtime@example.com")
+	conversation, err := s.CreateConversation(access, "运行测试")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := s.CreateRun(access, conversation.ID, "请解释 SSE", "ylven-default")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.Status != "completed" || run.AssistantMessageID == "" || run.Cursor < 2 {
+		t.Fatalf("run=%+v", run)
+	}
+	_, events, err := s.Events(access, run.ID, 0)
+	if err != nil || len(events) != int(run.Cursor) || events[len(events)-1].Type != "completed" {
+		t.Fatalf("events=%+v err=%v", events, err)
+	}
+	_, resumed, err := s.Events(access, run.ID, events[0].ID)
+	if err != nil || len(resumed) != len(events)-1 {
+		t.Fatalf("resumed=%+v err=%v", resumed, err)
+	}
+	stored, messages, err := s.Run(access, run.ID)
+	if err != nil || stored.ID != run.ID || len(messages) != 2 {
+		t.Fatalf("run=%+v messages=%+v err=%v", stored, messages, err)
+	}
+	draft, err := s.SaveDraft(access, conversation.ID, "未发送内容")
+	if err != nil || draft.Body != "未发送内容" {
+		t.Fatalf("draft=%+v err=%v", draft, err)
+	}
+	loaded, err := s.GetDraft(access, conversation.ID)
+	if err != nil || loaded.Body != draft.Body {
+		t.Fatalf("loaded=%+v err=%v", loaded, err)
+	}
+	export, err := s.ExportConversation(access, conversation.ID, "")
+	if err != nil || export.Status != "ready" || !strings.Contains(export.Content, "请解释 SSE") {
+		t.Fatalf("export=%+v err=%v", export, err)
+	}
+}
+
+func createAuthenticatedTestSession(t *testing.T, s *Store, email string) string {
+	t.Helper()
+	if email == "other@example.com" {
+		createTestUser(t, s, email)
+	}
+	c, _ := s.CreateChallenge(email, "login")
+	if err := s.VerifyTurnstile(c.ID, "token", true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateOTP(c.ID, "654321"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.VerifyOTP(c.ID, "654321"); err != nil {
+		t.Fatal(err)
+	}
+	_, access, _, err := s.CreateSession(c.ID, email)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return access
+}

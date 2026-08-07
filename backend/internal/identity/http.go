@@ -143,6 +143,14 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/auth/logout-all", a.logoutAll)
 	mux.HandleFunc("/api/v1/account/devices", a.devices)
 	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
+	mux.HandleFunc("/api/mobile/v1/home", a.mobileHome)
+	mux.HandleFunc("/api/mobile/v1/conversations/search", a.mobileConversationSearch)
+	mux.HandleFunc("/api/mobile/v1/conversations/", a.mobileConversationByID)
+	mux.HandleFunc("/api/mobile/v1/conversations", a.mobileConversations)
+	mux.HandleFunc("/api/mobile/v1/runs/", a.mobileRunByID)
+	mux.HandleFunc("/api/mobile/v1/messages/", a.mobileMessageByID)
+	mux.HandleFunc("/internal/v1/conversations/", a.internalConversationByID)
+	mux.HandleFunc("/internal/metrics/chat", a.chatMetrics)
 	mux.HandleFunc("/admin/v1/settings/email", a.adminSetting("email"))
 	mux.HandleFunc("/admin/v1/settings/turnstile", a.adminSetting("turnstile"))
 	mux.HandleFunc("/admin/v1/settings/otp-policy", a.adminSetting("otp-policy"))
@@ -154,6 +162,9 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/admin/v1/auth/sessions", a.adminSessions)
 	mux.HandleFunc("/admin/v1/security/step-up", a.adminStepUp)
 	mux.HandleFunc("/admin/v1/notifications/email-templates", a.adminEmailTemplates)
+	mux.HandleFunc("/admin/v1/content/home", a.adminHomeConfig)
+	mux.HandleFunc("/admin/v1/conversations", a.adminConversations)
+	mux.HandleFunc("/admin/v1/conversations/", a.adminConversationDetail)
 	return requestGuard(mux)
 }
 
@@ -735,6 +746,358 @@ func (a *API) deviceSession(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"revoked": true, "session_id": id})
 }
 
+func mobileAuthError(w http.ResponseWriter, err error) bool {
+	if err == nil {
+		return false
+	}
+	if err.Error() == "session_invalid" {
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+	} else {
+		writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+	}
+	return true
+}
+
+func (a *API) mobileHome(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	value, err := a.Store.Home(bearer(r))
+	if mobileAuthError(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, value)
+}
+
+func (a *API) mobileConversations(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+		items, next, err := a.Store.ListConversations(bearer(r), r.URL.Query().Get("cursor"), limit, r.URL.Query().Get("include_archived") == "true")
+		if mobileAuthError(w, err) {
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"items": items, "next_cursor": next})
+	case http.MethodPost:
+		var in struct {
+			Title string `json:"title"`
+		}
+		if !decode(r, &in) {
+			writeError(w, 400, "invalid_json", "Invalid JSON")
+			return
+		}
+		item, err := a.Store.CreateConversation(bearer(r), in.Title)
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, 401, "session_invalid", "Session is invalid")
+			} else {
+				writeError(w, 422, err.Error(), "Conversation title is invalid")
+			}
+			return
+		}
+		writeJSON(w, http.StatusCreated, item)
+	default:
+		writeError(w, 405, "method_not_allowed", "GET or POST required")
+	}
+}
+
+func (a *API) mobileConversationSearch(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	items, err := a.Store.SearchConversations(bearer(r), r.URL.Query().Get("q"), limit)
+	if err != nil {
+		if err.Error() == "session_invalid" {
+			writeError(w, 401, "session_invalid", "Session is invalid")
+		} else {
+			writeError(w, 400, err.Error(), "Search query is required")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/mobile/v1/conversations/")
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		writeError(w, 400, "conversation_id_required", "Conversation ID required")
+		return
+	}
+	id := parts[0]
+	if len(parts) > 1 && parts[1] == "runs" {
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		var in struct {
+			Body  string `json:"body"`
+			Model string `json:"model"`
+		}
+		if !decode(r, &in) {
+			writeError(w, 400, "invalid_json", "Invalid JSON")
+			return
+		}
+		started := time.Now()
+		run, err := a.Store.CreateRun(bearer(r), id, in.Body, in.Model)
+		a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
+			if err != nil {
+				return err.Error()
+			}
+			return ""
+		}())
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, 401, "session_invalid", "Session is invalid")
+			} else {
+				writeError(w, 422, err.Error(), "Unable to create run")
+			}
+			return
+		}
+		writeJSON(w, http.StatusCreated, run)
+		return
+	}
+	if len(parts) > 1 && parts[1] == "exports" {
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		job, err := a.Store.ExportConversation(bearer(r), id, "")
+		if err != nil {
+			writeError(w, 404, "conversation_not_found", "Conversation not found")
+			return
+		}
+		writeJSON(w, http.StatusCreated, job)
+		return
+	}
+	if len(parts) > 1 && parts[1] == "draft" {
+		if r.Method == http.MethodGet {
+			draft, err := a.Store.GetDraft(bearer(r), id)
+			if err != nil {
+				writeError(w, http.StatusNotFound, "draft_not_found", "Draft not found")
+				return
+			}
+			writeJSON(w, http.StatusOK, draft)
+			return
+		}
+		if r.Method == http.MethodPut {
+			var in struct {
+				Body string `json:"body"`
+			}
+			if !decode(r, &in) {
+				writeError(w, 400, "invalid_json", "Invalid JSON")
+				return
+			}
+			draft, err := a.Store.SaveDraft(bearer(r), id, in.Body)
+			if err != nil {
+				writeError(w, 422, err.Error(), "Draft unavailable")
+				return
+			}
+			writeJSON(w, http.StatusOK, draft)
+			return
+		}
+		writeError(w, 405, "method_not_allowed", "GET or PUT required")
+		return
+	}
+	if len(parts) > 1 && parts[1] == "archive" {
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		item, err := a.Store.ArchiveConversation(bearer(r), id)
+		if mobileAuthError(w, err) {
+			return
+		}
+		writeJSON(w, http.StatusOK, item)
+		return
+	}
+	switch r.Method {
+	case http.MethodPatch:
+		var in struct {
+			Title string `json:"title"`
+		}
+		if !decode(r, &in) {
+			writeError(w, 400, "invalid_json", "Invalid JSON")
+			return
+		}
+		item, err := a.Store.UpdateConversation(bearer(r), id, in.Title)
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, 401, "session_invalid", "Session is invalid")
+			} else {
+				writeError(w, 404, "conversation_not_found", "Conversation not found")
+			}
+			return
+		}
+		writeJSON(w, http.StatusOK, item)
+	case http.MethodDelete:
+		item, err := a.Store.DeleteConversation(bearer(r), id)
+		if mobileAuthError(w, err) {
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"conversation": item, "recycle_after": item.DeletedAt})
+	default:
+		writeError(w, 405, "method_not_allowed", "PATCH or DELETE required")
+	}
+}
+
+func (a *API) internalConversationByID(w http.ResponseWriter, r *http.Request) {
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/internal/v1/conversations/"), "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 || parts[0] == "" || parts[1] != "title" {
+		writeError(w, 404, "not_found", "Endpoint not found")
+		return
+	}
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	id := parts[0]
+	var in struct {
+		Title string `json:"title"`
+	}
+	if !decode(r, &in) {
+		writeError(w, 400, "invalid_json", "Invalid JSON")
+		return
+	}
+	item, err := a.Store.UpdateConversation(bearer(r), id, in.Title)
+	if err != nil {
+		if err.Error() == "session_invalid" {
+			writeError(w, 401, "session_invalid", "Session is invalid")
+		} else {
+			writeError(w, 404, "conversation_not_found", "Conversation not found")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"conversation": item, "generated": true})
+}
+
+func (a *API) mobileRunByID(w http.ResponseWriter, r *http.Request) {
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/mobile/v1/runs/"), "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 1 || parts[0] == "" {
+		writeError(w, 400, "run_id_required", "Run ID required")
+		return
+	}
+	runID := parts[0]
+	if len(parts) > 1 && parts[1] == "cancel" {
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		run, err := a.Store.CancelRun(bearer(r), runID)
+		if err != nil {
+			writeError(w, 404, "run_not_found", "Run not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, run)
+		return
+	}
+	if len(parts) > 1 && parts[1] == "events" {
+		if !requireMethod(w, r, http.MethodGet) {
+			return
+		}
+		after, _ := strconv.ParseInt(r.URL.Query().Get("after"), 10, 64)
+		run, events, err := a.Store.Events(bearer(r), runID, after)
+		if err != nil {
+			writeError(w, 404, "run_not_found", "Run not found")
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		for _, event := range events {
+			payload, _ := json.Marshal(event)
+			fmt.Fprintf(w, "id: %d\ndata: %s\n\n", event.ID, payload)
+		}
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		_ = run
+		return
+	}
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	run, messages, err := a.Store.Run(bearer(r), runID)
+	if err != nil {
+		writeError(w, 404, "run_not_found", "Run not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"run": run, "messages": messages})
+}
+
+func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/mobile/v1/messages/"), "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 1 || parts[0] == "" {
+		writeError(w, 400, "message_id_required", "Message ID required")
+		return
+	}
+	m, err := a.Store.MessageOwned(bearer(r), parts[0])
+	if err != nil {
+		writeError(w, 404, "message_not_found", "Message not found")
+		return
+	}
+	if len(parts) < 2 {
+		writeJSON(w, http.StatusOK, m)
+		return
+	}
+	switch parts[1] {
+	case "citations":
+		if !requireMethod(w, r, http.MethodGet) {
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"message_id": m.ID, "citations": []any{}})
+	case "exports":
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		job, err := a.Store.ExportConversation(bearer(r), m.ConversationID, m.ID)
+		if err != nil {
+			writeError(w, 422, err.Error(), "Export unavailable")
+			return
+		}
+		writeJSON(w, http.StatusCreated, job)
+	case "speech":
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]any{"message_id": m.ID, "status": "queued", "provider": "system_tts"})
+	case "feedback":
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		var in struct {
+			Value string `json:"value"`
+		}
+		if !decode(r, &in) || (in.Value != "up" && in.Value != "down") {
+			writeError(w, 400, "feedback_invalid", "Feedback value must be up or down")
+			return
+		}
+		a.Store.mu.Lock()
+		user, _, authErr := a.Store.authenticatedUserLocked(bearer(r))
+		if authErr == nil {
+			a.Store.data.Feedback[m.ID] = MessageFeedback{MessageID: m.ID, UserID: user.ID, Value: in.Value, CreatedAt: time.Now().UTC()}
+			a.Store.appendAuditLocked("message_feedback", user.Email, m.ID)
+			_ = a.Store.persistLocked()
+		}
+		a.Store.mu.Unlock()
+		if authErr != nil {
+			writeError(w, 401, "session_invalid", "Session is invalid")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"message_id": m.ID, "value": in.Value, "saved": true})
+	case "regenerate":
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		run, err := a.Store.CreateRun(bearer(r), m.ConversationID, "重新生成："+m.Body, "ylven-default")
+		if err != nil {
+			writeError(w, 422, err.Error(), "Regeneration unavailable")
+			return
+		}
+		writeJSON(w, http.StatusCreated, run)
+	default:
+		writeError(w, 404, "not_found", "Endpoint not found")
+	}
+}
+
 func (a *API) requireAdmin(w http.ResponseWriter, r *http.Request, permission string) (AdminUser, bool) {
 	admin, ok := a.Store.AuthorizeAdmin(bearer(r), permission)
 	if !ok {
@@ -880,6 +1243,76 @@ func (a *API) adminUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"users": a.Store.ListUsers()})
+}
+
+func (a *API) adminHomeConfig(w http.ResponseWriter, r *http.Request) {
+	admin, ok := a.requireAdmin(w, r, "content:home")
+	if !ok {
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, map[string]any{"config": a.Store.HomeConfigSnapshot(), "audit": a.Store.AuditSnapshot()})
+	case http.MethodPut:
+		if !a.requireStepUp(w, r) {
+			return
+		}
+		var in HomeConfig
+		if !decode(r, &in) {
+			writeError(w, 400, "invalid_json", "Invalid JSON")
+			return
+		}
+		saved, err := a.Store.UpdateHomeConfig(in, admin.ID)
+		if err != nil {
+			writeError(w, 422, err.Error(), "Home configuration is invalid")
+			return
+		}
+		writeJSON(w, http.StatusOK, saved)
+	default:
+		writeError(w, 405, "method_not_allowed", "GET or PUT required")
+	}
+}
+
+func (a *API) adminConversations(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	if _, ok := a.requireAdmin(w, r, "conversations:read"); !ok {
+		return
+	}
+	// P03-W01 deliberately exposes an auditable read-only operations view.
+	// It must not acknowledge a write that did not change a conversation.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"conversations": a.Store.ListAllConversations(),
+		"audit":         a.Store.AuditSnapshot(),
+	})
+}
+
+func (a *API) adminConversationDetail(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	if _, ok := a.requireAdmin(w, r, "conversations:read"); !ok {
+		return
+	}
+	id := strings.Trim(strings.TrimPrefix(r.URL.Path, "/admin/v1/conversations/"), "/")
+	conversation, messages, runs, ok := a.Store.ConversationDetail(id)
+	if !ok {
+		writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"conversation": conversation, "messages": messages, "runs": runs, "audit": a.Store.AuditSnapshot()})
+}
+
+func (a *API) chatMetrics(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	if _, _, err := a.Store.CurrentAccount(bearer(r)); err != nil {
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"metrics": a.Store.MetricsSnapshot()})
 }
 
 func (a *API) adminUserDetail(w http.ResponseWriter, r *http.Request) {
