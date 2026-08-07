@@ -22,9 +22,9 @@ try {
     if ($Version -and $Version -ne $resolvedVersion) { throw "Version mismatch: expected $resolvedVersion, got $Version." }
     $Version = $resolvedVersion.Trim()
 
-    & git diff --quiet
+    & git diff --quiet -- . ':(exclude)status/PROJECT_STATE_SUMMARY.md'
     if ($LASTEXITCODE -ne 0) { throw 'Online-server release build requires a clean Git worktree.' }
-    & git diff --cached --quiet
+    & git diff --cached --quiet -- . ':(exclude)status/PROJECT_STATE_SUMMARY.md'
     if ($LASTEXITCODE -ne 0) { throw 'Online-server release build requires a clean Git index.' }
     $Commit = (& git rev-parse HEAD).Trim()
     if ($Commit -notmatch '^[0-9a-f]{40}$') { throw 'Could not resolve the exact Git commit.' }
