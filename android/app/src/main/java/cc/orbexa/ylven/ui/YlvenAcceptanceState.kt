@@ -69,6 +69,9 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 private const val CONTRACT_WIDTH = 1080f
 private const val CONTRACT_HEIGHT = 2400f
+private val P03_PAGES = (18..32).mapTo(mutableSetOf()) { index ->
+    "YL-A-${index.toString().padStart(3, '0')}"
+}
 
 private object Pc {
     val bg = color("#F6F7FB")
@@ -142,7 +145,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             "YL-A-030" -> p03MessageActions(code)
             "YL-A-031" -> p03CreateConversation(code)
         }
-        stateFeedback(page, code)
+        // P03 pages already render their contract-specific state treatment.
+        // The generic feedback strip belongs to the earlier identity matrix
+        // and is not present in the approved P03 mockups.
+        if (page !in P03_PAGES) stateFeedback(page, code)
     }
 
     private fun splash(code: String) {
@@ -447,7 +453,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             return
         }
         homeBody()
-        if (code == "REFRESHING") statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
+        when (code) {
+            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
+            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
+        }
     }
 
     private fun p03NewConversation(code: String) {
@@ -464,6 +473,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         }
         button(72f, y + 20f, 1008f, y + 176f, "输入问题", loading = code == "SUBMITTING")
         when (code) {
+            "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在提交，请勿重复操作。")
             "EDIT_MODE", "DIRTY" -> pill(
                 72f, 282f, 390f, 354f,
                 if (code == "EDIT_MODE") "编辑模式" else "存在未保存修改",
@@ -510,6 +520,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         when (code) {
             "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
             "FILTER_ACTIVE" -> pill(72f, 282f, 340f, 354f, "筛选已生效", Pc.brandSoft, Pc.brand, 28f, Pc.brand)
+            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
         }
     }
 
@@ -578,7 +589,6 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
                 statusBanner(code, 270f, .84f)
             }
         }
-        gesture(Pc.text)
     }
 
     private fun componentHeader(title: String, subtitle: String) {
@@ -627,8 +637,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             y += 200f
         }
         statusBanner("OFFLINE_CACHE", 1320f, .82f, "恢复网络后将自动检查最新状态。")
-        if (code == "REFRESHING") statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
-        gesture(Pc.text)
+        when (code) {
+            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
+            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 270f, .84f)
+        }
     }
 
     private fun p03Response(code: String) {
@@ -741,7 +753,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             "SUCCESS" -> statusBanner("SUCCESS", 270f, .84f)
             "SAVE_ERROR" -> statusBanner("SAVE_ERROR", 270f, .84f)
         }
-        if (code == "INPUT_FOCUSED") keyboard(false) else gesture(Pc.text)
+        if (code == "INPUT_FOCUSED") keyboard(false)
     }
 
     private fun componentFooter() {
