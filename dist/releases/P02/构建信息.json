@@ -1,0 +1,14 @@
+{
+    "phase":  "P02",
+    "version_name":  "1.2.0",
+    "version_code":  1020000,
+    "git_commit":  "33faa8f83ecfc204ab2ddbba3b2e6945c1b22264",
+    "apk_name":  "YLVEN-1.2.0-P02.apk",
+    "apk_sha256":  "d9b7c91b13df6f27a112f43e4dab65934c43b032f9df458cf1b47ba22e57d4d5",
+    "apk_size":  18364716,
+    "artifact_origin":  "github-actions",
+    "source_apk":  "github-actions-run-31136387566/YLVEN-1.2.0-P02.apk",
+    "workflow_run_id":  31136387566,
+    "design_system_version":  "YL-DS-1.2.0",
+    "self_test_fixture":  false
+}
