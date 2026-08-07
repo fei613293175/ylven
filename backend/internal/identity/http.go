@@ -1133,7 +1133,12 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
 		}
-		writeJSON(w, http.StatusAccepted, map[string]any{"message_id": m.ID, "status": "queued", "provider": "system_tts"})
+		job, err := a.Store.CreateSpeechJob(bearer(r), m.ID)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "message_not_found", "Assistant message not found")
+			return
+		}
+		writeJSON(w, http.StatusAccepted, job)
 	case "feedback":
 		if !requireMethod(w, r, http.MethodPost) {
 			return
@@ -1408,8 +1413,7 @@ func (a *API) chatMetrics(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
-	if _, _, err := a.Store.CurrentAccount(bearer(r)); err != nil {
-		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+	if _, ok := a.requireAdmin(w, r, "conversations:read"); !ok {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"metrics": a.Store.MetricsSnapshot()})

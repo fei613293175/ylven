@@ -711,6 +711,45 @@ func TestP03W04TemporaryFeedbackExportAndAsyncRegenerate(t *testing.T) {
 	}
 }
 
+func TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "w05@example.com")
+	access := createAuthenticatedTestSession(t, s, "w05@example.com")
+	conversation, err := s.CreateConversation(access, "诊断")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assistant, err := s.AppendMessage(access, conversation.ID, "assistant", "可朗读的回答")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	speech := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+assistant.ID+"/speech", nil, access, "")
+	if speech.Code != http.StatusAccepted || !strings.Contains(speech.Body.String(), "android_system_tts") {
+		t.Fatalf("speech=%d %s", speech.Code, speech.Body.String())
+	}
+	other := createAuthenticatedTestSession(t, s, "other@example.com")
+	if response := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/messages/"+assistant.ID+"/speech", nil, other, ""); response.Code != http.StatusNotFound {
+		t.Fatalf("cross-user speech=%d", response.Code)
+	}
+	s.RecordMetric("chat.run", 0.12, "")
+	if _, err := s.BootstrapAdmin("owner@example.com", "long admin password"); err != nil {
+		t.Fatal(err)
+	}
+	_, adminToken, err := s.AdminLogin("owner@example.com", "long admin password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics := requestJSON(t, api.Handler(), http.MethodGet, "/internal/metrics/chat", nil, adminToken, "")
+	if metrics.Code != http.StatusOK || !strings.Contains(metrics.Body.String(), "chat.run") {
+		t.Fatalf("metrics=%d %s", metrics.Code, metrics.Body.String())
+	}
+	detail := requestJSON(t, api.Handler(), http.MethodGet, "/admin/v1/conversations/"+conversation.ID, nil, adminToken, "")
+	if detail.Code != http.StatusOK || !strings.Contains(detail.Body.String(), conversation.ID) {
+		t.Fatalf("detail=%d %s", detail.Code, detail.Body.String())
+	}
+}
+
 type staticErrorChatResponder struct{}
 
 func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {

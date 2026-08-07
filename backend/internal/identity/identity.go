@@ -261,6 +261,15 @@ type MessageFeedback struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type SpeechJob struct {
+	ID        string    `json:"id"`
+	MessageID string    `json:"message_id"`
+	UserID    string    `json:"user_id"`
+	Status    string    `json:"status"`
+	Provider  string    `json:"provider"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type state struct {
 	Challenges             map[string]Challenge         `json:"challenges"`
 	OTPs                   map[string]OTP               `json:"otps"`
@@ -286,6 +295,7 @@ type state struct {
 	Drafts                 map[string]Draft             `json:"drafts"`
 	Metrics                []map[string]any             `json:"chat_metrics"`
 	Feedback               map[string]MessageFeedback   `json:"message_feedback"`
+	SpeechJobs             map[string]SpeechJob         `json:"speech_jobs"`
 }
 
 type Store struct {
@@ -295,7 +305,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, Messages: map[string]Message{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, Messages: map[string]Message{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
 	if path == "" {
 		return s, nil
 	}
@@ -1401,6 +1411,30 @@ func (s *Store) MessageOwned(access, messageID string) (Message, error) {
 		return Message{}, errors.New("message_not_found")
 	}
 	return m, nil
+}
+
+func (s *Store) CreateSpeechJob(access, messageID string) (SpeechJob, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return SpeechJob{}, err
+	}
+	message, ok := s.data.Messages[messageID]
+	if !ok || message.UserID != user.ID || message.Role != "assistant" {
+		return SpeechJob{}, errors.New("message_not_found")
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return SpeechJob{}, err
+	}
+	if s.data.SpeechJobs == nil {
+		s.data.SpeechJobs = map[string]SpeechJob{}
+	}
+	job := SpeechJob{ID: id, MessageID: messageID, UserID: user.ID, Status: "accepted", Provider: "android_system_tts", CreatedAt: time.Now().UTC()}
+	s.data.SpeechJobs[id] = job
+	s.appendAuditLocked("speech_requested", user.Email, id)
+	return job, s.persistLocked()
 }
 
 func (s *Store) RunForMessage(access, messageID string) (MessageRun, Message, error) {

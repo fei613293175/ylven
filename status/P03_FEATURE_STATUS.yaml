@@ -198,30 +198,45 @@ features:
   - 'backend/internal/identity/identity_test.go::TestP03W04TemporaryFeedbackExportAndAsyncRegenerate'
   - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::temporary conversation action'
 - feature_id: P03-029
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.ExportConversation Markdown'
+  - 'backend/internal/identity/identity_test.go::TestP03W04TemporaryFeedbackExportAndAsyncRegenerate'
 - feature_id: P03-030
-  status: BLOCKED_EXTERNAL
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.CreateSpeechJob'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::system TextToSpeech action'
+  - 'backend/internal/identity/identity_test.go::TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics'
 - feature_id: P03-031
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::RecognizerIntent transcript editing'
 - feature_id: P03-032
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.SaveDraft/GetDraft'
+  - 'android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::draft restore/persist'
 - feature_id: P03-033
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::authenticatedUserLocked ownership checks'
+  - 'backend/internal/identity/identity_test.go::TestP03RunCancellationPreventsLateAssistantPersistence'
 - feature_id: P03-034
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/identity.go::Store.RecordMetric/MetricsSnapshot'
+  - 'backend/internal/identity/http.go::GET /internal/metrics/chat admin-protected'
 - feature_id: P03-035
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - 'backend/internal/identity/http.go::GET /admin/v1/conversations/{conversationId}'
+  - 'backend/internal/identity/identity.go::Store.ConversationDetail'
+  - 'backend/internal/identity/identity_test.go::TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics'

@@ -1,5 +1,9 @@
 package cc.orbexa.ylven.ui
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +34,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,6 +59,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -594,7 +601,13 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
     var retryBody by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
-    val cache = remember { ConversationCache(LocalContext.current) }
+    val context = LocalContext.current
+    val cache = remember { ConversationCache(context) }
+    val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { draft = it }
+    }
+    val tts = remember(context) { TextToSpeech(context, null) }
+    androidx.compose.runtime.DisposableEffect(tts) { onDispose { tts.shutdown() } }
     LaunchedEffect(conversation.id) { messages = cache.load(conversation.id); runCatching { val snapshot = gateway.loadDraft(session.bearer, conversation.id); draft = snapshot } }
     LaunchedEffect(messages) {
         messages.filter { it.role == "assistant" && !citations.containsKey(it.id) }.forEach { message ->
@@ -638,6 +651,7 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                                     TextButton(onClick = { scope.launch { try { gateway.submitFeedback(session.bearer, message.id, "up") } catch (reason: Exception) { error = reason.message ?: "反馈失败" } } }) { Text("赞") }
                                     TextButton(onClick = { scope.launch { try { gateway.submitFeedback(session.bearer, message.id, "down") } catch (reason: Exception) { error = reason.message ?: "反馈失败" } } }) { Text("踩") }
                                     TextButton(onClick = { scope.launch { try { val regenerated = gateway.regenerate(session.bearer, message.id); run = regenerated; refreshRun(regenerated.id) } catch (reason: Exception) { error = reason.message ?: "重答失败" } } }) { Text("重答") }
+                                    TextButton(onClick = { scope.launch { try { gateway.speak(session.bearer, message.id); tts.speak(message.body, TextToSpeech.QUEUE_FLUSH, null, message.id) } catch (reason: Exception) { error = reason.message ?: "朗读失败" } } }) { Text("朗读") }
                                 }
                                 citations[message.id]?.forEach { citation -> Text("来源：${citation.title}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                             }
@@ -657,6 +671,7 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                 maxLines = 6,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             )
+            OutlinedButton(onClick = { voiceLauncher.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply { putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM) }) }, modifier = Modifier.fillMaxWidth().height(52.dp)) { Icon(Icons.Default.Mic, null); Spacer(Modifier.size(8.dp)); Text("语音输入") }
             Button(
                 onClick = {
                     val body = draft.trim()
