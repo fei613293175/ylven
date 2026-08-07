@@ -72,6 +72,8 @@ class P01IdentityUiTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("p01-otp-submit").performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag("p01-open-account").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("账户与设备").assertExists()
         composeRule.onNodeWithText("当前设备").assertExists()
         capture("P01-AUTH-ACCOUNT")

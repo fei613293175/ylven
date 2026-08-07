@@ -44,14 +44,16 @@ def main()->int:
   for (left_name,left),(right_name,right) in zip(images,images[1:]):
    if left.size==right.size and sum(ImageStat.Stat(ImageChops.difference(left,right)).mean)/3 < 2:
     errors.append(f'P01 runtime screenshots are effectively identical: {left_name}, {right_name}')
- if a.phase.upper() == 'P02':
-  expected=phase_android_screenshots('P02')
-  if len(expected)!=92: errors.append(f'P02 contract must contain 92 Android states, got {len(expected)}')
+ if a.phase.upper() in {'P02','P03'}:
+  runtime_phase=a.phase.upper()
+  expected=phase_android_screenshots(runtime_phase)
+  required_count={'P02':92,'P03':93}[runtime_phase]
+  if len(expected)!=required_count: errors.append(f'{runtime_phase} contract must contain {required_count} Android states, got {len(expected)}')
   actual={path.name for path in (root/'截图').glob('*.png')}
   if actual!=set(expected):
-   missing=sorted(set(expected)-actual); unexpected=sorted(actual-set(expected))
-   if missing: errors.append(f'missing P02 runtime screenshots: {", ".join(missing)}')
-   if unexpected: errors.append(f'unexpected P02 runtime screenshots: {", ".join(unexpected)}')
+    missing=sorted(set(expected)-actual); unexpected=sorted(actual-set(expected))
+    if missing: errors.append(f'missing {runtime_phase} runtime screenshots: {", ".join(missing)}')
+    if unexpected: errors.append(f'unexpected {runtime_phase} runtime screenshots: {", ".join(unexpected)}')
   digests:dict[str,str]={}
   for name in expected:
    path=root/'截图'/name
@@ -61,13 +63,13 @@ def main()->int:
      source.verify()
     with Image.open(path) as source:
      shot=source.convert('RGB')
-     if shot.size!=(1080,2400): errors.append(f'P02 runtime screenshot has wrong dimensions: {name} {shot.size}')
-     if all(high-low < 8 for low,high in ImageStat.Stat(shot).extrema): errors.append(f'P02 runtime screenshot is blank: {name}')
+     if shot.size!=(1080,2400): errors.append(f'{runtime_phase} runtime screenshot has wrong dimensions: {name} {shot.size}')
+     if all(high-low < 8 for low,high in ImageStat.Stat(shot).extrema): errors.append(f'{runtime_phase} runtime screenshot is blank: {name}')
    except Exception as failure:
-    errors.append(f'P02 runtime screenshot is not a valid image: {name}: {failure}')
+    errors.append(f'{runtime_phase} runtime screenshot is not a valid image: {name}: {failure}')
     continue
    digest=sha(path)
-   if digest in digests: errors.append(f'P02 runtime screenshots are byte-identical: {digests[digest]}, {name}')
+   if digest in digests: errors.append(f'{runtime_phase} runtime screenshots are byte-identical: {digests[digest]}, {name}')
    else: digests[digest]=name
  if errors: print('\n'.join(errors)); return 1
  content_gate = subprocess.run(

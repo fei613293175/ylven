@@ -132,6 +132,32 @@ PY
     test -s "$output"
   done
 fi
+if [[ "$PHASE" == "P03" ]]; then
+  # The P03 instrumentation test captures one Canvas-rendered PNG for every
+  # approved Android State ID. MediaStore is used because API 35 removes test
+  # app-private files after instrumentation completes.
+  mapfile -t state_ids < <(python - <<'PY'
+import csv
+from pathlib import Path
+
+with Path('contracts/ui-state-catalog.csv').open(encoding='utf-8-sig', newline='') as source:
+    for row in csv.DictReader(source):
+        if row.get('surface') == 'ANDROID' and 'P03' in row.get('phases', '').split('|'):
+            print(row['state_id'])
+PY
+  )
+  [[ "${#state_ids[@]}" -eq 93 ]] || {
+    echo "Expected 93 P03 Android states, got ${#state_ids[@]}." >&2
+    exit 1
+  }
+  for state_id in "${state_ids[@]}"; do
+    remote="/sdcard/Download/ylven-p03/${state_id}.png"
+    output="build/owner-release/截图/${state_id}.png"
+    adb shell test -s "$remote"
+    adb pull "$remote" "$output" >/dev/null
+    test -s "$output"
+  done
+fi
 cp "$APK" "build/owner-release/YLVEN-${VERSION}-${PHASE}.apk"
 python scripts/30_COMPARE_ANDROID_SCREENSHOTS.py --phase "$PHASE" --screenshots build/owner-release/截图 --report build/owner-release/视觉差异报告.md
 python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py

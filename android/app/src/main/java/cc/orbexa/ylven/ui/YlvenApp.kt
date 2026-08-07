@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -251,8 +252,17 @@ fun YlvenApp(
                 session = requireNotNull(session),
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
+                onBack = { screen = IdentityScreen.HOME },
             )
-            IdentityScreen.HOME -> HomePage(gateway, requireNotNull(session), onSessionChange) { conversation -> activeConversation = conversation; screen = IdentityScreen.CHAT }
+            IdentityScreen.HOME -> HomePage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                onOpenConversation = { conversation ->
+                    activeConversation = conversation
+                    screen = IdentityScreen.CHAT
+                },
+                onOpenAccount = { screen = IdentityScreen.ACCOUNT },
+            )
             IdentityScreen.CHAT -> ChatPage(gateway, requireNotNull(session), requireNotNull(activeConversation), onBack = { screen = IdentityScreen.HOME })
         }
 
@@ -531,7 +541,12 @@ private fun OtpPage(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionChange: (AuthSession?) -> Unit, onOpenConversation: (Conversation) -> Unit) {
+private fun HomePage(
+    gateway: IdentityGateway,
+    session: AuthSession,
+    onOpenConversation: (Conversation) -> Unit,
+    onOpenAccount: () -> Unit,
+) {
     var snapshot by remember { mutableStateOf<HomeSnapshot?>(null) }
     var conversations by remember { mutableStateOf<List<Conversation>>(emptyList()) }
     var cursor by remember { mutableStateOf<String?>(null) }
@@ -571,6 +586,9 @@ private fun HomePage(gateway: IdentityGateway, session: AuthSession, onSessionCh
     }
     Scaffold(topBar = {
         TopAppBar(title = { Text("YLVEN") }, actions = {
+            IconButton(onClick = onOpenAccount, modifier = Modifier.testTag("p01-open-account")) {
+                Icon(Icons.Default.Person, "账户与设备")
+            }
             IconButton(onClick = { drawerOpen = true; loadDrawer(true) }) { Icon(Icons.Default.Search, "会话") }
             IconButton(onClick = { loadHome() }) { Icon(Icons.Default.Refresh, "刷新") }
         })
@@ -748,6 +766,7 @@ private fun AccountPage(
     session: AuthSession,
     onSessionUpdated: (AuthSession) -> Unit,
     onLoggedOut: () -> Unit,
+    onBack: () -> Unit,
 ) {
     var devices by remember { mutableStateOf<List<DeviceSession>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -766,7 +785,15 @@ private fun AccountPage(
     LaunchedEffect(session.bearer) { loadDevices() }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("账户与设备") }, actions = { IconButton(onClick = { loadDevices() }) { Icon(Icons.Default.Refresh, "刷新") } }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("账户与设备") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }
+                },
+                actions = { IconButton(onClick = { loadDevices() }) { Icon(Icons.Default.Refresh, "刷新") } },
+            )
+        },
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).padding(horizontal = YlvenDimensions.PageHorizontal),

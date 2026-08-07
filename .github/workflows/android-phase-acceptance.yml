@@ -34,7 +34,56 @@ env:
   ANDROID_API_LEVEL: "35"
 
 jobs:
+  resolve-release:
+    runs-on: ubuntu-latest
+    outputs:
+      phase: ${{ steps.release.outputs.phase }}
+      version: ${{ steps.release.outputs.version }}
+      commit_sha: ${{ steps.release.outputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install release-version validation dependency
+        run: python -m pip install --disable-pip-version-check PyYAML
+      - id: release
+        name: Resolve the source phase and release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          requested_phase="${{ inputs.phase || '' }}"
+          requested_version="${{ inputs.version || '' }}"
+          requested_commit="${{ inputs.commit_sha || '' }}"
+
+          if [[ -n "$requested_commit" && "$requested_commit" != "$GITHUB_SHA" ]]; then
+            echo "workflow_dispatch commit_sha must equal the checked-out GitHub SHA" >&2
+            exit 1
+          fi
+
+          if [[ -n "$requested_phase" ]]; then
+            phase="${requested_phase^^}"
+          else
+            phase=$(sed -nE "s/^[[:space:]]*(phase_id|current_phase):[[:space:]]*['\"]?([[:alnum:]_-]+).*/\2/p" CURRENT_PHASE.yaml | head -n 1 | tr '[:lower:]' '[:upper:]')
+          fi
+          if [[ -z "$phase" ]]; then
+            echo "could not resolve the current release phase" >&2
+            exit 1
+          fi
+
+          if [[ -n "$requested_version" ]]; then
+            version="$requested_version"
+          else
+            version=$(python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "$phase" --print-version)
+          fi
+          python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "$phase" --version "$version"
+
+          echo "phase=$phase" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
   web-shell-tests:
+    needs: resolve-release
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -51,6 +100,7 @@ jobs:
         run: npm install --no-audit --no-fund && npm test && npm run build
 
   backend-process-tests:
+    needs: resolve-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +112,7 @@ jobs:
         run: go test ./...
 
   contracts-and-schema:
+    needs: resolve-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,15 +131,15 @@ jobs:
           python scripts/44_VALIDATE_P00_TRACEABILITY.py
           python scripts/45_VALIDATE_SECRET_BOUNDARY.py
           python scripts/46_SELF_TEST_DESKTOP_DELIVERY.py
-          python scripts/47_VALIDATE_OWNER_DELIVERY_MANIFEST.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}"
+          python scripts/47_VALIDATE_OWNER_DELIVERY_MANIFEST.py --phase "${{ needs.resolve-release.outputs.phase }}" --version "${{ needs.resolve-release.outputs.version }}"
           python scripts/19_VALIDATE_UI_CONTRACTS.py
           python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
           python scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py
-          python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}"
+          python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ needs.resolve-release.outputs.phase }}" --version "${{ needs.resolve-release.outputs.version }}"
           python tests/p02_release_visual_guard_test.py
 
   android-emulator-acceptance:
-    needs: contracts-and-schema
+    needs: [contracts-and-schema, resolve-release]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -108,7 +159,7 @@ jobs:
         with:
           gradle-version: "8.9"
       - name: Build, unit test and lint
-        run: ./gradlew --no-daemon -PylvenVersionName="${{ inputs.version || '1.0.0' }}" -PylvenApiBaseUrl="https://ai-admin.orbexa.cc" -PylvenStagingTurnstileToken="test-pass" clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
+        run: ./gradlew --no-daemon -PylvenVersionName="${{ needs.resolve-release.outputs.version }}" -PylvenApiBaseUrl="https://ai-admin.orbexa.cc" -PylvenStagingTurnstileToken="test-pass" clean testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
       - name: Grant Android emulator access to KVM
         run: sudo chmod 666 /dev/kvm
       - name: Run fixed Android emulator acceptance
@@ -121,22 +172,22 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            UPGRADE_FROM=$(python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ inputs.phase || 'AUTO' }}" --print-upgrade-from | tail -n 1)
-            bash scripts/29_RUN_ANDROID_PHASE_ACCEPTANCE.sh "${{ inputs.phase || 'AUTO' }}" "${{ inputs.version || 'AUTO' }}" "$UPGRADE_FROM"
+            UPGRADE_FROM=$(python scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py --phase "${{ needs.resolve-release.outputs.phase }}" --print-upgrade-from | tail -n 1)
+            bash scripts/29_RUN_ANDROID_PHASE_ACCEPTANCE.sh "${{ needs.resolve-release.outputs.phase }}" "${{ needs.resolve-release.outputs.version }}" "$UPGRADE_FROM"
       - name: Verify exact acceptance artifact
-        run: python scripts/33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py --phase "${{ inputs.phase || 'AUTO' }}" --version "${{ inputs.version || 'AUTO' }}" --commit "${GITHUB_SHA}"
+        run: python scripts/33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py --phase "${{ needs.resolve-release.outputs.phase }}" --version "${{ needs.resolve-release.outputs.version }}" --commit "${{ needs.resolve-release.outputs.commit_sha }}"
       - name: Upload failed Android acceptance diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ylven-${{ inputs.phase || 'auto' }}-${{ inputs.version || 'auto' }}-${{ github.sha }}-failed-diagnostics
+          name: ylven-${{ needs.resolve-release.outputs.phase }}-${{ needs.resolve-release.outputs.version }}-${{ github.sha }}-failed-diagnostics
           path: build/owner-release/
           if-no-files-found: warn
           retention-days: 7
       - name: Upload exact acceptance artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ylven-${{ inputs.phase || 'auto' }}-${{ inputs.version || 'auto' }}-${{ github.sha }}-android-acceptance
+          name: ylven-${{ needs.resolve-release.outputs.phase }}-${{ needs.resolve-release.outputs.version }}-${{ github.sha }}-android-acceptance
           path: build/owner-release/
           if-no-files-found: error
           retention-days: 30

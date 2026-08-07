@@ -35,7 +35,7 @@ class P02IdentityStateUiTest {
         P02_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
-            composeRule.onNodeWithTag("p02-state-$stateId").assertExists()
+            composeRule.onNodeWithTag("acceptance-state-$stateId").assertExists()
             capture(stateId)
         }
     }
@@ -46,7 +46,7 @@ class P02IdentityStateUiTest {
         // Capture the currently rendered Compose Canvas, rather than sampling
         // the asynchronous window Surface via UiAutomation. The latter can
         // return the previous state immediately after a recomposition.
-        val bitmap = composeRule.onNodeWithTag("p02-state-$name")
+        val bitmap = composeRule.onNodeWithTag("acceptance-state-$name")
             .captureToImage()
             .asAndroidBitmap()
         check(bitmap.width == 1080 && bitmap.height == 2400) {
