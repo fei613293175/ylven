@@ -1,8 +1,0 @@
-{
-    "phase":  "P02",
-    "version":  "1.2.0",
-    "commit_sha":  "fda8c4c157f7dc8eb5b98f9ce768624296c1f760",
-    "apk":  "YLVEN-1.2.0-P02.apk",
-    "apk_sha256":  "d9b7c91b13df6f27a112f43e4dab65934c43b032f9df458cf1b47ba22e57d4d5",
-    "workflow_run_id":  31136387566
-}
