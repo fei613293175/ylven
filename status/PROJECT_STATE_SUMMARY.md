@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-07T16:31:10+08:00`
+- Generated: `2026-08-07T16:42:54+08:00`
 - Current phase: `P03`
-- Phase status: `DOING`
-- Current Work Packet: `P03-W05`
-- Work Packet status: `DOING`
-- Last closed Work Packet: `P03-W04`
+- Phase status: `READY_FOR_RELEASE`
+- Current Work Packet: `NONE`
+- Work Packet status: `PHASE_COMPLETE`
+- Last closed Work Packet: `P03-W05`
 - Last closed phase: `P02`
 - Last closed version: `1.2.0`
-- Closed/deferred Work Packets recorded: `19`
+- Closed/deferred Work Packets recorded: `20`
 - Closed releases recorded: `3`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `b3a29026bf4dc219d860d77697c9a15761b84280`
+- Git HEAD: `c60f59de80a016d2113c79ef028991dd061f129a`
 
 ## Exact next action
 
-Implement `P03-W05` (会话权限、监控指标与管理后台诊断). Commit code, tests and Feature evidence before running close-packet.
+Every Work Packet in `P03` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase.
 
 ## New-conversation rule
 
