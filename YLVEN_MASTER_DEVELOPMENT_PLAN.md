@@ -159,7 +159,7 @@ Each of the 64 Work Packets closes into a hash-chained packet history. Each P00�
 
 - 新 Codex 会话第一条命令固定为 `.\ylven.ps1 resume`；不得根据聊天中的“下个版本”猜测。
 - 每个 Work Packet 必须通过 `.\ylven.ps1 close-packet -Packet <ID>` 关闭；控制器验证 Feature 最终状态、理由、证据、测试和实现 Commit，追加哈希链历史，自动选择下一包，并自动提交状态变更。
-- 每个正式 APK 版本只有在精确 CI Artifact、项目所有者 `APPROVED` 后，才能通过 `.\ylven.ps1 close-release -Phase <Pxx>` 关闭；控制器写入发布总账、创建不可变 Tag、自动提交状态并推进下一阶段。
+- 每个正式 APK 版本只有在线上服务器从精确 Commit 构建、下载后复核 SHA-256、项目所有者本机物理 Android 手机完成验收并由项目所有者 `APPROVED` 后，才能通过 `.\ylven.ps1 close-release -Phase <Pxx>` 关闭；控制器写入发布总账、创建不可变 Tag、自动提交状态并推进下一阶段。
 - 仓库公开是项目所有者确认的合法事实；缺少 `.git`、远程为空或没有默认分支由 Bootstrap 自动修复，不再视为业务阻塞。
 - 本机为轻量控制端，只要求 Git、PowerShell、uv、Spec Kit、OpenSSH，以及发布时使用的 GitHub CLI；Java、Go、Gradle、ADB、Android SDK、Docker、Node 和系统 Python均不是本机启动门槛。
-- GitHub Actions承担构建、模拟器与视觉回归；线上服务器承担 Docker、数据库及 staging 集成。
+- 线上服务器承担 Android 构建、重型自动测试、Docker、数据库及 staging 集成；APK 只在项目所有者本机已连接的物理 Android 手机上验收。禁止使用 GitHub Actions、Android Emulator 或任何模拟器构建或测试当前 APK。

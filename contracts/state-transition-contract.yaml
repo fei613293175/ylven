@@ -38,8 +38,9 @@ work_packet_close_gate:
 - The controller appends one hash-chained final history row, updates runtime state, selects the next unfinished packet, creates a state commit and attempts to push it.
 release_close_gate:
 - All packets in the phase are CLOSED or DEFERRED_WITH_REASON.
-- GitHub Actions acceptance passed for the exact release commit.
-- The exact CI Artifact was delivered and OWNER_ACCEPTANCE.md contains APPROVED.
+- The exact release commit was built by Gradle on the connected online server and the downloaded APK SHA-256 matches server provenance.
+- The APK passed complete acceptance on the project owner's physical Android phone, including ADB state, upgrade install, launch, crash/ANR/log inspection, page interactions, business flows and visual screenshots.
+- The exact server build artifact was delivered and OWNER_ACCEPTANCE.md contains APPROVED.
 - The controller validates commit/version/provenance, creates or verifies an immutable version tag, appends the hash-chained release ledger, advances to the next phase, creates a state
   commit and attempts to push it.
 new_conversation_recovery:

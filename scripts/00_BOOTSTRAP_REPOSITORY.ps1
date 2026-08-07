@@ -60,5 +60,5 @@ if (-not $SkipInitialPush) {
 $branch='phase/p00-engineering-foundation'; $current=(& git branch --show-current).Trim()
 if ($current -ne $branch) { & git switch -C $branch }
 if (-not $SkipInitialPush) { & git push -u origin $branch 2>$null; if($LASTEXITCODE-ne 0){Write-Warning 'Phase branch push is pending.'} }
-Write-Host "Bootstrap complete under $VisibilityDecision. Local machine remains a thin control client; heavy builds run in GitHub Actions or on the SSH-connected server."
+Write-Host "Bootstrap complete under $VisibilityDecision. Local machine remains a thin control client; Android and other heavy builds run on the SSH-connected online server."
 Write-Host 'Run .\ylven.ps1 resume in every new Codex conversation.'

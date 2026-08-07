@@ -7,8 +7,9 @@ local_machine:
   - Spec Kit
   - Codex interaction
   - state transitions
-  - CI dispatch
-  - artifact download
+  - server build dispatch
+  - server artifact download and checksum verification
+  - physical Android device acceptance
   - desktop delivery
   required:
   - PowerShell 5.1+
@@ -16,30 +17,32 @@ local_machine:
   - uv
   - Spec Kit v0.15.2
   - OpenSSH
-  - GitHub CLI
+  - ADB platform-tools for owner release acceptance
   not_required:
   - system Python
   - Java
   - Go
   - Gradle
-  - ADB
   - Android SDK
   - Docker
   - Node.js
   - database services
   python: uv downloads and caches Python 3.12 for repository scripts; do not install a system Python solely for this project
 github_actions:
-  purpose:
-  - Android build
-  - emulator tests
-  - visual comparison
-  - backend tests
-  - web tests
-  - contract validation
+  prohibited: true
+  prohibited_uses:
+  - APK build
+  - APK test
+  - Android Emulator
+  - any simulator
   - release artifact creation
-  source_of_owner_apk: the exact tested CI artifact only
+  historical_records_only: true
 online_server:
   purpose:
+  - exact-commit Android Gradle build
+  - Android unit tests and lint
+  - backend, web and contract tests
+  - release artifact creation
   - staging containers
   - database/cache/queue
   - integration testing
@@ -52,8 +55,11 @@ online_server:
   - overwriting unknown containers
   - committing inventory or secrets
 routing_rules:
-- Never block implementation because Java, Go, Gradle, ADB or Docker are absent on the owner computer.
+- Never block implementation because Java, Go, Gradle, Android SDK or Docker are absent on the owner computer.
 - Run lightweight contract and state checks locally through uv-managed Python.
-- Run build and test workloads in GitHub Actions; run staging integration on the connected online server.
+- Run Android builds and heavy non-device tests on the SSH-connected online server.
+- Run APK tests only on the project owner's physically connected Android phone after ADB reports `device`.
+- If the phone is unavailable, stop APK testing without fallback. If another project holds the shared device lock, wait in the FIFO queue until ownership is acquired.
+- Never invoke GitHub Actions, Android Emulator or another simulator for this project.
 - A missing remote credential blocks only push/download operations, not local coding or contract work.
 - If a local `git push` fails, keep the commit SHA, phase branch and `origin` unchanged, transfer a complete Git bundle over a verified SSH/SFTP path to the online server, verify SHA-256 and `git bundle verify`, and push from that server to `origin`; never expose tokens, keys or secrets in the repository, bundle, command line or logs.

@@ -31,6 +31,9 @@ hard_gates:
       upgrade_evidence: 覆盖安装证据.md
       screenshot_index: 截图索引.csv
       screenshot_directory: 截图
+      production_screenshot_index: 真实页面截图索引.csv
+      production_screenshot_directory: 真实页面截图
+      production_visual_review: 真实页面视觉审查.json
       checksum_file: 校验文件_SHA256.txt
     english_aliases_are_not_release_artifacts: true
   admin_real_test:
@@ -44,6 +47,23 @@ hard_gates:
     mock_or_static_success_is_not_accepted: true
     evidence_file: 管理后台实测证据.md
     unavailable_or_incomplete_blocks_delivery: true
+  apk_build_and_test:
+    build_host: connected_online_server
+    build_from_exact_git_commit: true
+    download_sha256_must_match_server: true
+    physical_android_phone_only: true
+    adb_state_required: device
+    unavailable_device_action: stop_without_simulator_fallback
+    automatic_device_selection: prefer_idle_then_shortest_fifo
+    explicit_serial_override_allowed: true
+    busy_device_action: choose_shortest_fifo_and_wait
+    github_actions_forbidden: true
+    emulators_and_simulators_forbidden: true
+    every_page_real_interaction_required: true
+    every_defined_page_state_screenshot_required: true
+    production_app_path_screenshot_required: true
+    direct_codex_visual_review_required: true
+    crash_anr_and_log_review_required: true
 release_closure:
   owner_acceptance_must_remain_pending_until_owner_confirms: true
   no_claim_of_completion_without_all_hard_gates: true

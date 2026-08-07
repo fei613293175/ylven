@@ -1,0 +1,362 @@
+﻿param(
+    [Parameter(Mandatory=$true)][ValidatePattern('^P\d{2}$')][string]$Phase,
+    [Parameter(Mandatory=$true)][string]$Version,
+    [Parameter(Mandatory=$true)][string]$ServerBuildDir,
+    [string]$Serial,
+    [string]$AdbPath,
+    [string]$PreviousApk
+)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$PackageId = 'cc.orbexa.ylven'
+$TestPackageId = 'cc.orbexa.ylven.test'
+$QueueOwned = $false
+$TicketPath = $null
+$ActiveLock = $null
+
+function Invoke-Adb {
+    param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
+    $output = & $script:AdbPath -s $script:Serial @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "adb $($Arguments -join ' ') failed:`n$($output -join "`n")" }
+    return $output
+}
+
+function Get-DeviceRows {
+    $lines = & $script:AdbPath devices -l 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "adb devices -l failed:`n$($lines -join "`n")" }
+    $rows = @()
+    foreach ($line in $lines) {
+        if ($line -match '^(\S+)\s+(device|offline|unauthorized|no permissions)(?:\s+(.*))?$') {
+            $rows += [pscustomobject]@{ Serial=$Matches[1]; State=$Matches[2]; Detail=$Matches[3] }
+        }
+    }
+    return $rows
+}
+
+function Get-QueueSnapshot {
+    param([Parameter(Mandatory=$true)][string]$DeviceSerial)
+    $root = Join-Path $env:USERPROFILE ".codex\android-device-queue\$DeviceSerial"
+    $ticketCount = 0
+    $hasActiveLock = $false
+    if (Test-Path -LiteralPath $root) {
+        $ticketCount = @(Get-ChildItem -LiteralPath $root -Filter '*.ticket' -File -ErrorAction Stop).Count
+        $hasActiveLock = Test-Path -LiteralPath (Join-Path $root 'active.lock')
+    }
+    return [pscustomobject]@{
+        Root=$root
+        TicketCount=$ticketCount
+        HasActiveLock=$hasActiveLock
+        QueueLoad=$ticketCount + [int]$hasActiveLock
+        IsIdle=(-not $hasActiveLock -and $ticketCount -eq 0)
+    }
+}
+
+function Get-PhysicalDeviceCandidates {
+    param([Parameter(Mandatory=$true)][object[]]$Rows)
+    $candidates = @()
+    foreach ($row in $Rows) {
+        if ($row.State -ne 'device' -or $row.Serial -like 'emulator-*') { continue }
+        $qemuOutput = & $script:AdbPath -s $row.Serial shell getprop ro.kernel.qemu 2>&1
+        if ($LASTEXITCODE -ne 0) { continue }
+        $qemu = ($qemuOutput -join '').Trim()
+        if ($qemu -eq '1') { continue }
+        $queue = Get-QueueSnapshot -DeviceSerial $row.Serial
+        $candidates += [pscustomobject]@{
+            Serial=$row.Serial
+            State=$row.State
+            Detail=$row.Detail
+            Qemu=$qemu
+            QueueRoot=$queue.Root
+            TicketCount=$queue.TicketCount
+            HasActiveLock=$queue.HasActiveLock
+            QueueLoad=$queue.QueueLoad
+            IsIdle=$queue.IsIdle
+        }
+    }
+    return $candidates
+}
+
+Push-Location $Root
+try {
+    if (-not $AdbPath) { $AdbPath = $env:YLVEN_ADB_PATH }
+    if (-not $AdbPath) {
+        $localAdb = Join-Path $Root '.ylven-local\platform-tools-p03\platform-tools\adb.exe'
+        if (Test-Path -LiteralPath $localAdb) { $AdbPath = $localAdb }
+    }
+    if (-not $AdbPath) {
+        $command = Get-Command adb -ErrorAction SilentlyContinue
+        if ($command) { $AdbPath = $command.Source }
+    }
+    if (-not $AdbPath -or -not (Test-Path -LiteralPath $AdbPath)) { throw 'ADB is unavailable; physical-device testing stops with no simulator fallback.' }
+    $script:AdbPath = (Resolve-Path -LiteralPath $AdbPath).Path
+
+    $rows = @(Get-DeviceRows)
+    $physicalCandidates = @(Get-PhysicalDeviceCandidates -Rows $rows)
+    $selectionMode = $null
+    $queueLoadAtSelection = $null
+    $connectedCandidateCount = $physicalCandidates.Count
+    if ($Serial) {
+        if ($Serial -like 'emulator-*') { throw 'Emulator serials are forbidden.' }
+        $selected = $physicalCandidates | Where-Object { $_.Serial -eq $Serial } | Select-Object -First 1
+        if (-not $selected) { throw "ADB target $Serial is not an eligible physical device in exact state device; testing stops." }
+        $selectionMode = 'explicit_serial'
+    } else {
+        if ($physicalCandidates.Count -eq 0) { throw 'No eligible physical ADB device is in exact state device; testing stops with no simulator fallback.' }
+        $selected = $physicalCandidates |
+            Sort-Object @{Expression={ if ($_.IsIdle) { 0 } else { 1 } }}, @{Expression={$_.QueueLoad}}, @{Expression={$_.Serial}} |
+            Select-Object -First 1
+        $Serial = $selected.Serial
+        if ($selected.IsIdle) { $selectionMode = 'automatic_idle' } else { $selectionMode = 'automatic_shortest_fifo' }
+    }
+    $queueLoadAtSelection = $selected.QueueLoad
+    Write-Host "Selected physical device $Serial via $selectionMode (eligible devices: $connectedCandidateCount; queue load: $queueLoadAtSelection)."
+    $script:Serial = $Serial
+    $qemu = ((Invoke-Adb shell getprop ro.kernel.qemu) -join '').Trim()
+    if ($qemu -eq '1') { throw 'The selected ADB target reports ro.kernel.qemu=1; simulators are forbidden.' }
+
+    $queueRoot = Join-Path $env:USERPROFILE ".codex\android-device-queue\$Serial"
+    New-Item -ItemType Directory -Path $queueRoot -Force | Out-Null
+    $queueRootResolved = (Resolve-Path -LiteralPath $queueRoot).Path
+    $ticketName = ('{0}-{1:D8}-{2}.ticket' -f (Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmssfffffff'), $PID, [guid]::NewGuid().ToString('N'))
+    $TicketPath = Join-Path $queueRootResolved $ticketName
+    New-Item -ItemType File -Path $TicketPath -ErrorAction Stop | Out-Null
+    $ActiveLock = Join-Path $queueRootResolved 'active.lock'
+    $lastNotice = [DateTime]::MinValue
+    while (-not $QueueOwned) {
+        $first = Get-ChildItem -LiteralPath $queueRootResolved -Filter '*.ticket' -File | Sort-Object Name | Select-Object -First 1
+        if ($first -and $first.FullName -eq $TicketPath -and -not (Test-Path -LiteralPath $ActiveLock)) {
+            try {
+                New-Item -ItemType Directory -Path $ActiveLock -ErrorAction Stop | Out-Null
+                $QueueOwned = $true
+                @{ project='YLVEN'; phase=$Phase; serial=$Serial; pid=$PID; acquired_at=(Get-Date).ToUniversalTime().ToString('o') } |
+                    ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ActiveLock 'owner.json') -Encoding UTF8
+            } catch [System.IO.IOException] {
+                $QueueOwned = $false
+            }
+        }
+        if (-not $QueueOwned) {
+            if (((Get-Date) - $lastNotice).TotalSeconds -ge 30) {
+                Write-Host "Physical device $Serial is busy; waiting in the shared FIFO queue without interruption."
+                $lastNotice = Get-Date
+            }
+            Start-Sleep -Seconds 5
+        }
+    }
+
+    $currentRow = @(Get-DeviceRows | Where-Object { $_.Serial -eq $Serial }) | Select-Object -First 1
+    if (-not $currentRow -or $currentRow.State -ne 'device') { throw "Device $Serial became unavailable while queued; testing stops." }
+    $qemu = ((Invoke-Adb shell getprop ro.kernel.qemu) -join '').Trim()
+    if ($qemu -eq '1') { throw 'The acquired target is a simulator; testing stops.' }
+
+    $ServerBuildDir = (Resolve-Path -LiteralPath $ServerBuildDir).Path
+    $serverProvenancePath = Join-Path $ServerBuildDir '服务器构建来源证明.json'
+    $downloadProofPath = Join-Path $ServerBuildDir '本机下载校验证明.json'
+    if (-not (Test-Path -LiteralPath $serverProvenancePath) -or -not (Test-Path -LiteralPath $downloadProofPath)) {
+        throw 'Server build provenance or local download verification is missing.'
+    }
+    $provenance = Get-Content -Raw -LiteralPath $serverProvenancePath | ConvertFrom-Json
+    if ($provenance.phase -ne $Phase -or $provenance.version -ne $Version) { throw 'Server build phase/version mismatch.' }
+    $CurrentApk = (Resolve-Path -LiteralPath (Join-Path $ServerBuildDir $provenance.apk)).Path
+    $TestApk = (Resolve-Path -LiteralPath (Join-Path $ServerBuildDir $provenance.instrumentation_apk)).Path
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $CurrentApk).Hash.ToLowerInvariant() -ne $provenance.apk_sha256) { throw 'Current APK hash differs from server provenance.' }
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $TestApk).Hash.ToLowerInvariant() -ne $provenance.instrumentation_apk_sha256) { throw 'Instrumentation APK hash differs from server provenance.' }
+
+    if (-not $PreviousApk) {
+        $previousIndex = [int]$Phase.Substring(1) - 1
+        if ($previousIndex -lt 0) { throw 'P00 requires -PreviousApk for same-package reinstall testing.' }
+        $previousPhase = 'P{0:D2}' -f $previousIndex
+        $upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
+        $PreviousApk = Join-Path $Root "dist\releases\$previousPhase\YLVEN-$upgradeFrom-$previousPhase.apk"
+    }
+    $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
+
+    $acceptanceId = ('{0}-{1}-{2}' -f $Phase.ToLowerInvariant(), $Version, (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
+    $output = Join-Path $Root ".ylven-local\physical-device-acceptance\$acceptanceId"
+    $screenshots = Join-Path $output '截图'
+    $productionScreenshots = Join-Path $output '真实页面截图'
+    $testResults = Join-Path $output 'test-results'
+    New-Item -ItemType Directory -Path $output,$screenshots,$productionScreenshots,$testResults -Force | Out-Null
+    Copy-Item -LiteralPath $serverProvenancePath,$downloadProofPath -Destination $output
+    $deliveredApk = Join-Path $output "YLVEN-$Version-$Phase.apk"
+    Copy-Item -LiteralPath $CurrentApk -Destination $deliveredApk
+
+    $manufacturer = ((Invoke-Adb shell getprop ro.product.manufacturer) -join '').Trim()
+    $model = ((Invoke-Adb shell getprop ro.product.model) -join '').Trim()
+    $androidVersion = ((Invoke-Adb shell getprop ro.build.version.release) -join '').Trim()
+    $apiLevel = ((Invoke-Adb shell getprop ro.build.version.sdk) -join '').Trim()
+    $physicalSize = ((Invoke-Adb shell wm size) -join ' ').Trim()
+    $density = ((Invoke-Adb shell wm density) -join ' ').Trim()
+
+    Invoke-Adb logcat -c | Out-Null
+    (Invoke-Adb install -r $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
+    $installedBefore = (Invoke-Adb shell pm path $PackageId) -join "`n"
+    if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
+    $loginBefore = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
+    Invoke-Adb shell run-as $PackageId sh -c 'mkdir -p files; printf physical-upgrade-ok > files/physical-upgrade-marker' | Out-Null
+
+    (Invoke-Adb install -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
+    $marker = ((Invoke-Adb shell run-as $PackageId sh -c 'cat files/physical-upgrade-marker') -join '').Trim()
+    if ($marker -ne 'physical-upgrade-ok') { throw 'Upgrade data marker did not survive adb install -r.' }
+    $loginAfter = ((Invoke-Adb shell run-as $PackageId sh -c 'if test -s shared_prefs/ylven_identity.xml; then echo present; else echo absent; fi') -join '').Trim()
+    if ($loginBefore -eq 'present' -and $loginAfter -ne 'present') { throw 'Existing login-state preferences did not survive the upgrade.' }
+    $packageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
+    if ($packageDump -notmatch "versionName=$([regex]::Escape($Version))") { throw 'Installed versionName does not match the release contract.' }
+
+    Invoke-Adb shell am force-stop $PackageId | Out-Null
+    $launch = (Invoke-Adb shell am start -W -n "$PackageId/.MainActivity") -join "`n"
+    $launch | Set-Content -LiteralPath (Join-Path $testResults 'launch.txt') -Encoding UTF8
+    if ($launch -notmatch 'Status:\s*ok') { throw 'The installed APK did not launch successfully.' }
+
+    (Invoke-Adb install -r $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
+    $liveFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03LiveStagingFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $liveFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt') -Encoding UTF8
+    if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
+
+    $flow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03RealDeviceFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $flow | Set-Content -LiteralPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt') -Encoding UTF8
+    if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }
+
+    $stateFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03ConversationStateUiTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $stateFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ConversationStateUiTest.txt') -Encoding UTF8
+    if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
+
+    $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object { $_.surface -eq 'ANDROID' -and ($_.phases -split '\|') -contains $Phase }
+    if ($Phase -eq 'P03' -and @($stateRows).Count -ne 93) { throw "Expected 93 P03 Android states, got $(@($stateRows).Count)." }
+    $indexRows = @()
+    foreach ($row in $stateRows) {
+        $remote = "/sdcard/Download/ylven-$($Phase.ToLowerInvariant())/$($row.state_id).png"
+        $local = Join-Path $screenshots "$($row.state_id).png"
+        Invoke-Adb shell test -s $remote | Out-Null
+        Invoke-Adb pull $remote $local | Out-Null
+        $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $local).Hash.ToLowerInvariant()
+        $indexRows += [pscustomobject]@{
+            state_id=$row.state_id; page_id=$row.page_id; device_serial=$Serial
+            runtime_screenshot="截图/$($row.state_id).png"; runtime_sha256=$digest; result='PENDING_VISUAL_COMPARE'
+        }
+    }
+    $indexRows | Export-Csv -LiteralPath (Join-Path $output '截图索引.csv') -NoTypeInformation -Encoding UTF8
+
+    $productionPages = [ordered]@{
+        'YL-A-018'='YL-A-018-S02_POPULATED'
+        'YL-A-019'='YL-A-019-S02_POPULATED'
+        'YL-A-020'='YL-A-020-S02_POPULATED'
+        'YL-A-021'='YL-A-021-S02_POPULATED'
+        'YL-A-022'='YL-A-022-S01_DEFAULT'
+        'YL-A-023'='YL-A-023-S07_COMPLETED'
+        'YL-A-031'='YL-A-031-S01_DEFAULT'
+    }
+    $productionIndex = @()
+    foreach ($entry in $productionPages.GetEnumerator()) {
+        $name = "$($entry.Key)-PRODUCTION.png"
+        $remote = "/sdcard/Download/ylven-p03-production/$name"
+        $local = Join-Path $productionScreenshots $name
+        Invoke-Adb shell test -s $remote | Out-Null
+        Invoke-Adb pull $remote $local | Out-Null
+        $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $local).Hash.ToLowerInvariant()
+        $catalogRow = $stateRows | Where-Object { $_.state_id -eq $entry.Value } | Select-Object -First 1
+        if (-not $catalogRow) { throw "Missing representative mockup state $($entry.Value)." }
+        $productionIndex += [pscustomobject]@{
+            page_id=$entry.Key
+            representative_state_id=$entry.Value
+            production_screenshot="真实页面截图/$name"
+            production_sha256=$digest
+            mockup_path=$catalogRow.mockup_path
+            result='PENDING_CODEX_VISUAL_REVIEW'
+        }
+    }
+    $productionIndex | Export-Csv -LiteralPath (Join-Path $output '真实页面截图索引.csv') -NoTypeInformation -Encoding UTF8
+
+    & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/30_COMPARE_ANDROID_SCREENSHOTS.py' --phase $Phase --screenshots $screenshots --report (Join-Path $output '视觉差异报告.md')
+    if ($LASTEXITCODE -ne 0) { throw 'Physical-device visual comparison failed.' }
+    & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py' --phase $Phase
+    if ($LASTEXITCODE -ne 0) { throw 'Current-phase interaction test coverage failed.' }
+
+    (& $AdbPath -s $Serial logcat -d -v threadtime 2>&1) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
+    (& $AdbPath -s $Serial shell dumpsys activity exit-info $PackageId 2>&1) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
+    $logText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'logcat.txt')
+    $exitText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'application-exit-info.txt')
+    $runtimeErrors = @()
+    foreach ($pattern in @('FATAL EXCEPTION', 'ANR in cc\.orbexa\.ylven', 'am_crash.*cc\.orbexa\.ylven', 'am_anr.*cc\.orbexa\.ylven', 'Fatal signal.*cc\.orbexa\.ylven')) {
+        if ($logText -match $pattern) { $runtimeErrors += $pattern }
+    }
+    if ($exitText -match '(?is)(REASON_CRASH|REASON_ANR|reason=crash|reason=anr)') { $runtimeErrors += 'ApplicationExitInfo crash/ANR' }
+    if ($runtimeErrors.Count -gt 0) { throw "Crash/ANR/log review failed: $($runtimeErrors -join ', ')" }
+
+    $logReview = @"
+# 真机日志审查
+
+- 设备：$manufacturer $model / Android $androidVersion / API $apiLevel
+- APK：YLVEN-$Version-$Phase.apk
+- logcat：test-results/logcat.txt
+- ApplicationExitInfo：test-results/application-exit-info.txt
+- FATAL EXCEPTION：未发现
+- ANR：未发现
+- native crash：未发现
+- 无法解释的应用异常：未发现
+- 结果：PASS
+"@
+    $logReview | Set-Content -LiteralPath (Join-Path $output '真机日志审查.md') -Encoding UTF8
+
+    $automationReport = @"
+# 自动化测试报告
+
+- Phase: $Phase
+- Version: $Version
+- Device: $manufacturer $model ($Serial)
+- P03LiveStagingFlowTest: PASS（MainActivity、保留登录态和真实 staging API）
+- P03RealDeviceFlowTest: PASS（物理设备 UI 交互；确定性 Fake 网关，不替代 staging）
+- P03ConversationStateUiTest: PASS（物理设备 93 状态截图）
+- Interaction coverage: PASS
+- Crash/ANR/log review: PASS
+- Result: PENDING_CODEX_PRODUCTION_VISUAL_REVIEW
+"@
+    $automationReport | Set-Content -LiteralPath (Join-Path $output '自动化测试报告.md') -Encoding UTF8
+
+    $upgradeEvidence = @"
+# 覆盖安装证据
+
+- 阶段：$Phase
+- 当前版本：$Version
+- applicationId：$PackageId
+- 安装命令：adb install -r
+- 清除数据或卸载：未执行
+- 签名连续性：由服务器证书摘要比较和 adb install -r 共同验证
+- 数据标记：physical-upgrade-marker 覆盖安装后仍存在
+- 登录态文件：安装前 $loginBefore；安装后 $loginAfter
+- 结果：PASS
+"@
+    $upgradeEvidence | Set-Content -LiteralPath (Join-Path $output '覆盖安装证据.md') -Encoding UTF8
+
+    $deviceEvidence = [ordered]@{
+        schema_version='2.0'; phase=$Phase; version=$Version; commit_sha=$provenance.commit_sha
+        apk=(Split-Path -Leaf $deliveredApk); apk_sha256=$provenance.apk_sha256
+        device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density=$density }
+        selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
+        queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
+        paths=@('upgrade install','launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
+        state_screenshot_count=@($stateRows).Count
+        production_page_screenshot_count=$productionPages.Count
+        real_device_ui_flow='PASS'
+        deterministic_gateway_scope='UI interaction only; not staging acceptance'
+        real_staging_business_flow='PASS'
+        log_review='PASS'
+        state_matrix_visual_compare='PASS'
+        production_page_visual_review='PENDING_CODEX_VISUAL_REVIEW'
+        issues=@()
+        result='PENDING_CODEX_VISUAL_REVIEW'
+        completed_at=(Get-Date).ToUniversalTime().ToString('o')
+    }
+    $deviceEvidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output '真机验收证据.json') -Encoding UTF8
+    Write-Warning 'Production-page screenshots require direct Codex comparison with the representative approved mockups. The APK is not deliverable yet.'
+    Write-Output "PHYSICAL_ACCEPTANCE_DIR=$output"
+} finally {
+    if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) {
+        $activeFull = [System.IO.Path]::GetFullPath($ActiveLock)
+        if ($activeFull.StartsWith([System.IO.Path]::GetFullPath((Split-Path -Parent $ActiveLock)), [System.StringComparison]::OrdinalIgnoreCase)) {
+            Remove-Item -LiteralPath $ActiveLock -Recurse -Force
+        }
+    }
+    if ($TicketPath -and (Test-Path -LiteralPath $TicketPath)) { Remove-Item -LiteralPath $TicketPath -Force }
+    Pop-Location
+}

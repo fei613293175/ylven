@@ -1,22 +1,38 @@
-﻿param([Parameter(Mandatory)][ValidatePattern('^P\d{2}$')][string]$Phase,[switch]$NoWait)
+﻿param(
+    [Parameter(Mandatory=$true)][ValidatePattern('^P\d{2}$')][string]$Phase,
+    [string]$SshTarget,
+    [string]$Serial
+)
 Set-StrictMode -Version Latest
-$ErrorActionPreference='Stop'
-$Root=(Resolve-Path(Join-Path $PSScriptRoot '..')).Path; Set-Location $Root
-if(-not(Get-Command gh -ErrorAction SilentlyContinue)){
- if(Get-Command winget -ErrorAction SilentlyContinue){& winget install --id GitHub.cli -e --accept-package-agreements --accept-source-agreements}
-}
-if(-not(Get-Command gh -ErrorAction SilentlyContinue)){throw 'GitHub CLI is required to dispatch and retrieve the CI release. Java/Gradle/ADB/Docker are not required locally.'}
+$ErrorActionPreference = 'Stop'
+$Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+Set-Location $Root
+
 & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/38_VALIDATE_STATE_CONTINUITY.py'
+if ($LASTEXITCODE -ne 0) { throw 'State continuity validation failed.' }
 & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/40_PUBLIC_REPOSITORY_SAFETY.py'
-$phaseState=Get-Content 'CURRENT_PHASE.yaml' -Raw
-if($phaseState -notmatch 'status:\s*READY_FOR_RELEASE'){throw "$Phase is not READY_FOR_RELEASE; close all Work Packets first."}
-$matrix=Get-Content 'contracts/release-version-matrix.yaml' -Raw
-$version=(& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-version 2>$null | Select-Object -Last 1)
-if(-not $version){$entry=Select-String -Path 'contracts/release-version-matrix.yaml' -Pattern "phase: $Phase" -Context 0,5; $version=($entry.Context.PostContext|Select-String 'version_name:'|Select-Object -First 1).Line.Split(':',2)[1].Trim()}
-$sha=(& git rev-parse HEAD).Trim(); $branch=(& git branch --show-current).Trim(); & git push -u origin $branch; if($LASTEXITCODE-ne 0){throw 'Push current release commit before CI dispatch.'}
-& gh workflow run android-phase-acceptance.yml --ref $branch -f phase=$Phase -f version=$version -f commit_sha=$sha
-if($LASTEXITCODE-ne 0){throw 'Could not dispatch GitHub Actions release acceptance.'}
-Start-Sleep -Seconds 3
-$runData=(& gh run list --workflow android-phase-acceptance.yml --branch $branch --limit 1 --json databaseId,status,headSha | ConvertFrom-Json)[0]
-$run="$($runData.databaseId) $($runData.status) $($runData.headSha)"; Write-Host "Dispatched CI: $run"
-if(-not $NoWait){$id=($run -split ' ')[0]; & gh run watch $id --exit-status; if($LASTEXITCODE-ne 0){throw 'GitHub Actions acceptance failed.'}; Write-Host "CI passed. Deliver exact Artifact with scripts/35_DELIVER_ANDROID_RELEASE.ps1 -Phase $Phase -Version $version -RunId $id"}
+if ($LASTEXITCODE -ne 0) { throw 'Public repository safety validation failed.' }
+$phaseState = Get-Content 'CURRENT_PHASE.yaml' -Raw
+if ($phaseState -notmatch "(?m)^phase_id:\s*$Phase\s*$" -or $phaseState -notmatch '(?m)^status:\s*READY_FOR_RELEASE\s*$') {
+    throw "$Phase is not the active READY_FOR_RELEASE phase."
+}
+$version = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-version 2>$null | Select-Object -Last 1).Trim()
+if (-not $version) { throw "Could not resolve the version for $Phase." }
+
+$serverParameters = @{ Phase=$Phase; Version=$version }
+if ($SshTarget) { $serverParameters.SshTarget = $SshTarget }
+& (Join-Path $PSScriptRoot '49_BUILD_ANDROID_ONLINE_SERVER.ps1') @serverParameters | Tee-Object -Variable serverOutput
+$serverLine = $serverOutput | Where-Object { $_ -like 'SERVER_BUILD_DIR=*' } | Select-Object -Last 1
+if (-not $serverLine) { throw 'Online-server build completed without an artifact directory marker.' }
+$serverBuildDir = $serverLine.Substring('SERVER_BUILD_DIR='.Length)
+
+$deviceParameters = @{ Phase=$Phase; Version=$version; ServerBuildDir=$serverBuildDir }
+if ($Serial) { $deviceParameters.Serial = $Serial }
+& (Join-Path $PSScriptRoot '50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1') @deviceParameters | Tee-Object -Variable deviceOutput
+$deviceLine = $deviceOutput | Where-Object { $_ -like 'PHYSICAL_ACCEPTANCE_DIR=*' } | Select-Object -Last 1
+if (-not $deviceLine) { throw 'Physical-device acceptance completed without an evidence directory marker.' }
+$acceptanceDir = $deviceLine.Substring('PHYSICAL_ACCEPTANCE_DIR='.Length)
+
+& (Join-Path $PSScriptRoot '35_DELIVER_ANDROID_RELEASE.ps1') -Phase $Phase -Version $version -AcceptanceDir $acceptanceDir
+if ($LASTEXITCODE -ne 0) { throw 'Owner delivery failed.' }
+Write-Host "$Phase release evidence is ready for project-owner APPROVED/REJECTED review. The next phase has not started."

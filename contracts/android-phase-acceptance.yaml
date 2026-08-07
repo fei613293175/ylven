@@ -1,6 +1,5 @@
-schema_version: '1.0'
+schema_version: '2.0'
 authority: CANONICAL
-workflow: .github/workflows/android-phase-acceptance.yml
 owner_delivery_contract: contracts/owner-delivery-contract.yaml
 all_phase_hard_gates:
 - P00
@@ -17,6 +16,55 @@ all_phase_hard_gates:
 - P11
 - P12
 - P13
+forbidden_execution:
+  github_actions: true
+  android_emulator: true
+  every_other_simulator: true
+  simulator_fallback_when_device_unavailable: true
+online_server_build:
+  required: true
+  exact_clean_git_commit_required: true
+  source_transfer: git_archive
+  source_archive_sha256_required: true
+  shared_server_build_coordinator_required: true
+  isolated_toolchain_required: true
+  required_toolchain:
+    java_major: 21
+    gradle: '8.9'
+    android_platform: 35
+    android_build_tools: 36.0.0
+  required_tasks:
+  - testDebugUnitTest
+  - lintDebug
+  - assembleDebug
+  - assembleDebugAndroidTest
+  required_outputs:
+  - owner APK
+  - instrumentation APK
+  - test report
+  - lint report
+  - server build provenance
+  - SHA-256 manifest
+  download_sha256_must_match_server: true
+physical_device:
+  owner_computer_only: true
+  physically_connected_phone_only: true
+  adb_state_required: device
+  reject_ro_kernel_qemu: true
+  unavailable_action: stop_without_fallback
+  automatic_selection: prefer_idle_then_shortest_fifo
+  explicit_serial_override_allowed: true
+  shared_fifo_queue_root: '%USERPROFILE%/.codex/android-device-queue/<serial>/'
+  busy_action: choose_shortest_fifo_and_wait_without_interrupting_owner
+  lock_scope: entire_acceptance_run
+  required_device_record:
+  - serial
+  - manufacturer
+  - model
+  - Android version
+  - API level
+  - physical size
+  - density
 brand_assets:
   application_icon: android/app/src/main/res/drawable/ylven_logo.png
   startup_image: android/app/src/main/res/drawable-nodpi/ylven_splash.png
@@ -33,64 +81,80 @@ admin_real_test:
   public_url_must_be_opened_by_codex: true
   current_phase_features_must_be_exercised_with_real_data: true
   unavailable_or_incomplete_blocks_release: true
-emulator:
-  api_level: 35
-  target: google_apis
-  arch: x86_64
-  profile: pixel_6
-  orientation: portrait
-  screenshot_canvas_px: 1080x2400
 required_stages:
-- id: build
+- id: online_server_build
   requirements:
-  - 固定 applicationId
-  - 固定签名证书
+  - 固定 applicationId 和正式签名证书
   - versionName/versionCode 与 release-version-matrix 一致
-  - assemble、unit test、lint 通过
+  - 线上服务器从干净的精确 Commit 构建
+  - assemble、Android 单元测试和 Lint 通过
+  - 服务器构建来源、工具链、APK 与 instrumentation APK SHA-256 完整
+- id: physical_device_preflight
+  requirements:
+  - ADB 所选序列号的状态严格为 device
+  - ro.kernel.qemu 不得为 1，且不得选择 emulator-* 设备
+  - 设备不可用立即停止且不得回退模拟器
+  - 多台物理设备在线时优先选择空闲设备；全部占用时选择最短共享 FIFO 并持续等待，不得中断其他项目
 - id: upgrade_install
   requirements:
   - P01 以后先安装上一 owner release，再使用 adb install -r 安装本版；P00 也必须执行同包名重装校验
-  - 不得清除应用数据
+  - 不得卸载或清除应用数据
   - applicationId、签名证书和 versionCode 必须满足覆盖更新条件
   - 安装前写入应用数据标记，安装后标记必须存在
   - 数据库迁移和登录态恢复测试通过
   - 覆盖安装失败立即阻断发布
+- id: launch_and_runtime_health
+  requirements:
+  - 安装后必须真实启动应用并确认前台 Activity
+  - 验收开始前清空 logcat，结束后保存完整日志
+  - 检查 FATAL EXCEPTION、ANR、native crash、am_crash、am_anr 和 ApplicationExitInfo
+  - 任一无法解释的运行异常阻断发布
 - id: interaction_coverage
   requirements:
   - 所有已发布且可交互的 Interaction ID 必须绑定 Compose testTag/semantics
-  - 每个 Interaction ID 至少有一个自动测试
-  - 遍历点击不得出现崩溃、死链或未定义行为
+  - 每个当前阶段 Android Interaction ID 至少有一个真机自动测试
+  - 对每个页面执行真实点击、输入、返回和滚动
+  - 遍历操作不得出现崩溃、死链或未定义行为
 - id: current_phase_visual
   requirements:
-  - 本阶段全部 Page State ID 在固定模拟器生成截图
-  - 逐状态与已批准效果图比较
-  - 动态数据区域使用合同定义的 mask
-  - 未解释差异阻断发布
+  - 本阶段全部 Android Page State ID 在项目所有者物理手机生成截图
+  - 逐状态与已批准效果图比较布局、字体、颜色、间距、图标和交互状态
+  - 另从生产 YlvenApp 真实点击路径采集每个 PAGE/OVERLAY 截图，禁止用专用合同渲染器替代生产页面证据
+  - Codex 必须直接逐页核对生产截图并写入真实页面视觉审查.json；未审查或任一项失败时保持 PENDING/FAIL
+  - 动态数据区域只允许使用合同定义的 mask
+  - 缺图、尺寸错误或未解释差异阻断发布
 - id: released_golden_regression
   requirements:
   - 旧阶段每个主要页面至少回归 POPULATED/DEFAULT、ERROR、EMPTY 中适用的 Golden 状态
   - 不在每版机械重跑所有历史边缘状态
 - id: functional_flows
   requirements:
-  - 运行本阶段用户旅程、网络失败、操作失败、操作成功、权限和额度等流程
-  - 后端、数据库和后台证据完整
+  - 运行本阶段用户旅程、网络失败、操作失败、操作成功、权限、额度、取消和恢复流程
+  - 确定性 Fake 网关测试只证明 UI 交互，不得冒充真实 staging 联调
+  - 后端、数据库、真实 staging API 和后台审计证据完整
   - Codex 必须亲自打开公共管理后台，登录交付账号，逐项操作本阶段对应菜单和功能
   - 必须从真实 API 回读数据并核对审计记录；静态页面、模拟成功和仅健康检查不算通过
 - id: artifact
   requirements:
-  - 只允许交付当前 commit SHA 对应的 GitHub Actions Artifact
-  - 禁止 CI 通过后在本地重新构建另一个 APK
-  - Artifact 附带测试、截图、视觉差异和 SHA-256
+  - 只允许交付当前 Commit SHA 对应的线上服务器构建 APK
+  - 禁止下载后或真机通过后在本地重新构建另一个 APK
+  - 下载后的 APK SHA-256 必须与服务器来源证明一致
+  - 交付物附带真机设备、测试路径、截图、视觉差异、日志审查、问题和 SHA-256
 visual_thresholds:
   ssim_min: 0.985
   pixel_mismatch_ratio_max: 0.005
   manual_review_required_for_mask_change: true
+  owner_approved_exception_directory: contracts/visual-exceptions
 release_blockers:
-- 任何 required check 失败
-- Interaction ID 无测试
+- 任何 required stage 失败
+- GitHub Actions、Android Emulator 或其他模拟器被用于当前 APK 构建或测试
+- ADB 状态不是 device 或设备并非物理手机
+- Interaction ID 无真机测试
 - 当前阶段状态截图缺失
 - 视觉差异未解释
-- APK 版本或签名不匹配
-- 升级覆盖安装失败
+- APK 版本、Commit、SHA-256 或签名不匹配
+- 覆盖安装失败
+- 崩溃、ANR 或无法解释的日志异常
+- 真实 staging 业务流程未通过
 - 管理后台未实际打开、登录、操作或缺少真实数据/审计证据
 - 任一中文交付文件、截图或校验文件缺失或使用英文替代名

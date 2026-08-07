@@ -14,4 +14,4 @@ specify integration status
 uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/12_REGENERATE_CONTRACTS.py
 uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/07_VALIDATE_CONTRACTS.py
 uv run --python 3.12 --with-requirements requirements-tools.txt python scripts/38_VALIDATE_STATE_CONTINUITY.py
-printf 'Spec Kit %s installed. Heavy build tools remain on GitHub Actions and the SSH-connected server.\n' "$PINNED"
+printf 'Spec Kit %s installed. Android and other heavy build tools remain on the SSH-connected online server.\n' "$PINNED"

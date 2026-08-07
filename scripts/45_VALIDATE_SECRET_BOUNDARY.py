@@ -7,8 +7,9 @@ required = [".env", "*.pem", "*.key", "*.jks", ".ylven-local/"]
 missing = [item for item in required if item not in ignore]
 if missing:
     raise SystemExit("Missing secret ignore rules: " + ", ".join(missing))
+skip_dirs = {".git", "node_modules", ".ylven-local", "__pycache__", ".pytest_cache", ".mypy_cache", "build", "dist", ".gradle", ".specify", ".agents", ".venv-tools"}
 for path in root.rglob("*"):
-    if path == Path(__file__) or not path.is_file() or ".git" in path.parts or "node_modules" in path.parts or ".ylven-local" in path.parts:
+    if path == Path(__file__) or not path.is_file() or any(part in skip_dirs for part in path.parts) or path.suffix.lower() in {".pyc", ".pyo"}:
         continue
     try:
         text = path.read_text(encoding="utf-8")

@@ -35,7 +35,6 @@ def prepare_delivery(
     dest: Path,
     phase: str,
     version: str,
-    run_id: int | None = None,
     formal_dest: Path | None = None,
 ) -> None:
     gate = root / "scripts" / "47_VALIDATE_OWNER_DELIVERY_MANIFEST.py"
@@ -47,7 +46,11 @@ def prepare_delivery(
     )
     if result.returncode:
         raise ValueError(result.stdout.strip() or result.stderr.strip())
-    required = ["自动化测试报告.md", "视觉差异报告.md", "CI来源证明.json"]
+    required = [
+        "自动化测试报告.md", "视觉差异报告.md", "服务器构建来源证明.json",
+        "本机下载校验证明.json", "真机验收证据.json", "真机日志审查.md",
+        "真实页面截图索引.csv", "真实页面视觉审查.json",
+    ]
     apks = list(src.rglob("*.apk"))
     errors: list[str] = []
     if len(apks) != 1:
@@ -58,7 +61,8 @@ def prepare_delivery(
     if errors:
         raise ValueError("\n".join(errors))
 
-    provenance = json.loads((src / "CI来源证明.json").read_text(encoding="utf-8"))
+    provenance = json.loads((src / "服务器构建来源证明.json").read_text(encoding="utf-8-sig"))
+    device = json.loads((src / "真机验收证据.json").read_text(encoding="utf-8-sig"))
     apk = apks[0]
     expected = {
         "phase": phase,
@@ -73,14 +77,14 @@ def prepare_delivery(
     ]
     if mismatches:
         raise ValueError("\n".join(mismatches))
+    if provenance.get("build_host_class") != "connected_online_server":
+        raise ValueError("APK provenance is not an online-server build")
+    if device.get("result") != "PASS" or device.get("real_staging_business_flow") != "PASS":
+        raise ValueError("physical-device and real-staging acceptance must both be PASS")
 
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(src, dest)
-    if run_id is not None:
-        provenance["workflow_run_id"] = run_id
-        (dest / "CI来源证明.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
-
     evidence = dest / f"{phase}-evidence"
     packet_evidence = copy_matches(root / "docs" / "evidence", f"{phase}-W*.md", evidence)
     if not packet_evidence:
@@ -89,7 +93,6 @@ def prepare_delivery(
     screenshot_index = root / "docs" / "evidence" / "UI_SCREENSHOT_INDEX.csv"
     if screenshot_index.is_file():
         shutil.copy2(screenshot_index, evidence / "截图索引.csv")
-        shutil.copy2(screenshot_index, dest / "截图索引.csv")
     screenshots_root = root / "docs" / "evidence" / "screenshots"
     for screenshot_dir in sorted(screenshots_root.glob(f"{phase}-*")):
         if screenshot_dir.is_dir():
@@ -137,9 +140,10 @@ def prepare_delivery(
         "apk_name": apk.name,
         "apk_sha256": expected["apk_sha256"],
         "apk_size": apk.stat().st_size,
-        "artifact_origin": "github-actions",
-        "source_apk": f"github-actions-run-{run_id}/{apk.name}" if run_id is not None else f"github-actions/{apk.name}",
-        "workflow_run_id": run_id,
+        "artifact_origin": "online-server",
+        "source_apk": f"online-server/{apk.name}",
+        "server_build_run_id": provenance.get("build_run_id"),
+        "physical_device_serial": (device.get("device") or {}).get("serial"),
         "design_system_version": "YL-DS-1.2.0",
         "self_test_fixture": False,
     }
@@ -160,7 +164,7 @@ def prepare_delivery(
     (dest / "校验文件_SHA256.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     if formal_dest is not None:
         preserved_acceptance: str | None = None
-        old_provenance = formal_dest / "CI来源证明.json"
+        old_provenance = formal_dest / "服务器构建来源证明.json"
         old_acceptance = formal_dest / "所有者验收.md"
         if old_provenance.is_file() and old_acceptance.is_file():
             try:
@@ -181,7 +185,6 @@ def main() -> int:
     parser.add_argument("--artifact-dir", required=True)
     parser.add_argument("--phase", required=True)
     parser.add_argument("--version", required=True)
-    parser.add_argument("--run-id", type=int)
     parser.add_argument("--destination")
     args = parser.parse_args()
 
@@ -190,7 +193,7 @@ def main() -> int:
     try:
         prepare_delivery(
             Path(args.artifact_dir), root, destination, args.phase, args.version,
-            run_id=args.run_id, formal_dest=root / "dist" / "releases" / args.phase,
+            formal_dest=root / "dist" / "releases" / args.phase,
         )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(exc)

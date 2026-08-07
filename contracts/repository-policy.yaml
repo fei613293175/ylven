@@ -25,18 +25,18 @@ rules:
 - An empty public remote with no default branch is valid. Bootstrap creates main and performs the first push after safety validation.
 - Each owner-facing phase uses phase/Pxx-*; do not push feature work directly to main.
 - Each Work Packet closes through the state controller and records an immutable commit in WORK_PACKET_HISTORY.jsonl.
-- Each owner-facing version closes through the release controller and records commit, tag, CI run, artifact and APK hash in RELEASE_LEDGER.jsonl.
+- Each owner-facing version closes through the release controller and records commit, tag, online-server build provenance, real-device acceptance evidence and APK hash in RELEASE_LEDGER.jsonl.
 - No force push, no rewriting delivered tags, and no secrets, private keys, signing material or one-time administrator passwords in Git.
 - If a local `git push` fails, preserve the same commit SHA, phase branch and `origin`; transfer a complete Git bundle through a verified SSH/SFTP server path, verify SHA-256 and `git bundle verify`, then push from the server to `origin`. Never place tokens, keys or secrets in the repository, bundle, command line or logs, and read back the GitHub branch SHA after the push.
-- The phase tag ylven-v<version_name>, CI Artifact, desktop APK and release ledger must reference the same commit SHA.
+- The phase tag ylven-v<version_name>, online-server build artifact, desktop APK and release ledger must reference the same commit SHA.
 required_status_checks:
 - contracts-and-schema
 - secret-scan
 - backend-tests
 - web-tests
-- android-build
-- android-emulator-acceptance
-- visual-regression
+- online-server-android-build
+- physical-device-acceptance
+- physical-device-visual-regression
 - state-continuity
 - release-contract
 artifact_retention_days: 30

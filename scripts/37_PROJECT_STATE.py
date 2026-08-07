@@ -359,20 +359,22 @@ def release_evidence(phase: str, *, legacy_exception: bool = False) -> tuple[Pat
         provenance_name = "CI_PROVENANCE.json"
     else:
         required = [
-            "构建信息.json", "CI来源证明.json", "所有者验收.md", "校验文件_SHA256.txt",
+            "构建信息.json", "服务器构建来源证明.json", "本机下载校验证明.json",
+            "真机验收证据.json", "真机日志审查.md", "真实页面截图索引.csv", "真实页面视觉审查.json",
+            "所有者验收.md", "校验文件_SHA256.txt",
             "原功能清单.md", "功能完成对比清单.md", "完整测试清单.md",
             "部署证据.md", "域名DNS状态.md", "管理后台实测证据.md", "覆盖安装证据.md",
         ]
         feature_documents = ("原功能清单.md", "功能完成对比清单.md", "完整测试清单.md")
         deployment_documents = ("部署证据.md", "域名DNS状态.md")
         build_name = "构建信息.json"
-        provenance_name = "CI来源证明.json"
+        provenance_name = "服务器构建来源证明.json"
     missing = [name for name in required if not (directory / name).is_file()]
     if missing:
         raise SystemExit(f"{phase}: missing release evidence: {', '.join(missing)}")
     try:
-        build = json.loads((directory / build_name).read_text(encoding="utf-8"))
-        provenance = json.loads((directory / provenance_name).read_text(encoding="utf-8"))
+        build = json.loads((directory / build_name).read_text(encoding="utf-8-sig"))
+        provenance = json.loads((directory / provenance_name).read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
         raise SystemExit(f"{phase}: invalid JSON release evidence: {exc}") from exc
     expected_ids = {
@@ -388,6 +390,15 @@ def release_evidence(phase: str, *, legacy_exception: bool = False) -> tuple[Pat
         text = (directory / name).read_text(encoding="utf-8", errors="replace")
         if not re.search(r"(?im)^-\s*Result:\s*(PASS|DEPLOYED_STAGING|SUCCESS)\s*$", text):
             raise SystemExit(f"{phase}: {name} must contain a successful Result marker")
+    if not legacy_exception:
+        download = json.loads((directory / "本机下载校验证明.json").read_text(encoding="utf-8-sig"))
+        device = json.loads((directory / "真机验收证据.json").read_text(encoding="utf-8-sig"))
+        if provenance.get("build_host_class") != "connected_online_server":
+            raise SystemExit(f"{phase}: release provenance is not an online-server build")
+        if download.get("server_manifest_verified") is not True:
+            raise SystemExit(f"{phase}: local server-artifact SHA-256 verification is missing")
+        if device.get("result") != "PASS" or device.get("real_staging_business_flow") != "PASS" or device.get("production_page_visual_review") != "PASS":
+            raise SystemExit(f"{phase}: physical-device and real-staging acceptance must be PASS")
     return directory, build, provenance
 
 
@@ -600,7 +611,7 @@ def resume() -> None:
     current = packet_state.get("work_packet_id")
     if phase_state.get("status") == "READY_FOR_RELEASE":
         action = (
-            f"All Work Packets in `{phase}` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, "
+            f"All Work Packets in `{phase}` are final. Build the exact clean commit on the connected online server, verify the downloaded SHA-256, complete physical-device acceptance, "
             f"obtain `所有者验收.md: APPROVED`, then close `{phase}` through the release controller. Do not start the next phase yet."
         )
     elif phase_state.get("status") == "DONE":
@@ -739,7 +750,7 @@ def finalize_packet(requested: str | None, note: str, deferred_reason: str | Non
             "last_closed_work_packet": current,
         }
         phase_state.update({"status": "READY_FOR_RELEASE", "blocked_reason": None})
-        action = f"Every Work Packet in `{phase}` is final. Run the owner-facing GitHub Actions release acceptance; do not start another phase."
+        action = f"Every Work Packet in `{phase}` is final. Run online-server build and physical-device acceptance; do not start another phase."
     save_state(phase_state, packet_state, runtime)
     write_summary(phase_state, packet_state, action)
     state_commit = git_commit_state(f"chore(state): close {current}", push=not no_push)
@@ -762,6 +773,11 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, lega
         expected_file = "OWNER_ACCEPTANCE.md" if legacy_exception else "所有者验收.md"
         raise SystemExit(f"{phase}: {expected_file} must contain '- Result: APPROVED'")
     directory, build, provenance = release_evidence(phase, legacy_exception=legacy_exception)
+    device = {}
+    download = {}
+    if not legacy_exception:
+        device = json.loads((directory / "真机验收证据.json").read_text(encoding="utf-8-sig"))
+        download = json.loads((directory / "本机下载校验证明.json").read_text(encoding="utf-8-sig"))
     if legacy_exception:
         release_commit = first_value(
             build.get("commit_sha"), build.get("git_commit"), build.get("source_commit"),
@@ -807,10 +823,13 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, lega
             "status": "CLOSED",
             "commit": release_commit,
             "git_tag": tag,
-            "ci_run_id": first_value(provenance.get("workflow_run_id"), provenance.get("run_id")),
-            "artifact_id": provenance.get("artifact_id"),
-            "artifact_name": provenance.get("artifact_name"),
-            "artifact_sha256": provenance.get("artifact_sha256"),
+            "server_build_run_id": provenance.get("build_run_id"),
+            "source_archive_sha256": provenance.get("source_archive_sha256"),
+            "server_manifest_verified": download.get("server_manifest_verified"),
+            "physical_device_serial": (device.get("device") or {}).get("serial"),
+            "physical_device_result": device.get("result"),
+            "artifact_name": provenance.get("apk"),
+            "artifact_sha256": provenance.get("apk_sha256"),
             "apk_sha256": actual_apk_sha or declared_apk_sha,
             "owner_result": "APPROVED",
             "owner_acceptance_file": str(

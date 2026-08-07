@@ -92,6 +92,7 @@ interface IdentityGateway {
     suspend fun runEvents(bearer: String, runId: String, after: Long = 0): Pair<MessageRun, List<RunEvent>> = error("流式事件尚未配置")
     suspend fun cancelRun(bearer: String, runId: String): MessageRun = error("取消功能尚未配置")
     suspend fun exportConversation(bearer: String, conversationId: String): String = error("导出功能尚未配置")
+    suspend fun exportMessage(bearer: String, messageId: String): String = error("单条回答导出功能尚未配置")
     suspend fun saveDraft(bearer: String, conversationId: String, body: String): String = error("草稿功能尚未配置")
     suspend fun loadDraft(bearer: String, conversationId: String): String = error("草稿功能尚未配置")
     suspend fun submitFeedback(bearer: String, messageId: String, value: String): Boolean = false
@@ -322,6 +323,9 @@ class HttpIdentityGateway(
 
     override suspend fun exportConversation(bearer: String, conversationId: String): String =
         request("POST", "/api/mobile/v1/conversations/$conversationId/exports", bearer = bearer).optString("content")
+
+    override suspend fun exportMessage(bearer: String, messageId: String): String =
+        request("POST", "/api/mobile/v1/messages/$messageId/exports", bearer = bearer).optString("content")
 
     override suspend fun saveDraft(bearer: String, conversationId: String, body: String): String =
         request("PUT", "/api/mobile/v1/conversations/$conversationId/draft", JSONObject().put("body", body), bearer).optString("body")

@@ -34,8 +34,9 @@
 - 新会话、上下文压缩恢复、切换分支或拉取更新后，先运行 `.\ylven.ps1 resume`；不得根据聊天猜测下一个版本。
 - `CURRENT_PHASE.yaml`、`CURRENT_WORK_PACKET.yaml` 与 `status/WORK_PACKET_STATUS.yaml` 是运行状态权威；`contracts/work-packet-map.yaml` 只定义静态范围。
 - 工作包只能通过 `.\ylven.ps1 close-packet -Packet <ID>` 或有明确外部原因的 `defer-packet` 最终化。控制器验证 Feature、证据、测试、干净实现 Commit，追加哈希链历史，提交状态并选择下一包。
-- 正式 APK 版本先通过 `.\ylven.ps1 release -Phase <Pxx>` 完成精确 CI Artifact 验收；项目所有者 `APPROVED` 后，才能运行 `.\ylven.ps1 close-release -Phase <Pxx>`，写入发布总账、创建不可变 Tag并推进阶段。
+- 正式 APK 版本先通过 `.\ylven.ps1 release -Phase <Pxx>` 完成线上服务器精确 Commit 构建、SHA-256 下载复核和项目所有者本机物理 Android 手机验收；项目所有者 `APPROVED` 后，才能运行 `.\ylven.ps1 close-release -Phase <Pxx>`，写入发布总账、创建不可变 Tag并推进阶段。
 - 仓库公开是项目所有者确认的事实。不得要求改为 Private；必须在提交、推送和发布前通过公开仓库安全门禁，且不得提交任何 Secret、服务器详情、签名材料或一次性管理员凭据。
 - 缺少 `.git`、远端为空或无默认分支时运行 `.\ylven.ps1 bootstrap`；这属于正常初始化，不是业务阻塞。
-- 本机是轻量控制端，不因缺少 Java、Go、Gradle、ADB、Android SDK、Docker、Node 或系统 Python而停止。使用 uv 执行仓库脚本，GitHub Actions承担构建/模拟器/视觉回归，线上服务器承担 staging 与集成。
+- 本机是轻量控制端，不因缺少 Java、Go、Gradle、Android SDK、Docker、Node 或系统 Python而停止。使用 uv 执行仓库脚本；线上服务器承担 Android 构建、重型自动测试、staging 与集成，项目所有者本机的物理 Android 手机承担 APK 功能、日志和视觉验收。验收需要 ADB，可使用仓库忽略目录中的 platform-tools；禁止使用 GitHub Actions、Android Emulator 或任何模拟器构建或测试当前 APK。
+- 真机验收前仅从 ADB 状态严格为 `device` 且 `ro.kernel.qemu != 1` 的设备中选择；多台合格真机在线时优先空闲设备，全部占用时选择最短共享 FIFO 排队等待且不得中断其他项目，也允许显式指定序列号。
 - 一次必要预检后直接实现；输入未变化时不得重复全仓库审计。真实代码、测试和运行结果优先于长篇检查报告。

@@ -131,13 +131,40 @@ def main() -> int:
         if root_release!=contract_release: errors.append('root RELEASE_CONTRACT.yaml differs from contracts copy')
         required=set(root_release.get('required_outputs') or []); contract_required=set(contract_release.get('required_outputs') or [])
         if required!=contract_required: errors.append('root and contracts release output names differ')
-        if not {'原功能清单.md','功能完成对比清单.md','完整测试清单.md','部署证据.md','截图索引.csv','校验文件_SHA256.txt'}.issubset(required):
+        if not {
+            '原功能清单.md','功能完成对比清单.md','完整测试清单.md','部署证据.md',
+            '截图索引.csv','校验文件_SHA256.txt','服务器构建来源证明.json',
+            '本机下载校验证明.json','真机验收证据.json','真机日志审查.md',
+            '真实页面截图索引.csv','真实页面视觉审查.json',
+        }.issubset(required):
             errors.append('release contract does not enforce all required Chinese owner artifact names')
+        forbidden = root_release.get('forbidden') or {}
+        if any(forbidden.get(key) is not True for key in ('github_actions','android_emulator','every_other_simulator')):
+            errors.append('release contract must forbid GitHub Actions, Android Emulator and every simulator')
+
+        android_acceptance = load_yaml(ROOT/'contracts/android-phase-acceptance.yaml') or {}
+        forbidden_execution = android_acceptance.get('forbidden_execution') or {}
+        if any(forbidden_execution.get(key) is not True for key in ('github_actions','android_emulator','every_other_simulator')):
+            errors.append('Android acceptance contract does not enforce the forbidden execution modes')
+        server_build = android_acceptance.get('online_server_build') or {}
+        physical = android_acceptance.get('physical_device') or {}
+        if server_build.get('exact_clean_git_commit_required') is not True or server_build.get('download_sha256_must_match_server') is not True:
+            errors.append('Android acceptance contract must require exact server build and SHA-256 download verification')
+        if physical.get('adb_state_required') != 'device' or physical.get('busy_action') != 'choose_shortest_fifo_and_wait_without_interrupting_owner':
+            errors.append('Android acceptance contract must require exact device state and shortest shared FIFO waiting')
+        if physical.get('automatic_selection') != 'prefer_idle_then_shortest_fifo' or physical.get('explicit_serial_override_allowed') is not True:
+            errors.append('Android acceptance contract must define idle-device preference, shortest FIFO selection and explicit serial override')
 
         version_matrix = load_yaml(ROOT/'contracts/release-version-matrix.yaml') or {}
         global_requirements = version_matrix.get('global_release_requirements') or {}
         if global_requirements.get('applies_to_every_phase') is not True:
             errors.append('release-version-matrix must apply hard gates to every phase')
+        if global_requirements.get('build_pipeline') != 'online_server_exact_commit':
+            errors.append('release-version-matrix must use the online-server exact-commit build pipeline')
+        if global_requirements.get('acceptance_device') != 'owner_physical_android_phone':
+            errors.append('release-version-matrix must use the owner physical Android phone')
+        if global_requirements.get('github_actions_forbidden') is not True or global_requirements.get('emulators_and_simulators_forbidden') is not True:
+            errors.append('release-version-matrix must forbid GitHub Actions and simulators')
         if global_requirements.get('logo_resource') != 'android/app/src/main/res/drawable/ylven_logo.png':
             errors.append('release-version-matrix logo_resource is not the fixed YLVEN logo')
         if global_requirements.get('splash_resource') != 'android/app/src/main/res/drawable-nodpi/ylven_splash.png':
@@ -154,6 +181,8 @@ def main() -> int:
             'upgrade_evidence': '覆盖安装证据.md',
             'screenshots': '截图',
             'screenshot_index': '截图索引.csv',
+            'production_screenshot_index': '真实页面截图索引.csv',
+            'production_visual_review': '真实页面视觉审查.json',
             'checksum': '校验文件_SHA256.txt',
         }
         for key, expected in required_chinese.items():
@@ -170,6 +199,8 @@ def main() -> int:
             row = by_phase.get(phase_id) or {}
             if row.get('admin_access_delivery') is not True:
                 errors.append(f'{phase_id}: admin_access_delivery must be true; every version requires real admin testing')
+            if row.get('release_pipeline') != 'online-server-build-and-physical-device-acceptance':
+                errors.append(f'{phase_id}: release_pipeline must use online server and physical device acceptance')
             expected_upgrade = None if index == 0 else str((by_phase.get(PHASES[index - 1]) or {}).get('version_name'))
             if row.get('upgrade_test_from') != expected_upgrade:
                 errors.append(f'{phase_id}: upgrade_test_from must be {expected_upgrade!r}')

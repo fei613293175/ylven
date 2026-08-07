@@ -3,7 +3,7 @@ from __future__ import annotations
 import re, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-SKIP={'.git','build','dist','node_modules','.gradle','.specify','.agents','.ylven-local','.venv-tools','ui'}
+SKIP={'.git','build','dist','node_modules','.gradle','.specify','.agents','.ylven-local','.venv-tools','ui','__pycache__','.pytest_cache','.mypy_cache'}
 BAD_EXT={'.pem','.key','.p12','.pfx','.jks','.keystore','.env'}
 ALLOW_NAMES={'.env.example'}
 secret=re.compile(r'(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|private[_-]?key)\s*[:=]\s*["\']?([^\s"\']{16,})')
@@ -12,7 +12,7 @@ errors=[]
 for p in ROOT.rglob('*'):
  if not p.is_file() or any(part in SKIP for part in p.relative_to(ROOT).parts): continue
  if p.name in ALLOW_NAMES: continue
- if p.suffix.lower() in BAD_EXT: errors.append(f'public repository forbids sensitive file: {p.relative_to(ROOT)}'); continue
+ if p.suffix.lower() in BAD_EXT or p.suffix.lower() in {'.pyc','.pyo'}: errors.append(f'public repository forbids sensitive file: {p.relative_to(ROOT)}'); continue
  if p.stat().st_size>3_000_000 or p.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.zip'}: continue
  try: text=p.read_text(encoding='utf-8',errors='ignore')
  except Exception: continue

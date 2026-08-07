@@ -36,7 +36,7 @@ def main()->int:
   ]
  lines += ['| State | Raw Similarity | Raw Mismatch | Structural Mismatch | Result |','|---|---:|---:|---:|---|']
  if not rows:
-  lines += ['', 'No Android surface states are bound to this phase.', 'Admin/Web visual evidence is reviewed from the phase evidence package and is not an Android emulator screenshot.']
+  lines += ['', 'No Android surface states are bound to this phase.', 'Admin/Web visual evidence is reviewed from the phase evidence package and is not a physical-device Android screenshot.']
  for r in rows:
   sid=r['state_id']; actual=shots/f'{sid}.png'; ref=ROOT/r['mockup_path']
   if not actual.is_file():

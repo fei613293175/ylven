@@ -175,25 +175,25 @@ def validate_ui(release_dir: Path, phase: str, fixture: bool, errors: list[str])
         errors.append("real release 视觉差异报告 result must be PASS")
 
 
-def validate_ci_ui(release_dir: Path, phase: str, errors: list[str]) -> None:
+def validate_physical_device_ui(release_dir: Path, phase: str, errors: list[str]) -> None:
     report = release_dir / "视觉差异报告.md"
     text = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
     if not re.search(r"(?im)^Result:\s*\*\*PASS[^\n]*\*\*\s*$", text):
-        errors.append("CI 视觉差异报告 does not contain a PASS result")
+        errors.append("physical-device 视觉差异报告 does not contain a PASS result")
     screenshot_dir = release_dir / "截图"
     names = P01_RUNTIME_SCREENSHOTS if phase == "P01" else [path.name for path in screenshot_dir.glob("*.png")]
     images: list[tuple[str, Image.Image]] = []
     for name in names:
         path = screenshot_dir / name
         if not path.is_file():
-            errors.append(f"missing CI runtime screenshot: {name}")
+            errors.append(f"missing physical-device runtime screenshot: {name}")
             continue
         shot = Image.open(path).convert("RGB")
         images.append((name, shot))
         if shot.width < 720 or shot.height < 1280:
-            errors.append(f"CI runtime screenshot is too small: {name} {shot.size}")
+            errors.append(f"physical-device runtime screenshot is too small: {name} {shot.size}")
         if all(high - low < 8 for low, high in ImageStat.Stat(shot).extrema):
-            errors.append(f"CI runtime screenshot is blank: {name}")
+            errors.append(f"physical-device runtime screenshot is blank: {name}")
     validate_runtime_screenshot_distinctness(images, phase, errors)
 
 
@@ -203,14 +203,14 @@ def validate_runtime_screenshot_distinctness(
     if phase == "P01":
         for (left_name, left), (right_name, right) in zip(images, images[1:]):
             if left.size == right.size and sum(ImageStat.Stat(ImageChops.difference(left, right)).mean) / 3 < 2:
-                errors.append(f"CI runtime screenshots are effectively identical: {left_name}, {right_name}")
+                errors.append(f"physical-device runtime screenshots are effectively identical: {left_name}, {right_name}")
         return
 
     pixel_digests: dict[str, str] = {}
     for name, shot in images:
         digest = hashlib.sha256(shot.tobytes()).hexdigest()
         if digest in pixel_digests:
-            errors.append(f"CI runtime screenshots are pixel-identical: {pixel_digests[digest]}, {name}")
+            errors.append(f"physical-device runtime screenshots are pixel-identical: {pixel_digests[digest]}, {name}")
         else:
             pixel_digests[digest] = name
 
@@ -280,28 +280,68 @@ def main() -> int:
             if not fixture:
                 source = str(build.get("source_apk", "")).replace("\\", "/").lower()
                 origin = build.get("artifact_origin")
-                source_ok = (origin == "gradle" and "/build/outputs/apk/" in source) or (origin == "github-actions" and "github-actions" in source)
+                source_ok = origin == "online-server" and source.startswith("online-server/")
                 if not source_ok:
-                    errors.append("real release BUILD_INFO does not prove Gradle or exact GitHub Actions APK origin")
+                    errors.append("real release BUILD_INFO does not prove exact online-server APK origin")
                 if not re.fullmatch(r"[0-9a-fA-F]{40,64}", str(build.get("git_commit", ""))):
                     errors.append("real release BUILD_INFO has no valid Git commit")
 
-    provenance_path = release_dir / "CI来源证明.json"
+    provenance_path = release_dir / "服务器构建来源证明.json"
     provenance: dict = {}
     if provenance_path.is_file():
         try:
             provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
         except Exception as exc:
-            errors.append(f"invalid CI来源证明.json: {exc}")
+            errors.append(f"invalid 服务器构建来源证明.json: {exc}")
         else:
-            if provenance.get("phase") != phase:
-                errors.append("CI provenance phase mismatch")
-            if provenance.get("apk") != apk.name:
-                errors.append("CI provenance APK name mismatch")
-            if apk.is_file() and provenance.get("apk_sha256") != sha256(apk):
-                errors.append("CI provenance APK SHA-256 mismatch")
-            if build and provenance.get("commit_sha") != build.get("git_commit"):
-                errors.append("CI provenance commit differs from BUILD_INFO")
+            if not build.get("self_test_fixture"):
+                if provenance.get("phase") != phase:
+                    errors.append("server provenance phase mismatch")
+                if provenance.get("apk") != apk.name:
+                    errors.append("server provenance APK name mismatch")
+                if apk.is_file() and provenance.get("apk_sha256") != sha256(apk):
+                    errors.append("server provenance APK SHA-256 mismatch")
+                if build and provenance.get("commit_sha") != build.get("git_commit"):
+                    errors.append("server provenance commit differs from BUILD_INFO")
+                if provenance.get("build_host_class") != "connected_online_server":
+                    errors.append("server provenance does not identify the connected online server build class")
+                if provenance.get("build_coordinator") != "shared_cross_project_fifo":
+                    errors.append("server provenance does not prove shared build queue ownership")
+
+    download_path = release_dir / "本机下载校验证明.json"
+    if download_path.is_file() and not build.get("self_test_fixture"):
+        try:
+            download = json.loads(download_path.read_text(encoding="utf-8-sig"))
+            if download.get("server_manifest_verified") is not True:
+                errors.append("local download proof did not verify the server manifest")
+            downloaded = download.get("downloaded_files_sha256") or {}
+            if apk.is_file() and downloaded.get(apk.name) != sha256(apk):
+                errors.append("local download proof APK SHA-256 mismatch")
+        except Exception as exc:
+            errors.append(f"invalid 本机下载校验证明.json: {exc}")
+
+    device_path = release_dir / "真机验收证据.json"
+    if device_path.is_file() and not build.get("self_test_fixture"):
+        try:
+            device = json.loads(device_path.read_text(encoding="utf-8-sig"))
+            device_info = device.get("device") or {}
+            if device_info.get("adb_state") != "device" or device_info.get("physical_device") is not True:
+                errors.append("physical-device proof is not an exact ADB device")
+            if str(device_info.get("ro_kernel_qemu")) == "1":
+                errors.append("physical-device proof identifies a simulator")
+            if device.get("real_staging_business_flow") != "PASS" or device.get("result") != "PASS":
+                errors.append("physical-device/staging acceptance is not PASS")
+            if device.get("production_page_visual_review") != "PASS":
+                errors.append("production-page direct visual review is not PASS")
+            review_path = release_dir / "真实页面视觉审查.json"
+            if not review_path.is_file():
+                errors.append("production-page direct visual review is missing")
+            else:
+                review = json.loads(review_path.read_text(encoding="utf-8-sig"))
+                if review.get("reviewer") != "codex" or review.get("result") != "PASS":
+                    errors.append("production-page visual review was not directly passed by Codex")
+        except Exception as exc:
+            errors.append(f"invalid 真机验收证据.json: {exc}")
 
     sha_path = release_dir / "校验文件_SHA256.txt"
     if sha_path.is_file():
@@ -380,10 +420,10 @@ def main() -> int:
     if re.search(r"(?im)mock|static success|模拟成功|静态页面", admin_text) and not re.search(r"(?im)scope|限制|不宣称", admin_text):
         errors.append("管理后台实测证据.md cannot claim mock/static success as real delivery")
 
-    if build.get("artifact_origin") == "github-actions":
-        validate_ci_ui(release_dir, phase, errors)
-    else:
+    if build.get("self_test_fixture"):
         validate_ui(release_dir, phase, bool(build.get("self_test_fixture")), errors)
+    else:
+        validate_physical_device_ui(release_dir, phase, errors)
 
     acceptance_text = (release_dir / "所有者验收.md").read_text(encoding="utf-8", errors="replace") if (release_dir / "所有者验收.md").is_file() else ""
     if f"- Phase: {phase}" not in acceptance_text or f"- APK: {apk.name}" not in acceptance_text:
@@ -398,7 +438,7 @@ def main() -> int:
     fixture_note = " (self-test fixture allowed)" if build.get("self_test_fixture") else ""
     print(
         f"Release verification passed for {phase}{fixture_note}: "
-        f"{len(required)} required outputs and exact CI runtime evidence."
+        f"{len(required)} required outputs and exact online-server/physical-device evidence."
     )
     return 0
 

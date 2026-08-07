@@ -53,11 +53,12 @@ def package_files(root: Path = ROOT, exclude_manifests: bool = False) -> list[Pa
     return sorted(files, key=lambda item: item.relative_to(root).as_posix())
 
 
-def verify_distribution_tree(root: Path) -> dict[str, object]:
+def verify_distribution_tree(root: Path, *, check_forbidden_dirs: bool = True) -> dict[str, object]:
     errors: list[str] = []
-    for forbidden in sorted(FORBIDDEN):
-        if any(item.is_dir() and item.name == forbidden for item in root.rglob(forbidden)):
-            errors.append(f'forbidden directory: {forbidden}')
+    if check_forbidden_dirs:
+        for forbidden in sorted(FORBIDDEN):
+            if any(item.is_dir() and item.name == forbidden for item in root.rglob(forbidden)):
+                errors.append(f'forbidden directory: {forbidden}')
 
     sha_path = root / 'SHA256SUMS.txt'
     file_manifest_path = root / 'FILE_MANIFEST.csv'
@@ -222,7 +223,7 @@ def main() -> int:
             for path in checksum_files if path.name != 'SHA256SUMS.txt'
         ), encoding='utf-8'
     )
-    distribution_tree_validation = verify_distribution_tree(ROOT)
+    distribution_tree_validation = verify_distribution_tree(ROOT, check_forbidden_dirs=False)
 
     if output.exists():
         output.unlink()

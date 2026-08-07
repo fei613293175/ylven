@@ -1,9 +1,14 @@
-schema_version: 1.4.0
+schema_version: 2.0.0
 owner_delivery_contract: contracts/owner-delivery-contract.yaml
 required_outputs:
 - 自动化测试报告.md
 - 视觉差异报告.md
-- CI来源证明.json
+- 服务器构建来源证明.json
+- 本机下载校验证明.json
+- 真机验收证据.json
+- 真机日志审查.md
+- 真实页面截图索引.csv
+- 真实页面视觉审查.json
 - 构建信息.json
 - 原功能清单.md
 - 功能完成对比清单.md
@@ -21,18 +26,28 @@ required_outputs:
 apk_rules:
   exactly_one: true
   minimum_bytes: 1048576
-  must_be_exact_github_actions_artifact: true
+  must_be_exact_online_server_artifact: true
+  local_rebuild_forbidden: true
+  server_and_download_sha256_must_match: true
+  physical_device_acceptance_required: true
   must_contain:
   - AndroidManifest.xml
   - classes.dex
 completion_rules:
 - All current-phase Feature IDs have a final status and individual comparison row.
 - 原功能清单、功能完成对比清单、完整测试清单逐 Feature 通过脚本 47。
-- Automated tests and the exact GitHub Actions commit are captured in provenance.
+- Automated tests, exact Git commit, online-server build provenance and local download verification are captured.
+- Physical-device identity, FIFO lock, ADB device state, upgrade install, launch, interaction path, screenshots and log review are captured.
+- Every current-phase Android page is exercised with real click/input/back/scroll behavior, every defined state has a physical-device screenshot, and Codex directly reviews screenshots captured from the production YlvenApp path.
+- Real staging business flows are separate from deterministic Fake gateway UI tests and both must pass where applicable.
 - 部署证据、公开健康检查、回滚和已知限制必须明确。
 - 校验文件_SHA256.txt 必须校验每个不可变交付文件。
 - 每个 P00-P13 版本必须完成真实管理后台打开、登录、当前版本功能操作、真实数据回读和审计证据。
-- 覆盖安装失败、后台不可访问、功能不可用或证据缺失均禁止交付。
+- 覆盖安装失败、崩溃、ANR、日志异常、视觉失败、后台不可访问、功能不可用或证据缺失均禁止交付。
+forbidden:
+  github_actions: true
+  android_emulator: true
+  every_other_simulator: true
 brand_assets:
   logo: android/app/src/main/res/drawable/ylven_logo.png
   splash: android/app/src/main/res/drawable-nodpi/ylven_splash.png
@@ -50,6 +65,8 @@ admin_real_test:
   static_or_mock_success_forbidden: true
 ui_rules:
   design_system_version: YL-DS-1.2.0
-  ci_runtime_screenshots_required: true
+  physical_device_runtime_screenshots_required: true
+  production_app_path_screenshots_required: true
+  direct_codex_production_page_review_required: true
   blank_or_duplicate_screenshots_forbidden: true
   unexplained_visual_diff_forbidden: true

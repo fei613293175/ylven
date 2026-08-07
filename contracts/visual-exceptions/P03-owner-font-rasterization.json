@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "phase": "P03",
+  "status": "OWNER_APPROVED",
+  "approved_by": "project_owner",
+  "approved_at": "2026-08-08T03:51:46+08:00",
+  "scope": "Android system-font rasterization differences only",
+  "reason": "The owner explicitly approved a P03-only exception because approved mockups use Microsoft YaHei while the physical Android device must use installed Roboto/Noto Sans CJK and licensed font files may not be distributed.",
+  "raw_similarity_min": 0.977,
+  "raw_mismatch_max": 0.023,
+  "structural_blur_radius_px": 7.0,
+  "structural_mismatch_max": 0.005,
+  "invariants": [
+    "physical device screenshots must be exactly 1080x2400",
+    "every P03 state must have a physical-device runtime screenshot",
+    "raw similarity must remain at least 0.977",
+    "colors, layout, component geometry and visible state are not excepted",
+    "the exception does not apply to any phase other than P03"
+  ]
+}

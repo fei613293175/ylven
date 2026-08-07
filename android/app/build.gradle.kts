@@ -28,9 +28,42 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
+    val signingValues = mapOf(
+        "storeFile" to providers.gradleProperty("ylvenSigningStoreFile")
+            .orElse(providers.environmentVariable("YLVEN_SIGNING_STORE_FILE")).orNull,
+        "storePassword" to providers.gradleProperty("ylvenSigningStorePassword")
+            .orElse(providers.environmentVariable("YLVEN_SIGNING_STORE_PASSWORD")).orNull,
+        "keyAlias" to providers.gradleProperty("ylvenSigningKeyAlias")
+            .orElse(providers.environmentVariable("YLVEN_SIGNING_KEY_ALIAS")).orNull,
+        "keyPassword" to providers.gradleProperty("ylvenSigningKeyPassword")
+            .orElse(providers.environmentVariable("YLVEN_SIGNING_KEY_PASSWORD")).orNull,
+    )
+    val ownerSigningRequired = providers.gradleProperty("ylvenRequireOwnerSigning")
+        .map(String::toBoolean).orElse(false).get()
+    val ownerSigningConfigured = signingValues.values.all { !it.isNullOrBlank() }
+    if (ownerSigningRequired && !ownerSigningConfigured) {
+        throw GradleException(
+            "Owner release signing is required. Configure ylvenSigningStoreFile, " +
+                "ylvenSigningStorePassword, ylvenSigningKeyAlias and ylvenSigningKeyPassword " +
+                "through private server settings.",
+        )
+    }
+    if (ownerSigningConfigured) {
+        signingConfigs.create("owner") {
+            storeFile = file(requireNotNull(signingValues["storeFile"]))
+            storePassword = signingValues["storePassword"]
+            keyAlias = signingValues["keyAlias"]
+            keyPassword = signingValues["keyPassword"]
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfigs.findByName("owner")?.let { signingConfig = it }
+        }
         release {
             isMinifyEnabled = false
+            signingConfigs.findByName("owner")?.let { signingConfig = it }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

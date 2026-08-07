@@ -1,18 +1,22 @@
-# YLVEN 最终版本发布、域名、自动验收、桌面交付与快速执行合同
+# YLVEN 最终版本发布、域名、真机验收、桌面交付与快速执行合同
 
 ## 1. 唯一权威链路
 
 ```text
 contracts/release-version-matrix.yaml
 → contracts/android-phase-acceptance.yaml
-→ .github/workflows/android-phase-acceptance.yml
-→ 当前 commit SHA 的精确 CI Artifact
+→ 干净的当前 Commit 生成 Git archive
+→ 连接的线上服务器共享构建队列
+→ 服务器 Gradle 构建与来源证明
+→ 本机下载并复核 SHA-256
+→ 项目所有者物理 Android 手机共享 FIFO 队列
+→ 真机功能、日志和逐状态视觉验收
 → scripts/35_DELIVER_ANDROID_RELEASE.ps1
 → 本机桌面 YLVEN-Releases/<version>/
-→ 项目所有者真机与后台验收
+→ 项目所有者最终验收
 ```
 
-任何其他文档只可解释该链路，不得创建第二套版本号、域名或发布门禁。
+GitHub Actions、Android Emulator 和任何其他模拟器不得用于当前 APK 构建或测试。任何其他文档只可解释上述链路，不得创建第二套版本号、域名或发布门禁。
 
 ## 2. 固定仓库
 
@@ -21,7 +25,7 @@ contracts/release-version-matrix.yaml
 - 默认分支：`main`
 - 阶段分支：`phase/Pxx-*`
 - Android applicationId：`cc.orbexa.ylven`
-- 禁止直接向 `main` 推送功能代码，禁止 force push，禁止提交 Secret。
+- 禁止直接向 `main` 推送功能代码，禁止 force push，禁止提交 Secret、服务器标识或签名材料。
 
 ## 3. Owner-facing Android 版本
 
@@ -42,42 +46,43 @@ contracts/release-version-matrix.yaml
 | P12 | `1.12.0` | `1120000` | 高并发、安全、可观测性与运维 |
 | P13 | `1.13.0` | `1130000` | 最终回归、官方 API 迁移验证与商业验收 |
 
+同一 applicationId、同一正式签名证书和单调递增 versionCode 是覆盖更新安装的硬条件。P01 起必须先安装上一 owner release，再使用 `adb install -r` 安装本版，并验证数据标记、数据库迁移和登录态恢复。不得卸载或清除数据绕过签名/迁移失败。
 
-同一 applicationId、同一正式签名证书和单调递增 versionCode 是覆盖更新安装的硬条件。P01 起，CI 必须先安装上一版再使用 `adb install -r` 安装本版，并验证数据迁移和登录态恢复。
+## 4. 线上服务器构建
 
-## 4. GitHub Actions 模拟真机验收
+每个 owner-facing APK 必须从当前干净 Git Commit 创建可校验的 Git archive，在已连接线上服务器的跨项目共享构建队列中执行。服务器使用隔离工具链，不盲目升级宿主机；至少运行 Android 单元测试、Lint、APK 和 instrumentation APK 构建。
 
-每个 owner-facing APK 必须在固定 Android 模拟器完成：
+服务器输出必须记录 Commit SHA、源 archive SHA-256、工具链版本、构建队列运行标识、applicationId、versionName、versionCode、签名证书摘要、两个 APK 的 SHA-256 和测试/Lint 结果。本机下载后逐文件复核 SHA-256。服务器别名、地址、目录、凭据、keystore 和密码只能存放在忽略目录或环境变量中。
 
-1. 构建、单元测试和 Lint；
-2. 上一版到本版的覆盖升级安装；
-3. 本阶段全部可交互控件测试；
-4. 全部已发布 Interaction ID 的回归点击；
-5. 本阶段全部状态截图与已批准效果图比较；
-6. 旧页面主要 Golden 状态回归；
-7. 网络错误、服务失败、操作失败、成功、权限、额度和恢复流程；
-8. 上传 APK、自动测试报告、截图索引、视觉差异、功能完成清单和 SHA-256。
+## 5. 物理手机验收
 
-“点击每一个按钮”不是人工口号：每个可交互控件必须拥有 Interaction ID、Compose testTag/semantics 和至少一个自动测试。无测试映射即发布失败。
+APK 只能在项目所有者本机连接的物理 Android 手机测试：
 
-## 5. 管理后台交付
+1. `adb devices -l` 中所选序列号状态严格为 `device`，并验证不是 qemu/模拟器；
+2. 设备不可用立即停止，禁止回退模拟器；多台合格真机在线时优先选择空闲设备，全部占用时选择队列最短的 `%USERPROFILE%/.codex/android-device-queue/<serial>/` 共享 FIFO 持续等待；允许显式指定序列号且不得中断其他项目；
+3. 持锁覆盖上一版安装、数据/登录标记、`adb install -r`、启动、全部测试、截图和日志采集；
+4. 对本阶段每个页面真实执行点击、输入、返回、滚动和关键成功/失败/取消/恢复流程；
+5. 每个 Android Interaction ID 必须有 testTag/semantics 和真机测试；
+6. 每个 Page State ID 必须由物理手机生成截图并与 APPROVED 效果图逐页比较；
+7. 清空并保存 logcat，检查 crash、ANR、native crash、系统退出原因和无法解释的异常；
+8. 记录设备、APK、Commit、测试路径、截图、问题和结果。
+
+确定性 Fake 网关可验证 UI 交互，但不能冒充真实 staging API、持久化和审计联调。任一功能、视觉、日志或真实业务流程失败都禁止交付。
+
+## 6. 管理后台交付
 
 - P00-P13 每个版本都必须由 Codex 亲自打开公共管理后台并完成当前版本对应菜单和功能的真实操作；不能因为版本没有新增后台菜单而跳过。
-- 每版必须验证：公共 URL 可访问、交付账号可登录、当前版本功能可操作、真实 API 数据可回读、持久化结果正确、审计记录存在。仅健康检查、静态页面、mock 或演示成功均不算通过。
-- 后台打不开、登录失败、任何对应功能不可用、真实数据或审计证据缺失时，版本状态必须保持未交付。
-- P00 / App 1.0.0：交付后台工程壳、健康检查和部署基础，但仍须完成上述真实打开和可用性核验。
-- P01 / App 1.1.0：交付可访问的 `ai-admin.orbexa.cc`、管理员账号和项目所有者指定的测试密码。
-- 管理员邮箱由本机或服务器私密变量 `OWNER_ADMIN_EMAIL` 提供。
-- Codex 在 staging 生成高强度一次性密码，只写入项目所有者桌面交付目录的 `ADMIN_ACCESS_ONE_TIME.txt`；不得进入 Git、GitHub Artifact、日志或聊天。
-- 首次登录强制修改密码，并使一次性密码失效。
+- 每版必须验证公共 URL、交付账号、当前版本功能、真实 API 回读、持久化结果和审计记录。仅健康检查、静态页面、mock 或演示成功均不算通过。
+- 后台打不开、登录失败、对应功能不可用或真实数据/审计证据缺失时，版本保持未交付。
+- 管理员邮箱、密码和一次性凭据只能保存在本机或服务器私密变量及项目所有者桌面交付目录，不得进入 Git、构建来源证明、日志或聊天。
 
-## 6. 域名提醒
+## 7. 域名提醒
 
 域名清单和交付阶段只以 `contracts/domain-delivery-map.yaml` 为准。Codex 在相关阶段开始和发布前必须生成 `DNS_ACTION_REQUIRED.md`，列出准确记录类型、目标值、Cloudflare 代理状态、TLS 和健康检查；没有真实目标值时禁止猜测。
 
-## 7. 本机桌面交付
+## 8. 本机桌面交付
 
-通过 CI 后，Codex 必须下载**同一 commit SHA** 的精确 Artifact，禁止本地重新编译另一个 APK。目录：
+真机全部门禁通过后，只能交付同一 Commit、同一服务器 SHA-256、同一真机受测 APK：
 
 ```text
 ~/Desktop/YLVEN-Releases/<version>/
@@ -92,33 +97,19 @@ contracts/release-version-matrix.yaml
 ├── 部署证据.md
 ├── 域名DNS状态.md
 ├── 构建信息.json
-├── CI来源证明.json
+├── 服务器构建来源证明.json
+├── 本机下载校验证明.json
+├── 真机验收证据.json
+├── 真机日志审查.md
 ├── 管理后台实测证据.md
 └── 校验文件_SHA256.txt
 ```
 
-P01 额外包含本地生成且不进入 Git/CI 的 `ADMIN_ACCESS_ONE_TIME.txt`。
-
-## 8. 项目所有者测试清单
-
-`完整测试清单.md` 必须逐项说明：
-
-- 本版新增功能；
-- 每项功能的进入路径；
-- 具体操作步骤；
-- 正确预期；
-- 需要测试的失败和恢复路径；
-- 后台需要核对的字段或记录；
-- Codex 实际打开后台的 URL、时间、菜单、操作、真实返回数据和审计记录；
-- 覆盖更新安装步骤；
-- 已知限制；
-- 通过/不通过填写位置。
-
 ## 9. 快速开发模式
 
 - 每工作包只进行一次完整预检；
-- 开发中运行受影响测试，阶段发布才运行一次完整验收；
+- 开发中运行受影响测试，阶段发布才运行一次完整服务器构建和真机验收；
 - 连续两轮没有实际代码、测试或可运行成果，停止泛化分析并处理具体阻塞；
 - Spec Kit 每阶段规划一次，普通 Work Packet 直接实现；
 - 不重复生成内容相同的检查报告；
-- 以真实代码、真实测试、真实部署、真实 APK 为主要产出。
+- 以真实代码、真实测试、真实部署、真实 APK 和可复核证据为主要产出。

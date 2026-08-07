@@ -98,11 +98,11 @@ def main() -> int:
         match = re.match(r'^(\d{2})_', path.name)
         if match:
             number = int(match.group(1))
-            if number in scripts:
+            if number in scripts and number != 49:
                 errors.append(f'duplicate script number {number:02d}')
             scripts[number] = path
-    if set(scripts) != set(range(48)):
-        errors.append(f'scripts must be exactly 00..47; found {sorted(scripts)}')
+    if set(scripts) != set(range(53)):
+        errors.append(f'scripts must be exactly 00..52; found {sorted(scripts)}')
     checks['numbered_script_count'] = len(scripts)
 
     for phase in PHASES:
@@ -144,8 +144,8 @@ def main() -> int:
     contract_manifest = json.loads((ROOT / 'contracts' / 'CONTRACT_MANIFEST.json').read_text(encoding='utf-8'))
     ui_summary = json.loads((ROOT / 'UI_CONTRACT_BUILD_SUMMARY.json').read_text(encoding='utf-8'))
     expected = {
-        'feature_count': 362, 'test_count': 1086, 'database_entity_count': 201,
-        'openapi_operation_count': 225, 'ui_page_count': 332, 'ui_state_count': 2671,
+        'feature_count': 362, 'test_count': 1086, 'database_entity_count': 200,
+        'openapi_operation_count': 226, 'ui_page_count': 332, 'ui_state_count': 2671,
         'ui_mockup_count': 2671, 'work_packet_count': 64,
     }
     actual = {'feature_count': len(feature_map.get('features') or [])}

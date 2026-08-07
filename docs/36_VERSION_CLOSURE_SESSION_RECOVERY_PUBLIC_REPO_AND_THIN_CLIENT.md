@@ -39,15 +39,16 @@ status/PROJECT_STATE_SUMMARY.md
 当一个阶段全部工作包关闭后，阶段进入 `READY_FOR_RELEASE`，此时禁止开始下一阶段。随后必须完成：
 
 ```text
-GitHub Actions真实构建
-→ 模拟器功能和视觉验收
-→ 精确CI Artifact桌面交付
-→ 项目所有者真机和后台验收
+线上服务器从精确 Commit 真实构建
+→ 本机下载并复核 SHA-256
+→ 项目所有者物理手机功能、日志和逐页视觉验收
+→ 同一受测 APK 桌面交付
+→ 项目所有者后台与最终验收
 → OWNER_ACCEPTANCE.md = APPROVED
 → close-release
 ```
 
-`close-release` 校验版本号、Commit、CI Run、Artifact、APK SHA-256 和 Owner 批准，创建或核验不可变 Git Tag，追加 `RELEASE_LEDGER.jsonl`，再推进到下一阶段第一个工作包。
+`close-release` 校验版本号、Commit、线上服务器构建来源、物理设备验收、APK SHA-256 和 Owner 批准，创建或核验不可变 Git Tag，追加 `RELEASE_LEDGER.jsonl`，再推进到下一阶段第一个工作包。
 
 ## 5. 新 Codex 对话恢复
 
@@ -74,10 +75,10 @@ Codex 必须按输出继续：
 
 ## 7. 轻量本机
 
-项目所有者电脑只承担仓库控制、Spec Kit、Codex、状态推进、CI 调度、Artifact 下载和桌面交付。默认只要求 Git、PowerShell、uv、Spec Kit、OpenSSH；GitHub CLI 在需要调度/下载 CI 时使用。
+项目所有者电脑只承担仓库控制、Spec Kit、Codex、状态推进、服务器构建调度、产物下载与 SHA-256 复核、物理 Android 手机验收和桌面交付。默认只要求 Git、PowerShell、uv、Spec Kit、OpenSSH 和发布时使用的 ADB platform-tools。
 
-以下工具缺失不得阻塞开发：Java、Go、Gradle、ADB、Android SDK、Docker、Node.js、PostgreSQL、Redis、NATS。Android 构建、模拟器和视觉验收在 GitHub Actions；后端、Web 和集成测试优先在 GitHub Actions；staging 运行在已连接的线上服务器。服务器首次操作必须只读盘点，不允许盲目升级宿主机或直接编辑未提交源码。
+以下工具缺失不得阻塞普通本地开发：Java、Go、Gradle、Android SDK、Docker、Node.js、PostgreSQL、Redis、NATS。Android 构建及重型自动测试在已连接的线上服务器；APK 功能、日志和视觉验收只在项目所有者本机物理手机；staging 同样运行在线上服务器。服务器首次操作必须只读盘点，不允许盲目升级宿主机或直接编辑未提交源码。发布时 ADB 不可用或设备状态不是 `device` 必须停止验收，禁止改用模拟器。
 
 ## 8. 每个阶段和每个小版本的重复规则
 
-每份 `phases/Pxx_*.md` 和 `work-packets/Pxx-Wxx.md` 都必须重复：当前版本号、当前/下一工作包、版本关闭条件、新会话恢复命令、公开仓库 Secret 门禁、本机轻量执行边界、CI 精确 Artifact 交付要求。此重复是有意的上下文恢复机制，不得删除为“去重”。
+每份 `phases/Pxx_*.md` 和 `work-packets/Pxx-Wxx.md` 都必须重复：当前版本号、当前/下一工作包、版本关闭条件、新会话恢复命令、公开仓库 Secret 门禁、本机轻量执行边界、线上服务器精确 Commit 构建与物理手机验收要求。此重复是有意的上下文恢复机制，不得删除为“去重”。

@@ -2,8 +2,8 @@
   [Parameter(Mandatory)][ValidatePattern('^P\d{2}$')][string]$Phase,
   [string]$DesktopRoot
 )
-$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Source = Join-Path $Root "dist\releases\$Phase"
 if (-not (Test-Path $Source)) { throw "Missing authoritative release directory: $Source" }

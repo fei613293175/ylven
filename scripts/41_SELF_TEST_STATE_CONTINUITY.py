@@ -37,7 +37,14 @@ def main():
   release=r/'dist/releases/P00'; release.mkdir(parents=True); apk=release/'sample.apk'
   with zipfile.ZipFile(apk,'w') as z: z.writestr('AndroidManifest.xml',b'x'); z.writestr('classes.dex',b'x')
   sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip(); apksha=hashlib.sha256(apk.read_bytes()).hexdigest()
-  (release/'构建信息.json').write_text(json.dumps({'commit_sha':sha,'version_name':'1.0.0','version_code':1000000,'apk_sha256':apksha}),encoding='utf-8'); (release/'CI来源证明.json').write_text(json.dumps({'commit_sha':sha,'workflow_run_id':'1','artifact_id':'2','artifact_name':'sample','artifact_sha256':apksha}),encoding='utf-8'); (release/'所有者验收.md').write_text('- Result: APPROVED\n',encoding='utf-8'); (release/'校验文件_SHA256.txt').write_text(f'{apksha}  sample.apk\n',encoding='utf-8')
+  (release/'构建信息.json').write_text(json.dumps({'commit_sha':sha,'version_name':'1.0.0','version_code':1000000,'apk_sha256':apksha}),encoding='utf-8')
+  (release/'服务器构建来源证明.json').write_text(json.dumps({'commit_sha':sha,'build_host_class':'connected_online_server','build_run_id':'self-test','apk':'sample.apk','apk_sha256':apksha}),encoding='utf-8')
+  (release/'本机下载校验证明.json').write_text(json.dumps({'commit_sha':sha,'server_manifest_verified':True}),encoding='utf-8')
+  (release/'真机验收证据.json').write_text(json.dumps({'commit_sha':sha,'result':'PASS','real_staging_business_flow':'PASS','production_page_visual_review':'PASS','device':{'serial':'self-test'}}),encoding='utf-8')
+  (release/'真机日志审查.md').write_text('- 结果：PASS\n',encoding='utf-8')
+  (release/'真实页面截图索引.csv').write_text('page_id,result\nSELF_TEST_ONLY,PASS\n',encoding='utf-8')
+  (release/'真实页面视觉审查.json').write_text(json.dumps({'reviewer':'codex','result':'PASS','pages':[]}),encoding='utf-8')
+  (release/'所有者验收.md').write_text('- Result: APPROVED\n',encoding='utf-8'); (release/'校验文件_SHA256.txt').write_text(f'{apksha}  sample.apk\n',encoding='utf-8')
   manifest='- Phase: P00\n- Version: 1.0.0\nP00-001 P00-002\n'
   for name in ('原功能清单.md','功能完成对比清单.md','完整测试清单.md'): (release/name).write_text(manifest,encoding='utf-8')
   for name in ('部署证据.md','域名DNS状态.md'): (release/name).write_text('- Result: PASS\n',encoding='utf-8')

@@ -53,7 +53,9 @@
 - Verify `origin` is exactly `https://github.com/fei613293175/ylven.git`; use a phase branch and PR, never direct feature pushes to `main`.
 - Resolve the current Android version only from `contracts/release-version-matrix.yaml`. Keep applicationId/signing stable and test `adb install -r` upgrade installation.
 - Generate `DNS_ACTION_REQUIRED.md` whenever `contracts/domain-delivery-map.yaml` assigns a domain to the current phase. Never guess DNS targets.
-- Every owner APK must pass the GitHub Actions emulator acceptance and visual regression workflow. Deliver only the exact tested CI Artifact to the desktop.
+- Owner APKs must be built from the exact Git commit on the SSH-connected online server, downloaded with SHA-256 verification, and tested only on the project owner's physically connected Android phone. GitHub Actions, Android Emulator and every other simulator are forbidden for APK testing.
+- Before any APK operation, `adb devices -l` must report the selected serial as exactly `device`. An unavailable device stops testing with no simulator fallback. When multiple eligible physical devices are connected, prefer an idle device; when all are occupied, choose the shortest shared FIFO queue and wait without interrupting another project. An explicit serial remains allowed.
+- Real-device acceptance must install and launch the APK, inspect crash/ANR/log output, exercise every current-phase page with click/input/back/scroll and key business flows, capture every defined page state on the phone, compare it with the approved mockup, and record device/build/path/screenshots/issues. Any functional or visual failure blocks delivery.
 - Work fast: one full preflight per packet, affected tests during implementation, full acceptance only at phase release. Repeated analysis without output is prohibited.
 
 <!-- YLVEN_V1_6_CONTINUITY_RULES -->
@@ -62,9 +64,9 @@
 - 新会话、上下文压缩恢复、切换分支或拉取更新后，先运行 `.\ylven.ps1 resume`；不得根据聊天猜测下一个版本。
 - `CURRENT_PHASE.yaml`、`CURRENT_WORK_PACKET.yaml` 与 `status/WORK_PACKET_STATUS.yaml` 是运行状态权威；`contracts/work-packet-map.yaml` 只定义静态范围。
 - 工作包只能通过 `.\ylven.ps1 close-packet -Packet <ID>` 或有明确外部原因的 `defer-packet` 最终化。控制器验证 Feature、证据、测试、干净实现 Commit，追加哈希链历史，提交状态并选择下一包。
-- 正式 APK 版本先通过 `.\ylven.ps1 release -Phase <Pxx>` 完成精确 CI Artifact 验收；项目所有者 `APPROVED` 后，才能运行 `.\ylven.ps1 close-release -Phase <Pxx>`，写入发布总账、创建不可变 Tag并推进阶段。
+- 正式 APK 版本先通过 `.\ylven.ps1 release -Phase <Pxx>` 完成线上服务器精确 Commit 构建、SHA-256 下载复核和项目所有者本机物理 Android 手机验收；项目所有者 `APPROVED` 后，才能运行 `.\ylven.ps1 close-release -Phase <Pxx>`，写入发布总账、创建不可变 Tag并推进阶段。
 - 仓库公开是项目所有者确认的事实。不得要求改为 Private；必须在提交、推送和发布前通过公开仓库安全门禁，且不得提交任何 Secret、服务器详情、签名材料或一次性管理员凭据。
 - 缺少 `.git`、远端为空或无默认分支时运行 `.\ylven.ps1 bootstrap`；这属于正常初始化，不是业务阻塞。
-- 本机是轻量控制端，不因缺少 Java、Go、Gradle、ADB、Android SDK、Docker、Node 或系统 Python而停止。使用 uv 执行仓库脚本，GitHub Actions承担构建/模拟器/视觉回归，线上服务器承担 staging 与集成。
+- 本机是轻量控制端，不因缺少 Java、Go、Gradle、Android SDK、Docker、Node 或系统 Python而停止。使用 uv 执行仓库脚本；线上服务器承担 Android 构建及重型自动测试，项目所有者本机的真实 Android 手机承担 APK 功能、日志和视觉验收。发布验收需要 ADB，可使用仓库忽略目录中的 platform-tools，不要求系统级安装。
 - 本机 `git push` 失败时的固定备用路径：保持同一 Commit SHA、阶段分支和 `origin` 不变，通过已验证的 SSH/SFTP 将完整 Git Bundle 传到服务器，校验 SHA-256 与 `git bundle verify` 后由服务器推送 GitHub；不得把 Token、密钥或任何 Secret 放进仓库、Bundle、命令行或日志，推送后必须回读 GitHub 分支 SHA。
 - 一次必要预检后直接实现；输入未变化时不得重复全仓库审计。真实代码、测试和运行结果优先于长篇检查报告。

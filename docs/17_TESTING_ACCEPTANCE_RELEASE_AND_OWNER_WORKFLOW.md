@@ -21,11 +21,11 @@
 
 ### 1.4 Android 测试
 
-ViewModel/Reducer 单元测试、Compose UI 测试、网络/Room 集成、截图或语义回归、Android Emulator 自动测试和项目所有者真机测试。至少覆盖小屏、常见中屏、字体放大、浅/深色、旋转/进程重建和弱网。
+ViewModel/Reducer 单元测试、Compose UI 测试、网络/Room 集成、截图或语义回归和项目所有者物理 Android 手机测试。APK 构建和非设备重型测试在连接的线上服务器执行；APK 测试禁止 Android Emulator 和任何模拟器。至少覆盖小屏、常见中屏、字体放大、浅/深色、旋转/进程重建和弱网。
 
 ### 1.5 端到端测试
 
-注册、登录、发消息、流式恢复、上传文件、识图、图片、PPT、充值测试流程、API Key 和后台操作。真实上游测试控制成本和频率，常规 CI 使用 mock upstream。
+注册、登录、发消息、流式恢复、上传文件、识图、图片、PPT、充值测试流程、API Key 和后台操作。真实上游测试控制成本和频率；确定性 mock 只用于隔离测试，不能替代 staging 真实联调。
 
 ## 2. 测试清单不能伪造
 
@@ -83,22 +83,23 @@ dist/releases/Pxx/
 
 收到真机反馈后，Codex先复现或建立可验证假设，定位 Feature ID，补回归测试，修复最小必要范围，运行相关测试，重新执行阶段发布。不得借一个 UI 问题重新规划整个项目，也不得只改文案掩盖后端错误。
 
-## 8. CI 必需检查
+## 8. 发布必需检查
 
 - 格式、静态分析、依赖和 Secret 扫描；
-- Go/Android/Web 构建；
+- 线上服务器 Go/Android/Web 构建；
 - 单元和集成测试；
 - OpenAPI lint 和 breaking change 检查；
 - 数据库迁移测试；
 - Feature Map/阶段/测试引用校验；
-- APK 输出和 release contract 校验；
+- 线上服务器 APK 与 instrumentation APK 输出、下载 SHA-256 和 release contract 校验；
+- 项目所有者物理手机的 ADB `device`、多设备自动择闲（全部占用时选择最短共享 FIFO 等待）、覆盖安装、启动、真机交互、截图、视觉比较和日志审查；
 - 容器镜像扫描（生产阶段）。
 
-主分支保护只要求高价值检查，不增加重复的全文治理审查。
+GitHub Actions、Android Emulator 和其他模拟器不得用于本项目当前 APK 的构建或测试。
 
 ## 阶段 UI 证据固定目录
 
-真实阶段发布前，Codex 必须把视觉证据放在以下固定位置，不得临时改名或散落到桌面：
+真实阶段发布前，Codex 必须从物理手机采集视觉证据并放在以下固定位置，不得临时改名或散落到桌面：
 
 ```text
 build/ui-evidence/<Phase>/
@@ -110,5 +111,5 @@ build/ui-evidence/<Phase>/
 
 - 每个绑定 State ID 必须恰好对应一张独立运行截图；文件名必须是 `<StateID>.png`。
 - `VISUAL_DIFF_REPORT.md` 必须逐 State ID 记录已批准效果图 SHA、运行截图、设备/主题/字体缩放、差异和处理结果，并包含 `- Result: PASS`。
-- `scripts/05_RELEASE_PHASE.ps1` 默认读取 `build/ui-evidence/<Phase>`；缺少任一状态、效果图未 APPROVED、SHA 不一致或存在未解释差异时，阶段发布失败。
+- `scripts/05_RELEASE_PHASE.ps1` 通过线上服务器构建后在物理手机采集并校验 `build/ui-evidence/<Phase>`；缺少任一状态、效果图未 APPROVED、SHA 不一致或存在未解释差异时，阶段发布失败。
 - 桌面交付是发布脚本生成的副本，不是视觉证据的权威来源。

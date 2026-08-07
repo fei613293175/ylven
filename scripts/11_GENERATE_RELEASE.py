@@ -103,7 +103,9 @@ def clean_previous_output(output: Path, phase: str) -> None:
     names = {
         f"YLVEN-{phase}-test.apk", "原功能清单.md", "功能完成对比清单.md",
         "完整测试清单.md", "自动化测试报告.md", "变更记录.md", "部署证据.md",
-        "所有者操作项.md", "所有者验收.md", "构建信息.json", "CI来源证明.json",
+        "所有者操作项.md", "所有者验收.md", "构建信息.json", "服务器构建来源证明.json",
+        "本机下载校验证明.json", "真机验收证据.json", "真机日志审查.md",
+        "真实页面截图索引.csv", "真实页面视觉审查.json",
         "校验文件_SHA256.txt", "截图索引.csv", "视觉差异报告.md",
         "界面合同报告.json", "管理后台实测证据.md", "覆盖安装证据.md",
         # Remove legacy English aliases when regenerating an existing output.
@@ -122,6 +124,9 @@ def clean_previous_output(output: Path, phase: str) -> None:
     screenshot_dir = output / "截图"
     if screenshot_dir.exists():
         shutil.rmtree(screenshot_dir)
+    production_screenshot_dir = output / "真实页面截图"
+    if production_screenshot_dir.exists():
+        shutil.rmtree(production_screenshot_dir)
     legacy_screenshot_dir = output / "screenshots"
     if legacy_screenshot_dir.exists():
         shutil.rmtree(legacy_screenshot_dir)
@@ -158,6 +163,14 @@ def write_self_test_ui(output: Path, phase: str, states: list[dict[str, str]]) -
         f"- Design system: {DESIGN_SYSTEM_VERSION}\n"
         "- Result: SELF_TEST_ONLY\n\n"
         "This report exists only to exercise the release-control workflow. No mockup approval, runtime screenshot, pixel comparison or visual implementation is claimed.\n",
+        encoding="utf-8",
+    )
+    (output / "真实页面截图索引.csv").write_text(
+        "page_id,production_screenshot,result\nSELF_TEST_ONLY,SELF_TEST_ONLY,SELF_TEST_ONLY\n",
+        encoding="utf-8-sig",
+    )
+    (output / "真实页面视觉审查.json").write_text(
+        json.dumps({"phase": phase, "reviewer": "SELF_TEST_ONLY", "result": "SELF_TEST_ONLY", "pages": []}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     report = {
@@ -287,6 +300,12 @@ def main() -> int:
     parser.add_argument("--ui-evidence-root")
     parser.add_argument("--self-test-fixture", action="store_true")
     args = parser.parse_args()
+
+    if not args.self_test_fixture:
+        raise SystemExit(
+            "Real owner releases must use scripts/05_RELEASE_PHASE.ps1 so the APK comes from "
+            "the connected online server and passes physical-device acceptance."
+        )
 
     phase = args.phase
     apk = Path(args.apk).resolve()
@@ -454,17 +473,30 @@ def main() -> int:
     (output / "构建信息.json").write_text(
         json.dumps(build_info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    (output / "CI来源证明.json").write_text(
+    (output / "服务器构建来源证明.json").write_text(
         json.dumps({
             "phase": phase,
+            "version": "SELF_TEST_ONLY",
             "commit_sha": commit,
             "apk": target_apk.name,
             "apk_sha256": sha256(target_apk),
             "artifact_origin": build_info["artifact_origin"],
+            "build_host_class": "SELF_TEST_ONLY",
             "test_log": str(test_log_path),
             "generated_at": utc_now(),
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
+    )
+    (output / "本机下载校验证明.json").write_text(
+        json.dumps({"phase": phase, "result": "SELF_TEST_ONLY"}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (output / "真机验收证据.json").write_text(
+        json.dumps({"phase": phase, "result": "SELF_TEST_ONLY"}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (output / "真机日志审查.md").write_text(
+        "# 真机日志审查\n\n- 结果：SELF_TEST_ONLY\n", encoding="utf-8"
     )
 
     acceptance_template = (ROOT / "templates" / "OWNER_ACCEPTANCE_TEMPLATE.md").read_text(

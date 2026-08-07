@@ -6,13 +6,15 @@
   [string]$Packet,
   [string]$Reason,
   [string]$SshTarget,
+  [string]$Serial,
   [string]$Script,
   [Parameter(ValueFromRemainingArguments=$true)][string[]]$RemainingArguments,
   [switch]$SkipInitialPush,
-  [switch]$NoWait,
   [switch]$NoPush,
   [switch]$LegacyException
 )
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $Root=(Resolve-Path $PSScriptRoot).Path
@@ -61,7 +63,10 @@ switch($Command){
   }
   'release' {
     if(-not $Phase){throw '-Phase is required'}
-    & (Join-Path $Root 'scripts\05_RELEASE_PHASE.ps1') -Phase $Phase -NoWait:$NoWait
+    $releaseArgs=@{Phase=$Phase}
+    if($SshTarget){$releaseArgs.SshTarget=$SshTarget}
+    if($Serial){$releaseArgs.Serial=$Serial}
+    & (Join-Path $Root 'scripts\05_RELEASE_PHASE.ps1') @releaseArgs
   }
   'close-release' {
     $args=@('close-release')

@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
   "result": "PASS",
-  "generated_at_utc": "2026-08-04T21:06:47Z",
+  "generated_at_utc": "2026-08-07T21:33:32Z",
   "method": "deterministic_static_lexical_delimiter_encoding_and_structure_validation",
   "official_powershell_ast_executed": false,
   "official_ast_note": "PowerShell runtime was not installed in the Linux packaging sandbox; Windows bootstrap remains the executable interpreter check.",
   "summary": {
-    "file_count": 12,
-    "passed": 12,
+    "file_count": 14,
+    "passed": 14,
     "failed": 0
   },
   "files": [
     {
       "path": "scripts/00_BOOTSTRAP_REPOSITORY.ps1",
       "passed": true,
-      "byte_length": 3933,
-      "line_count": 54,
+      "byte_length": 4327,
+      "line_count": 64,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 69,
+      "delimiter_pairs": 71,
       "issues": []
     },
     {
@@ -66,14 +66,14 @@
     {
       "path": "scripts/05_RELEASE_PHASE.ps1",
       "passed": true,
-      "byte_length": 2403,
-      "line_count": 21,
+      "byte_length": 2530,
+      "line_count": 38,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 45,
+      "delimiter_pairs": 42,
       "issues": []
     },
     {
@@ -92,14 +92,14 @@
     {
       "path": "scripts/08_SYNC_DESKTOP_DELIVERY.ps1",
       "passed": true,
-      "byte_length": 1724,
-      "line_count": 38,
+      "byte_length": 1885,
+      "line_count": 40,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 42,
+      "delimiter_pairs": 45,
       "issues": []
     },
     {
@@ -118,14 +118,14 @@
     {
       "path": "scripts/35_DELIVER_ANDROID_RELEASE.ps1",
       "passed": true,
-      "byte_length": 1465,
-      "line_count": 26,
+      "byte_length": 1292,
+      "line_count": 20,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 26,
+      "delimiter_pairs": 27,
       "issues": []
     },
     {
@@ -155,16 +155,42 @@
       "issues": []
     },
     {
-      "path": "ylven.ps1",
+      "path": "scripts/49_BUILD_ANDROID_ONLINE_SERVER.ps1",
       "passed": true,
-      "byte_length": 2925,
-      "line_count": 78,
+      "byte_length": 5912,
+      "line_count": 92,
       "utf8_bom": true,
       "crlf_only": true,
       "top_level_param_block": true,
       "strict_mode": true,
       "stop_on_error": true,
-      "delimiter_pairs": 80,
+      "delimiter_pairs": 84,
+      "issues": []
+    },
+    {
+      "path": "scripts/50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1",
+      "passed": true,
+      "byte_length": 21951,
+      "line_count": 362,
+      "utf8_bom": true,
+      "crlf_only": true,
+      "top_level_param_block": true,
+      "strict_mode": true,
+      "stop_on_error": true,
+      "delimiter_pairs": 331,
+      "issues": []
+    },
+    {
+      "path": "ylven.ps1",
+      "passed": true,
+      "byte_length": 3192,
+      "line_count": 85,
+      "utf8_bom": true,
+      "crlf_only": true,
+      "top_level_param_block": true,
+      "strict_mode": true,
+      "stop_on_error": true,
+      "delimiter_pairs": 88,
       "issues": []
     }
   ]
