@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-07T02:30:21+08:00`
-- Current phase: `P02`
-- Phase status: `READY_FOR_RELEASE`
-- Current Work Packet: `NONE`
-- Work Packet status: `PHASE_COMPLETE`
+- Generated: `2026-08-07T13:52:25+08:00`
+- Current phase: `P03`
+- Phase status: `TODO`
+- Current Work Packet: `P03-W01`
+- Work Packet status: `TODO`
 - Last closed Work Packet: `P02-W05`
-- Last closed phase: `P01`
-- Last closed version: `1.1.0`
+- Last closed phase: `P02`
+- Last closed version: `1.2.0`
 - Closed/deferred Work Packets recorded: `15`
-- Closed releases recorded: `2`
-- Git branch: `phase/p01-identity-backend-email-auth-and-admin`
-- Git HEAD: `9af79bc165cbb25d631dd9d8a2ce3b28efd532f1`
+- Closed releases recorded: `3`
+- Git branch: `phase/p02-owner-fixes`
+- Git HEAD: `eac6063cfecbae8705c3e695518bfd986ebc8d81`
 
 ## Exact next action
 
-All Work Packets in `P02` are final. Run the owner-facing GitHub Actions release acceptance, deliver the exact CI Artifact, obtain `所有者验收.md: APPROVED`, then close `P02` through the release controller. Do not start the next phase yet.
+Release `1.2.0` is closed. The exact next work is `P03-W01` in `P03`.
 
 ## New-conversation rule
 
