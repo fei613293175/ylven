@@ -545,9 +545,15 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         }
         pill(72f, 300f, 450f, 370f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 26f)
         rounded(320f, 455f, 1008f, 650f, 42f, Pc.brand)
-        text("请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。", 370f, 505f, 35f, Pc.surface, maxWidth = 580f)
+        text(
+            "请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。",
+            370f, 505f, 35f, Pc.surface, maxWidth = 580f, lineSpacing = 16f,
+        )
         text("GPT-5.6 Sol · 深度推理", 72f, 740f, 27f, Pc.brand, true)
-        text("建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。", 72f, 800f, 37f, Pc.text, maxWidth = 930f)
+        text(
+            "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。",
+            72f, 800f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 20f,
+        )
         rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
         text("架构说明.pdf · 数据模型.md", 120f, 1210f, 32f, Pc.text, true)
@@ -627,7 +633,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         pill(270f, 376f, 600f, 438f, code, Pc.surfaceSubtle, Pc.text2, 23f, Pc.border)
         val y = 560f
         pill(120f, y, 470f, y + 70f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 27f)
-        text("后端建议采用模块化单体核心业务，\n并将 AI Runtime 作为独立无状态服务。", 120f, y + 120f, 39f, Pc.text, maxWidth = 820f)
+        text(
+            "后端建议采用模块化单体核心业务，\n并将 AI Runtime 作为独立无状态服务。",
+            120f, y + 120f, 39f, Pc.text, maxWidth = 820f, lineSpacing = 18f,
+        )
         rounded(120f, y + 350f, 960f, y + 560f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("工具调用", 165f, y + 395f, 27f, Pc.text3, true)
         text("正在读取项目架构资料", 165f, y + 455f, 34f, Pc.text, true)
@@ -719,10 +728,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         var y = 350f
         val fields = listOf("会话名称", "所属项目", "默认模型", "会话指令")
         fields.forEachIndexed { index, field ->
-            input(72f, y, 1008f, y + 145f, field, if (code == "INPUT_FOCUSED" && index == 0) "YLVEN 架构讨论" else "", "请输入$field", code == "INPUT_FOCUSED" && index == 0, if (code == "VALIDATION_ERROR" && index == 0) "请检查此字段" else null)
+            input(72f, y, 1008f, y + 145f, field, "", "请输入$field", code == "INPUT_FOCUSED" && index == 0, if (code == "VALIDATION_ERROR" && index == 0) "请检查此字段" else null)
             y += 230f
         }
-        button(72f, 1290f, 1008f, 1446f, "创建会话", loading = code == "SUBMITTING")
+        button(72f, 1290f, 1008f, 1446f, "会话指令", loading = code == "SUBMITTING")
         when (code) {
             "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在提交，请勿重复操作。")
             "SUCCESS" -> statusBanner("SUCCESS", 270f, .84f)
@@ -1052,6 +1061,27 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
                     x += keyWidth + pad
                 }
             }
+        } else {
+            val rows = "QWERTYUIOPASDFGHJKLZXCVBNM"
+                .map(Char::toString)
+                .chunked(10)
+            val pad = 10f
+            val keyWidth = (1080f - pad * 11f).toInt() / 10f
+            val keyHeight = 108f
+            rows.forEachIndexed { rowIndex, labels ->
+                val rowWidth = labels.size * keyWidth + (labels.size - 1) * pad
+                var x = ((1080f - rowWidth) / 2f).toInt().toFloat()
+                val y = top + 38f + rowIndex * (keyHeight + 18f)
+                labels.forEach { label ->
+                    rounded(x, y, x + keyWidth, y + keyHeight, 18f, Pc.surface)
+                    text(label, x + keyWidth / 2f, y + keyHeight / 2f, 34f, Pc.text, anchor = Anchor.MIDDLE_MIDDLE)
+                    x += keyWidth + pad
+                }
+            }
+            rounded(120f, 2090f, 820f, 2206f, 18f, Pc.surface)
+            text("空格", 470f, 2148f, 32f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+            rounded(842f, 2090f, 1048f, 2206f, 18f, Pc.brand)
+            text("完成", 945f, 2148f, 32f, Pc.surface, true, Anchor.MIDDLE_MIDDLE)
         }
         gesture(Pc.text)
     }
@@ -1166,7 +1196,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
 
     private fun text(
         value: String, x: Float, y: Float, size: Float, fill: Int, bold: Boolean = false,
-        anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null,
+        anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null, lineSpacing: Float = 8f,
     ) {
         paint.style = Paint.Style.FILL
         paint.color = fill
@@ -1190,7 +1220,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
                 y - (metrics.ascent + metrics.descent) / 2f + size * .1f
             else -> y - metrics.ascent + size * .225f
         }
-        val step = size + 8f
+        val step = size + lineSpacing
         lines.forEachIndexed { index, line -> canvas.drawText(line, x, baseline + index * step, paint) }
         paint.textScaleX = 1f
     }
