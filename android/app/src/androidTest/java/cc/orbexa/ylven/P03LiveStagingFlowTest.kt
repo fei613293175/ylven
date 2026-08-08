@@ -1,10 +1,10 @@
 package cc.orbexa.ylven
 
+import androidx.compose.ui.semantics.SemanticsConfiguration
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.fetchSemanticsNodes
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -119,3 +119,6 @@ class P03LiveStagingFlowTest {
         }
     }
 }
+
+private fun <T> SemanticsConfiguration.getOrNull(key: SemanticsPropertyKey<T>): T? =
+    if (contains(key)) get(key) else null

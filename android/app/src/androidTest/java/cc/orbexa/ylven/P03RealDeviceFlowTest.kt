@@ -5,10 +5,8 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.fetchSemanticsNodes
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -260,7 +258,12 @@ private class FlowGateway : IdentityGateway {
         return alpha.copy(status = "deleted")
     }
 
-    override suspend fun sendMessage(bearer: String, conversationId: String, body: String): MessageRun {
+    override suspend fun sendMessage(
+        bearer: String,
+        conversationId: String,
+        body: String,
+        model: String,
+    ): MessageRun {
         calls += "send"
         if (failNextSend) {
             failNextSend = false
