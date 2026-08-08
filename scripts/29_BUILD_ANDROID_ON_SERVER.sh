@@ -77,7 +77,7 @@ if [[ "$current_certificate" != "$previous_certificate" ]]; then
     exit 3
   }
   migration_property() {
-    sed -n "s/^$1=//p" "$migration_file" | head -n 1
+    sed -n "s/^$1=//p" "$migration_file" | tr -d '' | head -n 1
   }
   [[ "$(migration_property phase)" == "$YLVEN_PHASE" && "$(migration_property approved)" == "true" ]] || {
     echo "invalid signing migration approval for $YLVEN_PHASE" >&2
