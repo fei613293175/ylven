@@ -213,7 +213,9 @@ try {
     $density = ((Invoke-Adb shell wm density) -join ' ').Trim()
 
     Invoke-Adb logcat -c | Out-Null
-    (Invoke-Adb install -r $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
+    # Vivo's streaming installer requires an interactive vendor risk dialog; push install keeps the same ADB install path
+    # while allowing the real-device acceptance run to observe an explicit install result.
+    (Invoke-Adb install --no-streaming -r $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -236,7 +238,7 @@ try {
         (Invoke-Adb uninstall $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-uninstall.txt') -Encoding UTF8
         $installedAfterUninstall = (Get-PackagePath -Package $PackageId) -join "`n"
         if ($installedAfterUninstall -match '^package:') { throw 'P03 signing migration uninstall did not remove the old package.' }
-        (Invoke-Adb install $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
+        (Invoke-Adb install --no-streaming $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -246,7 +248,7 @@ try {
             (Invoke-Adb uninstall $TestPackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-test-package-uninstall.txt') -Encoding UTF8
         }
     } else {
-        (Invoke-Adb install -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
+        (Invoke-Adb install --no-streaming -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -260,7 +262,7 @@ try {
     $launch | Set-Content -LiteralPath (Join-Path $testResults 'launch.txt') -Encoding UTF8
     if ($launch -notmatch 'Status:\s*ok') { throw 'The installed APK did not launch successfully.' }
 
-    (Invoke-Adb install -r $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
+    (Invoke-Adb install --no-streaming -r $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
     $sessionProvisioned = $false
     if ($loginAfter -ne 'present') {
         $provisionFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03ProvisionStagingSessionTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
@@ -389,15 +391,15 @@ try {
 - 当前版本：$Version
 - applicationId：$PackageId
 - 安装模式：项目所有者批准的一次性 P02 -> P03 签名迁移
-- 旧版安装：adb install -r $PreviousApk
-- 迁移安装：adb uninstall $PackageId；adb install $CurrentApk
+- 旧版安装：adb install --no-streaming -r $PreviousApk
+- 迁移安装：adb uninstall $PackageId；adb install --no-streaming $CurrentApk
 - 旧签名证书：$($provenance.previous_signing_certificate_sha256)
 - 新签名证书：$($provenance.signing_certificate_sha256)
 - 旧本地数据/登录态：未保留（迁移合同明确 data_preserved=false）
 - 旧数据标记：卸载前 present；卸载后 absent
 - 新登录态：通过真实 staging 注册流程重新建立并保存到 Android Keystore
 - 新版本启动：已验证
-- P03 之后升级基线：新签名证书，恢复 adb install -r
+- P03 之后升级基线：新签名证书，恢复 adb install --no-streaming -r
 - 结果：PASS
 "@
     } else {
@@ -407,7 +409,7 @@ try {
 - 阶段：$Phase
 - 当前版本：$Version
 - applicationId：$PackageId
-- 安装命令：adb install -r
+- 安装命令：adb install --no-streaming -r
 - 清除数据或卸载：未执行
 - 签名连续性：由服务器证书摘要比较和 adb install -r 共同验证
 - 数据标记：physical-upgrade-marker 覆盖安装后仍存在

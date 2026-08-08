@@ -70,6 +70,77 @@ printf '%s  %s\n' '$sourceHash' '$RemotePath' | sha256sum -c -
     if ($LASTEXITCODE -ne 0) { throw "Server-side reconstruction or SHA-256 verification failed for $RemotePath." }
 }
 
+function Copy-DirectoryFromOnlineServer {
+    param(
+        [Parameter(Mandatory=$true)][string]$SshTarget,
+        [Parameter(Mandatory=$true)][string]$RemoteDirectory,
+        [Parameter(Mandatory=$true)][string]$LocalDirectory,
+        [Parameter(Mandatory=$true)][string]$LocalChunkRoot
+    )
+
+    # The server closes long SCP streams; transfer one compressed directory archive in bounded chunks.
+    $remoteDirectory = $RemoteDirectory.TrimEnd('/')
+    $remoteArchive = "$remoteDirectory.download.tar.gz"
+    $remoteParts = "$remoteArchive.parts"
+    $remoteParent = Split-Path -Path $remoteDirectory -Parent
+    $remoteName = Split-Path -Path $remoteDirectory -Leaf
+    $localChunkDirectory = Join-Path $LocalChunkRoot 'artifact-download'
+    $localArchive = Join-Path $LocalChunkRoot 'artifacts.tar.gz'
+    $chunkSize = 4MB
+    $maxChunkAttempts = 5
+
+    New-Item -ItemType Directory -Path $localChunkDirectory,$LocalDirectory -Force | Out-Null
+    $prepareCommand = @"
+set -eu
+rm -f '$remoteArchive'
+rm -rf '$remoteParts'
+mkdir -p '$remoteParts'
+tar -czf '$remoteArchive' -C '$remoteParent' '$remoteName'
+split -b $chunkSize -d -a 6 '$remoteArchive' '$remoteParts/part-'
+sha256sum '$remoteArchive' | awk '{print \$1}'
+"@
+    $remoteArchiveHash = (& ssh $SshTarget ($prepareCommand -replace "`r`n", "`n") | Select-Object -Last 1).Trim().ToLowerInvariant()
+    if ($LASTEXITCODE -ne 0 -or $remoteArchiveHash -notmatch '^[0-9a-f]{64}$') { throw 'Could not prepare the chunked online-server artifact download.' }
+
+    $remotePartsCommand = "set -eu; find '$remoteParts' -maxdepth 1 -type f -name 'part-*' -printf '%f\n' | sort"
+    $remotePartNames = @(& ssh $SshTarget $remotePartsCommand | Where-Object { $_ -match '^part-[0-9]{6}$' })
+    if ($LASTEXITCODE -ne 0 -or $remotePartNames.Count -eq 0) { throw 'The online-server artifact archive has no downloadable chunks.' }
+
+    foreach ($partName in $remotePartNames) {
+        $localPart = Join-Path $localChunkDirectory $partName
+        $downloaded = $false
+        for ($attempt = 1; $attempt -le $maxChunkAttempts -and -not $downloaded; $attempt++) {
+            & scp -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o IPQoS=throughput "${SshTarget}:$remoteParts/$partName" $localPart
+            $downloaded = $LASTEXITCODE -eq 0
+            if (-not $downloaded -and $attempt -lt $maxChunkAttempts) {
+                Write-Warning "Artifact chunk $partName download interrupted; retrying ($attempt/$maxChunkAttempts)."
+                Start-Sleep -Seconds 2
+            }
+        }
+        if (-not $downloaded) { throw "Could not download artifact chunk $partName after $maxChunkAttempts attempts." }
+    }
+
+    $archiveOutput = [System.IO.File]::Open($localArchive, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+    try {
+        foreach ($partName in $remotePartNames) {
+            $partPath = Join-Path $localChunkDirectory $partName
+            $partInput = [System.IO.File]::OpenRead($partPath)
+            try { $partInput.CopyTo($archiveOutput) } finally { $partInput.Dispose() }
+        }
+    } finally { $archiveOutput.Dispose() }
+    $localArchiveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $localArchive).Hash.ToLowerInvariant()
+    if ($localArchiveHash -ne $remoteArchiveHash) { throw "Downloaded artifact archive SHA-256 mismatch: expected $remoteArchiveHash, got $localArchiveHash." }
+
+    & tar -xzf $localArchive -C $LocalDirectory
+    if ($LASTEXITCODE -ne 0) { throw 'Could not extract the exact online-server artifact archive.' }
+    $extractedRoot = Join-Path $LocalDirectory $remoteName
+    if (-not (Test-Path -LiteralPath $extractedRoot -PathType Container)) { throw 'Extracted online-server artifact root is missing.' }
+    Get-ChildItem -LiteralPath $extractedRoot -Force | Move-Item -Destination $LocalDirectory -Force
+    Remove-Item -LiteralPath $extractedRoot -Force -Recurse
+    [ordered]@{ remote_archive=$remoteArchive; remote_archive_sha256=$remoteArchiveHash; local_archive_sha256=$localArchiveHash; chunk_count=$remotePartNames.Count } |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $LocalDirectory '线上产物归档下载校验证明.json') -Encoding UTF8
+}
+
 Push-Location $Root
 try {
     if (-not $SshTarget) { $SshTarget = $env:YLVEN_SSH_TARGET }
@@ -144,8 +215,7 @@ bash '$remoteWorkspace/scripts/49_RUN_ONLINE_SERVER_BUILD.sh' '$remoteWorkspace'
     & ssh $SshTarget ($remoteCommand -replace "`r`n", "`n")
     if ($LASTEXITCODE -ne 0) { throw 'Online-server Android build failed. No APK is eligible for device testing.' }
 
-    & scp -r "${SshTarget}:$remoteArtifacts/." $download
-    if ($LASTEXITCODE -ne 0) { throw 'Could not download the exact online-server build outputs.' }
+    Copy-DirectoryFromOnlineServer -SshTarget $SshTarget -RemoteDirectory $remoteArtifacts -LocalDirectory $download -LocalChunkRoot (Join-Path $localRoot 'download-chunks')
     & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/51_VERIFY_SERVER_ANDROID_BUILD.py' --artifact-dir $download --phase $Phase --version $Version --commit $Commit --source-archive-sha256 $archiveSha
     if ($LASTEXITCODE -ne 0) { throw 'Downloaded online-server build verification failed.' }
     Write-Output "SERVER_BUILD_DIR=$download"
