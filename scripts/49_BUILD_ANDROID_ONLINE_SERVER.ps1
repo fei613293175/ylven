@@ -7,6 +7,60 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+
+function Copy-FileToOnlineServer {
+    param(
+        [Parameter(Mandatory=$true)][string]$SourcePath,
+        [Parameter(Mandatory=$true)][string]$SshTarget,
+        [Parameter(Mandatory=$true)][string]$RemotePath,
+        [Parameter(Mandatory=$true)][string]$LocalChunkRoot
+    )
+
+    # This server closes long SCP streams; bounded chunks make transfer restartable and hash-verifiable.
+    $source = (Resolve-Path -LiteralPath $SourcePath).Path
+    $sourceHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $source).Hash.ToLowerInvariant()
+    $chunkDirectory = Join-Path $LocalChunkRoot ([System.IO.Path]::GetFileName($source))
+    $remoteChunkDirectory = "$RemotePath.parts"
+    $chunkSize = 4MB
+    New-Item -ItemType Directory -Path $chunkDirectory -Force | Out-Null
+
+    $prepareCommand = "set -eu; mkdir -p '$remoteChunkDirectory'"
+    & ssh $SshTarget $prepareCommand
+    if ($LASTEXITCODE -ne 0) { throw "Could not prepare chunk upload directory for $RemotePath." }
+
+    $input = [System.IO.File]::OpenRead($source)
+    $partCount = 0
+    try {
+        $buffer = New-Object byte[] $chunkSize
+        while (($read = $input.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $partName = ('part-{0:D6}' -f $partCount)
+            $localPart = Join-Path $chunkDirectory $partName
+            $output = [System.IO.File]::Open($localPart, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+            try {
+                $output.Write($buffer, 0, $read)
+            } finally {
+                $output.Dispose()
+            }
+            & scp $localPart "${SshTarget}:$remoteChunkDirectory/$partName"
+            if ($LASTEXITCODE -ne 0) { throw "Could not upload chunk $partName for $RemotePath." }
+            $partCount++
+        }
+    } finally {
+        $input.Dispose()
+    }
+
+    if ($partCount -eq 0) { throw "Refusing to upload empty file $source." }
+    $assembleCommand = @"
+set -eu
+part_count=`$(find '$remoteChunkDirectory' -maxdepth 1 -type f -name 'part-*' -printf '%f\n' | sort | wc -l)
+test "`$part_count" -eq $partCount
+cat '$remoteChunkDirectory'/part-* > '$RemotePath'
+printf '%s  %s\n' '$sourceHash' '$RemotePath' | sha256sum -c -
+"@
+    & ssh $SshTarget $assembleCommand
+    if ($LASTEXITCODE -ne 0) { throw "Server-side reconstruction or SHA-256 verification failed for $RemotePath." }
+}
+
 Push-Location $Root
 try {
     if (-not $SshTarget) { $SshTarget = $env:YLVEN_SSH_TARGET }
@@ -67,10 +121,9 @@ try {
     $createCommand = "set -eu; mkdir -p '$remoteIncoming' '$remoteWorkspace' '$remoteArtifacts'"
     & ssh $SshTarget $createCommand
     if ($LASTEXITCODE -ne 0) { throw 'Could not create isolated online-server build directories.' }
-    & scp $archive "${SshTarget}:$remoteArchive"
-    if ($LASTEXITCODE -ne 0) { throw 'Could not upload the exact Git archive.' }
-    & scp $PreviousApk "${SshTarget}:$remotePrevious"
-    if ($LASTEXITCODE -ne 0) { throw 'Could not upload the prior owner APK for signing and upgrade checks.' }
+    $localChunkRoot = Join-Path $incoming 'chunks'
+    Copy-FileToOnlineServer -SourcePath $archive -SshTarget $SshTarget -RemotePath $remoteArchive -LocalChunkRoot $localChunkRoot
+    Copy-FileToOnlineServer -SourcePath $PreviousApk -SshTarget $SshTarget -RemotePath $remotePrevious -LocalChunkRoot $localChunkRoot
 
     $remoteCommand = @"
 set -euo pipefail
