@@ -80,10 +80,13 @@ function Copy-DirectoryFromOnlineServer {
 
     # The server closes long SCP streams; transfer one compressed directory archive in bounded chunks.
     $remoteDirectory = $RemoteDirectory.TrimEnd('/')
+    $remoteSeparator = $remoteDirectory.LastIndexOf('/')
+    if ($remoteSeparator -le 0 -or $remoteSeparator -eq $remoteDirectory.Length - 1) { throw "Unsafe online-server artifact path: $RemoteDirectory" }
     $remoteArchive = "$remoteDirectory.download.tar.gz"
     $remoteParts = "$remoteArchive.parts"
-    $remoteParent = Split-Path -Path $remoteDirectory -Parent
-    $remoteName = Split-Path -Path $remoteDirectory -Leaf
+    # These are Linux paths for SSH; do not use Windows Split-Path, which changes '/' to '\'.
+    $remoteParent = $remoteDirectory.Substring(0, $remoteSeparator)
+    $remoteName = $remoteDirectory.Substring($remoteSeparator + 1)
     $localChunkDirectory = Join-Path $LocalChunkRoot 'artifact-download'
     $localArchive = Join-Path $LocalChunkRoot 'artifacts.tar.gz'
     $chunkSize = 4MB
@@ -99,8 +102,10 @@ tar -czf '$remoteArchive' -C '$remoteParent' '$remoteName'
 split -b $chunkSize -d -a 6 '$remoteArchive' '$remoteParts/part-'
 sha256sum '$remoteArchive' | cut -d ' ' -f 1
 "@
-    $remoteArchiveHash = (& ssh $SshTarget ($prepareCommand -replace "`r`n", "`n") | Select-Object -Last 1).Trim().ToLowerInvariant()
-    if ($LASTEXITCODE -ne 0 -or $remoteArchiveHash -notmatch '^[0-9a-f]{64}$') { throw 'Could not prepare the chunked online-server artifact download.' }
+    $prepareOutput = @(& ssh $SshTarget ($prepareCommand -replace "`r`n", "`n"))
+    if ($LASTEXITCODE -ne 0) { throw "Could not prepare the chunked online-server artifact download:`n$($prepareOutput -join "`n")" }
+    $remoteArchiveHash = (($prepareOutput | Select-Object -Last 1) -as [string]).Trim().ToLowerInvariant()
+    if ($remoteArchiveHash -notmatch '^[0-9a-f]{64}$') { throw 'Online-server artifact archive did not return a SHA-256.' }
 
     $remotePartsCommand = "set -eu; find '$remoteParts' -maxdepth 1 -type f -name 'part-*' -printf '%f\n' | sort"
     $remotePartNames = @(& ssh $SshTarget $remotePartsCommand | Where-Object { $_ -match '^part-[0-9]{6}$' })
