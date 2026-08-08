@@ -242,10 +242,10 @@ try {
     $effectiveDensityMatch = [regex]::Match($density, '(?i)(?:Override|Physical) density:\s*480')
     if (-not $effectiveDensityMatch.Success) { throw "Could not establish the canonical 480 dpi test density: $density" }
 
-    Invoke-Adb logcat -c | Out-Null
+    Invoke-Adb logcat '-c' | Out-Null
     # Vivo's streaming installer requires an interactive vendor risk dialog; push install keeps the same ADB install path
     # while allowing the real-device acceptance run to observe an explicit install result.
-    (Invoke-Adb install --no-streaming -r $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
+    (Invoke-Adb install '--no-streaming' '-r' $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -270,7 +270,7 @@ try {
         (Invoke-Adb uninstall $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-uninstall.txt') -Encoding UTF8
         $installedAfterUninstall = (Get-PackagePath -Package $PackageId) -join "`n"
         if ($installedAfterUninstall -match '^package:') { throw 'P03 signing migration uninstall did not remove the old package.' }
-        (Invoke-Adb install --no-streaming $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
+        (Invoke-Adb install '--no-streaming' $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -280,7 +280,7 @@ try {
             (Invoke-Adb uninstall $TestPackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-test-package-uninstall.txt') -Encoding UTF8
         }
     } else {
-        (Invoke-Adb install --no-streaming -r $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
+        (Invoke-Adb install '--no-streaming' '-r' $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -290,35 +290,35 @@ try {
     if ($packageDump -notmatch "versionName=$([regex]::Escape($Version))") { throw 'Installed versionName does not match the release contract.' }
 
     Invoke-Adb shell am force-stop $PackageId | Out-Null
-    $launch = (Invoke-Adb shell am start -W -n "$PackageId/.MainActivity") -join "`n"
+    $launch = (Invoke-Adb shell am start '-W' '-n' "$PackageId/.MainActivity") -join "`n"
     $launch | Set-Content -LiteralPath (Join-Path $testResults 'launch.txt') -Encoding UTF8
     if ($launch -notmatch 'Status:\s*ok') { throw 'The installed APK did not launch successfully.' }
 
-    (Invoke-Adb install --no-streaming -r $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
+    (Invoke-Adb install '--no-streaming' '-r' $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
     $sessionProvisioned = $false
     if ($loginAfter -ne 'present') {
-        $provisionFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03ProvisionStagingSessionTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+        $provisionFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03ProvisionStagingSessionTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
         $provisionFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt') -Encoding UTF8
         if ($provisionFlow -notmatch '(?m)^OK \(' -or $provisionFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging session provisioning failed on the physical device.' }
         $loginAfterProvision = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
         if ($loginAfterProvision -ne 'present') { throw 'P03 real staging session was not persisted after provisioning.' }
         $sessionProvisioned = $true
         Invoke-Adb shell am force-stop $PackageId | Out-Null
-        $launchAfterProvision = (Invoke-Adb shell am start -W -n "$PackageId/.MainActivity") -join "`n"
+        $launchAfterProvision = (Invoke-Adb shell am start '-W' '-n' "$PackageId/.MainActivity") -join "`n"
         $launchAfterProvision | Set-Content -LiteralPath (Join-Path $testResults 'launch-after-staging-session.txt') -Encoding UTF8
         if ($launchAfterProvision -notmatch 'Status:\s*ok') { throw 'The app did not relaunch after real staging session provisioning.' }
     } else {
         $loginAfterProvision = $loginAfter
     }
-    $liveFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03LiveStagingFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $liveFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03LiveStagingFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
     $liveFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt') -Encoding UTF8
     if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
 
-    $flow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03RealDeviceFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $flow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03RealDeviceFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
     $flow | Set-Content -LiteralPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt') -Encoding UTF8
     if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }
 
-    $stateFlow = (Invoke-Adb shell am instrument -w -r -e class "$PackageId.P03ConversationStateUiTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
+    $stateFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03ConversationStateUiTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
     $stateFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ConversationStateUiTest.txt') -Encoding UTF8
     if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
 
@@ -328,7 +328,7 @@ try {
     foreach ($row in $stateRows) {
         $remote = "/sdcard/Download/ylven-$($Phase.ToLowerInvariant())/$($row.state_id).png"
         $local = Join-Path $screenshots "$($row.state_id).png"
-        Invoke-Adb shell test -s $remote | Out-Null
+        Invoke-Adb shell test '-s' $remote | Out-Null
         Invoke-Adb pull $remote $local | Out-Null
         $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $local).Hash.ToLowerInvariant()
         $indexRows += [pscustomobject]@{
@@ -352,7 +352,7 @@ try {
         $name = "$($entry.Key)-PRODUCTION.png"
         $remote = "/sdcard/Download/ylven-p03-production/$name"
         $local = Join-Path $productionScreenshots $name
-        Invoke-Adb shell test -s $remote | Out-Null
+        Invoke-Adb shell test '-s' $remote | Out-Null
         Invoke-Adb pull $remote $local | Out-Null
         $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $local).Hash.ToLowerInvariant()
         $catalogRow = $stateRows | Where-Object { $_.state_id -eq $entry.Value } | Select-Object -First 1
@@ -373,7 +373,7 @@ try {
     & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py' --phase $Phase
     if ($LASTEXITCODE -ne 0) { throw 'Current-phase interaction test coverage failed.' }
 
-    (Invoke-Adb logcat -d -v threadtime) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
+    (Invoke-Adb logcat '-d' '-v' threadtime) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
     (Invoke-Adb shell dumpsys activity exit-info $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
     $logText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'logcat.txt')
     $exitText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'application-exit-info.txt')
