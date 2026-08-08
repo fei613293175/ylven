@@ -249,7 +249,8 @@ try {
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
-    Invoke-Adb shell run-as $PackageId mkdir -p files | Out-Null
+    # Quote -p so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.
+    Invoke-Adb shell run-as $PackageId mkdir '-p' files | Out-Null
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
 
     $signingMigration = [bool]$provenance.signing_migration

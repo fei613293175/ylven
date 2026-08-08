@@ -259,6 +259,18 @@ def validate_file(path: Path, root: Path) -> FileResult:
     if nul >= 0:
         issues.append(issue("NUL_CHARACTER", "NUL character detected; file may have wrong encoding.", text, nul))
 
+    if path.name == "50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1":
+        unsafe_mkdir = re.search(r"Invoke-Adb\s+shell\s+run-as\s+\$PackageId\s+mkdir\s+-p\s+files", text)
+        if unsafe_mkdir:
+            issues.append(
+                issue(
+                    "UNQUOTED_ADB_MKDIR_FLAG",
+                    "Quote '-p' so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.",
+                    text,
+                    unsafe_mkdir.start(),
+                )
+            )
+
     return FileResult(
         path=path.relative_to(root).as_posix(),
         passed=not issues,
