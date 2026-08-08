@@ -97,7 +97,7 @@ rm -rf '$remoteParts'
 mkdir -p '$remoteParts'
 tar -czf '$remoteArchive' -C '$remoteParent' '$remoteName'
 split -b $chunkSize -d -a 6 '$remoteArchive' '$remoteParts/part-'
-sha256sum '$remoteArchive' | awk '{print \$1}'
+sha256sum '$remoteArchive' | cut -d ' ' -f 1
 "@
     $remoteArchiveHash = (& ssh $SshTarget ($prepareCommand -replace "`r`n", "`n") | Select-Object -Last 1).Trim().ToLowerInvariant()
     if ($LASTEXITCODE -ne 0 -or $remoteArchiveHash -notmatch '^[0-9a-f]{64}$') { throw 'Could not prepare the chunked online-server artifact download.' }

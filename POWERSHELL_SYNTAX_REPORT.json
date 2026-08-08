@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "result": "PASS",
-  "generated_at_utc": "2026-08-08T04:22:42Z",
+  "generated_at_utc": "2026-08-08T04:35:47Z",
   "method": "deterministic_static_lexical_delimiter_encoding_and_structure_validation",
   "official_powershell_ast_executed": false,
   "official_ast_note": "PowerShell runtime was not installed in the Linux packaging sandbox; Windows bootstrap remains the executable interpreter check.",
@@ -157,7 +157,7 @@
     {
       "path": "scripts/49_BUILD_ANDROID_ONLINE_SERVER.ps1",
       "passed": true,
-      "byte_length": 13424,
+      "byte_length": 13422,
       "line_count": 224,
       "utf8_bom": true,
       "crlf_only": true,
