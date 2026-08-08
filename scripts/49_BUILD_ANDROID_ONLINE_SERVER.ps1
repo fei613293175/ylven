@@ -7,6 +7,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$SshConnectionOptions = @('-o','BatchMode=yes','-o','ConnectTimeout=15','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=4')
 
 function Copy-FileToOnlineServer {
     param(
@@ -26,7 +27,7 @@ function Copy-FileToOnlineServer {
     New-Item -ItemType Directory -Path $chunkDirectory -Force | Out-Null
 
     $prepareCommand = "set -eu; mkdir -p '$remoteChunkDirectory'"
-    & ssh $SshTarget $prepareCommand
+    & ssh @SshConnectionOptions $SshTarget $prepareCommand
     if ($LASTEXITCODE -ne 0) { throw "Could not prepare chunk upload directory for $RemotePath." }
 
     $input = [System.IO.File]::OpenRead($source)
@@ -66,7 +67,7 @@ test "`$part_count" -eq $partCount
 cat '$remoteChunkDirectory'/part-* > '$RemotePath'
 printf '%s  %s\n' '$sourceHash' '$RemotePath' | sha256sum -c -
 "@
-    & ssh $SshTarget ($assembleCommand -replace "`r`n", "`n")
+    & ssh @SshConnectionOptions $SshTarget ($assembleCommand -replace "`r`n", "`n")
     if ($LASTEXITCODE -ne 0) { throw "Server-side reconstruction or SHA-256 verification failed for $RemotePath." }
 }
 
@@ -102,13 +103,13 @@ tar -czf '$remoteArchive' -C '$remoteParent' '$remoteName'
 split -b $chunkSize -d -a 6 '$remoteArchive' '$remoteParts/part-'
 sha256sum '$remoteArchive' | cut -d ' ' -f 1
 "@
-    $prepareOutput = @(& ssh $SshTarget ($prepareCommand -replace "`r`n", "`n"))
+    $prepareOutput = @(& ssh @SshConnectionOptions $SshTarget ($prepareCommand -replace "`r`n", "`n"))
     if ($LASTEXITCODE -ne 0) { throw "Could not prepare the chunked online-server artifact download:`n$($prepareOutput -join "`n")" }
     $remoteArchiveHash = (($prepareOutput | Select-Object -Last 1) -as [string]).Trim().ToLowerInvariant()
     if ($remoteArchiveHash -notmatch '^[0-9a-f]{64}$') { throw 'Online-server artifact archive did not return a SHA-256.' }
 
     $remotePartsCommand = "set -eu; find '$remoteParts' -maxdepth 1 -type f -name 'part-*' -printf '%f\n' | sort"
-    $remotePartNames = @(& ssh $SshTarget $remotePartsCommand | Where-Object { $_ -match '^part-[0-9]{6}$' })
+    $remotePartNames = @(& ssh @SshConnectionOptions $SshTarget $remotePartsCommand | Where-Object { $_ -match '^part-[0-9]{6}$' })
     if ($LASTEXITCODE -ne 0 -or $remotePartNames.Count -eq 0) { throw 'The online-server artifact archive has no downloadable chunks.' }
 
     foreach ($partName in $remotePartNames) {
@@ -189,7 +190,7 @@ try {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archive)) { throw 'git archive failed.' }
     $archiveSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()
 
-    $projectRows = & ssh $SshTarget 'android-build projects'
+    $projectRows = & ssh @SshConnectionOptions $SshTarget 'android-build projects'
     if ($LASTEXITCODE -ne 0) { throw 'Could not query the online server build coordinator.' }
     $projectRow = $projectRows | Where-Object { $_ -like 'ylven|*' } | Select-Object -First 1
     if (-not $projectRow -or $projectRow -notmatch 'run_root=([^|]+)') { throw 'The online server has no registered YLVEN build root.' }
@@ -204,7 +205,7 @@ try {
     $remoteSigning = "$remoteRoot/signing"
     $remoteGradleCache = "$remoteRoot/gradle-cache"
     $createCommand = "set -eu; mkdir -p '$remoteIncoming' '$remoteWorkspace' '$remoteArtifacts'"
-    & ssh $SshTarget $createCommand
+    & ssh @SshConnectionOptions $SshTarget $createCommand
     if ($LASTEXITCODE -ne 0) { throw 'Could not create isolated online-server build directories.' }
     $localChunkRoot = Join-Path $incoming 'chunks'
     Copy-FileToOnlineServer -SourcePath $archive -SshTarget $SshTarget -RemotePath $remoteArchive -LocalChunkRoot $localChunkRoot
@@ -217,7 +218,7 @@ printf '%s\n' '$archiveSha' > '$remoteWorkspace/source-archive.sha256'
 tar -xf '$remoteArchive' -C '$remoteWorkspace'
 bash '$remoteWorkspace/scripts/49_RUN_ONLINE_SERVER_BUILD.sh' '$remoteWorkspace' '$remoteArtifacts' '$remoteGradleCache' '$remoteSigning' '$remotePrevious' '$Phase' '$Version' '$Commit'
 "@
-    & ssh $SshTarget ($remoteCommand -replace "`r`n", "`n")
+    & ssh @SshConnectionOptions $SshTarget ($remoteCommand -replace "`r`n", "`n")
     if ($LASTEXITCODE -ne 0) { throw 'Online-server Android build failed. No APK is eligible for device testing.' }
 
     Copy-DirectoryFromOnlineServer -SshTarget $SshTarget -RemoteDirectory $remoteArtifacts -LocalDirectory $download -LocalChunkRoot (Join-Path $localRoot 'download-chunks')
