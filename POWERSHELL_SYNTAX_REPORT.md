@@ -1,7 +1,7 @@
 # PowerShell 静态语法与兼容性检查报告
 
 - 结果：**PASS**
-- 检查时间（UTC）：`2026-08-08T01:36:45Z`
+- 检查时间（UTC）：`2026-08-08T02:03:15Z`
 - PowerShell 文件：`14` 个
 - 通过：`14` 个
 - 失败：`0` 个
@@ -28,7 +28,7 @@
 | `scripts/39_REMOTE_SERVER_INVENTORY.ps1` | PASS | 32 | 18 | 是 | 是 |
 | `scripts/42_RUN_PYTHON.ps1` | PASS | 22 | 35 | 是 | 是 |
 | `scripts/49_BUILD_ANDROID_ONLINE_SERVER.ps1` | PASS | 92 | 84 | 是 | 是 |
-| `scripts/50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1` | PASS | 441 | 412 | 是 | 是 |
+| `scripts/50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1` | PASS | 440 | 412 | 是 | 是 |
 | `ylven.ps1` | PASS | 85 | 88 | 是 | 是 |
 
 ## 结论

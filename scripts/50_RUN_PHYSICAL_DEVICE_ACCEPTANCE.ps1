@@ -204,7 +204,6 @@ try {
     $installedBefore = (Invoke-Adb shell pm path $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
-    Invoke-Adb shell run-as $PackageId mkdir -p files | Out-Null
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
 
     $signingMigration = [bool]$provenance.signing_migration
