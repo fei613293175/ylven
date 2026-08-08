@@ -66,7 +66,7 @@ test "`$part_count" -eq $partCount
 cat '$remoteChunkDirectory'/part-* > '$RemotePath'
 printf '%s  %s\n' '$sourceHash' '$RemotePath' | sha256sum -c -
 "@
-    & ssh $SshTarget $assembleCommand
+    & ssh $SshTarget ($assembleCommand -replace "`r`n", "`n")
     if ($LASTEXITCODE -ne 0) { throw "Server-side reconstruction or SHA-256 verification failed for $RemotePath." }
 }
 
@@ -108,8 +108,8 @@ try {
     $incoming = Join-Path $localRoot 'incoming'
     $download = Join-Path $localRoot 'download'
     New-Item -ItemType Directory -Path $incoming,$download -Force | Out-Null
-    $archive = Join-Path $incoming 'source.tar'
-    & git archive --format=tar --output=$archive $Commit
+    $archive = Join-Path $incoming 'source.tar.gz'
+    & git archive --format=tar.gz --output=$archive $Commit
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archive)) { throw 'git archive failed.' }
     $archiveSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()
 
@@ -123,7 +123,7 @@ try {
     $remoteIncoming = "$remoteRoot/incoming/$buildId"
     $remoteWorkspace = "$remoteRoot/workspaces/$buildId"
     $remoteArtifacts = "$remoteRoot/artifacts/$buildId"
-    $remoteArchive = "$remoteIncoming/source.tar"
+    $remoteArchive = "$remoteIncoming/source.tar.gz"
     $remotePrevious = "$remoteIncoming/previous.apk"
     $remoteSigning = "$remoteRoot/signing"
     $remoteGradleCache = "$remoteRoot/gradle-cache"
@@ -141,7 +141,7 @@ printf '%s\n' '$archiveSha' > '$remoteWorkspace/source-archive.sha256'
 tar -xf '$remoteArchive' -C '$remoteWorkspace'
 bash '$remoteWorkspace/scripts/49_RUN_ONLINE_SERVER_BUILD.sh' '$remoteWorkspace' '$remoteArtifacts' '$remoteGradleCache' '$remoteSigning' '$remotePrevious' '$Phase' '$Version' '$Commit'
 "@
-    & ssh $SshTarget $remoteCommand
+    & ssh $SshTarget ($remoteCommand -replace "`r`n", "`n")
     if ($LASTEXITCODE -ne 0) { throw 'Online-server Android build failed. No APK is eligible for device testing.' }
 
     & scp -r "${SshTarget}:$remoteArtifacts/." $download
