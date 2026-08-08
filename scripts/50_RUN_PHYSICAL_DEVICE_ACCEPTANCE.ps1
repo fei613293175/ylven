@@ -17,9 +17,21 @@ $ActiveLock = $null
 
 function Invoke-Adb {
     param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
-    $output = & $script:AdbPath -s $script:Serial @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "adb $($Arguments -join ' ') failed:`n$($output -join "`n")" }
-    return $output
+    $savedErrorActionPreference = $ErrorActionPreference
+    $output = @()
+    $exitCode = $null
+    try {
+        # Windows PowerShell 5 surfaces native stderr as ErrorRecord objects. ADB writes successful
+        # push progress there, so judge the command by its native exit code and preserve all text.
+        $ErrorActionPreference = 'Continue'
+        $output = @(& $script:AdbPath -s $script:Serial @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $savedErrorActionPreference
+    }
+    $textOutput = @($output | ForEach-Object { $_.ToString() })
+    if ($exitCode -ne 0) { throw "adb $($Arguments -join ' ') failed:`n$($textOutput -join "`n")" }
+    return $textOutput
 }
 
 function Test-AppPath {

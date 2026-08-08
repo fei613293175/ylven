@@ -144,7 +144,7 @@ sha256sum '$remoteArchive' | cut -d ' ' -f 1
     Get-ChildItem -LiteralPath $extractedRoot -Force | Move-Item -Destination $LocalDirectory -Force
     Remove-Item -LiteralPath $extractedRoot -Force -Recurse
     [ordered]@{ remote_archive=$remoteArchive; remote_archive_sha256=$remoteArchiveHash; local_archive_sha256=$localArchiveHash; chunk_count=$remotePartNames.Count } |
-        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $LocalDirectory '线上产物归档下载校验证明.json') -Encoding UTF8
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path (Split-Path -Path $LocalDirectory -Parent) '线上产物归档下载校验证明.json') -Encoding UTF8
 }
 
 Push-Location $Root
