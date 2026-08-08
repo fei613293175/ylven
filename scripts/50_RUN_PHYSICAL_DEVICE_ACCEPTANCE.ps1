@@ -33,6 +33,19 @@ function Test-AppPath {
     return $LASTEXITCODE -eq 0
 }
 
+function Get-PackagePath {
+    param([Parameter(Mandatory=$true)][string]$Package)
+    $output = & $script:AdbPath -s $script:Serial shell pm path $Package 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $text = ($output -join "`n").Trim()
+        if ($text -and $text -notmatch '(?i)(unable to find package|unknown package|package .* not found|does not exist)') {
+            throw "adb shell pm path $Package failed:`n$text"
+        }
+        return @()
+    }
+    return $output
+}
+
 function Get-DeviceRows {
     $lines = & $script:AdbPath devices -l 2>&1
     if ($LASTEXITCODE -ne 0) { throw "adb devices -l failed:`n$($lines -join "`n")" }
@@ -201,7 +214,7 @@ try {
 
     Invoke-Adb logcat -c | Out-Null
     (Invoke-Adb install -r $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
-    $installedBefore = (Invoke-Adb shell pm path $PackageId) -join "`n"
+    $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
@@ -221,14 +234,14 @@ try {
         }
         $preMigration | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-pre-uninstall.json') -Encoding UTF8
         (Invoke-Adb uninstall $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-uninstall.txt') -Encoding UTF8
-        $installedAfterUninstall = (Invoke-Adb shell pm path $PackageId) -join "`n"
+        $installedAfterUninstall = (Get-PackagePath -Package $PackageId) -join "`n"
         if ($installedAfterUninstall -match '^package:') { throw 'P03 signing migration uninstall did not remove the old package.' }
         (Invoke-Adb install $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
         if ($loginAfter -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old login state.' }
-        $oldTestPackage = (Invoke-Adb shell pm path $TestPackageId) -join "`n"
+        $oldTestPackage = (Get-PackagePath -Package $TestPackageId) -join "`n"
         if ($oldTestPackage -match '^package:') {
             (Invoke-Adb uninstall $TestPackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-test-package-uninstall.txt') -Encoding UTF8
         }
