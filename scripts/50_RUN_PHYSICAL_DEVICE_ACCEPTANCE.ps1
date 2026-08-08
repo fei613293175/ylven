@@ -14,6 +14,8 @@ $TestPackageId = 'cc.orbexa.ylven.test'
 $QueueOwned = $false
 $TicketPath = $null
 $ActiveLock = $null
+$DisplayDensityChanged = $false
+$OriginalDensityOverride = $null
 
 function Invoke-Adb {
     param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
@@ -222,7 +224,23 @@ try {
     $androidVersion = ((Invoke-Adb shell getprop ro.build.version.release) -join '').Trim()
     $apiLevel = ((Invoke-Adb shell getprop ro.build.version.sdk) -join '').Trim()
     $physicalSize = ((Invoke-Adb shell wm size) -join ' ').Trim()
+    if ($physicalSize -notmatch '(?i)(?:Physical|Override) size:\s*1080x2400') {
+        throw "The selected device does not provide the canonical 1080x2400 screenshot viewport: $physicalSize"
+    }
+    $densityBefore = ((Invoke-Adb shell wm density) -join ' ').Trim()
+    $physicalDensityMatch = [regex]::Match($densityBefore, '(?i)Physical density:\s*(\d+)')
+    $overrideDensityMatch = [regex]::Match($densityBefore, '(?i)Override density:\s*(\d+)')
+    if (-not $physicalDensityMatch.Success) { throw "Could not determine the physical display density: $densityBefore" }
+    if ($overrideDensityMatch.Success) { $OriginalDensityOverride = [int]$overrideDensityMatch.Groups[1].Value }
+    $effectiveDensityBefore = if ($overrideDensityMatch.Success) { [int]$overrideDensityMatch.Groups[1].Value } else { [int]$physicalDensityMatch.Groups[1].Value }
+    if ($effectiveDensityBefore -ne 480) {
+        $DisplayDensityChanged = $true
+        Invoke-Adb shell wm density 480 | Out-Null
+        Start-Sleep -Seconds 1
+    }
     $density = ((Invoke-Adb shell wm density) -join ' ').Trim()
+    $effectiveDensityMatch = [regex]::Match($density, '(?i)(?:Override|Physical) density:\s*480')
+    if (-not $effectiveDensityMatch.Success) { throw "Could not establish the canonical 480 dpi test density: $density" }
 
     Invoke-Adb logcat -c | Out-Null
     # Vivo's streaming installer requires an interactive vendor risk dialog; push install keeps the same ADB install path
@@ -231,6 +249,7 @@ try {
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
+    Invoke-Adb shell run-as $PackageId mkdir -p files | Out-Null
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
 
     $signingMigration = [bool]$provenance.signing_migration
@@ -353,8 +372,8 @@ try {
     & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py' --phase $Phase
     if ($LASTEXITCODE -ne 0) { throw 'Current-phase interaction test coverage failed.' }
 
-    (& $AdbPath -s $Serial logcat -d -v threadtime 2>&1) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
-    (& $AdbPath -s $Serial shell dumpsys activity exit-info $PackageId 2>&1) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
+    (Invoke-Adb logcat -d -v threadtime) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
+    (Invoke-Adb shell dumpsys activity exit-info $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
     $logText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'logcat.txt')
     $exitText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'application-exit-info.txt')
     $runtimeErrors = @()
@@ -434,7 +453,7 @@ try {
     $deviceEvidence = [ordered]@{
         schema_version='2.0'; phase=$Phase; version=$Version; commit_sha=$provenance.commit_sha
         apk=(Split-Path -Leaf $deliveredApk); apk_sha256=$provenance.apk_sha256
-        device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density=$density }
+        device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density_before=$densityBefore; density=$density; canonical_density_applied=$DisplayDensityChanged }
         selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
         queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
         paths=@($(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
@@ -456,6 +475,17 @@ try {
     Write-Warning 'Production-page screenshots require direct Codex comparison with the representative approved mockups. The APK is not deliverable yet.'
     Write-Output "PHYSICAL_ACCEPTANCE_DIR=$output"
 } finally {
+    if ($DisplayDensityChanged -and $AdbPath -and $Serial) {
+        $restoreDensityArgument = if ($null -ne $OriginalDensityOverride) { [string]$OriginalDensityOverride } else { 'reset' }
+        $savedErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            & $AdbPath -s $Serial shell wm density $restoreDensityArgument 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { Write-Warning "Could not restore the original device density with wm density $restoreDensityArgument." }
+        } finally {
+            $ErrorActionPreference = $savedErrorActionPreference
+        }
+    }
     if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) {
         $activeFull = [System.IO.Path]::GetFullPath($ActiveLock)
         if ($activeFull.StartsWith([System.IO.Path]::GetFullPath((Split-Path -Parent $ActiveLock)), [System.StringComparison]::OrdinalIgnoreCase)) {
