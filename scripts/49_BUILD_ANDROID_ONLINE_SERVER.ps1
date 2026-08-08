@@ -22,6 +22,7 @@ function Copy-FileToOnlineServer {
     $chunkDirectory = Join-Path $LocalChunkRoot ([System.IO.Path]::GetFileName($source))
     $remoteChunkDirectory = "$RemotePath.parts"
     $chunkSize = 4MB
+    $maxChunkAttempts = 5
     New-Item -ItemType Directory -Path $chunkDirectory -Force | Out-Null
 
     $prepareCommand = "set -eu; mkdir -p '$remoteChunkDirectory'"
@@ -41,8 +42,16 @@ function Copy-FileToOnlineServer {
             } finally {
                 $output.Dispose()
             }
-            & scp $localPart "${SshTarget}:$remoteChunkDirectory/$partName"
-            if ($LASTEXITCODE -ne 0) { throw "Could not upload chunk $partName for $RemotePath." }
+            $uploaded = $false
+            for ($attempt = 1; $attempt -le $maxChunkAttempts -and -not $uploaded; $attempt++) {
+                & scp -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o IPQoS=throughput $localPart "${SshTarget}:$remoteChunkDirectory/$partName"
+                $uploaded = $LASTEXITCODE -eq 0
+                if (-not $uploaded -and $attempt -lt $maxChunkAttempts) {
+                    Write-Warning "Chunk $partName upload interrupted; retrying ($attempt/$maxChunkAttempts)."
+                    Start-Sleep -Seconds 2
+                }
+            }
+            if (-not $uploaded) { throw "Could not upload chunk $partName for $RemotePath after $maxChunkAttempts attempts." }
             $partCount++
         }
     } finally {
