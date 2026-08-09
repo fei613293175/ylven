@@ -103,7 +103,7 @@ class P03LiveStagingFlowTest {
         waitForTag("YL-A-031-root", 20_000)
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
         Espresso.closeSoftKeyboard()
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
