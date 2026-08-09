@@ -171,8 +171,15 @@ function Test-AppPath {
 }
 
 function Test-AppSessionBlob {
-    & $script:AdbPath -s $script:Serial shell run-as $script:PackageId grep -q session_blob shared_prefs/ylven_identity.xml 2>$null
-    return $LASTEXITCODE -eq 0
+    if (-not (Test-AppPath -Package $script:PackageId -Path 'shared_prefs/ylven_identity.xml')) { return $false }
+    $savedErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $script:AdbPath -s $script:Serial shell run-as $script:PackageId grep -q session_blob shared_prefs/ylven_identity.xml 2>&1 | Out-Null
+        return $LASTEXITCODE -eq 0
+    } finally {
+        $ErrorActionPreference = $savedErrorActionPreference
+    }
 }
 
 function Get-PackagePath {
