@@ -39,7 +39,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.Briefcase
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -57,6 +56,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -1075,7 +1075,7 @@ private fun P03ConversationMenu(
                 P03MenuRow(Icons.Default.Edit, "重命名", "p03-open-rename-current", !busy, onStartRename)
                 P03MenuRow(Icons.Default.Archive, "归档", "YL-A-022-C-P03_006-01", !busy, onArchive)
                 P03MenuRow(Icons.Default.FileDownload, "导出", "YL-A-022-C-P03_029-01", !busy, onExport)
-                P03MenuRow(Icons.Default.Folder, "移入项目", null, enabled = false) {}
+                P03MenuRow(Icons.Default.Folder, "移入项目", null, enabled = false, onClick = {})
                 P03MenuRow(Icons.Default.Delete, "删除", "YL-A-022-C-P03_007-01", !busy, onRequestDelete, destructive = true)
             }
             if (busy) CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally).size(28.dp))
@@ -1147,7 +1147,7 @@ private fun P03BottomNavigation(onOpenAccount: () -> Unit) {
     Surface(color = YlvenLightColors.Surface, border = BorderStroke(1.dp, YlvenLightColors.Divider)) {
         Row(Modifier.fillMaxWidth().height(64.dp).navigationBarsPadding(), horizontalArrangement = Arrangement.SpaceAround) {
             P03NavigationItem(Icons.Default.Home, "首页", selected = true) {}
-            P03NavigationItem(Icons.Default.Briefcase, "工作", selected = false) {}
+            P03NavigationItem(Icons.Default.Work, "工作", selected = false) {}
             P03NavigationItem(Icons.Default.Explore, "发现", selected = false) {}
             P03NavigationItem(Icons.Default.Person, "我的", selected = false, onClick = onOpenAccount)
         }
