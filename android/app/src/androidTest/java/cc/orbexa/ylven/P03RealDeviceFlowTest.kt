@@ -45,7 +45,7 @@ class P03RealDeviceFlowTest {
     @Test
     fun conversationJourneyUsesEveryP03ControlOnDevice() {
         val gateway = FlowGateway()
-        val session = AuthSession("owner@example.invalid", "session", "access", "refresh", "physical-device")
+        val session = AuthSession("陈平@example.invalid", "session", "access", "refresh", "physical-device")
         val activity = launchP03TargetActivity()
         composeRule.mainClock.autoAdvance = true
         composeRule.runOnUiThread {
@@ -57,36 +57,35 @@ class P03RealDeviceFlowTest {
         }
 
         waitForTag("YL-A-018-C-P03_001-01")
-        captureProductionPage("YL-A-018-PRODUCTION")
-        composeRule.onNodeWithTag("p03-refresh-home").performClick()
+        captureProductionPage("YL-A-018-PRODUCTION", "YL-A-018-C-P03_001-01")
+        composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
+        waitForTag("YL-A-019-root")
+        captureProductionPage("YL-A-019-PRODUCTION", "YL-A-019-root")
         composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performClick()
-        waitForTag("p03-conversation-created")
-        captureProductionPage("YL-A-019-PRODUCTION")
+        waitForTag("p03-active-conversation-created")
+        Espresso.pressBack()
+        waitForTag("YL-A-018-C-P03_001-01")
+
+        composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
+        waitForTag("YL-A-031-root")
+        captureProductionPage("YL-A-031-PRODUCTION", "YL-A-031-root")
+        composeRule.onNodeWithTag("p03-temporary-title").performTextInput("临时架构讨论")
         composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
-        waitForTag("p03-conversation-temporary")
-        captureProductionPage("YL-A-031-PRODUCTION")
+        waitForTag("p03-active-conversation-temporary")
+        Espresso.pressBack()
+        waitForTag("YL-A-018-C-P03_001-01")
 
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
-        captureProductionPage("YL-A-020-PRODUCTION")
+        waitForTag("YL-A-020-root")
+        captureProductionPage("YL-A-020-PRODUCTION", "YL-A-020-root")
         waitForTag("YL-A-020-C-P03_003-01")
         composeRule.onNodeWithTag("YL-A-020-C-P03_003-01").performClick()
+        composeRule.onNodeWithTag("p03-open-search").performClick()
+        waitForTag("YL-A-021-root")
         composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput("Alpha")
-        waitForTag("p03-drawer-rename-alpha")
-        captureProductionPage("YL-A-021-PRODUCTION")
-        composeRule.onNodeWithTag("p03-drawer-rename-alpha").performClick()
-        waitForTag("p03-rename-input")
-        captureProductionPage("YL-A-022-PRODUCTION")
-        composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
-        composeRule.onNodeWithTag("p03-rename-input").performTextInput("Alpha renamed")
-        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
-        waitForCondition { "rename" in gateway.calls }
-        composeRule.onAllNodesWithTag("YL-A-022-C-P03_006-01")[0].performClick()
-        waitForCondition { "archive" in gateway.calls }
-        composeRule.onAllNodesWithTag("YL-A-022-C-P03_007-01")[0].performClick()
-        waitForCondition { "delete" in gateway.calls }
-        composeRule.onNodeWithText("关闭").performClick()
-
+        waitForTag("p03-conversation-alpha")
+        captureProductionPage("YL-A-021-PRODUCTION", "YL-A-021-root")
         composeRule.onNodeWithTag("p03-conversation-alpha").performScrollTo().performClick()
         waitForTag("YL-A-023-C-P03_013-01")
         waitForTag("YL-A-032-C-P03_032-01")
@@ -106,7 +105,7 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-027-C-P03_019-01")
         waitForTag("YL-A-028-C-P03_020-01")
         waitForTag("YL-A-029-C-P03_021-01")
-        captureProductionPage("YL-A-023-PRODUCTION")
+        captureProductionPage("YL-A-023-PRODUCTION", "YL-A-023-C-P03_013-01")
         composeRule.onNodeWithTag("YL-A-030-C-P03_022-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("YL-A-030-C-P03_023-01").performScrollTo().performClick()
         composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[0].performScrollTo().performClick()
@@ -114,8 +113,6 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-030-C-P03_024-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("YL-A-030-C-P03_030-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("p03-copy-code").performScrollTo().performClick()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
-
         gateway.failNextSend = true
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("retry me")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
@@ -131,10 +128,39 @@ class P03RealDeviceFlowTest {
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_031-01").performClick()
         Espresso.pressBack()
-        composeRule.waitForIdle()
-        if (composeRule.onAllNodesWithTag("YL-A-018-C-P03_001-01").fetchSemanticsNodes().isEmpty()) {
-            Espresso.pressBack()
+        if (composeRule.onAllNodesWithTag("YL-A-023-C-P03_013-01").fetchSemanticsNodes().isEmpty()) {
+            waitForTag("YL-A-018-C-P03_001-01")
+            composeRule.onNodeWithTag("p03-conversation-alpha").performScrollTo().performClick()
         }
+        waitForTag("YL-A-023-C-P03_013-01")
+
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        waitForTag("YL-A-022-root")
+        waitForTag("p03-conversation-menu")
+        captureProductionPage("YL-A-022-PRODUCTION", "YL-A-022-root")
+        composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
+        waitForCondition { "export-conversation" in gateway.calls }
+
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("p03-open-rename-current").performClick()
+        waitForTag("p03-rename-input")
+        composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
+        composeRule.onNodeWithTag("p03-rename-input").performTextInput("Alpha renamed")
+        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
+        waitForCondition { "rename" in gateway.calls }
+
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_006-01").performClick()
+        waitForCondition { "archive" in gateway.calls }
+        waitForTag("YL-A-018-C-P03_001-01")
+
+        composeRule.onNodeWithTag("p03-conversation-beta").performScrollTo().performClick()
+        waitForTag("p03-active-conversation-beta")
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
+        waitForTag("p03-confirm-delete")
+        composeRule.onNodeWithTag("p03-confirm-delete").performClick()
+        waitForCondition { "delete" in gateway.calls }
         waitForTag("YL-A-018-C-P03_001-01")
 
         val requiredCalls = setOf(
@@ -154,9 +180,13 @@ class P03RealDeviceFlowTest {
         composeRule.waitUntil(timeoutMillis = 8_000, condition = predicate)
     }
 
-    private fun captureProductionPage(name: String) {
+    private fun captureProductionPage(name: String, expectedRootTag: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
+        waitForTag(expectedRootTag)
+        check(composeRule.onAllNodesWithTag(expectedRootTag).fetchSemanticsNodes().isNotEmpty()) {
+            "Expected page root $expectedRootTag is absent before capturing $name"
+        }
         composeRule.waitForIdle()
         val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
             "Could not capture the physical device display for $name"
@@ -202,8 +232,8 @@ private class FlowGateway : IdentityGateway {
     private var failFirstEvent = true
     private var currentRunStatus = "streaming"
     private var draft = "saved draft"
-    private val alpha = Conversation("alpha", "Alpha", "active", "2026-08-08T00:00:00Z")
-    private val beta = Conversation("beta", "Beta", "active", "2026-08-08T00:00:00Z")
+    private val alpha = Conversation("alpha", "安卓 AI 工具架构设计", "active", "刚刚")
+    private val beta = Conversation("beta", "比较 Claude 与 GPT 的推理差异", "active", "昨天")
 
     override suspend fun startRegistration(email: String) = OtpChallenge("register", email, "123456")
     override suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String) = Unit
@@ -216,7 +246,7 @@ private class FlowGateway : IdentityGateway {
 
     override suspend fun home(bearer: String): HomeSnapshot {
         calls += "home"
-        return HomeSnapshot(listOf(alpha, beta), listOf("YLVEN Default"))
+        return HomeSnapshot(listOf(alpha, beta), listOf("GPT-5.6 Sol", "Claude Opus", "Grok"))
     }
 
     override suspend fun listConversations(
@@ -229,7 +259,7 @@ private class FlowGateway : IdentityGateway {
             Pair(listOf(alpha, beta), "next")
         } else {
             calls += "list-page-2"
-            Pair(listOf(Conversation("gamma", "Gamma", "active", "2026-08-08T00:00:00Z")), null)
+            Pair(listOf(Conversation("gamma", "YLVEN 品牌主视觉", "active", "7 月 30 日")), null)
         }
     }
 
@@ -345,7 +375,9 @@ private class FlowGateway : IdentityGateway {
             "assistant",
             alpha.id,
             "assistant",
-            "# Result\n```kotlin\nprintln(\"ok\")\n```\nA | B\n--- | ---\n1 | 2",
+            "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n" +
+                "业务后端管理用户、会话、钱包和作品；AI Runtime 负责流式请求、模型路由与上下文编译。\n" +
+                "```kotlin\nprintln(\"ok\")\n```\nA | B\n--- | ---\n1 | 2",
             "2026-08-08T00:00:02Z",
         ),
     )

@@ -32,12 +32,9 @@ class P03LiveStagingFlowTest {
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
         val marker = "device-${Instant.now().epochSecond}"
 
-        composeRule.onNodeWithTag("p03-refresh-home").performClick()
-        val existingCards = conversationCardTags()
+        composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
+        waitForTag("YL-A-019-root", 20_000)
         composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performClick()
-        val createdCard = waitForNewConversationCard(existingCards)
-        val conversationId = createdCard.removePrefix("p03-conversation-")
-        composeRule.onNodeWithTag(createdCard).performScrollTo().performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextClearance()
@@ -46,31 +43,48 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         waitForTagText("YL-A-026-C-P03_026-01", "completed", 45_000)
         assertNoInlineError()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
 
-        Espresso.pressBack()
-        waitForTag("YL-A-018-C-P03_001-01", 20_000)
-        composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
-        waitForTag("p03-conversation-drawer", 20_000)
-        composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput(marker)
-        waitForTag("p03-drawer-rename-$conversationId", 20_000)
-        composeRule.onNodeWithTag("p03-drawer-rename-$conversationId").performClick()
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        waitForTag("YL-A-022-root", 20_000)
+        composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
+        waitForTagGone("YL-A-022-root", 20_000)
+
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("p03-open-rename-current").performClick()
         waitForTag("p03-rename-input", 20_000)
         composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
         composeRule.onNodeWithTag("p03-rename-input").performTextInput("P03 $marker")
         Espresso.closeSoftKeyboard()
         composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
-        waitForTag("p03-drawer-rename-$conversationId", 20_000)
-        assertNoInlineError()
-        composeRule.onAllNodesWithTag("YL-A-022-C-P03_006-01")[0].performClick()
-        waitForTagGone("p03-drawer-rename-$conversationId", 20_000)
+        waitForTagGone("YL-A-022-root", 20_000)
         assertNoInlineError()
 
-        composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextClearance()
-        composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput("P03 $marker")
-        waitForTag("p03-drawer-rename-$conversationId", 20_000)
-        composeRule.onAllNodesWithTag("YL-A-022-C-P03_007-01")[0].performClick()
-        waitForTagGone("p03-drawer-rename-$conversationId", 20_000)
+        Espresso.pressBack()
+        waitForTag("YL-A-018-C-P03_001-01", 20_000)
+        composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
+        waitForTag("p03-conversation-drawer", 20_000)
+        composeRule.onNodeWithTag("p03-open-search").performClick()
+        waitForTag("YL-A-021-root", 20_000)
+        composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput(marker)
+        val matchingConversation = waitForConversationCard()
+        composeRule.onNodeWithTag(matchingConversation).performScrollTo().performClick()
+        waitForTag("YL-A-023-C-P03_013-01", 20_000)
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_006-01").performClick()
+        waitForTag("YL-A-018-C-P03_001-01", 20_000)
+        assertNoInlineError()
+
+        composeRule.onNodeWithTag("p03-open-temporary-conversation").performScrollTo().performClick()
+        waitForTag("YL-A-031-root", 20_000)
+        composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
+        Espresso.closeSoftKeyboard()
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
+        waitForTag("YL-A-023-C-P03_013-01", 20_000)
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
+        waitForTag("p03-confirm-delete", 20_000)
+        composeRule.onNodeWithTag("p03-confirm-delete").performClick()
+        waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
     }
 
@@ -100,11 +114,11 @@ class P03LiveStagingFlowTest {
             .mapNotNull { it.config.getOrNull(SemanticsProperties.TestTag) }
             .toSet()
 
-    private fun waitForNewConversationCard(existing: Set<String>): String {
+    private fun waitForConversationCard(): String {
         composeRule.waitUntil(timeoutMillis = 20_000) {
-            (conversationCardTags() - existing).isNotEmpty()
+            conversationCardTags().isNotEmpty()
         }
-        return (conversationCardTags() - existing).single()
+        return conversationCardTags().first()
     }
 
     private fun assertNoInlineError() {

@@ -257,7 +257,7 @@ fun YlvenApp(
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
                 onBack = { screen = IdentityScreen.HOME },
             )
-            IdentityScreen.HOME -> HomePage(
+            IdentityScreen.HOME -> P03HomePage(
                 gateway = gateway,
                 session = requireNotNull(session),
                 onOpenConversation = { conversation ->
@@ -266,7 +266,7 @@ fun YlvenApp(
                 },
                 onOpenAccount = { screen = IdentityScreen.ACCOUNT },
             )
-            IdentityScreen.CHAT -> ChatPage(gateway, requireNotNull(session), requireNotNull(activeConversation), onBack = { screen = IdentityScreen.HOME })
+            IdentityScreen.CHAT -> P03ChatPage(gateway, requireNotNull(session), requireNotNull(activeConversation), onBack = { screen = IdentityScreen.HOME })
         }
 
         if (securityAction != null) {
