@@ -109,6 +109,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
     }
     private var currentPage = ""
     private var p03ChatBaselineScale = 0f
+    private var p03ChatStatusFontCalibration = false
 
     fun render(stateId: String) {
         val page = stateId.substringBefore("-S")
@@ -578,19 +579,28 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             p03ChatBaselineScale = if (code == "INPUT_FOCUSED") 0f else .09f
             when (code) {
                 "INPUT_FOCUSED" -> keyboard(false)
-                "CONNECTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在建立安全连接…")
-                "UPLOADING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "文件正在上传…")
+                "CONNECTING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "正在建立安全连接…")
+                "UPLOADING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "文件正在上传…")
                 "STREAMING" -> { text("正在生成…", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
-                "TOOL_RUNNING" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在调用文件检索工具…")
-                "COMPLETED" -> statusBanner("SUCCESS", 270f, .84f)
-                "STOPPED" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止生成，已保留当前内容。")
+                "TOOL_RUNNING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在调用文件检索工具…")
+                "COMPLETED" -> p03ChatStatusBanner("SUCCESS", 270f, .84f)
+                "STOPPED" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止生成，已保留当前内容。")
                 "RATE_LIMITED", "PROVIDER_ERROR", "CONTENT_BLOCKED" -> {
-                    statusBanner(code, 1430f, .80f)
-                    statusBanner(code, 270f, .84f)
+                    p03ChatStatusBanner(code, 1430f, .80f)
+                    p03ChatStatusBanner(code, 270f, .84f)
                 }
             }
         } finally {
             p03ChatBaselineScale = 0f
+        }
+    }
+
+    private fun p03ChatStatusBanner(code: String, top: Float, widthRatio: Float, message: String? = null) {
+        p03ChatStatusFontCalibration = true
+        try {
+            statusBanner(code, top, widthRatio, message)
+        } finally {
+            p03ChatStatusFontCalibration = false
         }
     }
 
@@ -1216,7 +1226,8 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null, lineSpacing: Float = 8f,
     ) {
         val p03Text = currentPage in P03_PAGE_IDS
-        val calibratePhysicalFont = currentPage in P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS
+        val calibratePhysicalFont =
+            currentPage in P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS || p03ChatStatusFontCalibration
         paint.style = if (calibratePhysicalFont && !bold) Paint.Style.FILL_AND_STROKE else Paint.Style.FILL
         paint.strokeWidth = if (calibratePhysicalFont && !bold) .35f else 1f
         paint.color = fill
