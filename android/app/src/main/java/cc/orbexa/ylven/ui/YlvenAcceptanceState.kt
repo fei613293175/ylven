@@ -1284,7 +1284,13 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             bold -> .12f
             else -> .075f
         }
-        return 1f + coefficient * asciiRatio
+        val statusTitleCalibration = if (
+            currentPage == P03_CHAT_PAGE_ID &&
+            p03ChatStatusFontCalibration &&
+            bold &&
+            visible.length > 1
+        ) .008f else 0f
+        return 1f + coefficient * asciiRatio + statusTitleCalibration
     }
 
     private fun wrap(value: String, maxWidth: Float?, p03Text: Boolean, bold: Boolean): List<String> {
