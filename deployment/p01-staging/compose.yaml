@@ -17,12 +17,17 @@ services:
       TURNSTILE_MODE: first_party
       EMAIL_MODE: mock
       IDENTITY_DEBUG_OTP: "1"
+      CHAT_RUNTIME_MODE: upstream
+      SUB2API_ENDPOINT: ${SUB2API_ENDPOINT:?set SUB2API_ENDPOINT}
+      SUB2API_API_KEY_FILE: /run/secrets/sub2api_credential
+      SUB2API_DEFAULT_MODEL: ${SUB2API_DEFAULT_MODEL:-gpt-5.5}
       OWNER_ADMIN_USERNAME: admin
       OWNER_ADMIN_EMAIL: admin@ai-admin.orbexa.cc
       ADMIN_BOOTSTRAP_PASSWORD_FILE: /run/secrets/admin_credential
     volumes:
       - /opt/ylven-p01/data:/data
       - /opt/ylven-p01/secrets/admin_credential:/run/secrets/admin_credential:ro
+      - /opt/ylven-p01/secrets/sub2api_credential:/run/secrets/sub2api_credential:ro
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=16m

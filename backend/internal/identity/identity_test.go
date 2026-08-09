@@ -521,12 +521,21 @@ func TestP03RunEndpointPersistsProviderResponseAndResumesSSE(t *testing.T) {
 		if r.URL.Path != "/v1/chat/completions" || r.Header.Get("Authorization") != "Bearer test-key" {
 			t.Fatalf("unexpected provider request %s %q", r.URL.Path, r.Header.Get("Authorization"))
 		}
+		var request struct {
+			Model string `json:"model"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatal(err)
+		}
+		if request.Model != "gpt-test" {
+			t.Fatalf("unexpected provider model %q", request.Model)
+		}
 		_, _ = w.Write([]byte("{\"choices\":[{\"message\":{\"content\":\"来自受控上游的回答\"}}]}"))
 	}))
 	defer provider.Close()
 	api := NewAPI(s)
 	api.ChatRuntimeMode = "upstream"
-	api.ChatResponder = OpenAICompatibleResponder{Endpoint: provider.URL, APIKey: "test-key", Client: provider.Client()}
+	api.ChatResponder = OpenAICompatibleResponder{Endpoint: provider.URL, APIKey: "test-key", DefaultModel: "gpt-test", Client: provider.Client()}
 	created := requestJSON(t, api.Handler(), http.MethodPost, "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]string{"body": "测试正文", "model": "ylven-default"}, access, "")
 	if created.Code != http.StatusAccepted {
 		t.Fatalf("run create status=%d body=%s", created.Code, created.Body.String())

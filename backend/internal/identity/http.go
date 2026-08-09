@@ -41,12 +41,19 @@ func NewAPI(store *Store) *API {
 		api.ChatRuntimeMode = "unconfigured"
 	}
 	if api.ChatRuntimeMode == "upstream" {
-		endpoint, _ := envOrFile("SUB2API_ENDPOINT")
-		apiKey, _ := envOrFile("SUB2API_API_KEY")
-		api.ChatResponder = OpenAICompatibleResponder{Endpoint: endpoint, APIKey: apiKey}
-		if endpoint == "" || apiKey == "" {
+		endpoint, endpointErr := envOrFile("SUB2API_ENDPOINT")
+		apiKey, apiKeyErr := envOrFile("SUB2API_API_KEY")
+		defaultModel, defaultModelErr := envOrFile("SUB2API_DEFAULT_MODEL")
+		_, endpointParseErr := openAIChatCompletionsEndpoint(endpoint)
+		if endpointErr != nil || endpointParseErr != nil || apiKeyErr != nil || defaultModelErr != nil || endpoint == "" || apiKey == "" || defaultModel == "" {
+			api.configurationErrs = append(api.configurationErrs, "upstream chat runtime is not configured")
 			api.ChatRuntimeMode = "unconfigured"
+		} else {
+			api.ChatResponder = OpenAICompatibleResponder{Endpoint: endpoint, APIKey: apiKey, DefaultModel: defaultModel}
 		}
+	} else if api.ChatRuntimeMode != "unconfigured" {
+		api.configurationErrs = append(api.configurationErrs, "invalid chat runtime mode")
+		api.ChatRuntimeMode = "unconfigured"
 	}
 	api.TurnstileSiteKey = strings.TrimSpace(os.Getenv("TURNSTILE_SITE_KEY"))
 	api.TurnstileMode = strings.ToLower(strings.TrimSpace(os.Getenv("TURNSTILE_MODE")))

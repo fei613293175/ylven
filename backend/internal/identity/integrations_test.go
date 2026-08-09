@@ -32,6 +32,83 @@ func TestCloudflareTurnstileVerifierChecksHostnameAndAction(t *testing.T) {
 	}
 }
 
+func TestOpenAICompatibleResponderMapsDefaultModelAndV1BaseURL(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/chat/completions" {
+			t.Fatalf("unexpected provider path: %s", r.URL.Path)
+		}
+		if r.Header.Get("Authorization") != "Bearer provider-key" {
+			t.Fatal("provider authorization header is missing")
+		}
+		var request struct {
+			Model    string              `json:"model"`
+			Messages []map[string]string `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatal(err)
+		}
+		if request.Model != "gpt-5.5" || len(request.Messages) != 1 || request.Messages[0]["content"] != "hello" {
+			t.Fatalf("unexpected provider payload: %#v", request)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": "provider answer"}}}})
+	}))
+	defer provider.Close()
+
+	responder := OpenAICompatibleResponder{
+		Endpoint: provider.URL + "/v1", APIKey: "provider-key", DefaultModel: "gpt-5.5", Client: provider.Client(),
+	}
+	answer, err := responder.Respond(context.Background(), "ylven-default", "hello")
+	if err != nil || answer != "provider answer" {
+		t.Fatalf("answer=%q err=%v", answer, err)
+	}
+}
+
+func TestOpenAICompatibleResponderRequiresConfiguredDefaultModel(t *testing.T) {
+	responder := OpenAICompatibleResponder{Endpoint: "https://provider.example/v1", APIKey: "provider-key"}
+	if _, err := responder.Respond(context.Background(), "", "hello"); err == nil || err.Error() != "chat_runtime_unavailable" {
+		t.Fatalf("unexpected missing-model error: %v", err)
+	}
+}
+
+func TestNewAPIRejectsIncompleteUpstreamChatConfiguration(t *testing.T) {
+	t.Setenv("TURNSTILE_MODE", "first_party")
+	t.Setenv("EMAIL_MODE", "mock")
+	t.Setenv("OWNER_ADMIN_EMAIL", "admin@ai-admin.orbexa.cc")
+	t.Setenv("ADMIN_BOOTSTRAP_PASSWORD", "12345678")
+	t.Setenv("CHAT_RUNTIME_MODE", "upstream")
+	t.Setenv("SUB2API_ENDPOINT", "https://provider.example/v1")
+	t.Setenv("SUB2API_API_KEY", "provider-key")
+	t.Setenv("SUB2API_DEFAULT_MODEL", "")
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(store)
+	if api.ConfigurationOK() || api.ChatRuntimeMode != "unconfigured" || api.ChatResponder != nil {
+		t.Fatalf("incomplete upstream configuration was accepted: mode=%s responder=%T", api.ChatRuntimeMode, api.ChatResponder)
+	}
+}
+
+func TestNewAPIConfiguresUpstreamDefaultModel(t *testing.T) {
+	t.Setenv("TURNSTILE_MODE", "first_party")
+	t.Setenv("EMAIL_MODE", "mock")
+	t.Setenv("OWNER_ADMIN_EMAIL", "admin@ai-admin.orbexa.cc")
+	t.Setenv("ADMIN_BOOTSTRAP_PASSWORD", "12345678")
+	t.Setenv("CHAT_RUNTIME_MODE", "upstream")
+	t.Setenv("SUB2API_ENDPOINT", "https://provider.example/v1")
+	t.Setenv("SUB2API_API_KEY", "provider-key")
+	t.Setenv("SUB2API_DEFAULT_MODEL", "gpt-5.5")
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(store)
+	responder, ok := api.ChatResponder.(OpenAICompatibleResponder)
+	if !api.ConfigurationOK() || api.ChatRuntimeMode != "upstream" || !ok || responder.DefaultModel != "gpt-5.5" {
+		t.Fatalf("valid upstream configuration was rejected: ready=%t mode=%s responder=%#v", api.ConfigurationOK(), api.ChatRuntimeMode, api.ChatResponder)
+	}
+}
+
 func TestHTTPRegistrationUsesExplicitStagingMocks(t *testing.T) {
 	t.Setenv("TURNSTILE_MODE", "mock")
 	t.Setenv("TURNSTILE_MOCK_TOKEN", "test-pass")

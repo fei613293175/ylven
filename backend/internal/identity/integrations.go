@@ -101,20 +101,25 @@ type ChatResponder interface {
 }
 
 type OpenAICompatibleResponder struct {
-	Endpoint string
-	APIKey   string
-	Client   *http.Client
+	Endpoint     string
+	APIKey       string
+	DefaultModel string
+	Client       *http.Client
 }
 
 func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt string) (string, error) {
-	if strings.TrimSpace(r.Endpoint) == "" || strings.TrimSpace(r.APIKey) == "" {
+	providerModel := strings.TrimSpace(model)
+	if providerModel == "" || providerModel == "ylven-default" {
+		providerModel = strings.TrimSpace(r.DefaultModel)
+	}
+	if strings.TrimSpace(r.Endpoint) == "" || strings.TrimSpace(r.APIKey) == "" || providerModel == "" {
 		return "", errors.New("chat_runtime_unavailable")
 	}
-	endpoint := strings.TrimRight(r.Endpoint, "/")
-	if !strings.HasSuffix(endpoint, "/chat/completions") {
-		endpoint += "/v1/chat/completions"
+	endpoint, err := openAIChatCompletionsEndpoint(r.Endpoint)
+	if err != nil {
+		return "", errors.New("chat_runtime_unavailable")
 	}
-	payload := map[string]any{"model": model, "messages": []map[string]string{{"role": "user", "content": prompt}}, "stream": false}
+	payload := map[string]any{"model": providerModel, "messages": []map[string]string{{"role": "user", "content": prompt}}, "stream": false}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
@@ -155,6 +160,24 @@ func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt st
 		return "", errors.New("chat_provider_empty_response")
 	}
 	return strings.TrimSpace(decoded.Choices[0].Message.Content), nil
+}
+
+func openAIChatCompletionsEndpoint(baseURL string) (string, error) {
+	parsed, err := url.Parse(strings.TrimSpace(baseURL))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", errors.New("invalid chat provider endpoint")
+	}
+	path := strings.TrimRight(parsed.Path, "/")
+	switch {
+	case strings.HasSuffix(path, "/chat/completions"):
+	case strings.HasSuffix(path, "/v1"):
+		path += "/chat/completions"
+	default:
+		path += "/v1/chat/completions"
+	}
+	parsed.Path = path
+	parsed.RawPath = ""
+	return parsed.String(), nil
 }
 
 type SMTPMailer struct {
