@@ -1,5 +1,6 @@
 package cc.orbexa.ylven
 
+import android.os.Bundle
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
+import androidx.test.platform.app.InstrumentationRegistry
 import java.time.Instant
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -28,25 +30,36 @@ class P03LiveStagingFlowTest {
 
     @Test
     fun authenticatedStagingSessionCompletesARealConversationJourney() {
+        reportStage("shell_activity_launch")
+        launchP03TargetActivity()
+        composeRule.mainClock.advanceTimeBy(3_100)
+        reportStage("home_wait")
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
+        reportStage("home_ready")
         val marker = "device-${Instant.now().epochSecond}"
 
         composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
         waitForTag("YL-A-019-root", 20_000)
+        reportStage("new_conversation_form_ready")
         composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
+        reportStage("conversation_created")
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextClearance()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("P03 physical staging $marker")
         Espresso.closeSoftKeyboard()
+        reportStage("message_send_start")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
+        reportStage("message_send_clicked")
         waitForTagText("YL-A-026-C-P03_026-01", "completed", 45_000)
         assertNoInlineError()
+        reportStage("message_completed")
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         waitForTag("YL-A-022-root", 20_000)
         composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
         waitForTagGone("YL-A-022-root", 20_000)
+        reportStage("conversation_exported")
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("p03-open-rename-current").performClick()
@@ -57,6 +70,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
         waitForTagGone("YL-A-022-root", 20_000)
         assertNoInlineError()
+        reportStage("conversation_renamed")
 
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
@@ -72,6 +86,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("YL-A-022-C-P03_006-01").performClick()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
+        reportStage("conversation_archived")
 
         composeRule.onNodeWithTag("p03-open-temporary-conversation").performScrollTo().performClick()
         waitForTag("YL-A-031-root", 20_000)
@@ -85,6 +100,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("p03-confirm-delete").performClick()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
+        reportStage("temporary_conversation_deleted")
     }
 
     private fun waitForTag(tag: String, timeout: Long) {
@@ -125,6 +141,13 @@ class P03LiveStagingFlowTest {
         assertTrue(
             "The live staging flow displayed an application error",
             composeRule.onAllNodesWithTag("p01-inline-error").fetchSemanticsNodes().isEmpty(),
+        )
+    }
+
+    private fun reportStage(stage: String) {
+        InstrumentationRegistry.getInstrumentation().sendStatus(
+            2,
+            Bundle().apply { putString("ylven_stage", stage) },
         )
     }
 
