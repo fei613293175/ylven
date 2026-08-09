@@ -118,6 +118,7 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-024-C-P03_011-01").performClick()
         waitForCondition { "cancel" in gateway.calls }
         gateway.releaseStream()
+        waitForCondition { "events" in gateway.calls }
 
         scrollChatTo("YL-A-026-C-P03_026-01")
         waitForTag("YL-A-025-C-P03_016-01")
