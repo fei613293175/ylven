@@ -18,6 +18,10 @@ if ($phaseState -notmatch "(?m)^phase_id:\s*$Phase\s*$" -or $phaseState -notmatc
 }
 $version = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-version 2>$null | Select-Object -Last 1).Trim()
 if (-not $version) { throw "Could not resolve the version for $Phase." }
+$upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
+if (-not $upgradeFrom -or $upgradeFrom -eq 'NONE') {
+    throw "Could not resolve the required previous owner version for $Phase physical-device acceptance."
+}
 
 $serverParameters = @{ Phase=$Phase; Version=$version }
 if ($SshTarget) { $serverParameters.SshTarget = $SshTarget }
@@ -26,7 +30,7 @@ $serverLine = $serverOutput | Where-Object { $_ -like 'SERVER_BUILD_DIR=*' } | S
 if (-not $serverLine) { throw 'Online-server build completed without an artifact directory marker.' }
 $serverBuildDir = $serverLine.Substring('SERVER_BUILD_DIR='.Length)
 
-$deviceParameters = @{ Phase=$Phase; Version=$version; ServerBuildDir=$serverBuildDir }
+$deviceParameters = @{ Phase=$Phase; Version=$version; PreviousVersion=$upgradeFrom; ServerBuildDir=$serverBuildDir }
 if ($Serial) { $deviceParameters.Serial = $Serial }
 & (Join-Path $PSScriptRoot '50_RUN_PHYSICAL_DEVICE_ACCEPTANCE.ps1') @deviceParameters | Tee-Object -Variable deviceOutput
 $deviceLine = $deviceOutput | Where-Object { $_ -like 'PHYSICAL_ACCEPTANCE_DIR=*' } | Select-Object -Last 1
