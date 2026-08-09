@@ -5,11 +5,13 @@ import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
@@ -52,7 +54,11 @@ class P03LiveStagingFlowTest {
         reportStage("message_send_start")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         reportStage("message_send_clicked")
-        waitForTagText("YL-A-026-C-P03_026-01", "completed", 45_000)
+        waitForTagGone("YL-A-023-C-P03_009-01", 10_000)
+        waitForTag("YL-A-023-C-P03_009-01", 45_000)
+        composeRule.onNodeWithTag("YL-A-025-C-P03_016-01")
+            .performScrollToNode(hasTestTag("YL-A-026-C-P03_026-01"))
+        waitForTagText("YL-A-026-C-P03_026-01", "completed", 10_000)
         assertNoInlineError()
         reportStage("message_completed")
 
