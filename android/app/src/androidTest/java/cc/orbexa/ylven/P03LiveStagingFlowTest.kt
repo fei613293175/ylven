@@ -55,6 +55,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput(marker)
         waitForTag("p03-drawer-rename-$conversationId", 20_000)
         composeRule.onNodeWithTag("p03-drawer-rename-$conversationId").performClick()
+        waitForTag("p03-rename-input", 20_000)
         composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
         composeRule.onNodeWithTag("p03-rename-input").performTextInput("P03 $marker")
         Espresso.closeSoftKeyboard()
