@@ -1,5 +1,7 @@
 package cc.orbexa.ylven
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -18,16 +20,35 @@ internal fun launchP03TargetActivity(): MainActivity {
     }
 
     instrumentation.waitForIdleSync()
-    repeat(100) {
+    repeat(150) {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
             resumed = ActivityLifecycleMonitorRegistry.getInstance()
                 .getActivitiesInStage(Stage.RESUMED)
                 .filterIsInstance<MainActivity>()
                 .singleOrNull()
+            resumed?.let { activity ->
+                val metrics = activity.resources.displayMetrics
+                if (
+                    activity.resources.configuration.orientation != Configuration.ORIENTATION_PORTRAIT ||
+                    metrics.widthPixels >= metrics.heightPixels
+                ) {
+                    // Keep the physical display untouched while capturing the portrait-only
+                    // commercial visual baseline from the instrumentation activity.
+                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
+            }
         }
-        resumed?.let { return it }
+        resumed?.let { activity ->
+            val metrics = activity.resources.displayMetrics
+            if (
+                activity.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
+                metrics.widthPixels < metrics.heightPixels
+            ) {
+                return activity
+            }
+        }
         Thread.sleep(100)
     }
-    error("The target APK MainActivity did not reach RESUMED within 10 seconds.")
+    error("The target APK MainActivity did not reach portrait RESUMED state within 15 seconds.")
 }
