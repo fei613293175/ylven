@@ -72,7 +72,7 @@ private const val CONTRACT_HEIGHT = 2400f
 private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
-private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018", "YL-A-023")
+private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
 
 private object Pc {
     val bg = color("#F6F7FB")
@@ -561,9 +561,9 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             // Keep the approved CJK/Latin break stable across Android system fonts.
             // The reference places the final 负 on the first line and starts the
             // following line with 责流式请求、; relying on Paint.measureText()
-            // changes that break on different emulator font builds.
+            // changes that break across physical-device font builds.
             "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。",
-            72f, 801f, 37f, Pc.text, maxWidth = 950f, lineSpacing = 23f,
+            72f, 801f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 23f,
         )
         rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
