@@ -8,12 +8,15 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
@@ -34,6 +37,8 @@ import cc.orbexa.ylven.identity.RunEvent
 import cc.orbexa.ylven.ui.YlvenApp
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
+import java.util.concurrent.CopyOnWriteArraySet
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -67,26 +72,31 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
         waitForTag("YL-A-019-root")
         captureProductionPage("YL-A-019-PRODUCTION", "YL-A-019-root")
-        composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performClick()
+        composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performScrollTo().performClick()
         waitForTag("p03-active-conversation-created")
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-open-temporary-conversation"))
         composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
         waitForTag("YL-A-031-root")
         captureProductionPage("YL-A-031-PRODUCTION", "YL-A-031-root")
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("临时架构讨论")
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
+        Espresso.closeSoftKeyboard()
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()
         waitForTag("p03-active-conversation-temporary")
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-open-conversation-drawer"))
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
         waitForTag("YL-A-020-root")
         captureProductionPage("YL-A-020-PRODUCTION", "YL-A-020-root")
         waitForTag("YL-A-020-C-P03_003-01")
-        composeRule.onNodeWithTag("YL-A-020-C-P03_003-01").performClick()
+        composeRule.onNodeWithTag("YL-A-020-C-P03_003-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("p03-open-search").performClick()
         waitForTag("YL-A-021-root")
         composeRule.onNodeWithTag("YL-A-021-C-P03_004-01").performTextInput("Alpha")
@@ -99,30 +109,53 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextClearance()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("physical flow message")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
-        waitForTag("YL-A-023-C-P03_010-01")
-        waitForTag("YL-A-023-C-P03_012-01")
+        scrollChatTo("YL-A-023-C-P03_010-01")
+        gateway.releaseSend()
+        waitForCondition { "events-attempt" in gateway.calls }
+        gateway.releaseFirstEventFailure()
+        scrollChatTo("YL-A-023-C-P03_012-01")
         waitForTag("YL-A-024-C-P03_011-01")
         composeRule.onNodeWithTag("YL-A-024-C-P03_011-01").performClick()
+        waitForCondition { "cancel" in gateway.calls }
+        gateway.releaseStream()
 
-        waitForTag("YL-A-026-C-P03_026-01")
+        scrollChatTo("YL-A-026-C-P03_026-01")
         waitForTag("YL-A-025-C-P03_016-01")
         waitForTag("YL-A-023-C-P03_017-01")
-        waitForTag("YL-A-026-C-P03_018-01")
-        waitForTag("YL-A-027-C-P03_019-01")
-        waitForTag("YL-A-028-C-P03_020-01")
-        waitForTag("YL-A-029-C-P03_021-01")
+        scrollChatTo("YL-A-026-C-P03_018-01")
+        scrollChatTo("YL-A-027-C-P03_019-01")
+        scrollChatTo("YL-A-028-C-P03_020-01")
+        scrollChatTo("YL-A-029-C-P03_021-01")
         captureProductionPage(
             "YL-A-023-PRODUCTION",
             "YL-A-023-C-P03_013-01",
-            scrollAnchorTag = "p03-chat-start",
+            scrollAnchorTag = "YL-A-025-C-P03_016-01",
         )
-        composeRule.onNodeWithTag("YL-A-030-C-P03_022-01").performScrollTo().performClick()
-        composeRule.onNodeWithTag("YL-A-030-C-P03_023-01").performScrollTo().performClick()
-        composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[0].performScrollTo().performClick()
-        composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[1].performScrollTo().performClick()
-        composeRule.onNodeWithTag("YL-A-030-C-P03_024-01").performScrollTo().performClick()
-        composeRule.onNodeWithTag("YL-A-030-C-P03_030-01").performScrollTo().performClick()
-        composeRule.onNodeWithTag("p03-copy-code").performScrollTo().performClick()
+        scrollChatTo("YL-A-030-C-P03_022-01")
+        composeRule.onNodeWithTag("YL-A-030-C-P03_022-01").performClick()
+        scrollChatTo("YL-A-030-C-P03_023-01")
+        composeRule.onNodeWithTag("YL-A-030-C-P03_023-01").performClick()
+        waitForCall(gateway, "export-message")
+        composeRule.waitForIdle()
+        scrollChatTo("YL-A-030-C-P03_025-01")
+        val feedbackNodes = composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")
+        check(feedbackNodes.fetchSemanticsNodes().size >= 2) { "Both feedback controls are not present" }
+        feedbackNodes[0].performClick()
+        waitForCondition { "feedback-up" in gateway.calls || "feedback-down" in gateway.calls }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[1].performClick()
+        waitForCall(gateway, "feedback-up")
+        waitForCall(gateway, "feedback-down")
+        composeRule.waitForIdle()
+        scrollChatTo("YL-A-030-C-P03_024-01")
+        composeRule.onNodeWithTag("YL-A-030-C-P03_024-01").performClick()
+        waitForCall(gateway, "regenerate")
+        composeRule.waitForIdle()
+        scrollChatTo("YL-A-030-C-P03_030-01")
+        composeRule.onNodeWithTag("YL-A-030-C-P03_030-01").performClick()
+        waitForCall(gateway, "speak")
+        scrollChatTo("p03-copy-code")
+        composeRule.onNodeWithTag("p03-copy-code").performClick()
         gateway.failNextSend = true
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("retry me")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
@@ -132,7 +165,9 @@ class P03RealDeviceFlowTest {
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
-        composeRule.onNodeWithTag("p03-conversation-alpha").performScrollTo().performClick()
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-conversation-alpha"))
+        composeRule.onNodeWithTag("p03-conversation-alpha").performClick()
         waitForTag("YL-A-032-C-P03_032-01")
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").assertTextContains("retry me")
 
@@ -140,7 +175,9 @@ class P03RealDeviceFlowTest {
         returnFromVoiceInputIfLaunched()
         if (composeRule.onAllNodesWithTag("YL-A-023-C-P03_013-01").fetchSemanticsNodes().isEmpty()) {
             waitForTag("YL-A-018-C-P03_001-01")
-            composeRule.onNodeWithTag("p03-conversation-alpha").performScrollTo().performClick()
+            composeRule.onNodeWithTag("p03-home-list")
+                .performScrollToNode(hasTestTag("p03-conversation-alpha"))
+            composeRule.onNodeWithTag("p03-conversation-alpha").performClick()
         }
         waitForTag("YL-A-023-C-P03_013-01")
 
@@ -156,6 +193,7 @@ class P03RealDeviceFlowTest {
         waitForTag("p03-rename-input")
         composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
         composeRule.onNodeWithTag("p03-rename-input").performTextInput("Alpha renamed")
+        Espresso.closeSoftKeyboard()
         composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
         waitForCondition { "rename" in gateway.calls }
 
@@ -164,7 +202,9 @@ class P03RealDeviceFlowTest {
         waitForCondition { "archive" in gateway.calls }
         waitForTag("YL-A-018-C-P03_001-01")
 
-        composeRule.onNodeWithTag("p03-conversation-beta").performScrollTo().performClick()
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-conversation-beta"))
+        composeRule.onNodeWithTag("p03-conversation-beta").performClick()
         waitForTag("p03-active-conversation-beta")
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
@@ -186,6 +226,20 @@ class P03RealDeviceFlowTest {
         composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
     }
 
+    private fun waitForCall(gateway: FlowGateway, call: String) {
+        try {
+            waitForCondition { call in gateway.calls }
+        } catch (failure: Throwable) {
+            throw AssertionError("Missing gateway call $call; calls=${gateway.calls}", failure)
+        }
+    }
+
+    private fun scrollChatTo(tag: String) {
+        composeRule.onNodeWithTag("YL-A-025-C-P03_016-01")
+            .performScrollToNode(hasTestTag(tag))
+        waitForTag(tag)
+    }
+
     private fun waitForCondition(predicate: () -> Boolean) {
         composeRule.waitUntil(timeoutMillis = 8_000, condition = predicate)
     }
@@ -205,7 +259,7 @@ class P03RealDeviceFlowTest {
         composeRule.waitForIdle()
         instrumentation.waitForIdleSync()
         if (scrollAnchorTag != null) {
-            composeRule.onNodeWithTag(scrollAnchorTag).performScrollTo()
+            composeRule.onNodeWithTag(scrollAnchorTag).performScrollToIndex(0)
             composeRule.waitForIdle()
             instrumentation.waitForIdleSync()
         }
@@ -295,11 +349,14 @@ class P03RealDeviceFlowTest {
 }
 
 private class FlowGateway : IdentityGateway {
-    val calls = linkedSetOf<String>()
+    val calls = CopyOnWriteArraySet<String>()
     var failNextSend = false
     private var failFirstEvent = true
     private var currentRunStatus = "streaming"
     private var draft = "saved draft"
+    private val sendGate = CompletableDeferred<Unit>()
+    private val firstEventFailureGate = CompletableDeferred<Unit>()
+    private val streamGate = CompletableDeferred<Unit>()
     private val alpha = Conversation("alpha", "安卓 AI 工具架构设计", "active", "刚刚")
     private val beta = Conversation("beta", "比较 Claude 与 GPT 的推理差异", "active", "昨天")
 
@@ -372,6 +429,7 @@ private class FlowGateway : IdentityGateway {
             failNextSend = false
             throw IOException("controlled network failure")
         }
+        sendGate.await()
         currentRunStatus = "streaming"
         return run("run-1")
     }
@@ -379,11 +437,26 @@ private class FlowGateway : IdentityGateway {
     override suspend fun runEvents(bearer: String, runId: String, after: Long): Pair<MessageRun, List<RunEvent>> {
         if (failFirstEvent) {
             failFirstEvent = false
+            calls += "events-attempt"
+            firstEventFailureGate.await()
             calls += "events-retry"
             throw IOException("controlled SSE disconnect")
         }
+        streamGate.await()
         calls += "events"
         return Pair(run(runId), listOf(RunEvent(after + 1, "delta", "answer")))
+    }
+
+    fun releaseSend() {
+        sendGate.complete(Unit)
+    }
+
+    fun releaseFirstEventFailure() {
+        firstEventFailureGate.complete(Unit)
+    }
+
+    fun releaseStream() {
+        streamGate.complete(Unit)
     }
 
     override suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> =
