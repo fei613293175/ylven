@@ -16,6 +16,9 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.Conversation
 import cc.orbexa.ylven.identity.DeviceSession
@@ -196,8 +199,7 @@ class P03RealDeviceFlowTest {
         check(composeRule.onAllNodesWithTag(expectedRootTag).fetchSemanticsNodes().isNotEmpty()) {
             "Expected page root $expectedRootTag is absent before capturing $name"
         }
-        Espresso.closeSoftKeyboard()
-        composeRule.runOnUiThread { activity.currentFocus?.clearFocus() }
+        hideKeyboardIfVisible()
         composeRule.waitForIdle()
         instrumentation.waitForIdleSync()
         if (scrollAnchorTag != null) {
@@ -240,6 +242,32 @@ class P03RealDeviceFlowTest {
         } finally {
             bitmap.recycle()
         }
+    }
+
+    private fun hideKeyboardIfVisible() {
+        var wasVisible = false
+        composeRule.runOnUiThread {
+            val decorView = activity.window.decorView
+            wasVisible = ViewCompat.getRootWindowInsets(decorView)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            activity.currentFocus?.clearFocus()
+            if (wasVisible) {
+                WindowCompat.getInsetsController(activity.window, decorView)
+                    .hide(WindowInsetsCompat.Type.ime())
+            }
+        }
+        if (wasVisible) {
+            composeRule.waitUntil(timeoutMillis = 5_000) { !isKeyboardVisible() }
+        }
+    }
+
+    private fun isKeyboardVisible(): Boolean {
+        var visible = false
+        composeRule.runOnUiThread {
+            visible = ViewCompat.getRootWindowInsets(activity.window.decorView)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        }
+        return visible
     }
 }
 
