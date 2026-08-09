@@ -45,10 +45,12 @@ function Invoke-Instrumentation {
     if (-not $device -or $device.State -ne 'device') {
         throw "ADB target $script:Serial is not in exact state device immediately before $ClassName; testing stops."
     }
-    $foregroundOutput = @(Invoke-Adb shell am start '-W' '-n' "$script:PackageId/.MainActivity")
-    $foregroundOutput | Set-Content -LiteralPath "$ResultPath.foreground.txt" -Encoding UTF8
-    if (($foregroundOutput -join "`n") -notmatch 'Status:\s*ok') {
-        throw "The target APK could not be brought to the foreground before $ClassName."
+    if ($ClassName -eq "$script:PackageId.P03ProvisionStagingSessionTest") {
+        $foregroundOutput = @(Invoke-Adb shell am start '-W' '-n' "$script:PackageId/.MainActivity")
+        $foregroundOutput | Set-Content -LiteralPath "$ResultPath.foreground.txt" -Encoding UTF8
+        if (($foregroundOutput -join "`n") -notmatch 'Status:\s*ok') {
+            throw "The target APK could not be brought to the foreground before $ClassName."
+        }
     }
     $arguments = @(
         '-s', $script:Serial, 'shell', 'am', 'instrument', '-w', '-r',

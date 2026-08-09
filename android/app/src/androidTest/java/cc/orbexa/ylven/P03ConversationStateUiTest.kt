@@ -10,7 +10,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
@@ -23,14 +23,15 @@ import org.junit.Test
 /** Captures every P03 Android contract state from the running Compose surface. */
 class P03ConversationStateUiTest {
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createEmptyComposeRule()
 
     @Test
     fun everyP03AndroidStateIsRuntimeCaptured() {
         check(P03_STATE_IDS.size == 93) { "P03 state catalog changed; update this acceptance test." }
         val activeState = mutableStateOf(P03_STATE_IDS.first())
+        val activity = launchP03TargetActivity()
         composeRule.runOnUiThread {
-            composeRule.activity.setContent {
+            activity.setContent {
                 YlvenTheme(darkTheme = false) {
                     key(activeState.value) { YlvenAcceptanceState(activeState.value) }
                 }
