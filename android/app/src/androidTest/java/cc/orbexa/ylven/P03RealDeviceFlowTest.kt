@@ -125,8 +125,8 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("retry me")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         waitForTag("YL-A-023-C-P03_027-01")
-        composeRule.onNodeWithTag("YL-A-023-C-P03_027-01").performScrollTo().performClick()
-        Espresso.closeSoftKeyboard()
+        composeRule.onNodeWithTag("YL-A-023-C-P03_027-01").performClick()
+        hideKeyboardIfVisible()
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
