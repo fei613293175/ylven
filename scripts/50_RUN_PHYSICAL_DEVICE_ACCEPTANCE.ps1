@@ -73,13 +73,17 @@ function Invoke-Instrumentation {
             $partial | Set-Content -LiteralPath $ResultPath -Encoding UTF8
             throw "Instrumentation $ClassName exceeded the bounded timeout of $TimeoutSeconds seconds."
         }
+        # Windows PowerShell needs the parameterless wait before ExitCode is reliably populated.
+        $process.WaitForExit()
+        $process.Refresh()
+        $exitCode = $process.ExitCode
         $output = @(
             if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
             if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
         )
         $output | Set-Content -LiteralPath $ResultPath -Encoding UTF8
-        if ($process.ExitCode -ne 0) {
-            throw "Instrumentation $ClassName failed with adb exit code $($process.ExitCode):`n$($output -join "`n")"
+        if ($exitCode -ne 0) {
+            throw "Instrumentation $ClassName failed with adb exit code ${exitCode}:`n$($output -join "`n")"
         }
         return $output
     } finally {
