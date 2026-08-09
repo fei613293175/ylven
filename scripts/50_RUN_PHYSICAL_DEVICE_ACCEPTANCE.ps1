@@ -14,10 +14,6 @@ $TestPackageId = 'cc.orbexa.ylven.test'
 $QueueOwned = $false
 $TicketPath = $null
 $ActiveLock = $null
-$DisplayDensityChanged = $false
-$OriginalDensityOverride = $null
-$DisplaySizeChanged = $false
-$OriginalSizeOverride = $null
 
 function Invoke-Adb {
     param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
@@ -225,34 +221,12 @@ try {
     $model = ((Invoke-Adb shell getprop ro.product.model) -join '').Trim()
     $androidVersion = ((Invoke-Adb shell getprop ro.build.version.release) -join '').Trim()
     $apiLevel = ((Invoke-Adb shell getprop ro.build.version.sdk) -join '').Trim()
-    $sizeBefore = ((Invoke-Adb shell wm size) -join ' ').Trim()
-    $physicalSizeMatch = [regex]::Match($sizeBefore, '(?i)Physical size:\s*(\d+x\d+)')
-    $overrideSizeMatch = [regex]::Match($sizeBefore, '(?i)Override size:\s*(\d+x\d+)')
-    if (-not $physicalSizeMatch.Success) { throw "Could not determine the physical display size: $sizeBefore" }
-    if ($overrideSizeMatch.Success) { $OriginalSizeOverride = $overrideSizeMatch.Groups[1].Value }
-    $effectiveSizeBefore = if ($overrideSizeMatch.Success) { $overrideSizeMatch.Groups[1].Value } else { $physicalSizeMatch.Groups[1].Value }
-    if ($effectiveSizeBefore -ne '1080x2400') {
-        $DisplaySizeChanged = $true
-        Invoke-Adb shell wm size 1080x2400 | Out-Null
-        Start-Sleep -Seconds 1
-    }
-    $size = ((Invoke-Adb shell wm size) -join ' ').Trim()
-    $effectiveSizeMatch = [regex]::Match($size, '(?i)(?:Override|Physical) size:\s*1080x2400')
-    if (-not $effectiveSizeMatch.Success) { throw "Could not establish the canonical 1080x2400 screenshot viewport: $size" }
-    $densityBefore = ((Invoke-Adb shell wm density) -join ' ').Trim()
-    $physicalDensityMatch = [regex]::Match($densityBefore, '(?i)Physical density:\s*(\d+)')
-    $overrideDensityMatch = [regex]::Match($densityBefore, '(?i)Override density:\s*(\d+)')
-    if (-not $physicalDensityMatch.Success) { throw "Could not determine the physical display density: $densityBefore" }
-    if ($overrideDensityMatch.Success) { $OriginalDensityOverride = [int]$overrideDensityMatch.Groups[1].Value }
-    $effectiveDensityBefore = if ($overrideDensityMatch.Success) { [int]$overrideDensityMatch.Groups[1].Value } else { [int]$physicalDensityMatch.Groups[1].Value }
-    if ($effectiveDensityBefore -ne 480) {
-        $DisplayDensityChanged = $true
-        Invoke-Adb shell wm density 480 | Out-Null
-        Start-Sleep -Seconds 1
-    }
+    $physicalSize = ((Invoke-Adb shell wm size) -join ' ').Trim()
+    if ($physicalSize -notmatch '(?i)Physical size:\s*\d+x\d+') { throw "Could not determine the physical display size: $physicalSize" }
+    if ($physicalSize -match '(?i)Override size:') { throw "The selected phone has an existing display-size override; testing stops without changing it: $physicalSize" }
     $density = ((Invoke-Adb shell wm density) -join ' ').Trim()
-    $effectiveDensityMatch = [regex]::Match($density, '(?i)(?:Override|Physical) density:\s*480')
-    if (-not $effectiveDensityMatch.Success) { throw "Could not establish the canonical 480 dpi test density: $density" }
+    if ($density -notmatch '(?i)Physical density:\s*\d+') { throw "Could not determine the physical display density: $density" }
+    if ($density -match '(?i)Override density:') { throw "The selected phone has an existing density override; testing stops without changing it: $density" }
 
     Invoke-Adb logcat '-c' | Out-Null
     # Vivo's streaming installer requires an interactive vendor risk dialog; push install keeps the same ADB install path
@@ -466,7 +440,7 @@ try {
     $deviceEvidence = [ordered]@{
         schema_version='2.0'; phase=$Phase; version=$Version; commit_sha=$provenance.commit_sha
         apk=(Split-Path -Leaf $deliveredApk); apk_sha256=$provenance.apk_sha256
-        device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; size_before=$sizeBefore; size=$size; density_before=$densityBefore; density=$density; canonical_size_applied=$DisplaySizeChanged; canonical_density_applied=$DisplayDensityChanged }
+        device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density=$density; display_size_override=$false; density_override=$false }
         selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
         queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
         paths=@($(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
@@ -488,28 +462,6 @@ try {
     Write-Warning 'Production-page screenshots require direct Codex comparison with the representative approved mockups. The APK is not deliverable yet.'
     Write-Output "PHYSICAL_ACCEPTANCE_DIR=$output"
 } finally {
-    if ($DisplaySizeChanged -and $AdbPath -and $Serial) {
-        $restoreSizeArgument = if ($null -ne $OriginalSizeOverride) { [string]$OriginalSizeOverride } else { 'reset' }
-        $savedErrorActionPreference = $ErrorActionPreference
-        try {
-            $ErrorActionPreference = 'Continue'
-            & $AdbPath -s $Serial shell wm size $restoreSizeArgument 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) { Write-Warning "Could not restore the original device size with wm size $restoreSizeArgument." }
-        } finally {
-            $ErrorActionPreference = $savedErrorActionPreference
-        }
-    }
-    if ($DisplayDensityChanged -and $AdbPath -and $Serial) {
-        $restoreDensityArgument = if ($null -ne $OriginalDensityOverride) { [string]$OriginalDensityOverride } else { 'reset' }
-        $savedErrorActionPreference = $ErrorActionPreference
-        try {
-            $ErrorActionPreference = 'Continue'
-            & $AdbPath -s $Serial shell wm density $restoreDensityArgument 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) { Write-Warning "Could not restore the original device density with wm density $restoreDensityArgument." }
-        } finally {
-            $ErrorActionPreference = $savedErrorActionPreference
-        }
-    }
     if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) {
         $activeFull = [System.IO.Path]::GetFullPath($ActiveLock)
         if ($activeFull.StartsWith([System.IO.Path]::GetFullPath((Split-Path -Parent $ActiveLock)), [System.StringComparison]::OrdinalIgnoreCase)) {

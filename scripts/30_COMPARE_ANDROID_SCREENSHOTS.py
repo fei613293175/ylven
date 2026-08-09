@@ -11,6 +11,12 @@ def score(a:Image.Image,b:Image.Image)->tuple[float,float]:
  diff=ImageChops.difference(a,b); stat=ImageStat.Stat(diff)
  mae=sum(stat.mean)/(3*255.0); return max(0.0,1.0-mae),mae
 
+def normalize_runtime(reference:Image.Image,runtime:Image.Image)->tuple[Image.Image,str]:
+ if runtime.size==reference.size: return runtime,'native-size'
+ original=runtime.size
+ normalized=runtime.resize(reference.size,Image.Resampling.LANCZOS)
+ return normalized,f'native {original[0]}x{original[1]} -> comparison {reference.width}x{reference.height}'
+
 def font_exception(phase:str)->dict|None:
  path=ROOT/'contracts'/'visual-exceptions'/f'{phase}-owner-font-rasterization.json'
  if not path.is_file(): return None
@@ -34,23 +40,24 @@ def main()->int:
    '- Layout, colors, component geometry, visible state and missing screenshots remain strict.',
    '',
   ]
- lines += ['| State | Raw Similarity | Raw Mismatch | Structural Mismatch | Result |','|---|---:|---:|---:|---|']
+ lines += ['Raw physical-device PNGs are retained unchanged. Size normalization occurs only in memory for comparison.','', '| State | Screenshot Size | Comparison Similarity | Comparison Mismatch | Structural Mismatch | Result |','|---|---|---:|---:|---:|---|']
  if not rows:
   lines += ['', 'No Android surface states are bound to this phase.', 'Admin/Web visual evidence is reviewed from the phase evidence package and is not a physical-device Android screenshot.']
  for r in rows:
   sid=r['state_id']; actual=shots/f'{sid}.png'; ref=ROOT/r['mockup_path']
   if not actual.is_file():
    if phase == 'P00':
-    lines.append(f'| {sid} | — | — | — | NOT_CAPTURED (P00 shell limitation) |'); continue
-   errors.append(f'missing screenshot {sid}'); lines.append(f'| {sid} | — | — | — | MISSING |'); continue
+    lines.append(f'| {sid} | — | — | — | — | NOT_CAPTURED (P00 shell limitation) |'); continue
+   errors.append(f'missing screenshot {sid}'); lines.append(f'| {sid} | — | — | — | — | MISSING |'); continue
   reference=Image.open(ref); runtime=Image.open(actual)
+  runtime,normalization=normalize_runtime(reference,runtime)
   s,m=score(reference,runtime); structural=None
   ok=s>=0.985 and m<=0.005; result='PASS' if ok else 'REVIEW'
-  if not ok and exception and reference.size==runtime.size:
+  if not ok and exception:
    structural_s,structural=structural_score(reference,runtime,float(exception['structural_blur_radius_px']))
    ok=(s>=float(exception['raw_similarity_min']) and m<=float(exception['raw_mismatch_max']) and structural<=float(exception['structural_mismatch_max']))
    if ok: result='PASS_WITH_OWNER_FONT_EXCEPTION'
-  lines.append(f'| {sid} | {s:.5f} | {m:.5f} | {"—" if structural is None else f"{structural:.5f}"} | {result} |')
+  lines.append(f'| {sid} | {normalization} | {s:.5f} | {m:.5f} | {"—" if structural is None else f"{structural:.5f}"} | {result} |')
   if not ok: errors.append(f'{sid} visual threshold failed')
  result = 'PASS (runtime screenshots not captured for P00 shell)' if phase == 'P00' and not errors else ('PASS' if not errors else 'FAIL')
  lines += ['',f'Result: **{result}**']

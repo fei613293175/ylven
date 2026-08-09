@@ -38,6 +38,11 @@ def load_json(path: Path, errors: list[str]) -> dict:
     if not path.is_file():
         errors.append(f"missing {path.name}")
         return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid {path.name}: {exc}")
+        return {}
 
 
 def load_properties(path: Path, errors: list[str]) -> dict[str, str]:
@@ -55,11 +60,6 @@ def load_properties(path: Path, errors: list[str]) -> dict[str, str]:
     except OSError as exc:
         errors.append(f"invalid {path.name}: {exc}")
     return values
-    try:
-        return json.loads(path.read_text(encoding="utf-8-sig"))
-    except (OSError, json.JSONDecodeError) as exc:
-        errors.append(f"invalid {path.name}: {exc}")
-        return {}
 
 
 def main() -> int:
@@ -128,6 +128,25 @@ def main() -> int:
         errors.append("physical-device proof does not record exact ADB state device")
     if device_info.get("physical_device") is not True or str(device_info.get("ro_kernel_qemu")) == "1":
         errors.append("physical-device proof is missing or identifies a simulator")
+    size_match = re.fullmatch(
+        r"Physical size:\s*(\d+)x(\d+)",
+        str(device_info.get("physical_size", "")).strip(),
+        flags=re.IGNORECASE,
+    )
+    native_size = tuple(map(int, size_match.groups())) if size_match else None
+    if native_size is None or min(native_size) <= 0:
+        errors.append("physical-device proof does not contain a valid native physical size")
+    density_match = re.fullmatch(
+        r"Physical density:\s*(\d+)",
+        str(device_info.get("density", "")).strip(),
+        flags=re.IGNORECASE,
+    )
+    if density_match is None or int(density_match.group(1)) <= 0:
+        errors.append("physical-device proof does not contain a valid native physical density")
+    if device_info.get("display_size_override") is not False:
+        errors.append("physical-device proof does not explicitly reject a display-size override")
+    if device_info.get("density_override") is not False:
+        errors.append("physical-device proof does not explicitly reject a display-density override")
     queue = device.get("queue") or {}
     if queue.get("type") != "shared_fifo" or queue.get("lock_held_for_entire_run") is not True:
         errors.append("physical-device shared FIFO ownership was not proven")
@@ -165,8 +184,11 @@ def main() -> int:
         try:
             with Image.open(path) as source:
                 shot = source.convert("RGB")
-                if shot.size != (1080, 2400):
-                    errors.append(f"physical-device screenshot has wrong dimensions: {name} {shot.size}")
+                if native_size is not None and shot.size != native_size:
+                    errors.append(
+                        f"physical-device screenshot is not native size: {name} "
+                        f"{shot.size}, expected {native_size}"
+                    )
                 if all(high - low < 8 for low, high in ImageStat.Stat(shot).extrema):
                     errors.append(f"physical-device screenshot is blank: {name}")
         except Exception as exc:
@@ -195,8 +217,11 @@ def main() -> int:
         try:
             with Image.open(path) as source:
                 shot = source.convert("RGB")
-                if shot.size != (1080, 2400):
-                    errors.append(f"production-page screenshot has wrong dimensions: {name} {shot.size}")
+                if native_size is not None and shot.size != native_size:
+                    errors.append(
+                        f"production-page screenshot is not native size: {name} "
+                        f"{shot.size}, expected {native_size}"
+                    )
                 if all(high - low < 8 for low, high in ImageStat.Stat(shot).extrema):
                     errors.append(f"production-page screenshot is blank: {name}")
         except Exception as exc:

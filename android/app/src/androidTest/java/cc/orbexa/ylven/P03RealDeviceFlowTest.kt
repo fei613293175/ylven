@@ -156,8 +156,8 @@ class P03RealDeviceFlowTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         composeRule.waitForIdle()
         val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
-        check(bitmap.width == 1080 && bitmap.height == 2400) {
-            "P03 production screenshot has unexpected dimensions for $name: ${bitmap.width}x${bitmap.height}"
+        check(bitmap.width > 0 && bitmap.height > 0) {
+            "P03 production screenshot is empty for $name"
         }
         val resolver = context.contentResolver
         val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/ylven-p03-production/"

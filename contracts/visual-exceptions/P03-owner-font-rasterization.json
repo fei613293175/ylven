@@ -11,7 +11,8 @@
   "structural_blur_radius_px": 7.0,
   "structural_mismatch_max": 0.005,
   "invariants": [
-    "physical device screenshots must be exactly 1080x2400",
+    "physical device screenshots must retain the selected phone's native size and density without adb display overrides",
+    "only in-memory comparison copies may be normalized to the 1080x2400 approved mockup size",
     "every P03 state must have a physical-device runtime screenshot",
     "raw similarity must remain at least 0.977",
     "colors, layout, component geometry and visible state are not excepted",

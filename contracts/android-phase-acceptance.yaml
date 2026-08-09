@@ -65,6 +65,7 @@ physical_device:
   - API level
   - physical size
   - density
+  - no adb display size or density override
 brand_assets:
   application_icon: android/app/src/main/res/drawable/ylven_logo.png
   startup_image: android/app/src/main/res/drawable-nodpi/ylven_splash.png
@@ -126,6 +127,7 @@ required_stages:
 - id: current_phase_visual
   requirements:
   - 本阶段全部 Android Page State ID 在项目所有者物理手机生成截图
+  - 截图必须保留手机原生分辨率和密度，禁止为验收修改手机 display size 或 density；像素比较只能转换内存副本
   - 逐状态与已批准效果图比较布局、字体、颜色、间距、图标和交互状态
   - 另从生产 YlvenApp 真实点击路径采集每个 PAGE/OVERLAY 截图，禁止用专用合同渲染器替代生产页面证据
   - Codex 必须直接逐页核对生产截图并写入真实页面视觉审查.json；未审查或任一项失败时保持 PENDING/FAIL
