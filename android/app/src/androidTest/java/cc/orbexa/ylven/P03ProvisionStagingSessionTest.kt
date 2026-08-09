@@ -1,5 +1,6 @@
 package cc.orbexa.ylven
 
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.identity.HttpIdentityGateway
 import cc.orbexa.ylven.identity.SessionStore
@@ -7,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -14,6 +16,9 @@ import org.junit.Test
  * physical-device journey after the owner-approved signing migration.
  */
 class P03ProvisionStagingSessionTest {
+    @get:Rule
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
     @Test
     fun createsAndPersistsRealStagingSession() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext

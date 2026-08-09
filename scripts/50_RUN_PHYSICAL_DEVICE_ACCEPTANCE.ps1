@@ -34,6 +34,55 @@ function Invoke-Adb {
     return $textOutput
 }
 
+function Invoke-Instrumentation {
+    param(
+        [Parameter(Mandatory=$true)][string]$ClassName,
+        [Parameter(Mandatory=$true)][ValidateRange(1,3600)][int]$TimeoutSeconds,
+        [Parameter(Mandatory=$true)][string]$ResultPath
+    )
+    $deviceRows = @(Get-DeviceRows)
+    $device = $deviceRows | Where-Object { $_.Serial -eq $script:Serial } | Select-Object -First 1
+    if (-not $device -or $device.State -ne 'device') {
+        throw "ADB target $script:Serial is not in exact state device immediately before $ClassName; testing stops."
+    }
+    $stdoutPath = "$ResultPath.stdout.tmp"
+    $stderrPath = "$ResultPath.stderr.tmp"
+    $arguments = @(
+        '-s', $script:Serial, 'shell', 'am', 'instrument', '-w', '-r',
+        '-e', 'class', $ClassName,
+        "$script:TestPackageId/androidx.test.runner.AndroidJUnitRunner"
+    )
+    $process = Start-Process -FilePath $script:AdbPath -ArgumentList $arguments -NoNewWindow -PassThru `
+        -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    try {
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            $process.Kill()
+            $process.WaitForExit()
+            # Closing the host adb client is not sufficient proof that device-side instrumentation stopped.
+            & $script:AdbPath -s $script:Serial shell am force-stop $script:TestPackageId 2>$null
+            & $script:AdbPath -s $script:Serial shell am force-stop $script:PackageId 2>$null
+            $partial = @(
+                if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
+                if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
+            )
+            $partial | Set-Content -LiteralPath $ResultPath -Encoding UTF8
+            throw "Instrumentation $ClassName exceeded the bounded timeout of $TimeoutSeconds seconds."
+        }
+        $output = @(
+            if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
+            if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
+        )
+        $output | Set-Content -LiteralPath $ResultPath -Encoding UTF8
+        if ($process.ExitCode -ne 0) {
+            throw "Instrumentation $ClassName failed with adb exit code $($process.ExitCode):`n$($output -join "`n")"
+        }
+        return $output
+    } finally {
+        Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
+        $process.Dispose()
+    }
+}
+
 function Test-AppPath {
     param(
         [Parameter(Mandatory=$true)][string]$Package,
@@ -148,6 +197,8 @@ try {
     $queueLoadAtSelection = $selected.QueueLoad
     Write-Host "Selected physical device $Serial via $selectionMode (eligible devices: $connectedCandidateCount; queue load: $queueLoadAtSelection)."
     $script:Serial = $Serial
+    $script:PackageId = $PackageId
+    $script:TestPackageId = $TestPackageId
     $qemu = ((Invoke-Adb shell getprop ro.kernel.qemu) -join '').Trim()
     if ($qemu -eq '1') { throw 'The selected ADB target reports ro.kernel.qemu=1; simulators are forbidden.' }
 
@@ -283,8 +334,7 @@ try {
     (Invoke-Adb install '--no-streaming' '-r' $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
     $sessionProvisioned = $false
     if ($loginAfter -ne 'present') {
-        $provisionFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03ProvisionStagingSessionTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
-        $provisionFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt') -Encoding UTF8
+        $provisionFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ProvisionStagingSessionTest" -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt')) -join "`n"
         if ($provisionFlow -notmatch '(?m)^OK \(' -or $provisionFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging session provisioning failed on the physical device.' }
         $loginAfterProvision = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
         if ($loginAfterProvision -ne 'present') { throw 'P03 real staging session was not persisted after provisioning.' }
@@ -296,16 +346,13 @@ try {
     } else {
         $loginAfterProvision = $loginAfter
     }
-    $liveFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03LiveStagingFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
-    $liveFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt') -Encoding UTF8
+    $liveFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03LiveStagingFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt')) -join "`n"
     if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
 
-    $flow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03RealDeviceFlowTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
-    $flow | Set-Content -LiteralPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt') -Encoding UTF8
+    $flow = (Invoke-Instrumentation -ClassName "$PackageId.P03RealDeviceFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt')) -join "`n"
     if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }
 
-    $stateFlow = (Invoke-Adb shell am instrument '-w' '-r' '-e' class "$PackageId.P03ConversationStateUiTest" "$TestPackageId/androidx.test.runner.AndroidJUnitRunner") -join "`n"
-    $stateFlow | Set-Content -LiteralPath (Join-Path $testResults 'P03ConversationStateUiTest.txt') -Encoding UTF8
+    $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ConversationStateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P03ConversationStateUiTest.txt')) -join "`n"
     if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
 
     $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object { $_.surface -eq 'ANDROID' -and ($_.phases -split '\|') -contains $Phase }
