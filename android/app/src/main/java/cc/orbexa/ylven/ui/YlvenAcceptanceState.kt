@@ -73,6 +73,7 @@ private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
 private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
+private const val P03_CHAT_PAGE_ID = "YL-A-023"
 
 private object Pc {
     val bg = color("#F6F7FB")
@@ -558,12 +559,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         )
         text("GPT-5.6 Sol · 深度推理", 72f, 740f, 27f, Pc.brand, true)
         text(
-            // Keep the approved CJK/Latin break stable across Android system fonts.
-            // The reference places the final 负 on the first line and starts the
-            // following line with 责流式请求、; relying on Paint.measureText()
-            // changes that break across physical-device font builds.
-            "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。",
-            72f, 801f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 23f,
+            // Use the approved six-line composition directly. Android system
+            // fonts otherwise move the final Latin glyph to a hidden seventh line.
+            "建议将系统拆分为控制平面、AI 数据平面和异步工作平\n面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT\n任务。",
+            72f, 801f, 37f, Pc.text, lineSpacing = 23f,
         )
         rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
@@ -1229,7 +1228,11 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         }
         val lines = wrap(value, maxWidth, p03Text, bold)
         val metrics = paint.fontMetrics
-        val p03BaselineOffset = if (p03Text) -3f else 0f
+        val p03BaselineOffset = when {
+            currentPage == P03_CHAT_PAGE_ID -> -3f - size * .12f
+            p03Text -> -3f
+            else -> 0f
+        }
         val baseline = when (anchor) {
             Anchor.LEFT_MIDDLE, Anchor.MIDDLE_MIDDLE ->
                 y - (metrics.ascent + metrics.descent) / 2f + size * .1f + p03BaselineOffset
@@ -1250,7 +1253,12 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         val visible = value.filterNot(Char::isWhitespace)
         if (visible.isEmpty()) return 1f
         val asciiRatio = visible.count { it.code in 0x21..0x7E }.toFloat() / visible.length
-        return 1f + (if (bold) .12f else .075f) * asciiRatio
+        val coefficient = when {
+            currentPage == P03_CHAT_PAGE_ID && bold -> .045f
+            bold -> .12f
+            else -> .075f
+        }
+        return 1f + coefficient * asciiRatio
     }
 
     private fun wrap(value: String, maxWidth: Float?, p03Text: Boolean, bold: Boolean): List<String> {
