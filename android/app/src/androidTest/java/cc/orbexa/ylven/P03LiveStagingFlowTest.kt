@@ -5,7 +5,7 @@ import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -40,7 +40,7 @@ class P03LiveStagingFlowTest {
         }
     }
 
-    private val composeRule = createAndroidComposeRule<MainActivity>()
+    private val composeRule = createEmptyComposeRule()
 
     @get:Rule
     val ruleChain: RuleChain = RuleChain.outerRule(shellForegroundRule).around(composeRule)
