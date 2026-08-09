@@ -81,6 +81,8 @@ class P03LiveStagingFlowTest {
 
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-open-conversation-drawer"))
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer", 20_000)
         composeRule.onNodeWithTag("p03-open-search").performClick()
@@ -95,7 +97,9 @@ class P03LiveStagingFlowTest {
         assertNoInlineError()
         reportStage("conversation_archived")
 
-        composeRule.onNodeWithTag("p03-open-temporary-conversation").performScrollTo().performClick()
+        composeRule.onNodeWithTag("p03-home-list")
+            .performScrollToNode(hasTestTag("p03-open-temporary-conversation"))
+        composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
         waitForTag("YL-A-031-root", 20_000)
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
         Espresso.closeSoftKeyboard()

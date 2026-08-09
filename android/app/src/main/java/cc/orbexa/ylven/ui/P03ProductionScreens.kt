@@ -297,7 +297,10 @@ private fun P03HomeScreen(
         bottomBar = { P03BottomNavigation(onOpenAccount) },
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .testTag("p03-home-list"),
             contentPadding = PaddingValues(horizontal = YlvenDimensions.PageHorizontal, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(YlvenDimensions.CardGap),
         ) {
