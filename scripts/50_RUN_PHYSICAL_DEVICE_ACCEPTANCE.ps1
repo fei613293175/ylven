@@ -4,7 +4,8 @@
     [Parameter(Mandatory=$true)][string]$ServerBuildDir,
     [string]$Serial,
     [string]$AdbPath,
-    [string]$PreviousApk
+    [string]$PreviousApk,
+    [Parameter(Mandatory=$true)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$PreviousVersion
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -326,7 +327,7 @@ try {
     $signingMigration = [bool]$provenance.signing_migration
     if ($signingMigration -and $Phase -ne 'P03') { throw 'Signing migration is only allowed for P03.' }
 
-    $upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
+    $upgradeFrom = $PreviousVersion.Trim()
     if (-not $PreviousApk) {
         $previousIndex = [int]$Phase.Substring(1) - 1
         if ($previousIndex -lt 0) { throw 'P00 requires -PreviousApk for same-package reinstall testing.' }
@@ -523,10 +524,9 @@ try {
     }
     $productionIndex | Export-Csv -LiteralPath (Join-Path $output '真实页面截图索引.csv') -NoTypeInformation -Encoding UTF8
 
-    & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/30_COMPARE_ANDROID_SCREENSHOTS.py' --phase $Phase --screenshots $screenshots --report (Join-Path $output '视觉差异报告.md')
-    if ($LASTEXITCODE -ne 0) { throw 'Physical-device visual comparison failed.' }
-    & (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/31_VALIDATE_INTERACTION_TEST_COVERAGE.py' --phase $Phase
-    if ($LASTEXITCODE -ne 0) { throw 'Current-phase interaction test coverage failed.' }
+    @('# Visual Diff Report — P03','', 'Result: **PENDING_SERVER_POST_PROCESSING**','', 'Raw screenshots were captured on the physical device; visual comparison and interaction coverage run only on the connected online build server.') | Set-Content -LiteralPath (Join-Path $output '视觉差异报告.md') -Encoding UTF8
+    'PENDING_SERVER_POST_PROCESSING' | Set-Content -LiteralPath (Join-Path $testResults 'server-post-processing.status') -Encoding UTF8
+    $serverPostProcessing = 'PENDING_SERVER_POST_PROCESSING'
 
     (Invoke-Adb logcat '-d' '-v' threadtime) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
     (Invoke-Adb shell dumpsys activity exit-info $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
@@ -621,10 +621,10 @@ try {
         deterministic_gateway_scope='UI interaction only; not staging acceptance'
         real_staging_business_flow='PASS'
         log_review='PASS'
-        state_matrix_visual_compare='PASS'
+        state_matrix_visual_compare=$serverPostProcessing
         production_page_visual_review='PENDING_CODEX_VISUAL_REVIEW'
         issues=@()
-        result='PENDING_CODEX_VISUAL_REVIEW'
+        result='PENDING_SERVER_POST_PROCESSING'
         completed_at=(Get-Date).ToUniversalTime().ToString('o')
     }
     $deviceEvidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output '真机验收证据.json') -Encoding UTF8
