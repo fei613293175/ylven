@@ -596,11 +596,14 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
     }
 
     private fun p03ChatStatusBanner(code: String, top: Float, widthRatio: Float, message: String? = null) {
+        val previousBaselineScale = p03ChatBaselineScale
+        p03ChatBaselineScale = .06f
         p03ChatStatusFontCalibration = true
         try {
             statusBanner(code, top, widthRatio, message)
         } finally {
             p03ChatStatusFontCalibration = false
+            p03ChatBaselineScale = previousBaselineScale
         }
     }
 
