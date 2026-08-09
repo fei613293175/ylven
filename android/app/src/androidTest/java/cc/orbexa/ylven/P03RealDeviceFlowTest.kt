@@ -5,14 +5,11 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
@@ -157,9 +154,12 @@ class P03RealDeviceFlowTest {
     }
 
     private fun captureProductionPage(name: String) {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
         composeRule.waitForIdle()
-        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
+        val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
+            "Could not capture the physical device display for $name"
+        }
         check(bitmap.width > 0 && bitmap.height > 0) {
             "P03 production screenshot is empty for $name"
         }
