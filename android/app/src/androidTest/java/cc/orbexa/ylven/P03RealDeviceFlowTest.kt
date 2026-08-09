@@ -1,8 +1,10 @@
 package cc.orbexa.ylven
 
+import android.accessibilityservice.AccessibilityService
 import android.content.ContentValues
 import android.graphics.Bitmap
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
@@ -135,7 +137,7 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").assertTextContains("retry me")
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_031-01").performClick()
-        Espresso.pressBack()
+        returnFromVoiceInputIfLaunched()
         if (composeRule.onAllNodesWithTag("YL-A-023-C-P03_013-01").fetchSemanticsNodes().isEmpty()) {
             waitForTag("YL-A-018-C-P03_001-01")
             composeRule.onNodeWithTag("p03-conversation-alpha").performScrollTo().performClick()
@@ -268,6 +270,27 @@ class P03RealDeviceFlowTest {
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }
         return visible
+    }
+
+    private fun returnFromVoiceInputIfLaunched() {
+        val launchDeadline = SystemClock.uptimeMillis() + 3_000
+        while (hasAppWindowFocus() && SystemClock.uptimeMillis() < launchDeadline) {
+            Thread.sleep(50)
+        }
+        if (hasAppWindowFocus()) return
+
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        check(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)) {
+            "Could not return from the physical device voice-input activity"
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) { hasAppWindowFocus() }
+        instrumentation.waitForIdleSync()
+    }
+
+    private fun hasAppWindowFocus(): Boolean {
+        var focused = false
+        composeRule.runOnUiThread { focused = activity.hasWindowFocus() }
+        return focused
     }
 }
 
