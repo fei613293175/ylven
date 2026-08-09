@@ -18,6 +18,10 @@ import java.time.Instant
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 /**
  * Uses MainActivity, an encrypted session established through the real public
@@ -25,13 +29,24 @@ import org.junit.Test
  * is involved in this test.
  */
 class P03LiveStagingFlowTest {
+    private val shellForegroundRule = TestRule { base: Statement, _: Description ->
+        object : Statement() {
+            override fun evaluate() {
+                reportStage("shell_activity_launch")
+                launchP03TargetActivity()
+                reportStage("shell_activity_ready")
+                base.evaluate()
+            }
+        }
+    }
+
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val ruleChain: RuleChain = RuleChain.outerRule(shellForegroundRule).around(composeRule)
 
     @Test
     fun authenticatedStagingSessionCompletesARealConversationJourney() {
-        reportStage("shell_activity_launch")
-        launchP03TargetActivity()
         composeRule.mainClock.advanceTimeBy(3_100)
         reportStage("home_wait")
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
