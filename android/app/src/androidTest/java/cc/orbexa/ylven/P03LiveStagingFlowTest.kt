@@ -4,7 +4,7 @@ import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -24,11 +24,10 @@ import org.junit.Test
  */
 class P03LiveStagingFlowTest {
     @get:Rule
-    val composeRule = createEmptyComposeRule()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun authenticatedStagingSessionCompletesARealConversationJourney() {
-        launchP03TargetActivity()
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
         val marker = "device-${Instant.now().epochSecond}"
 
