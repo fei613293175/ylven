@@ -445,7 +445,8 @@ internal fun userFacingMessage(code: String, serverMessage: String, status: Int)
 
 class SessionStore(context: Context) {
     private val preferences = context.getSharedPreferences("ylven_identity", Context.MODE_PRIVATE)
-    private val keyAlias = "ylven_identity_session_v1"
+    // P03 starts the permanent signer baseline after the approved P02 uninstall migration.
+    private val keyAlias = "ylven_identity_session_v2"
 
     fun load(): AuthSession? {
         val encoded = preferences.getString("session_blob", null) ?: return null

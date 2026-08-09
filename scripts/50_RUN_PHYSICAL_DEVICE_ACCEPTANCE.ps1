@@ -170,6 +170,11 @@ function Test-AppPath {
     return $LASTEXITCODE -eq 0
 }
 
+function Test-AppSessionBlob {
+    & $script:AdbPath -s $script:Serial shell run-as $script:PackageId grep -q session_blob shared_prefs/ylven_identity.xml 2>$null
+    return $LASTEXITCODE -eq 0
+}
+
 function Get-PackagePath {
     param([Parameter(Mandatory=$true)][string]$Package)
     $output = & $script:AdbPath -s $script:Serial shell pm path $Package 2>&1
@@ -388,7 +393,7 @@ try {
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
     $previousPackageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
     if ($previousPackageDump -notmatch "versionName=$([regex]::Escape($upgradeFrom))") { throw 'The required previous owner version was not installed before migration testing.' }
-    $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
+    $loginBefore = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
     # Quote -p so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.
     Invoke-Adb shell run-as $PackageId mkdir '-p' files | Out-Null
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
@@ -414,7 +419,7 @@ try {
             -EvidenceDir (Join-Path $testResults 'install-confirmations\current-owner')
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
-        $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
+        $loginAfter = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
         if ($loginAfter -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old login state.' }
         $oldTestPackage = (Get-PackagePath -Package $TestPackageId) -join "`n"
         if ($oldTestPackage -match '^package:') {
@@ -428,7 +433,7 @@ try {
             -EvidenceDir (Join-Path $testResults 'install-confirmations\current-owner')
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
-        $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
+        $loginAfter = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
         if ($loginBefore -eq 'present' -and $loginAfter -ne 'present') { throw 'Existing login-state preferences did not survive the upgrade.' }
     }
     $packageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
@@ -448,7 +453,7 @@ try {
     if ($loginAfter -ne 'present') {
         $provisionFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ProvisionStagingSessionTest" -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt')) -join "`n"
         if ($provisionFlow -notmatch '(?m)^OK \(' -or $provisionFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging session provisioning failed on the physical device.' }
-        $loginAfterProvision = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
+        $loginAfterProvision = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
         if ($loginAfterProvision -ne 'present') { throw 'P03 real staging session was not persisted after provisioning.' }
         $sessionProvisioned = $true
         Invoke-Adb shell am force-stop $PackageId | Out-Null
