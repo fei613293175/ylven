@@ -108,6 +108,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         strokeJoin = Paint.Join.ROUND
     }
     private var currentPage = ""
+    private var p03ChatBaselineScale = 0f
 
     fun render(stateId: String) {
         val page = stateId.substringBefore("-S")
@@ -546,43 +547,50 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
     }
 
     private fun p03Chat(code: String) {
-        topBar("YLVEN App 架构讨论", "GPT-5.6 Sol · 深度推理", back = true, right = true)
-        if (code == "OFFLINE") {
-            errorCenter(code)
-            return
-        }
-        pill(72f, 300f, 450f, 370f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 26f)
-        rounded(320f, 455f, 1008f, 650f, 42f, Pc.brand)
-        text(
-            "请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。",
-            370f, 505f, 35f, Pc.surface, maxWidth = 580f, lineSpacing = 16f,
-        )
-        text("GPT-5.6 Sol · 深度推理", 72f, 740f, 27f, Pc.brand, true)
-        text(
-            // Use the approved six-line composition directly. Android system
-            // fonts otherwise move the final Latin glyph to a hidden seventh line.
-            "建议将系统拆分为控制平面、AI 数据平面和异步工作平\n面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT\n任务。",
-            72f, 801f, 37f, Pc.text, lineSpacing = 23f,
-        )
-        rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
-        text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
-        text("架构说明.pdf · 数据模型.md", 120f, 1210f, 32f, Pc.text, true)
-        rounded(54f, 1960f, 1026f, 2185f, 70f, Pc.surface, Pc.border2, 2f)
-        iconCircle(130f, 2072f, 38f, "＋", Pc.surfaceSubtle, Pc.text2, 30f)
-        text("继续追问…", 200f, 2050f, 34f, Pc.disabled)
-        iconCircle(940f, 2072f, 42f, "➤", Pc.brand, Pc.surface, 30f)
-        when (code) {
-            "INPUT_FOCUSED" -> keyboard(false)
-            "CONNECTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在建立安全连接…")
-            "UPLOADING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "文件正在上传…")
-            "STREAMING" -> { text("正在生成…", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
-            "TOOL_RUNNING" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在调用文件检索工具…")
-            "COMPLETED" -> statusBanner("SUCCESS", 270f, .84f)
-            "STOPPED" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止生成，已保留当前内容。")
-            "RATE_LIMITED", "PROVIDER_ERROR", "CONTENT_BLOCKED" -> {
-                statusBanner(code, 1430f, .80f)
-                statusBanner(code, 270f, .84f)
+        p03ChatBaselineScale = .12f
+        try {
+            topBar("YLVEN App 架构讨论", "GPT-5.6 Sol · 深度推理", back = true, right = true)
+            if (code == "OFFLINE") {
+                errorCenter(code)
+                return
             }
+            pill(72f, 300f, 450f, 370f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 26f)
+            rounded(320f, 455f, 1008f, 650f, 42f, Pc.brand)
+            text(
+                "请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。",
+                370f, 505f, 35f, Pc.surface, maxWidth = 580f, lineSpacing = 16f,
+            )
+            text("GPT-5.6 Sol · 深度推理", 72f, 740f, 27f, Pc.brand, true)
+            text(
+                // Use the approved six-line composition directly. Android system
+                // fonts otherwise move the final Latin glyph to a hidden seventh line.
+                "建议将系统拆分为控制平面、AI 数据平面和异步工作平\n面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT\n任务。",
+                72f, 801f, 37f, Pc.text, lineSpacing = 23f,
+            )
+            rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
+            text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
+            text("架构说明.pdf · 数据模型.md", 120f, 1210f, 32f, Pc.text, true)
+            rounded(54f, 1960f, 1026f, 2185f, 70f, Pc.surface, Pc.border2, 2f)
+            iconCircle(130f, 2072f, 38f, "＋", Pc.surfaceSubtle, Pc.text2, 30f)
+            text("继续追问…", 200f, 2050f, 34f, Pc.disabled)
+            iconCircle(940f, 2072f, 42f, "➤", Pc.brand, Pc.surface, 30f)
+
+            p03ChatBaselineScale = if (code == "INPUT_FOCUSED") 0f else .09f
+            when (code) {
+                "INPUT_FOCUSED" -> keyboard(false)
+                "CONNECTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在建立安全连接…")
+                "UPLOADING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "文件正在上传…")
+                "STREAMING" -> { text("正在生成…", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
+                "TOOL_RUNNING" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在调用文件检索工具…")
+                "COMPLETED" -> statusBanner("SUCCESS", 270f, .84f)
+                "STOPPED" -> statusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止生成，已保留当前内容。")
+                "RATE_LIMITED", "PROVIDER_ERROR", "CONTENT_BLOCKED" -> {
+                    statusBanner(code, 1430f, .80f)
+                    statusBanner(code, 270f, .84f)
+                }
+            }
+        } finally {
+            p03ChatBaselineScale = 0f
         }
     }
 
@@ -1229,7 +1237,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         val lines = wrap(value, maxWidth, p03Text, bold)
         val metrics = paint.fontMetrics
         val p03BaselineOffset = when {
-            currentPage == P03_CHAT_PAGE_ID -> -3f - size * .12f
+            currentPage == P03_CHAT_PAGE_ID -> -3f - size * p03ChatBaselineScale
             p03Text -> -3f
             else -> 0f
         }
@@ -1239,9 +1247,13 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             else -> y - metrics.ascent + size * .225f + p03BaselineOffset
         }
         val step = size + lineSpacing
+        val drawX = if (
+            currentPage == P03_CHAT_PAGE_ID &&
+            anchor in setOf(Anchor.LEFT_ASCENDER, Anchor.LEFT_MIDDLE)
+        ) x - 1f else x
         lines.forEachIndexed { index, line ->
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
-            canvas.drawText(line, x, baseline + index * step, paint)
+            canvas.drawText(line, drawX, baseline + index * step, paint)
         }
         paint.textScaleX = 1f
         paint.isFakeBoldText = false
