@@ -72,6 +72,7 @@ private const val CONTRACT_HEIGHT = 2400f
 private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
+private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018", "YL-A-023")
 
 private object Pc {
     val bg = color("#F6F7FB")
@@ -562,7 +563,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             // following line with 责流式请求、; relying on Paint.measureText()
             // changes that break on different emulator font builds.
             "建议将系统拆分为控制平面、AI 数据平面和异步工作平面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT 任务。",
-            72f, 801f, 37f, Pc.text, maxWidth = 930f, lineSpacing = 23f,
+            72f, 801f, 37f, Pc.text, maxWidth = 950f, lineSpacing = 23f,
         )
         rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
         text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
@@ -1144,7 +1145,8 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
 
     private fun iconCircle(cx: Float, cy: Float, radius: Float, symbol: String, fill: Int, fg: Int, size: Float) {
         circle(cx, cy, radius, fill)
-        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙")) {
+        val usesApprovedP03Fallback = currentPage in P03_PAGE_IDS && symbol in setOf("✓", "⌛")
+        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙") || usesApprovedP03Fallback) {
             missingGlyph(cx, cy, size, fg)
         } else {
             text(symbol, cx, cy, size, fg, true, Anchor.MIDDLE_MIDDLE)
@@ -1207,12 +1209,13 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         anchor: Anchor = Anchor.LEFT_ASCENDER, maxWidth: Float? = null, lineSpacing: Float = 8f,
     ) {
         val p03Text = currentPage in P03_PAGE_IDS
-        paint.style = Paint.Style.FILL
-        paint.strokeWidth = 1f
+        val calibratePhysicalFont = currentPage in P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS
+        paint.style = if (calibratePhysicalFont && !bold) Paint.Style.FILL_AND_STROKE else Paint.Style.FILL
+        paint.strokeWidth = if (calibratePhysicalFont && !bold) .35f else 1f
         paint.color = fill
         paint.textSize = size
         paint.typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
-        paint.isFakeBoldText = false
+        paint.isFakeBoldText = calibratePhysicalFont && bold
         // The reference mockups use Microsoft YaHei, whose Latin glyphs are
         // wider than Android's default sans face at the same size. Keep CJK
         // untouched and widen mixed Latin/number labels to match the source
@@ -1238,6 +1241,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             canvas.drawText(line, x, baseline + index * step, paint)
         }
         paint.textScaleX = 1f
+        paint.isFakeBoldText = false
         paint.style = Paint.Style.FILL
         paint.strokeWidth = 1f
     }

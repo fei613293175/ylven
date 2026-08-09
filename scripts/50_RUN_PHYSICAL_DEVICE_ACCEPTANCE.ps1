@@ -34,6 +34,69 @@ function Invoke-Adb {
     return $textOutput
 }
 
+function Invoke-AdbInstall {
+    param(
+        [Parameter(Mandatory=$true)][string]$Apk,
+        [Parameter(Mandatory=$true)][string]$ResultPath,
+        [Parameter(Mandatory=$true)][string]$EvidenceDir,
+        [switch]$Replace
+    )
+    $device = @(Get-DeviceRows | Where-Object { $_.Serial -eq $script:Serial }) | Select-Object -First 1
+    if (-not $device -or $device.State -ne 'device') {
+        throw "ADB target $script:Serial is not in exact state device immediately before installing $(Split-Path -Leaf $Apk); testing stops."
+    }
+
+    $arguments = @('-s', $script:Serial, 'install', '--no-streaming')
+    if ($Replace) { $arguments += '-r' }
+    $arguments += ('"{0}"' -f $Apk.Replace('"', '\"'))
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $script:AdbPath
+    $startInfo.Arguments = $arguments -join ' '
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    $watcherJob = $null
+    try {
+        if (-not $process.Start()) { throw "Could not start adb install for $Apk." }
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $watcherPath = Join-Path $PSScriptRoot '51_WATCH_VENDOR_INSTALL_CONFIRMATION.ps1'
+        $watcherJob = Start-Job -FilePath $watcherPath -ArgumentList @(
+            $script:AdbPath, $script:Serial, $process.Id, $EvidenceDir, 180
+        )
+        if (-not $process.WaitForExit(180000)) {
+            $process.Kill()
+            $process.WaitForExit()
+            throw "ADB install exceeded the bounded timeout of 180 seconds for $(Split-Path -Leaf $Apk)."
+        }
+        $process.WaitForExit()
+        $output = @($stdoutTask.GetAwaiter().GetResult() -split '\r?\n')
+        $output += @($stderrTask.GetAwaiter().GetResult() -split '\r?\n')
+        $output | Where-Object { $_ } | Set-Content -LiteralPath $ResultPath -Encoding UTF8
+        if ($process.ExitCode -ne 0 -or ($output -join "`n") -notmatch '(?m)^Success\s*$') {
+            throw "ADB install failed for $(Split-Path -Leaf $Apk):`n$($output -join "`n")"
+        }
+    } finally {
+        if ($watcherJob) {
+            $watcherJob | Wait-Job -Timeout 15 | Out-Null
+            if ($watcherJob.State -eq 'Running') { $watcherJob | Stop-Job }
+            $watcherOutput = @($watcherJob | Receive-Job -ErrorAction SilentlyContinue)
+            if ($watcherOutput.Count -gt 0) {
+                $watcherOutput | Set-Content -LiteralPath (Join-Path $EvidenceDir 'watcher-output.txt') -Encoding UTF8
+            }
+            $watcherState = $watcherJob.State
+            $watcherJob | Remove-Job -Force
+            if ($watcherState -eq 'Failed' -and $process.HasExited -and $process.ExitCode -ne 0) {
+                throw "Vendor install confirmation watcher failed for $(Split-Path -Leaf $Apk)."
+            }
+        }
+        $process.Dispose()
+    }
+}
+
 function Invoke-Instrumentation {
     param(
         [Parameter(Mandatory=$true)][string]$ClassName,
@@ -260,6 +323,8 @@ try {
     $TestApk = (Resolve-Path -LiteralPath (Join-Path $ServerBuildDir $provenance.instrumentation_apk)).Path
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $CurrentApk).Hash.ToLowerInvariant() -ne $provenance.apk_sha256) { throw 'Current APK hash differs from server provenance.' }
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $TestApk).Hash.ToLowerInvariant() -ne $provenance.instrumentation_apk_sha256) { throw 'Instrumentation APK hash differs from server provenance.' }
+    $signingMigration = [bool]$provenance.signing_migration
+    if ($signingMigration -and $Phase -ne 'P03') { throw 'Signing migration is only allowed for P03.' }
 
     $upgradeFrom = (& (Join-Path $PSScriptRoot '42_RUN_PYTHON.ps1') -Script 'scripts/32_VERIFY_ANDROID_VERSION_CONTRACT.py' --phase $Phase --print-upgrade-from 2>$null | Select-Object -Last 1).Trim()
     if (-not $PreviousApk) {
@@ -292,18 +357,41 @@ try {
     if ($density -match '(?i)Override density:') { throw "The selected phone has an existing density override; testing stops without changing it: $density" }
 
     Invoke-Adb logcat '-c' | Out-Null
-    # Vivo's streaming installer requires an interactive vendor risk dialog; push install keeps the same ADB install path
-    # while allowing the real-device acceptance run to observe an explicit install result.
-    (Invoke-Adb install '--no-streaming' '-r' $PreviousApk) | Set-Content -LiteralPath (Join-Path $testResults 'previous-install.txt') -Encoding UTF8
+    $existingPackage = (Get-PackagePath -Package $PackageId) -join "`n"
+    if ($signingMigration -and $existingPackage -match '^package:') {
+        $existingDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
+        $existingVersionMatch = [regex]::Match($existingDump, '(?m)^\s*versionName=([^\s]+)')
+        if (-not $existingVersionMatch.Success) { throw 'Could not determine the installed YLVEN version before rebuilding the P02 migration baseline.' }
+        $existingVersion = $existingVersionMatch.Groups[1].Value
+        if ([version]$existingVersion -gt [version]$upgradeFrom) {
+            $resetRows = @("installed_version=$existingVersion", "required_baseline=$upgradeFrom")
+            $existingTestPackage = (Get-PackagePath -Package $TestPackageId) -join "`n"
+            if ($existingTestPackage -match '^package:') {
+                $testReset = (Invoke-Adb uninstall $TestPackageId) -join "`n"
+                if ($testReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 instrumentation package before rebuilding the P02 baseline.' }
+                $resetRows += 'instrumentation_package_removed=true'
+            }
+            $appReset = (Invoke-Adb uninstall $PackageId) -join "`n"
+            if ($appReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 app before rebuilding the P02 baseline.' }
+            $resetRows += 'current_app_removed=true'
+            $resetRows | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-baseline-reset.txt') -Encoding UTF8
+        }
+    }
+
+    Invoke-AdbInstall `
+        -Apk $PreviousApk `
+        -Replace `
+        -ResultPath (Join-Path $testResults 'previous-install.txt') `
+        -EvidenceDir (Join-Path $testResults 'install-confirmations\previous-owner')
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
     if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
+    $previousPackageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
+    if ($previousPackageDump -notmatch "versionName=$([regex]::Escape($upgradeFrom))") { throw 'The required previous owner version was not installed before migration testing.' }
     $loginBefore = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
     # Quote -p so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.
     Invoke-Adb shell run-as $PackageId mkdir '-p' files | Out-Null
     Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
 
-    $signingMigration = [bool]$provenance.signing_migration
-    if ($signingMigration -and $Phase -ne 'P03') { throw 'Signing migration is only allowed for P03.' }
     if ($signingMigration) {
         $preMigration = [ordered]@{
             previous_version=$upgradeFrom
@@ -319,7 +407,10 @@ try {
         (Invoke-Adb uninstall $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-uninstall.txt') -Encoding UTF8
         $installedAfterUninstall = (Get-PackagePath -Package $PackageId) -join "`n"
         if ($installedAfterUninstall -match '^package:') { throw 'P03 signing migration uninstall did not remove the old package.' }
-        (Invoke-Adb install '--no-streaming' $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-migration-install.txt') -Encoding UTF8
+        Invoke-AdbInstall `
+            -Apk $CurrentApk `
+            -ResultPath (Join-Path $testResults 'current-migration-install.txt') `
+            -EvidenceDir (Join-Path $testResults 'install-confirmations\current-owner')
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'absent') { throw 'P03 signing migration unexpectedly preserved old app data.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -329,7 +420,11 @@ try {
             (Invoke-Adb uninstall $TestPackageId) | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-test-package-uninstall.txt') -Encoding UTF8
         }
     } else {
-        (Invoke-Adb install '--no-streaming' '-r' $CurrentApk) | Set-Content -LiteralPath (Join-Path $testResults 'current-upgrade-install.txt') -Encoding UTF8
+        Invoke-AdbInstall `
+            -Apk $CurrentApk `
+            -Replace `
+            -ResultPath (Join-Path $testResults 'current-upgrade-install.txt') `
+            -EvidenceDir (Join-Path $testResults 'install-confirmations\current-owner')
         $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
         if ($marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
         $loginAfter = if (Test-AppPath -Package $PackageId -Path 'shared_prefs/ylven_identity.xml' -NonEmpty) { 'present' } else { 'absent' }
@@ -343,7 +438,11 @@ try {
     $launch | Set-Content -LiteralPath (Join-Path $testResults 'launch.txt') -Encoding UTF8
     if ($launch -notmatch 'Status:\s*ok') { throw 'The installed APK did not launch successfully.' }
 
-    (Invoke-Adb install '--no-streaming' '-r' $TestApk) | Set-Content -LiteralPath (Join-Path $testResults 'instrumentation-install.txt') -Encoding UTF8
+    Invoke-AdbInstall `
+        -Apk $TestApk `
+        -Replace `
+        -ResultPath (Join-Path $testResults 'instrumentation-install.txt') `
+        -EvidenceDir (Join-Path $testResults 'install-confirmations\instrumentation')
     $sessionProvisioned = $false
     if ($loginAfter -ne 'present') {
         $provisionFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ProvisionStagingSessionTest" -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt')) -join "`n"
@@ -360,6 +459,17 @@ try {
     }
     $liveFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03LiveStagingFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt')) -join "`n"
     if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
+
+    if ($Phase -eq 'P03') {
+        $remoteScreenshotDirectories = @(
+            '/sdcard/Download/ylven-p03',
+            '/sdcard/Download/ylven-p03-production'
+        )
+        foreach ($remoteScreenshotDirectory in $remoteScreenshotDirectories) {
+            Invoke-Adb shell rm '-rf' $remoteScreenshotDirectory | Out-Null
+        }
+        $remoteScreenshotDirectories | Set-Content -LiteralPath (Join-Path $testResults 'remote-screenshot-cleanup.txt') -Encoding UTF8
+    }
 
     $flow = (Invoke-Instrumentation -ClassName "$PackageId.P03RealDeviceFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt')) -join "`n"
     if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }

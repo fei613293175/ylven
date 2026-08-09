@@ -41,12 +41,13 @@ import org.junit.Test
 class P03RealDeviceFlowTest {
     @get:Rule
     val composeRule = createEmptyComposeRule()
+    private lateinit var activity: MainActivity
 
     @Test
     fun conversationJourneyUsesEveryP03ControlOnDevice() {
         val gateway = FlowGateway()
         val session = AuthSession("陈平@example.invalid", "session", "access", "refresh", "physical-device")
-        val activity = launchP03TargetActivity()
+        activity = launchP03TargetActivity()
         composeRule.mainClock.autoAdvance = true
         composeRule.runOnUiThread {
             activity.setContent {
@@ -105,7 +106,11 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-027-C-P03_019-01")
         waitForTag("YL-A-028-C-P03_020-01")
         waitForTag("YL-A-029-C-P03_021-01")
-        captureProductionPage("YL-A-023-PRODUCTION", "YL-A-023-C-P03_013-01")
+        captureProductionPage(
+            "YL-A-023-PRODUCTION",
+            "YL-A-023-C-P03_013-01",
+            scrollAnchorTag = "p03-chat-start",
+        )
         composeRule.onNodeWithTag("YL-A-030-C-P03_022-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("YL-A-030-C-P03_023-01").performScrollTo().performClick()
         composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[0].performScrollTo().performClick()
@@ -180,14 +185,26 @@ class P03RealDeviceFlowTest {
         composeRule.waitUntil(timeoutMillis = 8_000, condition = predicate)
     }
 
-    private fun captureProductionPage(name: String, expectedRootTag: String) {
+    private fun captureProductionPage(
+        name: String,
+        expectedRootTag: String,
+        scrollAnchorTag: String? = null,
+    ) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         waitForTag(expectedRootTag)
         check(composeRule.onAllNodesWithTag(expectedRootTag).fetchSemanticsNodes().isNotEmpty()) {
             "Expected page root $expectedRootTag is absent before capturing $name"
         }
+        Espresso.closeSoftKeyboard()
+        composeRule.runOnUiThread { activity.currentFocus?.clearFocus() }
         composeRule.waitForIdle()
+        instrumentation.waitForIdleSync()
+        if (scrollAnchorTag != null) {
+            composeRule.onNodeWithTag(scrollAnchorTag).performScrollTo()
+            composeRule.waitForIdle()
+            instrumentation.waitForIdleSync()
+        }
         val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
             "Could not capture the physical device display for $name"
         }

@@ -88,6 +88,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -644,6 +645,7 @@ internal fun P03ChatPage(
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val cache = remember { ConversationCache(context) }
     val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { draft = it }
@@ -712,9 +714,11 @@ internal fun P03ChatPage(
     fun send() {
         val body = draft.trim()
         if (body.isEmpty() || sending) return
+        focusManager.clearFocus(force = true)
         scope.launch {
             sending = true
             error = null
+            retryBody = null
             messages = messages + MessageRecord("optimistic-${System.currentTimeMillis()}", conversation.id, "user", body, "")
             try {
                 val created = gateway.sendMessage(session.bearer, conversation.id, body)
@@ -754,22 +758,40 @@ internal fun P03ChatPage(
             )
         },
         bottomBar = {
-            P03Composer(
-                draft = draft,
-                onDraftChange = { draft = it },
-                sending = sending || run?.status.equals("streaming", ignoreCase = true),
-                onSend = ::send,
-                onStop = {
-                    run?.let { active ->
-                        scope.launch {
-                            runCatching { gateway.cancelRun(session.bearer, active.id) }
-                                .onSuccess { run = it }
-                                .onFailure { error = it.message ?: "停止失败" }
-                        }
+            Column(Modifier.fillMaxWidth()) {
+                val failedBody = retryBody
+                if (error != null || failedBody != null) {
+                    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        P03InlineError(
+                            message = error ?: "发送失败，请重试",
+                            onRetry = failedBody?.let { body ->
+                                {
+                                    draft = body
+                                    retryBody = null
+                                    error = null
+                                }
+                            },
+                            retryTag = if (failedBody != null) "YL-A-023-C-P03_027-01" else null,
+                        )
                     }
-                },
-                onVoice = ::openVoiceInput,
-            )
+                }
+                P03Composer(
+                    draft = draft,
+                    onDraftChange = { draft = it },
+                    sending = sending || run?.status.equals("streaming", ignoreCase = true),
+                    onSend = ::send,
+                    onStop = {
+                        run?.let { active ->
+                            scope.launch {
+                                runCatching { gateway.cancelRun(session.bearer, active.id) }
+                                    .onSuccess { run = it }
+                                    .onFailure { error = it.message ?: "停止失败" }
+                            }
+                        }
+                    },
+                    onVoice = ::openVoiceInput,
+                )
+            }
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).testTag("p03-active-conversation-${conversation.id}")) {
@@ -782,7 +804,10 @@ internal fun P03ChatPage(
                 item {
                     Text(
                         "GPT-5.6 Sol · 深度",
-                        modifier = Modifier.background(YlvenLightColors.SurfaceBrandSoft, RoundedCornerShape(18.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier
+                            .background(YlvenLightColors.SurfaceBrandSoft, RoundedCornerShape(18.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .testTag("p03-chat-start"),
                         color = YlvenLightColors.Primary,
                         style = MaterialTheme.typography.labelLarge,
                     )
@@ -849,15 +874,6 @@ internal fun P03ChatPage(
                             color = YlvenLightColors.TextTertiary,
                             modifier = Modifier.testTag("YL-A-026-C-P03_026-01"),
                         )
-                    }
-                }
-                error?.let { message -> item { P03InlineError(message) } }
-                retryBody?.let { body ->
-                    item {
-                        TextButton(
-                            onClick = { draft = body; retryBody = null },
-                            modifier = Modifier.testTag("YL-A-023-C-P03_027-01"),
-                        ) { Text("将失败内容放回输入框") }
                     }
                 }
             }
@@ -1293,7 +1309,11 @@ private fun P03ErrorState(message: String, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun P03InlineError(message: String, onRetry: (() -> Unit)? = null) {
+private fun P03InlineError(
+    message: String,
+    onRetry: (() -> Unit)? = null,
+    retryTag: String? = null,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth().testTag("p01-inline-error"),
         shape = RoundedCornerShape(12.dp),
@@ -1302,7 +1322,12 @@ private fun P03InlineError(message: String, onRetry: (() -> Unit)? = null) {
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(message, Modifier.weight(1f), color = YlvenLightColors.Error, style = MaterialTheme.typography.bodySmall)
-            if (onRetry != null) TextButton(onClick = onRetry) { Text("重试") }
+            if (onRetry != null) {
+                TextButton(
+                    onClick = onRetry,
+                    modifier = if (retryTag == null) Modifier else Modifier.testTag(retryTag),
+                ) { Text("重试") }
+            }
         }
     }
 }
