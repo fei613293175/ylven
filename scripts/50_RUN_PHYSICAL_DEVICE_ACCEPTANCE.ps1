@@ -50,44 +50,45 @@ function Invoke-Instrumentation {
     if (($foregroundOutput -join "`n") -notmatch 'Status:\s*ok') {
         throw "The target APK could not be brought to the foreground before $ClassName."
     }
-    $stdoutPath = "$ResultPath.stdout.tmp"
-    $stderrPath = "$ResultPath.stderr.tmp"
     $arguments = @(
         '-s', $script:Serial, 'shell', 'am', 'instrument', '-w', '-r',
         '-e', 'class', $ClassName,
         "$script:TestPackageId/androidx.test.runner.AndroidJUnitRunner"
     )
-    $process = Start-Process -FilePath $script:AdbPath -ArgumentList $arguments -NoNewWindow -PassThru `
-        -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $script:AdbPath
+    $startInfo.Arguments = $arguments -join ' '
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
     try {
+        if (-not $process.Start()) { throw "Could not start adb instrumentation for $ClassName." }
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
             $process.Kill()
             $process.WaitForExit()
             # Closing the host adb client is not sufficient proof that device-side instrumentation stopped.
             & $script:AdbPath -s $script:Serial shell am force-stop $script:TestPackageId 2>$null
             & $script:AdbPath -s $script:Serial shell am force-stop $script:PackageId 2>$null
-            $partial = @(
-                if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
-                if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
-            )
+            $partial = @($stdoutTask.GetAwaiter().GetResult() -split '\r?\n')
+            $partial += @($stderrTask.GetAwaiter().GetResult() -split '\r?\n')
             $partial | Set-Content -LiteralPath $ResultPath -Encoding UTF8
             throw "Instrumentation $ClassName exceeded the bounded timeout of $TimeoutSeconds seconds."
         }
-        # Windows PowerShell needs the parameterless wait before ExitCode is reliably populated.
         $process.WaitForExit()
-        $process.Refresh()
         $exitCode = $process.ExitCode
-        $output = @(
-            if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath }
-            if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath }
-        )
+        $output = @($stdoutTask.GetAwaiter().GetResult() -split '\r?\n')
+        $output += @($stderrTask.GetAwaiter().GetResult() -split '\r?\n')
         $output | Set-Content -LiteralPath $ResultPath -Encoding UTF8
         if ($exitCode -ne 0) {
             throw "Instrumentation $ClassName failed with adb exit code ${exitCode}:`n$($output -join "`n")"
         }
         return $output
     } finally {
-        Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
         $process.Dispose()
     }
 }
