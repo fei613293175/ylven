@@ -668,6 +668,32 @@ func TestP03RunProviderFailurePersistsStableFailedState(t *testing.T) {
 	}
 }
 
+func TestP03FailedRunRecordsLatency(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "failure-latency@example.com")
+	access := createAuthenticatedTestSession(t, s, "failure-latency@example.com")
+	conversation, err := s.CreateConversation(access, "失败延迟")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := s.StartRun(access, conversation.ID, "fail", "ylven-default")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.mu.Lock()
+	stored := s.data.Runs[run.ID]
+	stored.StartedAt = time.Now().UTC().Add(-25 * time.Millisecond)
+	s.data.Runs[run.ID] = stored
+	s.mu.Unlock()
+	failed, err := s.FailRun(access, run.ID, "chat_provider_unavailable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed.LatencyMs < 25 {
+		t.Fatalf("failed run latency was not recorded: %+v", failed)
+	}
+}
+
 func TestP03CitationEndpointUsesPersistedAssistantContent(t *testing.T) {
 	s, _ := NewStore("")
 	createTestUser(t, s, "w03@example.com")

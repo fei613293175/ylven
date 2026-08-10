@@ -107,6 +107,10 @@ type OpenAICompatibleResponder struct {
 	Client       *http.Client
 }
 
+// upstreamChatHTTPTimeout is intentionally below the run deadline so the
+// provider returns a controlled failure before the run context is cancelled.
+const upstreamChatHTTPTimeout = 90 * time.Second
+
 func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt string) (string, error) {
 	providerModel := strings.TrimSpace(model)
 	if providerModel == "" || providerModel == "ylven-default" {
@@ -132,7 +136,7 @@ func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt st
 	req.Header.Set("Authorization", "Bearer "+r.APIKey)
 	client := r.Client
 	if client == nil {
-		client = &http.Client{Timeout: 45 * time.Second}
+		client = &http.Client{Timeout: upstreamChatHTTPTimeout}
 	}
 	resp, err := client.Do(req)
 	if err != nil {

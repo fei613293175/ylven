@@ -34,6 +34,10 @@ type API struct {
 	runCancels        map[string]context.CancelFunc
 }
 
+// Keep the run deadline above the provider HTTP deadline. This admits the
+// observed slow but successful upstream responses while preserving a bound.
+const chatRunTimeout = 95 * time.Second
+
 func NewAPI(store *Store) *API {
 	api := &API{Store: store, runCancels: map[string]context.CancelFunc{}}
 	api.ChatRuntimeMode = strings.ToLower(strings.TrimSpace(os.Getenv("CHAT_RUNTIME_MODE")))
@@ -886,7 +890,7 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusAccepted, run)
 		go func(runID, accessToken, model, prompt string) {
 			started := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
 			a.runMu.Lock()
 			a.runCancels[runID] = cancel
 			a.runMu.Unlock()
@@ -1187,7 +1191,7 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusAccepted, run)
 		go func(runID, accessToken string) {
 			started := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
 			a.runMu.Lock()
 			a.runCancels[runID] = cancel
 			a.runMu.Unlock()

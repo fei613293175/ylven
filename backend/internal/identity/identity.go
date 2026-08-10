@@ -1136,6 +1136,7 @@ func (s *Store) FailRun(access, runID, code string) (MessageRun, error) {
 	run.Status = "failed"
 	run.ErrorCode = "chat_provider_error"
 	run.UpdatedAt = time.Now().UTC()
+	run.LatencyMs = run.UpdatedAt.Sub(run.StartedAt).Milliseconds()
 	run.Cursor++
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "failed", CreatedAt: run.UpdatedAt})

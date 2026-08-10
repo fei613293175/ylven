@@ -70,6 +70,15 @@ func TestOpenAICompatibleResponderRequiresConfiguredDefaultModel(t *testing.T) {
 	}
 }
 
+func TestOpenAICompatibleResponderDefaultTimeoutFitsRunBudget(t *testing.T) {
+	if upstreamChatHTTPTimeout != 90*time.Second {
+		t.Fatalf("upstream timeout=%s", upstreamChatHTTPTimeout)
+	}
+	if upstreamChatHTTPTimeout >= chatRunTimeout {
+		t.Fatalf("provider timeout %s must remain below run timeout %s", upstreamChatHTTPTimeout, chatRunTimeout)
+	}
+}
+
 func TestNewAPIRejectsIncompleteUpstreamChatConfiguration(t *testing.T) {
 	t.Setenv("TURNSTILE_MODE", "first_party")
 	t.Setenv("EMAIL_MODE", "mock")
