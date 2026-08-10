@@ -61,13 +61,16 @@ function Invoke-AdbInstall {
     $process.StartInfo = $startInfo
     $watcherJob = $null
     try {
+        $watcherPath = Join-Path $PSScriptRoot '51_WATCH_VENDOR_INSTALL_CONFIRMATION.ps1'
+        # Warm the vendor-dialog watcher before install starts so short Xiaomi
+        # confirmation countdowns cannot expire during PowerShell job startup.
+        $watcherJob = Start-Job -FilePath $watcherPath -ArgumentList @(
+            $script:AdbPath, $script:Serial, $PID, $EvidenceDir, 180
+        )
+        Start-Sleep -Milliseconds 1200
         if (-not $process.Start()) { throw "Could not start adb install for $Apk." }
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
-        $watcherPath = Join-Path $PSScriptRoot '51_WATCH_VENDOR_INSTALL_CONFIRMATION.ps1'
-        $watcherJob = Start-Job -FilePath $watcherPath -ArgumentList @(
-            $script:AdbPath, $script:Serial, $process.Id, $EvidenceDir, 180
-        )
         if (-not $process.WaitForExit(180000)) {
             $process.Kill()
             $process.WaitForExit()
@@ -82,8 +85,8 @@ function Invoke-AdbInstall {
         }
     } finally {
         if ($watcherJob) {
-            $watcherJob | Wait-Job -Timeout 15 | Out-Null
             if ($watcherJob.State -eq 'Running') { $watcherJob | Stop-Job }
+            $watcherJob | Wait-Job -Timeout 15 | Out-Null
             $watcherOutput = @($watcherJob | Receive-Job -ErrorAction SilentlyContinue)
             if ($watcherOutput.Count -gt 0) {
                 $watcherOutput | Set-Content -LiteralPath (Join-Path $EvidenceDir 'watcher-output.txt') -Encoding UTF8
