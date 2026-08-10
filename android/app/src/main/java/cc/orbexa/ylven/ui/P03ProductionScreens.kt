@@ -579,15 +579,17 @@ private fun P03TemporaryConversationScreen(
         title = "新建对话",
         subtitle = "创建后不会长期保留在会话历史中",
         onBack = onBack,
+        bottomAction = {
+            P03PrimaryButton(
+                label = "创建临时对话",
+                loading = loading,
+                enabled = !loading,
+                tag = "YL-A-031-C-P03_028-01",
+                onClick = { onCreate(title.trim()) },
+            )
+        },
     ) {
         P03LabeledField("会话名称", title, { title = it }, "请输入会话名称", tag = "p03-temporary-title")
-        P03PrimaryButton(
-            label = "创建临时对话",
-            loading = loading,
-            enabled = !loading,
-            tag = "YL-A-031-C-P03_028-01",
-            onClick = { onCreate(title.trim()) },
-        )
         if (error != null) P03InlineError(error)
     }
 }
@@ -598,6 +600,7 @@ private fun P03FormScaffold(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
+    bottomAction: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Scaffold(
@@ -605,6 +608,19 @@ private fun P03FormScaffold(
         containerColor = YlvenLightColors.Background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { P03TopBar(title, subtitle, onBack = onBack) },
+        bottomBar = {
+            bottomAction?.let { action ->
+                Surface(color = YlvenLightColors.Background) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .height(72.dp)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                    ) { action() }
+                }
+            }
+        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).imePadding(),
