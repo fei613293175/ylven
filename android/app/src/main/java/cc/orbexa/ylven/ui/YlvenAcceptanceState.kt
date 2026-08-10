@@ -80,6 +80,7 @@ data class ProviderErrorFontCalibration(
     val fakeBold: Boolean = true,
     val strokeWidth: Float = .08f,
     val scaleX: Float = 1.002f,
+    val xOffset: Float = 0f,
     val baselineOffset: Float = 0f,
 )
 
@@ -1293,7 +1294,7 @@ private class AndroidContractRenderer(
         lines.forEachIndexed { index, line ->
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
             if (calibrateProviderErrorTitle) {
-                val calibratedX = drawX
+                val calibratedX = drawX + providerErrorFontCalibration.xOffset
                 paint.isFakeBoldText = providerErrorFontCalibration.fakeBold
                 paint.style = if (providerErrorFontCalibration.strokeWidth > 0f) {
                     Paint.Style.FILL_AND_STROKE

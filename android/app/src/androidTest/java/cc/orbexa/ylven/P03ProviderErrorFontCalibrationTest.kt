@@ -16,6 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.ui.ProviderErrorFontCalibration
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
+import kotlin.math.roundToInt
 import org.junit.Rule
 import org.junit.Test
 
@@ -92,30 +93,35 @@ private data class ProviderErrorVariant(
 )
 
 private val PROVIDER_ERROR_VARIANTS = buildList {
-    val strokeWidths = listOf(0f, .2f, .4f, .6f, .8f, 1f)
-    val scaleXs = listOf(1f, 1.002f, 1.004f, 1.006f, 1.008f)
-    val baselineOffsets = listOf(-.6f, -.3f, 0f)
+    val strokeWidths = listOf(0f, .04f, .08f, .12f)
+    val scaleXs = listOf(.998f, 1f, 1.002f, 1.004f)
+    val xOffsets = listOf(-1f, -.5f, 0f)
+    val baselineOffsets = listOf(-1f, 0f)
     strokeWidths.forEach { strokeWidth ->
         scaleXs.forEach { scaleX ->
-            baselineOffsets.forEach { baselineOffset ->
-                val strokeCode = (strokeWidth * 100).toInt().toString().padStart(3, '0')
-                val scaleCode = (scaleX * 1000).toInt().toString()
-                val baselineCode = if (baselineOffset < 0) {
-                    "n${(-baselineOffset * 10).toInt().toString().padStart(2, '0')}"
-                } else {
-                    "p00"
-                }
-                add(
-                    ProviderErrorVariant(
-                        name = "provider-f0-sw$strokeCode-sx$scaleCode-by$baselineCode",
-                        calibration = ProviderErrorFontCalibration(
-                            fakeBold = false,
-                            strokeWidth = strokeWidth,
-                            scaleX = scaleX,
-                            baselineOffset = baselineOffset,
+            xOffsets.forEach { xOffset ->
+                baselineOffsets.forEach { baselineOffset ->
+                    val strokeCode = (strokeWidth * 1000).roundToInt().toString().padStart(3, '0')
+                    val scaleCode = (scaleX * 1000).roundToInt().toString()
+                    val xCode = if (xOffset < 0) {
+                        "n${(-xOffset * 10).roundToInt().toString().padStart(2, '0')}"
+                    } else {
+                        "p00"
+                    }
+                    val baselineCode = if (baselineOffset < 0) "n10" else "p00"
+                    add(
+                        ProviderErrorVariant(
+                            name = "provider-f1-sw$strokeCode-sx$scaleCode-x$xCode-by$baselineCode",
+                            calibration = ProviderErrorFontCalibration(
+                                fakeBold = true,
+                                strokeWidth = strokeWidth,
+                                scaleX = scaleX,
+                                xOffset = xOffset,
+                                baselineOffset = baselineOffset,
+                            ),
                         ),
-                    ),
-                )
+                    )
+                }
             }
         }
     }
