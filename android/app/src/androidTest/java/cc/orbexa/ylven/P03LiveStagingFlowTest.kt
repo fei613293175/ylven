@@ -6,11 +6,10 @@ import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -105,9 +104,7 @@ class P03LiveStagingFlowTest {
             .performScrollToNode(hasTestTag("p03-open-temporary-conversation"))
         composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
         waitForTag("YL-A-031-root", 20_000)
-        composeRule.onNodeWithText("所属项目").assertDoesNotExist()
-        composeRule.onNodeWithText("默认模型").assertDoesNotExist()
-        composeRule.onNodeWithText("会话指令").assertDoesNotExist()
+        assertTemporaryConversationScope()
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
         Espresso.closeSoftKeyboard()
         composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()
@@ -124,6 +121,15 @@ class P03LiveStagingFlowTest {
     private fun waitForTag(tag: String, timeout: Long) {
         composeRule.waitUntil(timeoutMillis = timeout) {
             composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun assertTemporaryConversationScope() {
+        listOf("所属项目", "默认模型", "会话指令").forEach { label ->
+            assertTrue(
+                "Temporary conversation must not expose unsupported $label control",
+                composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isEmpty(),
+            )
         }
     }
 
