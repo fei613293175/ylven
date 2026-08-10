@@ -1040,7 +1040,10 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         val x = (1080f - width) / 2f
         shadowCard(x, top, x + width, top + 150f, 28f, spec.bg, mix(spec.bg, spec.fg, .2f), shadow = 4f, offset = 2f)
         iconCircle(x + 60f, top + 75f, 32f, spec.symbol, spec.bg, spec.fg, 30f)
-        text(spec.title, x + 112f, top + 28f, 34f, spec.fg, true)
+        val titleSize = if (
+            currentPage == P03_CHAT_PAGE_ID && code == "PROVIDER_ERROR"
+        ) 35f else 34f
+        text(spec.title, x + 112f, top + 28f, titleSize, spec.fg, true)
         text(message ?: "请检查后重试，已保留当前操作内容。", x + 112f, top + 76f, 26f, Pc.text2, maxWidth = width - 150f)
     }
 
@@ -1289,7 +1292,9 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             p03ChatStatusFontCalibration &&
             bold &&
             visible.length > 1
-        ) .008f else 0f
+        ) {
+            if (value == "当前模型响应失败") -.018f else .008f
+        } else 0f
         return 1f + coefficient * asciiRatio + statusTitleCalibration
     }
 
