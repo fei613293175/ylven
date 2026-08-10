@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -82,6 +83,9 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
         waitForTag("YL-A-031-root")
         captureProductionPage("YL-A-031-PRODUCTION", "YL-A-031-root")
+        composeRule.onNodeWithText("所属项目").assertDoesNotExist()
+        composeRule.onNodeWithText("默认模型").assertDoesNotExist()
+        composeRule.onNodeWithText("会话指令").assertDoesNotExist()
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("临时架构讨论")
         Espresso.closeSoftKeyboard()
         composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()

@@ -256,7 +256,6 @@ internal fun P03HomePage(
             onOpenConversation = onOpenConversation,
         )
         P03HomeDestination.TEMPORARY_CONVERSATION -> P03TemporaryConversationScreen(
-            models = snapshot?.modelCatalog.orEmpty(),
             loading = operationLoading,
             error = error,
             onBack = { destination = P03HomeDestination.HOME },
@@ -569,26 +568,19 @@ private fun P03SearchScreen(
 
 @Composable
 private fun P03TemporaryConversationScreen(
-    models: List<String>,
     loading: Boolean,
     error: String?,
     onBack: () -> Unit,
     onCreate: (String) -> Unit,
 ) {
     var title by rememberSaveable { mutableStateOf("") }
-    var project by rememberSaveable { mutableStateOf("") }
-    var model by rememberSaveable { mutableStateOf(models.firstOrNull().orEmpty()) }
-    var instruction by rememberSaveable { mutableStateOf("") }
     P03FormScaffold(
         rootTag = "YL-A-031-root",
         title = "新建对话",
-        subtitle = "设置会话名称、项目和默认模型",
+        subtitle = "创建后不会长期保留在会话历史中",
         onBack = onBack,
     ) {
         P03LabeledField("会话名称", title, { title = it }, "请输入会话名称", tag = "p03-temporary-title")
-        P03LabeledField("所属项目", project, { project = it }, "请输入所属项目")
-        P03LabeledField("默认模型", model, { model = it }, "请输入默认模型")
-        P03LabeledField("会话指令", instruction, { instruction = it }, "请输入会话指令", singleLine = false)
         P03PrimaryButton(
             label = "创建临时对话",
             loading = loading,
