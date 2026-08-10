@@ -107,7 +107,9 @@ class P03LiveStagingFlowTest {
         assertTemporaryConversationScope()
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
         Espresso.closeSoftKeyboard()
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()
+        // The temporary-conversation action is pinned in the bottom action bar,
+        // outside the home list's scroll container.
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()

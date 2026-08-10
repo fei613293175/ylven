@@ -35,6 +35,24 @@ function Invoke-Adb {
     return $textOutput
 }
 
+function Invoke-AdbOptional {
+    param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
+    $savedErrorActionPreference = $ErrorActionPreference
+    $output = @()
+    $exitCode = $null
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = @(& $script:AdbPath -s $script:Serial @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $savedErrorActionPreference
+    }
+    [pscustomobject]@{
+        ExitCode = $exitCode
+        Lines = @($output | ForEach-Object { $_.ToString() })
+    }
+}
+
 function Invoke-AdbInstall {
     param(
         [Parameter(Mandatory=$true)][string]$Apk,
@@ -176,9 +194,23 @@ function Test-AppPath {
         [Parameter(Mandatory=$true)][string]$Path,
         [switch]$NonEmpty
     )
-    $testFlag = if ($NonEmpty) { '-s' } else { '-e' }
-    & $script:AdbPath -s $script:Serial shell run-as $Package test $testFlag $Path 2>$null
-    return $LASTEXITCODE -eq 0
+    if ($Package -notmatch '^[A-Za-z0-9._]+$' -or $Path -notmatch '^[A-Za-z0-9._/-]+$') {
+        throw 'Unsafe package or app-relative path passed to Test-AppPath.'
+    }
+    $savedErrorActionPreference = $ErrorActionPreference
+    try {
+        # Some vendor Android builds reject `run-as <package> test ...` even though
+        # run-as itself works. Reading through run-as proves existence without relying
+        # on the vendor's executable allow-list. Keep the content only in memory.
+        $ErrorActionPreference = 'Continue'
+        $content = @(& $script:AdbPath -s $script:Serial shell run-as $Package cat $Path 2>$null)
+        $readSucceeded = $LASTEXITCODE -eq 0
+        if (-not $readSucceeded) { return $false }
+        if ($NonEmpty) { return (($content -join "`n").Length -gt 0) }
+        return $true
+    } finally {
+        $ErrorActionPreference = $savedErrorActionPreference
+    }
 }
 
 function Test-AppSessionBlob {
@@ -186,8 +218,8 @@ function Test-AppSessionBlob {
     $savedErrorActionPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        & $script:AdbPath -s $script:Serial shell run-as $script:PackageId grep -q session_blob shared_prefs/ylven_identity.xml 2>&1 | Out-Null
-        return $LASTEXITCODE -eq 0
+        $content = @(& $script:AdbPath -s $script:Serial shell run-as $script:PackageId cat shared_prefs/ylven_identity.xml 2>$null)
+        return ($LASTEXITCODE -eq 0 -and ($content -join "`n") -match 'session_blob')
     } finally {
         $ErrorActionPreference = $savedErrorActionPreference
     }
@@ -552,23 +584,32 @@ try {
     $serverPostProcessing = 'PENDING_SERVER_POST_PROCESSING'
 
     (Invoke-Adb logcat '-d' '-v' threadtime) | Set-Content -LiteralPath (Join-Path $testResults 'logcat.txt') -Encoding UTF8
-    (Invoke-Adb shell dumpsys activity exit-info $PackageId) | Set-Content -LiteralPath (Join-Path $testResults 'application-exit-info.txt') -Encoding UTF8
+    $exitInfoResult = Invoke-AdbOptional shell dumpsys activity exit-info $PackageId
+    $exitInfoPath = Join-Path $testResults 'application-exit-info.txt'
+    $exitInfoResult.Lines | Set-Content -LiteralPath $exitInfoPath -Encoding UTF8
+    $dropboxResult = Invoke-AdbOptional shell dumpsys dropbox --print data_app_crash data_app_anr
+    $dropboxPath = Join-Path $testResults 'application-dropbox-crash-anr.txt'
+    $dropboxResult.Lines | Set-Content -LiteralPath $dropboxPath -Encoding UTF8
     $logText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'logcat.txt')
-    $exitText = Get-Content -Raw -LiteralPath (Join-Path $testResults 'application-exit-info.txt')
+    $exitText = Get-Content -Raw -LiteralPath $exitInfoPath
+    $dropboxText = Get-Content -Raw -LiteralPath $dropboxPath
     $runtimeErrors = @()
     foreach ($pattern in @('FATAL EXCEPTION', 'ANR in cc\.orbexa\.ylven', 'am_crash.*cc\.orbexa\.ylven', 'am_anr.*cc\.orbexa\.ylven', 'Fatal signal.*cc\.orbexa\.ylven')) {
         if ($logText -match $pattern) { $runtimeErrors += $pattern }
     }
     if ($exitText -match '(?is)(REASON_CRASH|REASON_ANR|reason=crash|reason=anr)') { $runtimeErrors += 'ApplicationExitInfo crash/ANR' }
+    if ($dropboxText -match '(?is)(cc\.orbexa\.ylven.*(FATAL EXCEPTION|ANR|crash)|(?:FATAL EXCEPTION|ANR|crash).*cc\.orbexa\.ylven)') { $runtimeErrors += 'dumpsys dropbox crash/ANR' }
     if ($runtimeErrors.Count -gt 0) { throw "Crash/ANR/log review failed: $($runtimeErrors -join ', ')" }
 
+    $exitInfoSupport = if ($exitInfoResult.ExitCode -eq 0 -and $exitText -notmatch '(?i)(unknown command|not found|unsupported|error:)') { '可用' } else { '不支持或不可用' }
     $logReview = @"
 # 真机日志审查
 
 - 设备：$manufacturer $model / Android $androidVersion / API $apiLevel
 - APK：YLVEN-$Version-$Phase.apk
 - logcat：test-results/logcat.txt
-- ApplicationExitInfo：test-results/application-exit-info.txt
+- ApplicationExitInfo：test-results/application-exit-info.txt（厂商支持状态：$exitInfoSupport）
+- dumpsys dropbox：test-results/application-dropbox-crash-anr.txt
 - FATAL EXCEPTION：未发现
 - ANR：未发现
 - native crash：未发现

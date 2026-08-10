@@ -86,7 +86,9 @@ class P03RealDeviceFlowTest {
         assertTemporaryConversationScope()
         composeRule.onNodeWithTag("p03-temporary-title").performTextInput("临时架构讨论")
         Espresso.closeSoftKeyboard()
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performScrollTo().performClick()
+        // The temporary-conversation action is pinned in the bottom action bar,
+        // outside the home list's scroll container.
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
         waitForTag("p03-active-conversation-temporary")
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
