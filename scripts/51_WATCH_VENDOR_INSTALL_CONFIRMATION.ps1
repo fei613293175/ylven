@@ -87,6 +87,15 @@ while ((Get-Process -Id $MonitorPid -ErrorAction SilentlyContinue) -and (Get-Dat
                         continue
                     }
 
+                    $installCountdownActive = $nodes | Where-Object {
+                        $label = (($_.text + ' ' + $_.GetAttribute('content-desc')).Trim())
+                        $label -match '拒绝\s*[（(]\s*[1-9]\d*\s*[）)]'
+                    } | Select-Object -First 1
+                    if ($installCountdownActive) {
+                        Start-Sleep -Milliseconds 400
+                        continue
+                    }
+
                     $positive = $nodes | Where-Object {
                         $label = (($_.text + ' ' + $_.GetAttribute('content-desc')).Trim())
                         $_.enabled -eq 'true' -and $_.clickable -eq 'true' -and
