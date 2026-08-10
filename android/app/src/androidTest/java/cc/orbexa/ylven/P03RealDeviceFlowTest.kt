@@ -113,6 +113,8 @@ class P03RealDeviceFlowTest {
         gateway.releaseSend()
         waitForCondition { "events-attempt" in gateway.calls }
         gateway.releaseFirstEventFailure()
+        waitForCall(gateway, "events-retry")
+        waitForTag("YL-A-023-C-P03_012-01")
         scrollChatTo("YL-A-023-C-P03_012-01")
         waitForTag("YL-A-024-C-P03_011-01")
         composeRule.onNodeWithTag("YL-A-024-C-P03_011-01").performClick()
