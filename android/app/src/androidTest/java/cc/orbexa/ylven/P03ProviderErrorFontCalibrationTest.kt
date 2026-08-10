@@ -2,6 +2,7 @@ package cc.orbexa.ylven
 
 import android.content.ContentValues
 import android.graphics.Bitmap
+import android.graphics.Paint
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -93,26 +94,37 @@ private data class ProviderErrorVariant(
 )
 
 private val PROVIDER_ERROR_VARIANTS = buildList {
-    val fontWeights = listOf(400, 450, 500, 550, 600, 650, 700)
+    val subpixelValues = listOf(false, true)
+    val linearValues = listOf(false, true)
+    val hintingValues = listOf(Paint.HINTING_OFF, Paint.HINTING_ON)
     val strokeWidths = listOf(0f, .04f, .08f)
-    val scaleXs = listOf(1.002f, 1.004f, 1.006f)
-    fontWeights.forEach { fontWeight ->
-        strokeWidths.forEach { strokeWidth ->
-            scaleXs.forEach { scaleX ->
-                val strokeCode = (strokeWidth * 1000).roundToInt().toString().padStart(3, '0')
-                val scaleCode = (scaleX * 1000).roundToInt().toString()
-                add(
-                    ProviderErrorVariant(
-                        name = "provider-fw$fontWeight-sw$strokeCode-sx$scaleCode",
-                        calibration = ProviderErrorFontCalibration(
-                            fontWeight = fontWeight,
-                            fakeBold = true,
-                            strokeWidth = strokeWidth,
-                            scaleX = scaleX,
-                        ),
-                    ),
-                )
+    val scaleXs = listOf(1.002f, 1.004f)
+    subpixelValues.forEach { subpixelText ->
+        linearValues.forEach { linearText ->
+            hintingValues.forEach { hinting ->
+                strokeWidths.forEach { strokeWidth ->
+                    scaleXs.forEach { scaleX ->
+                        val strokeCode = (strokeWidth * 1000).roundToInt().toString().padStart(3, '0')
+                        val scaleCode = (scaleX * 1000).roundToInt().toString()
+                        add(
+                            ProviderErrorVariant(
+                                name = "provider-sp${subpixelText.toInt()}-ln${linearText.toInt()}-hi$hinting-sw$strokeCode-sx$scaleCode",
+                                calibration = ProviderErrorFontCalibration(
+                                    fontWeight = 550,
+                                    fakeBold = true,
+                                    strokeWidth = strokeWidth,
+                                    scaleX = scaleX,
+                                    subpixelText = subpixelText,
+                                    linearText = linearText,
+                                    hinting = hinting,
+                                ),
+                            ),
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+private fun Boolean.toInt(): Int = if (this) 1 else 0

@@ -78,12 +78,15 @@ private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
 }
 
 data class ProviderErrorFontCalibration(
-    val fontWeight: Int = 700,
+    val fontWeight: Int = 550,
     val fakeBold: Boolean = true,
     val strokeWidth: Float = .08f,
     val scaleX: Float = 1.002f,
     val xOffset: Float = 0f,
     val baselineOffset: Float = 0f,
+    val subpixelText: Boolean = true,
+    val linearText: Boolean = false,
+    val hinting: Int = Paint.HINTING_OFF,
 )
 
 private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
@@ -1305,6 +1308,9 @@ private class AndroidContractRenderer(
                         false,
                     )
                 }
+                paint.isSubpixelText = providerErrorFontCalibration.subpixelText
+                paint.isLinearText = providerErrorFontCalibration.linearText
+                paint.hinting = providerErrorFontCalibration.hinting
                 paint.isFakeBoldText = providerErrorFontCalibration.fakeBold
                 paint.style = if (providerErrorFontCalibration.strokeWidth > 0f) {
                     Paint.Style.FILL_AND_STROKE
@@ -1327,6 +1333,9 @@ private class AndroidContractRenderer(
         }
         paint.textScaleX = 1f
         paint.isFakeBoldText = false
+        paint.isSubpixelText = true
+        paint.isLinearText = false
+        paint.hinting = Paint.HINTING_OFF
         paint.style = Paint.Style.FILL
         paint.strokeWidth = 1f
     }
