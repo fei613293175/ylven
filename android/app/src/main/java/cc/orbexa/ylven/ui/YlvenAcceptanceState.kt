@@ -29,7 +29,10 @@ import kotlin.math.max
  * does not load the approved PNGs: every screenshot is drawn by the running APK.
  */
 @Composable
-fun YlvenAcceptanceState(stateId: String) {
+fun YlvenAcceptanceState(
+    stateId: String,
+    providerErrorFontCalibration: ProviderErrorFontCalibration = ProviderErrorFontCalibration(),
+) {
     AcceptanceSystemBars()
     Canvas(
         modifier = Modifier
@@ -40,7 +43,7 @@ fun YlvenAcceptanceState(stateId: String) {
             val canvas = composeCanvas.nativeCanvas
             val checkpoint = canvas.save()
             canvas.scale(size.width / CONTRACT_WIDTH, size.height / CONTRACT_HEIGHT)
-            AndroidContractRenderer(canvas).render(stateId)
+            AndroidContractRenderer(canvas, providerErrorFontCalibration).render(stateId)
             canvas.restoreToCount(checkpoint)
         }
     }
@@ -72,6 +75,14 @@ private const val CONTRACT_HEIGHT = 2400f
 private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
+
+data class ProviderErrorFontCalibration(
+    val fakeBold: Boolean = true,
+    val strokeWidth: Float = .08f,
+    val scaleX: Float = 1.002f,
+    val baselineOffset: Float = 0f,
+)
+
 private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
 private const val P03_CHAT_PAGE_ID = "YL-A-023"
 
@@ -102,7 +113,10 @@ private object Pc {
 
 private fun color(value: String): Int = Color.parseColor(value)
 
-private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
+private class AndroidContractRenderer(
+    private val canvas: AndroidCanvas,
+    private val providerErrorFontCalibration: ProviderErrorFontCalibration,
+) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
@@ -1280,11 +1294,21 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
             if (calibrateProviderErrorTitle) {
                 val calibratedX = drawX
-                paint.style = Paint.Style.FILL_AND_STROKE
-                paint.strokeWidth = .08f
+                paint.isFakeBoldText = providerErrorFontCalibration.fakeBold
+                paint.style = if (providerErrorFontCalibration.strokeWidth > 0f) {
+                    Paint.Style.FILL_AND_STROKE
+                } else {
+                    Paint.Style.FILL
+                }
+                paint.strokeWidth = providerErrorFontCalibration.strokeWidth.coerceAtLeast(0f)
                 canvas.save()
-                canvas.scale(1.002f, 1f, calibratedX, y)
-                canvas.drawText(line, calibratedX, baseline + index * step, paint)
+                canvas.scale(providerErrorFontCalibration.scaleX, 1f, calibratedX, y)
+                canvas.drawText(
+                    line,
+                    calibratedX,
+                    baseline + index * step + providerErrorFontCalibration.baselineOffset,
+                    paint,
+                )
                 canvas.restore()
             } else {
                 canvas.drawText(line, drawX, baseline + index * step, paint)
