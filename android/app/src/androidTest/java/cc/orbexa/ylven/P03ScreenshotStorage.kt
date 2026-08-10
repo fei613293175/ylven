@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.annotation.RequiresApi
 import java.io.File
 import java.io.FileOutputStream
 
@@ -42,7 +41,7 @@ internal object P03ScreenshotStorage {
 
 /** Loaded only on API 29+, where MediaStore.Downloads and scoped-storage columns exist. */
 private object ScopedDownloadMediaWriter {
-    @RequiresApi(Build.VERSION_CODES.Q)
+    @Suppress("NewApi")
     fun writePng(
         context: Context,
         bitmap: Bitmap,
