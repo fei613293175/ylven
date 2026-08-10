@@ -1281,7 +1281,7 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             if (calibrateProviderErrorTitle) {
                 val calibratedX = drawX
                 paint.style = Paint.Style.FILL_AND_STROKE
-                paint.strokeWidth = .2f
+                paint.strokeWidth = .08f
                 canvas.save()
                 canvas.scale(1.002f, 1f, calibratedX, y)
                 canvas.drawText(line, calibratedX, baseline + index * step, paint)
