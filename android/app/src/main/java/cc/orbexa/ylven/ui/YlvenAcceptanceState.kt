@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -77,6 +78,7 @@ private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
 }
 
 data class ProviderErrorFontCalibration(
+    val fontWeight: Int = 700,
     val fakeBold: Boolean = true,
     val strokeWidth: Float = .08f,
     val scaleX: Float = 1.002f,
@@ -1295,6 +1297,14 @@ private class AndroidContractRenderer(
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
             if (calibrateProviderErrorTitle) {
                 val calibratedX = drawX + providerErrorFontCalibration.xOffset
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    val baseTypeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                    paint.typeface = Typeface.create(
+                        baseTypeface,
+                        providerErrorFontCalibration.fontWeight.coerceIn(1, 1000),
+                        false,
+                    )
+                }
                 paint.isFakeBoldText = providerErrorFontCalibration.fakeBold
                 paint.style = if (providerErrorFontCalibration.strokeWidth > 0f) {
                     Paint.Style.FILL_AND_STROKE

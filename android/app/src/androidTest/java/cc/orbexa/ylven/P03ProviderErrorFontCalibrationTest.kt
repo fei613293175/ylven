@@ -93,35 +93,25 @@ private data class ProviderErrorVariant(
 )
 
 private val PROVIDER_ERROR_VARIANTS = buildList {
-    val strokeWidths = listOf(0f, .04f, .08f, .12f)
-    val scaleXs = listOf(.998f, 1f, 1.002f, 1.004f)
-    val xOffsets = listOf(-1f, -.5f, 0f)
-    val baselineOffsets = listOf(-1f, 0f)
-    strokeWidths.forEach { strokeWidth ->
-        scaleXs.forEach { scaleX ->
-            xOffsets.forEach { xOffset ->
-                baselineOffsets.forEach { baselineOffset ->
-                    val strokeCode = (strokeWidth * 1000).roundToInt().toString().padStart(3, '0')
-                    val scaleCode = (scaleX * 1000).roundToInt().toString()
-                    val xCode = if (xOffset < 0) {
-                        "n${(-xOffset * 10).roundToInt().toString().padStart(2, '0')}"
-                    } else {
-                        "p00"
-                    }
-                    val baselineCode = if (baselineOffset < 0) "n10" else "p00"
-                    add(
-                        ProviderErrorVariant(
-                            name = "provider-f1-sw$strokeCode-sx$scaleCode-x$xCode-by$baselineCode",
-                            calibration = ProviderErrorFontCalibration(
-                                fakeBold = true,
-                                strokeWidth = strokeWidth,
-                                scaleX = scaleX,
-                                xOffset = xOffset,
-                                baselineOffset = baselineOffset,
-                            ),
+    val fontWeights = listOf(400, 450, 500, 550, 600, 650, 700)
+    val strokeWidths = listOf(0f, .04f, .08f)
+    val scaleXs = listOf(1.002f, 1.004f, 1.006f)
+    fontWeights.forEach { fontWeight ->
+        strokeWidths.forEach { strokeWidth ->
+            scaleXs.forEach { scaleX ->
+                val strokeCode = (strokeWidth * 1000).roundToInt().toString().padStart(3, '0')
+                val scaleCode = (scaleX * 1000).roundToInt().toString()
+                add(
+                    ProviderErrorVariant(
+                        name = "provider-fw$fontWeight-sw$strokeCode-sx$scaleCode",
+                        calibration = ProviderErrorFontCalibration(
+                            fontWeight = fontWeight,
+                            fakeBold = true,
+                            strokeWidth = strokeWidth,
+                            scaleX = scaleX,
                         ),
-                    )
-                }
+                    ),
+                )
             }
         }
     }
