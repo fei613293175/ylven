@@ -1038,11 +1038,14 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
         }
         val width = 1080f * widthRatio
         val x = (1080f - width) / 2f
+        val calibrateProviderError = currentPage == P03_CHAT_PAGE_ID && code == "PROVIDER_ERROR"
         shadowCard(x, top, x + width, top + 150f, 28f, spec.bg, mix(spec.bg, spec.fg, .2f), shadow = 4f, offset = 2f)
-        iconCircle(x + 60f, top + 75f, 32f, spec.symbol, spec.bg, spec.fg, 30f)
-        val titleSize = if (
-            currentPage == P03_CHAT_PAGE_ID && code == "PROVIDER_ERROR"
-        ) 35f else 34f
+        iconCircle(
+            x + if (calibrateProviderError) 59f else 60f,
+            top + if (calibrateProviderError) 77f else 75f,
+            32f, spec.symbol, spec.bg, spec.fg, 30f,
+        )
+        val titleSize = if (calibrateProviderError) 35f else 34f
         text(spec.title, x + 112f, top + 28f, titleSize, spec.fg, true)
         text(message ?: "请检查后重试，已保留当前操作内容。", x + 112f, top + 76f, 26f, Pc.text2, maxWidth = width - 150f)
     }
@@ -1268,9 +1271,21 @@ private class AndroidContractRenderer(private val canvas: AndroidCanvas) {
             currentPage == P03_CHAT_PAGE_ID &&
             anchor in setOf(Anchor.LEFT_ASCENDER, Anchor.LEFT_MIDDLE)
         ) x - 1f else x
+        val calibrateProviderErrorTitle =
+            currentPage == P03_CHAT_PAGE_ID &&
+                p03ChatStatusFontCalibration &&
+                bold &&
+                value == "当前模型响应失败"
         lines.forEachIndexed { index, line ->
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
-            canvas.drawText(line, drawX, baseline + index * step, paint)
+            if (calibrateProviderErrorTitle) {
+                canvas.save()
+                canvas.scale(1.002f, 1.02f, drawX, y)
+                canvas.drawText(line, drawX, baseline + index * step, paint)
+                canvas.restore()
+            } else {
+                canvas.drawText(line, drawX, baseline + index * step, paint)
+            }
         }
         paint.textScaleX = 1f
         paint.isFakeBoldText = false
