@@ -405,6 +405,10 @@ try {
     $model = ((Invoke-Adb shell getprop ro.product.model) -join '').Trim()
     $androidVersion = ((Invoke-Adb shell getprop ro.build.version.release) -join '').Trim()
     $apiLevel = ((Invoke-Adb shell getprop ro.build.version.sdk) -join '').Trim()
+    if ($apiLevel -notmatch '^\d+$') { throw "Could not determine the Android API level: $apiLevel" }
+    $usesScopedDownloadMedia = [int]$apiLevel -ge 29
+    $remoteStateScreenshotDirectory = if ($usesScopedDownloadMedia) { "/sdcard/Download/ylven-$($Phase.ToLowerInvariant())" } else { "/sdcard/Android/data/$PackageId/files/screenshots" }
+    $remoteProductionScreenshotDirectory = if ($usesScopedDownloadMedia) { "/sdcard/Download/ylven-p03-production" } else { "/sdcard/Android/data/$PackageId/files/production-screenshots" }
     $physicalSize = ((Invoke-Adb shell wm size) -join ' ').Trim()
     if ($physicalSize -notmatch '(?i)Physical size:\s*\d+x\d+') { throw "Could not determine the physical display size: $physicalSize" }
     if ($physicalSize -match '(?i)Override size:') { throw "The selected phone has an existing display-size override; testing stops without changing it: $physicalSize" }
@@ -518,8 +522,8 @@ try {
 
     if ($Phase -eq 'P03') {
         $remoteScreenshotDirectories = @(
-            '/sdcard/Download/ylven-p03',
-            '/sdcard/Download/ylven-p03-production'
+            $remoteStateScreenshotDirectory,
+            $remoteProductionScreenshotDirectory
         )
         foreach ($remoteScreenshotDirectory in $remoteScreenshotDirectories) {
             Invoke-Adb shell rm '-rf' $remoteScreenshotDirectory | Out-Null
@@ -537,7 +541,7 @@ try {
     if ($Phase -eq 'P03' -and @($stateRows).Count -ne 93) { throw "Expected 93 P03 Android states, got $(@($stateRows).Count)." }
     $indexRows = @()
     foreach ($row in $stateRows) {
-        $remote = "/sdcard/Download/ylven-$($Phase.ToLowerInvariant())/$($row.state_id).png"
+        $remote = "$remoteStateScreenshotDirectory/$($row.state_id).png"
         $local = Join-Path $screenshots "$($row.state_id).png"
         Invoke-Adb shell test '-s' $remote | Out-Null
         Invoke-Adb pull $remote $local | Out-Null
@@ -561,7 +565,7 @@ try {
     $productionIndex = @()
     foreach ($entry in $productionPages.GetEnumerator()) {
         $name = "$($entry.Key)-PRODUCTION.png"
-        $remote = "/sdcard/Download/ylven-p03-production/$name"
+        $remote = "$remoteProductionScreenshotDirectory/$name"
         $local = Join-Path $productionScreenshots $name
         Invoke-Adb shell test '-s' $remote | Out-Null
         Invoke-Adb pull $remote $local | Out-Null
@@ -680,6 +684,7 @@ try {
         install_transition=[ordered]@{ mode=if ($signingMigration) { 'one_time_uninstall_then_install' } else { 'adb_install_r' }; data_preserved=(-not $signingMigration); old_login_state=$loginBefore; login_state_immediately_after_install=$loginAfter; staging_session_provisioned=$sessionProvisioned; final_login_state=$loginAfterProvision }
         signing_migration=[ordered]@{ applied=$signingMigration; previous_certificate_sha256=$provenance.previous_signing_certificate_sha256; new_certificate_sha256=$provenance.signing_certificate_sha256; approved_contract=if ($signingMigration) { 'contracts/signing-migrations/P03.properties' } else { $null } }
         state_screenshot_count=@($stateRows).Count
+        screenshot_storage=if ($usesScopedDownloadMedia) { 'scoped_download_media' } else { 'app_specific_external_storage' }
         production_page_screenshot_count=$productionPages.Count
         real_device_ui_flow='PASS'
         deterministic_gateway_scope='UI interaction only; not staging acceptance'

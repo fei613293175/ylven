@@ -1,10 +1,6 @@
 package cc.orbexa.ylven
 
-import android.content.ContentValues
 import android.graphics.Bitmap
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -15,8 +11,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
-import java.io.File
-import java.io.FileOutputStream
 import org.junit.Rule
 import org.junit.Test
 
@@ -54,42 +48,18 @@ class P03ConversationStateUiTest {
         check(bitmap.width > 0 && bitmap.height > 0) {
             "P03 runtime screenshot is empty for $name"
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val resolver = context.contentResolver
-            val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/ylven-p03/"
-            resolver.delete(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                "${MediaStore.MediaColumns.DISPLAY_NAME} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?",
-                arrayOf("$name.png", relativePath),
+        try {
+            P03ScreenshotStorage.writePng(
+                context = context,
+                bitmap = bitmap,
+                legacyDirectory = "screenshots",
+                scopedDownloadDirectory = "ylven-p03",
+                fileName = "$name.png",
+                subject = "P03 acceptance screenshot",
             )
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.png")
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
-            }
-            val uri = requireNotNull(resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)) {
-                "Could not create P03 acceptance screenshot media entry"
-            }
-            try {
-                requireNotNull(resolver.openOutputStream(uri)).use { stream ->
-                    check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
-                }
-                resolver.update(uri, ContentValues().apply {
-                    put(MediaStore.MediaColumns.IS_PENDING, 0)
-                }, null, null)
-            } catch (failure: Throwable) {
-                resolver.delete(uri, null, null)
-                throw failure
-            }
-        } else {
-            val output = File(context.getExternalFilesDir(null), "screenshots/$name.png")
-            output.parentFile?.mkdirs()
-            FileOutputStream(output).use { stream ->
-                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
-            }
+        } finally {
+            bitmap.recycle()
         }
-        bitmap.recycle()
     }
 }
 

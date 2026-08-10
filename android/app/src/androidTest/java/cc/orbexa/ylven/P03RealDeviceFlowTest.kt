@@ -1,11 +1,8 @@
 package cc.orbexa.ylven
 
 import android.accessibilityservice.AccessibilityService
-import android.content.ContentValues
 import android.graphics.Bitmap
-import android.os.Environment
 import android.os.SystemClock
-import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
@@ -285,32 +282,15 @@ class P03RealDeviceFlowTest {
         check(bitmap.width > 0 && bitmap.height > 0) {
             "P03 production screenshot is empty for $name"
         }
-        val resolver = context.contentResolver
-        val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/ylven-p03-production/"
-        resolver.delete(
-            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-            "${MediaStore.MediaColumns.DISPLAY_NAME} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?",
-            arrayOf("$name.png", relativePath),
-        )
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.png")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
-        }
-        val uri = requireNotNull(resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)) {
-            "Could not create P03 production screenshot media entry"
-        }
         try {
-            requireNotNull(resolver.openOutputStream(uri)).use { stream ->
-                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
-            }
-            resolver.update(uri, ContentValues().apply {
-                put(MediaStore.MediaColumns.IS_PENDING, 0)
-            }, null, null)
-        } catch (failure: Throwable) {
-            resolver.delete(uri, null, null)
-            throw failure
+            P03ScreenshotStorage.writePng(
+                context = context,
+                bitmap = bitmap,
+                legacyDirectory = "production-screenshots",
+                scopedDownloadDirectory = "ylven-p03-production",
+                fileName = "$name.png",
+                subject = "P03 production screenshot",
+            )
         } finally {
             bitmap.recycle()
         }
