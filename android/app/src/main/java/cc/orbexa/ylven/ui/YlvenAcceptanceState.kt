@@ -32,7 +32,6 @@ import kotlin.math.max
 @Composable
 fun YlvenAcceptanceState(
     stateId: String,
-    providerErrorFontCalibration: ProviderErrorFontCalibration = ProviderErrorFontCalibration(),
 ) {
     AcceptanceSystemBars()
     Canvas(
@@ -44,7 +43,7 @@ fun YlvenAcceptanceState(
             val canvas = composeCanvas.nativeCanvas
             val checkpoint = canvas.save()
             canvas.scale(size.width / CONTRACT_WIDTH, size.height / CONTRACT_HEIGHT)
-            AndroidContractRenderer(canvas, providerErrorFontCalibration).render(stateId)
+            AndroidContractRenderer(canvas).render(stateId)
             canvas.restoreToCount(checkpoint)
         }
     }
@@ -77,20 +76,11 @@ private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
 
-data class ProviderErrorFontCalibration(
-    val fontWeight: Int = 550,
-    val fakeBold: Boolean = true,
-    val strokeWidth: Float = .08f,
-    val scaleX: Float = 1.002f,
-    val xOffset: Float = 0f,
-    val baselineOffset: Float = 0f,
-    val subpixelText: Boolean = true,
-    val linearText: Boolean = false,
-    val hinting: Int = Paint.HINTING_OFF,
-)
-
 private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
 private const val P03_CHAT_PAGE_ID = "YL-A-023"
+private const val P03_PROVIDER_ERROR_FONT_WEIGHT = 550
+private const val P03_PROVIDER_ERROR_STROKE_WIDTH = .04f
+private const val P03_PROVIDER_ERROR_SCALE_X = 1.004f
 
 private object Pc {
     val bg = color("#F6F7FB")
@@ -121,7 +111,6 @@ private fun color(value: String): Int = Color.parseColor(value)
 
 private class AndroidContractRenderer(
     private val canvas: AndroidCanvas,
-    private val providerErrorFontCalibration: ProviderErrorFontCalibration,
 ) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         strokeCap = Paint.Cap.ROUND
@@ -1299,31 +1288,26 @@ private class AndroidContractRenderer(
         lines.forEachIndexed { index, line ->
             if (p03Text) paint.textScaleX = p03TextScale(line, bold)
             if (calibrateProviderErrorTitle) {
-                val calibratedX = drawX + providerErrorFontCalibration.xOffset
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val baseTypeface = Typeface.create("sans-serif", Typeface.NORMAL)
                     paint.typeface = Typeface.create(
                         baseTypeface,
-                        providerErrorFontCalibration.fontWeight.coerceIn(1, 1000),
+                        P03_PROVIDER_ERROR_FONT_WEIGHT,
                         false,
                     )
                 }
-                paint.isSubpixelText = providerErrorFontCalibration.subpixelText
-                paint.isLinearText = providerErrorFontCalibration.linearText
-                paint.hinting = providerErrorFontCalibration.hinting
-                paint.isFakeBoldText = providerErrorFontCalibration.fakeBold
-                paint.style = if (providerErrorFontCalibration.strokeWidth > 0f) {
-                    Paint.Style.FILL_AND_STROKE
-                } else {
-                    Paint.Style.FILL
-                }
-                paint.strokeWidth = providerErrorFontCalibration.strokeWidth.coerceAtLeast(0f)
+                paint.isSubpixelText = true
+                paint.isLinearText = false
+                paint.hinting = Paint.HINTING_ON
+                paint.isFakeBoldText = true
+                paint.style = Paint.Style.FILL_AND_STROKE
+                paint.strokeWidth = P03_PROVIDER_ERROR_STROKE_WIDTH
                 canvas.save()
-                canvas.scale(providerErrorFontCalibration.scaleX, 1f, calibratedX, y)
+                canvas.scale(P03_PROVIDER_ERROR_SCALE_X, 1f, drawX, y)
                 canvas.drawText(
                     line,
-                    calibratedX,
-                    baseline + index * step + providerErrorFontCalibration.baselineOffset,
+                    drawX,
+                    baseline + index * step,
                     paint,
                 )
                 canvas.restore()
