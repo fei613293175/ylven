@@ -1,6 +1,7 @@
 package cc.orbexa.ylven
 
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -64,8 +65,7 @@ class P03LiveStagingFlowTest {
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         waitForTag("YL-A-022-root", 20_000)
-        composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
-        waitForTagGone("YL-A-022-root", 20_000)
+        performSheetActionAndWaitForDismiss("YL-A-022-C-P03_029-01", 20_000)
         reportStage("conversation_exported")
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
@@ -74,8 +74,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
         composeRule.onNodeWithTag("p03-rename-input").performTextInput("P03 $marker")
         Espresso.closeSoftKeyboard()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
-        waitForTagGone("YL-A-022-root", 20_000)
+        performSheetActionAndWaitForDismiss("YL-A-022-C-P03_005-01", 20_000)
         assertNoInlineError()
         reportStage("conversation_renamed")
 
@@ -92,7 +91,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag(matchingConversation).performScrollTo().performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_006-01").performClick()
+        performSheetActionAndWaitForDismiss("YL-A-022-C-P03_006-01", 20_000)
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
         reportStage("conversation_archived")
@@ -108,7 +107,7 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
         waitForTag("p03-confirm-delete", 20_000)
-        composeRule.onNodeWithTag("p03-confirm-delete").performClick()
+        performSheetActionAndWaitForDismiss("p03-confirm-delete", 20_000)
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
         reportStage("temporary_conversation_deleted")
@@ -123,6 +122,25 @@ class P03LiveStagingFlowTest {
     private fun waitForTagGone(tag: String, timeout: Long) {
         composeRule.waitUntil(timeoutMillis = timeout) {
             composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    private fun performSheetActionAndWaitForDismiss(tag: String, timeout: Long) {
+        waitForTag(tag, timeout)
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.onNodeWithTag(tag).performClick()
+            val deadline = SystemClock.uptimeMillis() + timeout
+            while (SystemClock.uptimeMillis() < deadline) {
+                composeRule.runOnUiThread { composeRule.mainClock.advanceTimeByFrame() }
+                if (composeRule.onAllNodesWithTag("YL-A-022-root").fetchSemanticsNodes().isEmpty()) {
+                    return
+                }
+                Thread.sleep(10)
+            }
+            error("Conversation action sheet did not close within $timeout ms after $tag")
+        } finally {
+            composeRule.mainClock.autoAdvance = true
         }
     }
 
