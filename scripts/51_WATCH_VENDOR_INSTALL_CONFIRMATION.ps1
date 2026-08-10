@@ -33,6 +33,8 @@ if ($state -ne 'device') { throw "Device $Serial is not in exact state device." 
 New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
 $localXml = Join-Path $EvidenceDir 'latest-install-ui.xml'
 $transcript = Join-Path $EvidenceDir 'install-confirmations.log'
+$readyMarker = Join-Path $EvidenceDir 'watcher-ready.txt'
+"$(Get-Date -Format o) READY serial=$Serial" | Set-Content -LiteralPath $readyMarker -Encoding UTF8
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 $lastSignature = $null
 $clickCount = 0

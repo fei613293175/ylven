@@ -67,7 +67,15 @@ function Invoke-AdbInstall {
         $watcherJob = Start-Job -FilePath $watcherPath -ArgumentList @(
             $script:AdbPath, $script:Serial, $PID, $EvidenceDir, 180
         )
-        Start-Sleep -Milliseconds 1200
+        $watcherReady = Join-Path $EvidenceDir 'watcher-ready.txt'
+        $watcherReadyDeadline = (Get-Date).AddSeconds(15)
+        while (-not (Test-Path -LiteralPath $watcherReady) -and (Get-Date) -lt $watcherReadyDeadline) {
+            if ($watcherJob.State -eq 'Failed') { throw 'Vendor install confirmation watcher failed during startup.' }
+            Start-Sleep -Milliseconds 100
+        }
+        if (-not (Test-Path -LiteralPath $watcherReady)) {
+            throw 'Vendor install confirmation watcher did not become ready before the bounded startup deadline.'
+        }
         if (-not $process.Start()) { throw "Could not start adb install for $Apk." }
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
