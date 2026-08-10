@@ -56,7 +56,10 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         reportStage("message_send_clicked")
         waitForTagGone("YL-A-023-C-P03_009-01", 10_000)
-        waitForTag("YL-A-023-C-P03_009-01", 45_000)
+        // The real upstream request can legitimately run for up to the API's
+        // bounded 95-second deadline. Keep the physical-flow assertion above
+        // that budget so slow successful replies are not reported as failures.
+        waitForTag("YL-A-023-C-P03_009-01", 110_000)
         composeRule.onNodeWithTag("YL-A-025-C-P03_016-01")
             .performScrollToNode(hasTestTag("YL-A-026-C-P03_026-01"))
         waitForTagText("YL-A-026-C-P03_026-01", "completed", 10_000)
