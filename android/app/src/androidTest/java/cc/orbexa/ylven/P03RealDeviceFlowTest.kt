@@ -188,6 +188,7 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         waitForTag("YL-A-022-root")
         waitForTag("p03-conversation-menu")
+        waitForModalSheetToSettle()
         captureProductionPage("YL-A-022-PRODUCTION", "YL-A-022-root")
         composeRule.onNodeWithTag("YL-A-022-C-P03_029-01").performClick()
         waitForCondition { "export-conversation" in gateway.calls }
@@ -294,6 +295,14 @@ class P03RealDeviceFlowTest {
         } finally {
             bitmap.recycle()
         }
+    }
+
+    private fun waitForModalSheetToSettle() {
+        // The semantics root is attached before Material's enter transition ends.
+        // Capture only the settled production sheet, never an intermediate frame.
+        Thread.sleep(450)
+        composeRule.waitForIdle()
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
     }
 
     private fun hideKeyboardIfVisible() {
