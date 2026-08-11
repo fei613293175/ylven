@@ -80,6 +80,9 @@ private val P03_PAGE_IDS = (18..34).filterNot { it == 19 || it == 31 }.mapTo(mut
 
 private val P03_PHYSICAL_FONT_CALIBRATION_PAGE_IDS = setOf("YL-A-018")
 private const val P03_CHAT_PAGE_ID = "YL-A-023"
+private val P03_CORRECTION_PAGE_IDS = setOf(
+    "YL-A-018", "YL-A-020", "YL-A-023", "YL-A-024", "YL-A-026", "YL-A-033", "YL-A-034",
+)
 private const val P03_PROVIDER_ERROR_FONT_WEIGHT = 550
 private const val P03_PROVIDER_ERROR_STROKE_WIDTH = .04f
 private const val P03_PROVIDER_ERROR_SCALE_X = 1.004f
@@ -130,7 +133,7 @@ private class AndroidContractRenderer(
         // INPUT_FOCUSED must select their own contract variants rather than
         // being truncated to ERROR or FOCUSED.
         val code = stateId.substringAfter('_')
-        canvas.drawColor(Pc.bg)
+        canvas.drawColor(if (page in P03_CORRECTION_PAGE_IDS) color("#F7F8FC") else Pc.bg)
         when (page) {
             "YL-A-004" -> splash(code)
             "YL-A-005" -> auth("login", code)
@@ -506,47 +509,61 @@ private class AndroidContractRenderer(
 
     private fun p03ConversationList(code: String, history: Boolean) {
         if (history) {
-            p03Home("POPULATED")
-            overlay(Color.argb(82, 0, 0, 0))
-            rounded(0f, 72f, 912f, 2400f, 48f, Pc.surface)
-            rect(0f, 72f, 850f, 2400f, Pc.surface)
-            text("YLVEN", 54f, 166f, 45f, Pc.text, true)
-            text("+", 835f, 166f, 62f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
-            rounded(48f, 220f, 864f, 330f, 55f, Pc.surfaceSubtle)
-            lineIcon(92f, 255f, "search", 45f, Pc.text3, 5f)
-            text("搜索对话", 150f, 278f, 34f, Pc.disabled)
-            rounded(48f, 360f, 864f, 468f, 28f, Pc.brandSoft)
-            text("+  开始新对话", 78f, 415f, 38f, Pc.brand, true, Anchor.LEFT_MIDDLE)
-            if (code == "LOADING") {
-                skeleton(48f, 560f, 864f, 5)
-                return
+            val parentState = when (code) {
+                "LOADING", "EMPTY", "REFRESHING", "OFFLINE_CACHE", "NETWORK_ERROR" -> code
+                "SERVER_ERROR" -> "SERVICE_DEGRADED"
+                else -> "POPULATED"
             }
-            if (code == "EMPTY") {
-                text("暂无会话", 456f, 750f, 40f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-                text("新建会话后会显示在这里", 456f, 815f, 28f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
-                return
-            }
-            text("今天", 60f, 565f, 32f, Pc.text2)
-            listOf("多服务器 AI 架构设计" to "刚刚", "对话上下文与长期记忆方案" to "22:48", "首页与聊天体验重构" to "21:16").forEachIndexed { index, item ->
-                val y = 650f + index * 128f
-                text(item.first, 65f, y, 37f, Pc.text)
-                text(item.second, 65f, y + 48f, 27f, Pc.text3)
-                text("…", 820f, y + 20f, 38f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
-            }
-            text("过去 7 天", 60f, 1085f, 32f, Pc.text2)
-            listOf("YLVEN 发布流程优化", "模型能力测试").forEachIndexed { index, item ->
-                val y = 1170f + index * 128f
-                text(item, 65f, y, 37f, Pc.text)
-                text(if (index == 0) "昨天" else "8 月 8 日", 65f, y + 48f, 27f, Pc.text3)
-                text("…", 820f, y + 20f, 38f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
-            }
+            p03Home(parentState)
+            rect(912f, 72f, 1080f, 2400f, Color.argb(82, 0, 0, 0))
+            rounded(-48f, 72f, 912f, 2400f, 48f, color("#FCFCFE"))
+            line(911f, 120f, 911f, 2352f, Pc.border2, 1f)
+            p03DrawerHeader(
+                query = if (code == "FILTER_ACTIVE") "上下文" else null,
+                searchActive = code == "FILTER_ACTIVE",
+                newChatEnabled = code !in setOf("NETWORK_ERROR", "SERVER_ERROR", "PERMISSION_DENIED"),
+            )
             when (code) {
-                "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 505f, .74f, "正在更新会话…")
-                "FILTER_ACTIVE" -> statusBanner("SUCCESS", 505f, .74f, "已显示搜索结果")
-                "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 505f, .74f, "正在显示最近保存的会话")
-                "NETWORK_ERROR" -> statusBanner("NETWORK_ERROR", 505f, .74f, "网络不可用，请检查连接后重试")
-                "SERVER_ERROR" -> statusBanner("SERVER_ERROR", 505f, .74f, "暂时无法加载，请重试")
-                "PERMISSION_DENIED" -> statusBanner("PERMISSION_DENIED", 505f, .74f, "登录状态已失效，请重新登录")
+                "LOADING" -> {
+                    p03DrawerGroup(410f, "最近对话")
+                    listOf(565f to 240f, 610f to 300f, 520f to 210f, 590f to 270f, 470f to 200f)
+                        .forEachIndexed { index, widths -> p03DrawerSkeleton(485f + index * 145f, widths.first, widths.second) }
+                }
+                "EMPTY" -> p03DrawerEmpty()
+                "REFRESHING" -> {
+                    p03DrawerBanner(382f, "正在更新对话…", "info", spinner = true)
+                    p03DrawerGroup(486f, "今天")
+                    p03DrawerConversation(568f, "多服务器 AI 架构设计", "刚刚")
+                    p03DrawerConversation(692f, "对话上下文与长期记忆方案", "22:48")
+                    p03DrawerConversation(816f, "首页与聊天体验重构", "21:16")
+                    p03DrawerGroup(960f, "过去 7 天")
+                    p03DrawerConversation(1042f, "YLVEN 发布流程优化", "昨天")
+                }
+                "FILTER_ACTIVE" -> {
+                    p03DrawerGroup(410f, "搜索结果 · 2")
+                    p03DrawerConversation(500f, "对话上下文与长期记忆方案", "今天 22:48", highlighted = true)
+                    p03DrawerConversation(640f, "项目上下文与文件检索", "8 月 7 日")
+                    text("仅显示与“上下文”相关的对话", 456f, 872f, 27f, Pc.disabled, anchor = Anchor.MIDDLE_ASCENDER)
+                }
+                "OFFLINE_CACHE" -> {
+                    p03DrawerBanner(382f, "当前离线，已显示本地记录", "warning")
+                    p03DrawerGroup(486f, "已保存的对话")
+                    p03DrawerConversation(568f, "多服务器 AI 架构设计", "刚刚")
+                    p03DrawerConversation(692f, "对话上下文与长期记忆方案", "今天 22:48")
+                    p03DrawerConversation(816f, "YLVEN 发布流程优化", "昨天")
+                }
+                "NETWORK_ERROR" -> p03DrawerError("network", "网络连接不可用", "请检查网络连接后重试", "重试")
+                "SERVER_ERROR" -> p03DrawerError("server", "暂时无法加载对话", "服务正在恢复，请稍后再试", "重新加载")
+                "PERMISSION_DENIED" -> p03DrawerError("lock", "登录状态已失效", "重新登录后可继续查看历史对话", "重新登录")
+                else -> {
+                    p03DrawerGroup(410f, "今天")
+                    p03DrawerConversation(492f, "多服务器 AI 架构设计", "刚刚")
+                    p03DrawerConversation(616f, "对话上下文与长期记忆方案", "22:48")
+                    p03DrawerConversation(740f, "首页与聊天体验重构", "21:16")
+                    p03DrawerGroup(884f, "过去 7 天")
+                    p03DrawerConversation(966f, "YLVEN 发布流程优化", "昨天")
+                    p03DrawerConversation(1090f, "Sub2API 模型能力测试", "8 月 8 日")
+                }
             }
             return
         }
@@ -588,6 +605,97 @@ private class AndroidContractRenderer(
         }
     }
 
+    private fun p03DrawerHeader(query: String?, searchActive: Boolean, newChatEnabled: Boolean) {
+        val primarySoft = color("#EEF0FF")
+        text("YLVEN", 54f, 113f, 46f, Pc.text, true)
+        lineIcon(810f, 123f, "plus", 36f, if (newChatEnabled) Pc.text else Pc.disabled, 5f)
+        rounded(48f, 196f, 864f, 288f, 46f, if (searchActive) Pc.surface else color("#F4F6FA"), if (searchActive) Pc.brand else null, if (searchActive) 3f else 1f)
+        lineIcon(60f, 210f, "search", 64f, Pc.disabled, 5f)
+        text(query ?: "搜索对话", 143f, 216f, 38f, if (query == null) Pc.disabled else Pc.text)
+        if (searchActive && query != null) {
+            line(810f, 229f, 836f, 255f, Pc.disabled, 4f)
+            line(836f, 229f, 810f, 255f, Pc.disabled, 4f)
+        }
+        rounded(48f, 316f, 864f, 416f, 28f, if (newChatEnabled) primarySoft else color("#F2F4F7"))
+        lineIcon(73f, 347f, "plus", 36f, if (newChatEnabled) Pc.brand else Pc.disabled, 5f)
+        text("开始新对话", 143f, 340f, 42f, if (newChatEnabled) Pc.brand else Pc.disabled, true)
+    }
+
+    private fun p03DrawerGroup(localY: Float, label: String) =
+        text(label, 60f, localY + 72f, 32f, Pc.text2)
+
+    private fun p03DrawerConversation(
+        localY: Float,
+        title: String,
+        subtitle: String,
+        highlighted: Boolean = false,
+    ) {
+        val y = localY + 72f
+        if (highlighted) rounded(44f, y - 12f, 870f, y + 100f, 24f, color("#EEF0FF"))
+        text(title, 66f, y, 40f, Pc.text)
+        text(subtitle, 66f, y + 52f, 28f, Pc.disabled)
+        lineIcon(796f, y + 2f, "more", 48f, Pc.disabled, 4f)
+    }
+
+    private fun p03DrawerSkeleton(localY: Float, titleWidth: Float, subtitleWidth: Float) {
+        val y = localY + 72f
+        rounded(66f, y, 66f + titleWidth, y + 40f, 18f, Pc.divider)
+        rounded(66f, y + 57f, 66f + subtitleWidth, y + 82f, 12f, color("#F2F4F7"))
+        listOf(804f, 822f, 840f).forEach { x -> circle(x + 4f, y + 22f, 4f, Pc.divider) }
+    }
+
+    private fun p03DrawerBanner(localY: Float, label: String, kind: String, spinner: Boolean = false) {
+        val y = localY + 72f
+        val (background, foreground) = when (kind) {
+            "warning" -> color("#FFF8E7") to color("#B54708")
+            "error" -> Pc.errorSoft to Pc.error
+            else -> Pc.infoSoft to color("#175CD3")
+        }
+        rounded(48f, y, 864f, y + 74f, 24f, background)
+        if (spinner) spinner(86f, y + 37f, 15f, foreground, 5f) else iconCircle(87f, y + 37f, 10f, "i", foreground, Pc.surface, 17f)
+        text(label, 119f, y + 17f, 30f, foreground)
+    }
+
+    private fun p03DrawerEmpty() {
+        val primarySoft = color("#EEF0FF")
+        circle(456f, 762f, 95f, primarySoft)
+        rounded(398f, 718f, 503f, 798f, 24f, Pc.surface, Pc.brand, 5f)
+        listOf(431f, 456f, 481f).forEach { x -> circle(x, 755f, 5f, Pc.brand) }
+        path(listOf(464f to 796f, 484f to 820f, 492f to 796f), Pc.brand, 5f)
+        text("还没有对话", 456f, 896f, 43f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        text("开始一次新的对话，记录会显示在这里", 456f, 966f, 31f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+    }
+
+    private fun p03DrawerError(icon: String, title: String, body: String, button: String) {
+        val cx = 456f
+        val cy = 772f
+        circle(cx, cy, 92f, color("#EEF0FF"))
+        when (icon) {
+            "network" -> {
+                arc(cx - 46f, cy - 46f, cx + 46f, cy + 46f, 210f, 120f, Pc.brand, 6f)
+                arc(cx - 33f, cy - 33f, cx + 33f, cy + 33f, 210f, 120f, Pc.brand, 6f)
+                arc(cx - 20f, cy - 20f, cx + 20f, cy + 20f, 210f, 120f, Pc.brand, 6f)
+                circle(cx, cy + 20f, 5f, Pc.brand)
+                line(cx - 45f, cy - 48f, cx + 45f, cy + 42f, Pc.brand, 8f)
+            }
+            "server" -> listOf(-38f, 0f, 38f).forEach { offset ->
+                rounded(cx - 54f, cy + offset - 15f, cx + 54f, cy + offset + 15f, 8f, null, Pc.brand, 6f)
+                circle(cx - 33f, cy + offset, 4f, Pc.brand)
+                line(cx + 10f, cy + offset, cx + 35f, cy + offset, Pc.brand, 5f)
+            }
+            else -> {
+                rounded(cx - 45f, cy - 8f, cx + 45f, cy + 67f, 15f, null, Pc.brand, 7f)
+                arc(cx - 31f, cy - 62f, cx + 31f, cy + 3f, 180f, 180f, Pc.brand, 7f)
+                circle(cx, cy + 25f, 7f, Pc.brand)
+                line(cx, cy + 31f, cx, cy + 46f, Pc.brand, 6f)
+            }
+        }
+        text(title, cx, 910f, 43f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        text(body, cx, 980f, 31f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        rounded(cx - 165f, 1069f, cx + 165f, 1155f, 28f, Pc.brand)
+        text(button, cx, 1088f, 34f, Pc.surface, true, Anchor.MIDDLE_ASCENDER)
+    }
+
     private fun p03ConversationMenu(code: String) {
         // The source dialog draws the normal chat body directly, without the
         // page-level completed banner, before applying its modal scrim.
@@ -613,52 +721,188 @@ private class AndroidContractRenderer(
     }
 
     private fun p03Chat(code: String) {
-        p03ChatBaselineScale = .12f
+        val isNewConversation = code in setOf("DEFAULT", "INPUT_FOCUSED", "UPLOADING")
+        p03ChatBaselineScale = .09f
         try {
-            topBar("多服务器 AI 架构设计", "GPT-5.6 Sol · 深度", back = true, right = true)
-            if (code == "OFFLINE") {
-                errorCenter(code)
-                return
-            }
-            pill(72f, 300f, 450f, 370f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 26f)
-            rounded(320f, 455f, 1008f, 650f, 42f, Pc.brand)
-            text(
-                "请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。",
-                370f, 505f, 35f, Pc.surface, maxWidth = 580f, lineSpacing = 16f,
+            topBar(
+                if (isNewConversation) "新对话" else "多服务器 AI 架构设计",
+                if (isNewConversation) "自动选择" else "GPT-5.6 Sol · 深度",
+                back = true,
+                right = true,
             )
-            text("✦  YLVEN", 72f, 740f, 29f, Pc.text2, true)
-            text(
-                // Use the approved six-line composition directly. Android system
-                // fonts otherwise move the final Latin glyph to a hidden seventh line.
-                "建议将系统拆分为控制平面、AI 数据平面和异步工作平\n面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT\n任务。",
-                72f, 801f, 37f, Pc.text, lineSpacing = 23f,
-            )
-            listOf("复制", "朗读", "重新回答", "换模型").forEachIndexed { index, label ->
-                val left = 54f + index * 202f
-                pill(left, 1170f, left + 180f, 1245f, label, Pc.surface, Pc.text2, 25f, Pc.border)
-            }
-            rounded(54f, 1960f, 1026f, 2185f, 70f, Pc.surface, Pc.border2, 2f)
-            iconCircle(130f, 2072f, 38f, "＋", Pc.surfaceSubtle, Pc.text2, 30f)
-            text("继续追问…", 200f, 2050f, 34f, Pc.disabled)
-            iconCircle(940f, 2072f, 42f, "➤", Pc.brand, Pc.surface, 30f)
-
-            p03ChatBaselineScale = if (code == "INPUT_FOCUSED") 0f else .09f
             when (code) {
-                "INPUT_FOCUSED" -> keyboard(false)
-                "CONNECTING" -> { text("正在思考", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
-                "UPLOADING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "正在上传文件…")
-                "STREAMING" -> Unit
-                "TOOL_RUNNING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在阅读文件…")
-                "COMPLETED" -> Unit
-                "STOPPED" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止，当前内容已保留")
-                "RECONNECTING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "连接不稳定，正在恢复…")
-                "RATE_LIMITED" -> p03ChatStatusBanner(code, 1430f, .80f, "当前请求较多，请稍后重试")
-                "PROVIDER_ERROR" -> p03ChatStatusBanner(code, 1430f, .80f, "暂时无法完成回答，请重试")
-                "CONTENT_BLOCKED" -> p03ChatStatusBanner(code, 1430f, .80f, "这项请求暂时无法完成，请调整后重试")
+                "DEFAULT" -> p03EmptyChatHero("有什么想一起完成的？", "直接提问，YLVEN 会自动选择合适的模型。")
+                "INPUT_FOCUSED" -> p03EmptyChatHero("从一个问题开始", null)
+                "UPLOADING" -> p03EmptyChatHero("资料已加入本次对话", null)
+                else -> {
+                    p03ChatUserMessage()
+                    when (code) {
+                        "CONNECTING" -> p03ChatConnecting()
+                        "STREAMING" -> p03ChatAnswer(partial = true)
+                        "TOOL_RUNNING" -> p03ChatToolProgress()
+                        "COMPLETED" -> p03ChatAnswer(partial = false, actions = true)
+                        "STOPPED" -> p03ChatAnswer(partial = true, stopped = true)
+                        "RECONNECTING" -> p03ChatAnswer(partial = true, reconnecting = true)
+                        "OFFLINE" -> p03ChatRecovery("当前网络不可用", "恢复网络后即可继续这段对话。", "重试", "稍后再试", "warning")
+                        "RATE_LIMITED" -> p03ChatRecovery("当前请求较多", "请稍后再试，当前输入内容已经保留。", "稍后重试", "更换模型", "warning")
+                        "PROVIDER_ERROR" -> p03ChatRecovery("暂时无法完成回答", "你可以重试，或切换到其他可用模型。", "重试", "更换模型", "error")
+                        "CONTENT_BLOCKED" -> p03ChatRecovery("这个请求暂时无法处理", "请调整问题描述后重新发送。", "修改问题", "返回", "warning")
+                    }
+                }
             }
+            p03ChatComposer(code)
         } finally {
             p03ChatBaselineScale = 0f
         }
+    }
+
+    private fun p03Spark(cx: Float, cy: Float, size: Float = 54f) {
+        filledPath(
+            listOf(
+                cx to cy - size,
+                cx + size * .24f to cy - size * .24f,
+                cx + size to cy,
+                cx + size * .24f to cy + size * .24f,
+                cx to cy + size,
+                cx - size * .24f to cy + size * .24f,
+                cx - size to cy,
+                cx - size * .24f to cy - size * .24f,
+                cx to cy - size,
+            ),
+            Pc.brand,
+        )
+        circle(cx, cy, size * .14f, Pc.surface)
+    }
+
+    private fun p03EmptyChatHero(title: String, subtitle: String?) {
+        p03Spark(540f, if (subtitle == null) 690f else 650f, if (subtitle == null) 40f else 54f)
+        text(title, 540f, if (subtitle == null) 780f else 790f, if (subtitle == null) 46f else 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        if (subtitle != null) text(subtitle, 540f, 882f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+    }
+
+    private fun p03ChatUserMessage() {
+        rounded(320f, 320f, 1026f, 618f, 42f, Pc.brand)
+        text(
+            "如何让多模型对话具备上下文，\n并为多服务器部署做好准备？",
+            370f,
+            380f,
+            35f,
+            Pc.surface,
+            maxWidth = 590f,
+            lineSpacing = 16f,
+        )
+    }
+
+    private fun p03ChatAssistantLabel() {
+        p03Spark(78f, 743f, 12f)
+        text("YLVEN", 108f, 724f, 26f, Pc.text2)
+    }
+
+    private fun p03ChatConnecting() {
+        p03ChatAssistantLabel()
+        text("正在思考", 54f, 815f, 34f, Pc.text, true)
+        listOf(330f, 405f, 350f).forEachIndexed { index, width ->
+            rounded(54f + index * 70f, 885f + index * 34f, 54f + index * 70f + width, 909f + index * 34f, 12f, color("#E8EAFF"))
+        }
+    }
+
+    private fun p03ChatAnswer(
+        partial: Boolean,
+        actions: Boolean = false,
+        stopped: Boolean = false,
+        reconnecting: Boolean = false,
+    ) {
+        p03ChatAssistantLabel()
+        text(
+            "可以。建议把当前系统设计为无状态 AI Runtime，\n并由 PostgreSQL 保存完整会话事实。",
+            54f,
+            790f,
+            33f,
+            Pc.text,
+            lineSpacing = 16f,
+        )
+        text(
+            "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，\n再通过 Sub2API 调用目标模型。",
+            54f,
+            950f,
+            33f,
+            Pc.text,
+            lineSpacing = 16f,
+        )
+        if (!partial) {
+            text("这样后续切换 GPT、Claude 或 Grok 时，仍然", 54f, 1195f, 33f, Pc.text)
+        } else {
+            rounded(54f, 1150f, 60f, 1198f, 3f, Pc.brand)
+        }
+        if (stopped) pill(54f, 1230f, 250f, 1288f, "已停止生成", color("#F2F4F7"), Pc.text2, 23f)
+        if (reconnecting) pill(54f, 1230f, 420f, 1294f, "连接不稳定，正在恢复…", Pc.warningSoft, Pc.warning, 23f)
+        if (actions) {
+            listOf("复制", "朗读", "重答", "换模型").forEachIndexed { index, label ->
+                val left = 54f + index * 154f
+                pill(left, 1320f, left + 132f, 1385f, label, Pc.surface, Pc.text2, 23f, Pc.border)
+            }
+        }
+    }
+
+    private fun p03ChatToolProgress() {
+        p03ChatAssistantLabel()
+        text("正在阅读你提供的资料", 54f, 812f, 34f, Pc.text, true)
+        rounded(54f, 870f, 1026f, 1055f, 30f, Pc.surface, Pc.border, 2f)
+        spinner(112f, 950f, 26f, Pc.brand, 6f)
+        text("正在分析 2 份文件", 160f, 900f, 33f, Pc.text, true)
+        text("架构说明.pdf  ·  部署清单.md", 160f, 962f, 27f, Pc.text2)
+        rounded(160f, 1010f, 820f, 1026f, 8f, color("#EAECF0"))
+        rounded(160f, 1010f, 520f, 1026f, 8f, Pc.brand)
+    }
+
+    private fun p03ChatRecovery(
+        title: String,
+        body: String,
+        primaryAction: String,
+        secondaryAction: String,
+        kind: String,
+    ) {
+        val bg = if (kind == "error") Pc.errorSoft else Pc.warningSoft
+        val fg = if (kind == "error") Pc.error else Pc.warning
+        rounded(54f, 700f, 1026f, 955f, 34f, bg)
+        circle(100f, 762f, 16f, fg)
+        text(title, 132f, 735f, 38f, Pc.text, true)
+        text(body, 132f, 795f, 28f, Pc.text2)
+        pill(132f, 860f, 330f, 925f, primaryAction, Pc.brand, Pc.surface, 24f)
+        pill(350f, 860f, 550f, 925f, secondaryAction, Pc.surface, Pc.text2, 24f, Pc.border)
+    }
+
+    private fun p03ChatComposer(code: String) {
+        val focused = code in setOf("INPUT_FOCUSED", "UPLOADING")
+        val sending = code in setOf("CONNECTING", "STREAMING", "TOOL_RUNNING", "RECONNECTING")
+        val placeholder = when (code) {
+            "INPUT_FOCUSED" -> "帮我规划一套多服务器部署方案"
+            "UPLOADING" -> "结合资料，给出方案"
+            "DEFAULT" -> "问问 YLVEN…"
+            else -> "继续追问…"
+        }
+        shadowCard(
+            54f,
+            2044f,
+            1026f,
+            2270f,
+            70f,
+            Pc.surface,
+            if (focused) Pc.brand else Pc.border,
+            shadow = 8f,
+            offset = 4f,
+        )
+        if (code == "UPLOADING") {
+            pill(82f, 2075f, 340f, 2135f, "架构说明.pdf", color("#F2F4F7"), Pc.text2, 22f, Pc.border)
+            pill(354f, 2075f, 620f, 2135f, "部署清单.md", color("#F2F4F7"), Pc.text2, 22f, Pc.border)
+            text(placeholder, 82f, 2150f, 31f, Pc.text2)
+        } else {
+            text(placeholder, 82f, 2082f, 31f, if (code == "INPUT_FOCUSED") Pc.text2 else Pc.disabled, maxWidth = 760f)
+        }
+        text("+", 112f, 2203f, 46f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+        pill(150f, 2160f, if (code == "DEFAULT") 380f else 410f, 2240f, if (code == "DEFAULT") "自动选择" else "GPT-5.6 Sol", color("#EEF0FF"), Pc.brand, 24f)
+        lineIcon(830f, 2175f, "mic", 54f, Pc.text2, 5f)
+        iconCircle(950f, 2200f, 48f, if (sending) "■" else "➤", Pc.brand, Pc.surface, if (sending) 22f else 30f)
     }
 
     private fun p03ChatStatusBanner(code: String, top: Float, widthRatio: Float, message: String? = null) {
@@ -1323,10 +1567,19 @@ private class AndroidContractRenderer(
         val cy = y + size / 2f
         when (kind) {
             "back" -> path(listOf(x + size * .65f to y + size * .2f, x + size * .3f to cy, x + size * .65f to y + size * .8f), fill, width)
+            "menu" -> listOf(.25f, .5f, .75f).forEach { offset ->
+                line(x + size * .18f, y + size * offset, x + size * .82f, y + size * offset, fill, width)
+            }
             "plus" -> { line(cx, y + size * .2f, cx, y + size * .8f, fill, width); line(x + size * .2f, cy, x + size * .8f, cy, fill, width) }
             "search" -> {
                 oval(x + size * .12f, y + size * .12f, x + size * .62f, y + size * .62f, null, fill, width)
                 line(x + size * .58f, y + size * .58f, x + size * .88f, y + size * .88f, fill, width)
+            }
+            "mic" -> {
+                rounded(x + size * .35f, y + size * .08f, x + size * .65f, y + size * .62f, size * .15f, null, fill, width)
+                arc(x + size * .22f, y + size * .34f, x + size * .78f, y + size * .82f, 0f, 180f, fill, width)
+                line(cx, y + size * .82f, cx, y + size * .96f, fill, width)
+                line(x + size * .35f, y + size * .96f, x + size * .65f, y + size * .96f, fill, width)
             }
             "check" -> path(listOf(x + size * .18f to y + size * .52f, x + size * .42f to y + size * .76f, x + size * .84f to y + size * .24f), fill, width + 1f)
             "more" -> listOf(.25f, .5f, .75f).forEach { circle(x + size * it, cy, 4f, fill) }
@@ -1514,6 +1767,18 @@ private class AndroidContractRenderer(
         if (points.isEmpty()) return
         val path = Path().apply { moveTo(points.first().first, points.first().second); points.drop(1).forEach { lineTo(it.first, it.second) } }
         paint.style = Paint.Style.STROKE; paint.strokeWidth = width; paint.color = fill; canvas.drawPath(path, paint)
+    }
+
+    private fun filledPath(points: List<Pair<Float, Float>>, fill: Int) {
+        if (points.isEmpty()) return
+        val path = Path().apply {
+            moveTo(points.first().first, points.first().second)
+            points.drop(1).forEach { lineTo(it.first, it.second) }
+            close()
+        }
+        paint.style = Paint.Style.FILL
+        paint.color = fill
+        canvas.drawPath(path, paint)
     }
 
     private fun arc(x1: Float, y1: Float, x2: Float, y2: Float, start: Float, sweep: Float, fill: Int, width: Float) {
