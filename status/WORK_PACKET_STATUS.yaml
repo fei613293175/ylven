@@ -262,7 +262,7 @@ work_packets:
 - work_packet_id: P04-W01
   phase: P04
   sequence: 1
-  status: PLANNED
+  status: TODO
   started_at: null
   closed_at: null
   started_commit: null
@@ -753,4 +753,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-07T16:42:54+08:00'
+updated_at: '2026-08-11T14:47:46+08:00'

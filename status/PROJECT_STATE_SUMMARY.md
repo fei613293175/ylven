@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-11T09:32:01+08:00`
-- Current phase: `P03`
-- Phase status: `READY_FOR_RELEASE`
-- Current Work Packet: `NONE`
-- Work Packet status: `PHASE_COMPLETE`
+- Generated: `2026-08-11T14:47:46+08:00`
+- Current phase: `P04`
+- Phase status: `TODO`
+- Current Work Packet: `P04-W01`
+- Work Packet status: `TODO`
 - Last closed Work Packet: `P03-W05`
-- Last closed phase: `P02`
-- Last closed version: `1.2.0`
+- Last closed phase: `P03`
+- Last closed version: `1.3.0`
 - Closed/deferred Work Packets recorded: `20`
-- Closed releases recorded: `3`
+- Closed releases recorded: `4`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `d2f26243214d8862702278a2c75523c759e70d3f`
+- Git HEAD: `23968d94dc3e900ba1210f9e59172e2643b3d676`
 
 ## Exact next action
 
-All Work Packets in `P03` are final. Build the exact clean commit on the connected online server, verify the downloaded SHA-256, complete physical-device acceptance, obtain `所有者验收.md: APPROVED`, then close `P03` through the release controller. Do not start the next phase yet.
+Release `1.3.0` is closed. The exact next work is `P04-W01` in `P04`.
 
 ## New-conversation rule
 
