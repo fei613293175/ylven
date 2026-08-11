@@ -1,8 +1,8 @@
 # ADR-010: Preserve P03 scope when the conversation menu mockup shows project assignment
 
-- Status: Proposed - requires explicit P03 owner release decision
+- Status: Accepted for P03
 - Date: 2026-08-11
-- Owner approval: No approval for this exception is recorded.
+- Owner approval: Approved by the project owner on 2026-08-11.
 - Related Feature IDs: P03-005, P03-006, P03-007, P03-029, P06-007
 
 ## Context
@@ -29,9 +29,10 @@ available. This preserves the P03 feature boundary and avoids inventing a projec
 
 ## Consequences
 
-The P03 screenshot has an intentional interaction-state difference from the sample. It
-needs owner acceptance as a release exception, or a future approved P03 mockup that
-shows the disabled state. No P03 code or data is changed by this ADR.
+The P03 screenshot has an intentional interaction-state difference from the sample. The
+project owner accepted the disabled P03 state on 2026-08-11. A future P06 visual update
+may show the enabled state after P06-007 is implemented. No P03 code or data is changed
+by this ADR.
 
 ## Security, data, billing and compatibility impact
 

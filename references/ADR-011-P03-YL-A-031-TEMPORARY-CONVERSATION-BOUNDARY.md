@@ -1,8 +1,8 @@
 # ADR-011: Keep temporary conversation creation within the P03 functional boundary
 
-- Status: Accepted for P03 implementation; visual-contract revision remains pending owner approval
+- Status: Accepted for P03
 - Date: 2026-08-11
-- Owner approval: No approval for this exception is recorded.
+- Owner approval: Approved by the project owner on 2026-08-11.
 - Related Feature IDs: P03-028
 
 ## Context
@@ -32,9 +32,9 @@ P04/P06 may introduce their own backed settings when their feature contracts exi
 
 ## Consequences
 
-The functional P03 temporary-conversation journey is now truthful and covered by
-instrumentation assertions. The approved design sample still needs an owner-approved
-revision before the page can be marked as an unqualified visual match.
+The functional P03 temporary-conversation journey is truthful and covered by
+instrumentation assertions. The project owner accepted the P03 title-only scope and its
+documented visual difference on 2026-08-11. P04/P06 retain ownership of their settings.
 
 ## Security, data, billing and compatibility impact
 
