@@ -72,6 +72,7 @@ class P03RealDeviceFlowTest {
         }
 
         waitForTag("YL-A-018-C-P03_001-01")
+        waitForTagAbsent("p02-brand-splash")
         captureProductionPage("YL-A-018-PRODUCTION", "YL-A-018-C-P03_001-01")
         composeRule.onNodeWithTag("CO-P03-001-HOME-COMPOSER").performClick()
         waitForTag("p03-local-draft-conversation")
@@ -334,9 +335,15 @@ class P03RealDeviceFlowTest {
         hideKeyboardIfVisible()
         composeRule.waitForIdle()
         instrumentation.waitForIdleSync()
+        // Compose semantics can settle one frame before SurfaceFlinger replaces
+        // the launch/sheet frame returned by UiAutomation.takeScreenshot().
+        SystemClock.sleep(350)
+        instrumentation.waitForIdleSync()
         if (scrollAnchorTag != null) {
             composeRule.onNodeWithTag(scrollAnchorTag).performScrollToIndex(0)
             composeRule.waitForIdle()
+            instrumentation.waitForIdleSync()
+            SystemClock.sleep(350)
             instrumentation.waitForIdleSync()
         }
         val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
