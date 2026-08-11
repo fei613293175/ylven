@@ -1,8 +1,8 @@
 schema_version: 1.2.0
 phase: P03
 phase_title: 核心会话、流式聊天与消息数据模型
-overall_status: READY_FOR_RELEASE
-updated_at: '2026-08-10T00:00:00+08:00'
+overall_status: DOING
+updated_at: '2026-08-11T18:54:17+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -241,45 +241,75 @@ features:
   - backend/internal/identity/identity.go::Store.ConversationDetail
   - backend/internal/identity/identity_test.go::TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics
 - feature_id: P03-036
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/db/migrations/0005_p03_canonical_context.sql::conversation_branches + messages sequence/parent/branch + message_parts
+  - backend/internal/identity/identity.go::Store.AppendCanonicalMessage + Store.ConversationContext
+  - backend/internal/identity/conversation_context_test.go::TestP03W06CanonicalContextAPIsEnforceOwnershipIdempotencyAndCompaction
 - feature_id: P03-037
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.ConversationContext
+  - backend/internal/identity/http.go::GET /internal/v1/conversations/{conversationId}/context-items
+  - backend/internal/identity/conversation_context_test.go::TestP03W06CanonicalHistorySupportsReferencesCorrectionsAndModelSwitch
 - feature_id: P03-038
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/conversation_context.go::ConversationContextCompiler.Compile + DefaultModelCapability
+  - backend/db/migrations/0005_p03_canonical_context.sql::model_capabilities + context_builds + context_build_items
+  - backend/internal/identity/conversation_context_test.go::TestP03W06CompactionRetainsAmountDateDecisionAndConstraint
 - feature_id: P03-039
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/conversation_context.go::BuildTraceableSummary
+  - backend/internal/identity/identity.go::Store.QueueConversationCompaction + Store.ProcessConversationCompaction
+  - backend/internal/identity/conversation_context_test.go::TestP03W06CanonicalContextAPIsEnforceOwnershipIdempotencyAndCompaction
 - feature_id: P03-040
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::POST /internal/v1/context/recompile
+  - backend/internal/identity/identity.go::Store.CompileRunContext
+  - backend/internal/identity/conversation_context_test.go::TestP03W06CanonicalHistorySupportsReferencesCorrectionsAndModelSwitch
 - feature_id: P03-041
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/http.go::API.dispatchRun provider continuation fallback
+  - backend/internal/identity/identity.go::Store.MarkProviderContinuationFallback
+  - backend/internal/identity/conversation_context_test.go::TestP03W06ProviderContinuationFailureFallsBackToLocalHistory
 - feature_id: P03-042
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/conversation_postgres.go::postgresConversationStore.startRun + idempotentRun
+  - backend/db/migrations/0005_p03_canonical_context.sql::conversation_locks + idempotency_records
+  - backend/internal/identity/conversation_context_test.go::TestP03W06ConversationConcurrencyAndReconnectIdempotency
 - feature_id: P03-043
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.StartConversationFromFirstMessage
+  - backend/internal/identity/conversation_postgres.go::postgresConversationStore.firstMessage
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::local draft to first-message transaction
 - feature_id: P03-044
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/conversation_context.go::TemporaryConversationTitle + NormalizeFinalConversationTitle
+  - backend/internal/identity/http.go::API.optimizeConversationTitle
+  - backend/internal/identity/conversation_context_test.go::TestP03W06FirstMessageIsAtomicIdempotentAndTitleLocked + TestP03W06LowInformationTitleWaitsThenFinalizesOnce
 - feature_id: P03-045
-  status: PLANNED
+  status: IMPLEMENTED
   reason: ''
-  evidence: []
+  evidence:
+  - backend/internal/identity/identity.go::Store.UpdateConversation + Store.ApplyAutomaticConversationTitle
+  - backend/internal/identity/conversation_postgres.go::postgresConversationStore.updateTitle
+  - backend/internal/identity/conversation_context_test.go::TestP03W06FirstMessageIsAtomicIdempotentAndTitleLocked
 - feature_id: P03-046
   status: PLANNED
   reason: ''

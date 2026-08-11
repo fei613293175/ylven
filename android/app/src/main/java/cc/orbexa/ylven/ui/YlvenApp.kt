@@ -88,6 +88,8 @@ import cc.orbexa.ylven.identity.SecurityChallenge
 import cc.orbexa.ylven.identity.MessageRecord
 import cc.orbexa.ylven.identity.MessageCitation
 import cc.orbexa.ylven.identity.ConversationCache
+import cc.orbexa.ylven.identity.consumerStatusText
+import cc.orbexa.ylven.identity.isGenerating
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import cc.orbexa.ylven.ui.theme.YlvenLightColors
 import kotlinx.coroutines.launch
@@ -511,7 +513,7 @@ private fun OtpPage(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("验证码已发送至", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(masked, style = MaterialTheme.typography.titleMedium)
-                    challenge.debugCode?.let { Text("本次验证码：$it", color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("p01-debug-otp")) }
+                    challenge.debugCode?.let { Text("本次验证码：$it", color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("p01-otp-code-preview")) }
                 }
             }
             OutlinedTextField(
@@ -861,7 +863,7 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                     },
                     modifier = Modifier.testTag("YL-A-022-C-P03_029-01"),
                 ) { Text("导出会话") }
-                run?.takeIf { it.status == "streaming" }?.let { active ->
+				run?.takeIf { it.isGenerating }?.let { active ->
                     TextButton(
                         onClick = {
                             scope.launch {
@@ -954,14 +956,14 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                     }
                     if (sending) item {
                         Text(
-                            "正在连接并接收回答…",
+							"正在思考…",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.testTag("YL-A-023-C-P03_010-01"),
                         )
                     }
                     if (reconnecting) item {
                         Text(
-                            "连接中断，正在按游标恢复…",
+							"网络波动，正在继续…",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.testTag("YL-A-023-C-P03_012-01"),
                         )
@@ -969,7 +971,7 @@ private fun ChatPage(gateway: IdentityGateway, session: AuthSession, conversatio
                     run?.let { activeRun ->
                         item {
                             Text(
-                                "生成状态：${activeRun.status}",
+								activeRun.consumerStatusText,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.testTag("YL-A-026-C-P03_026-01"),

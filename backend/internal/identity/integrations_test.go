@@ -58,15 +58,15 @@ func TestOpenAICompatibleResponderMapsDefaultModelAndV1BaseURL(t *testing.T) {
 	responder := OpenAICompatibleResponder{
 		Endpoint: provider.URL + "/v1", APIKey: "provider-key", DefaultModel: "gpt-5.5", Client: provider.Client(),
 	}
-	answer, err := responder.Respond(context.Background(), "ylven-default", "hello")
-	if err != nil || answer != "provider answer" {
+	answer, err := responder.Respond(context.Background(), ChatRequest{Model: "ylven-default", Messages: []ProviderMessage{{Role: "user", Content: "hello"}}})
+	if err != nil || answer.Content != "provider answer" {
 		t.Fatalf("answer=%q err=%v", answer, err)
 	}
 }
 
 func TestOpenAICompatibleResponderRequiresConfiguredDefaultModel(t *testing.T) {
 	responder := OpenAICompatibleResponder{Endpoint: "https://provider.example/v1", APIKey: "provider-key"}
-	if _, err := responder.Respond(context.Background(), "", "hello"); err == nil || err.Error() != "chat_runtime_unavailable" {
+	if _, err := responder.Respond(context.Background(), ChatRequest{Messages: []ProviderMessage{{Role: "user", Content: "hello"}}}); err == nil || err.Error() != "chat_runtime_unavailable" {
 		t.Fatalf("unexpected missing-model error: %v", err)
 	}
 }

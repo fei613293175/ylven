@@ -14,6 +14,8 @@ services:
       APP_VERSION: "1.3.0-${YLVEN_IMAGE_TAG}"
       HTTP_ADDR: ":8080"
       IDENTITY_STORE_PATH: /data/identity.json
+      DATABASE_URL_FILE: /run/secrets/database_url
+      YLVEN_INSTANCE_ID: ${YLVEN_INSTANCE_ID:-ylven-p03-api-1}
       TURNSTILE_MODE: first_party
       EMAIL_MODE: mock
       IDENTITY_DEBUG_OTP: "1"
@@ -28,6 +30,7 @@ services:
       - /opt/ylven-p01/data:/data
       - /opt/ylven-p01/secrets/admin_credential:/run/secrets/admin_credential:ro
       - /opt/ylven-p01/secrets/sub2api_credential:/run/secrets/sub2api_credential:ro
+      - /opt/ylven-p01/secrets/database_url:/run/secrets/database_url:ro
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=16m

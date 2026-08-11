@@ -54,6 +54,11 @@ data class Conversation(
     val status: String,
     val updatedAt: String,
     val archivedAt: String? = null,
+    val titleSource: String = "",
+    val titleLocked: Boolean = false,
+    val draftSessionId: String? = null,
+    val initialDraft: String = "",
+    val temporary: Boolean = false,
 )
 
 data class HomeSnapshot(
@@ -63,6 +68,21 @@ data class HomeSnapshot(
 
 data class MessageRecord(val id: String, val conversationId: String, val role: String, val body: String, val createdAt: String)
 data class MessageRun(val id: String, val conversationId: String, val status: String, val cursor: Long, val assistantMessageId: String? = null)
+
+val MessageRun.isGenerating: Boolean
+    get() = status.lowercase() in setOf("queued", "running", "streaming")
+
+val MessageRun.consumerStatusText: String
+    get() = when (status.lowercase()) {
+        "queued", "running", "streaming" -> "正在思考"
+        "completed" -> "回答已完成"
+        "cancelled" -> "已停止生成"
+        "failed" -> "暂时未能完成"
+        "content_blocked" -> "这项请求暂时无法完成"
+        else -> "正在处理"
+    }
+
+data class FirstMessageResult(val conversation: Conversation, val run: MessageRun)
 data class RunEvent(val id: Long, val type: String, val delta: String)
 data class MessageCitation(val url: String, val title: String)
 
@@ -88,6 +108,16 @@ interface IdentityGateway {
     suspend fun archiveConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
     suspend fun deleteConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
     suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String = ""): MessageRun = error("消息功能尚未配置")
+    suspend fun sendMessageIdempotent(bearer: String, conversationId: String, body: String, model: String = "", idempotencyKey: String): MessageRun =
+        sendMessage(bearer, conversationId, body, model)
+    suspend fun startConversationFromFirstMessage(
+        bearer: String,
+        draftSessionId: String,
+        body: String,
+        model: String = "",
+        idempotencyKey: String,
+        temporary: Boolean = false,
+    ): FirstMessageResult = error("会话功能尚未配置")
     suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> = error("运行状态尚未配置")
     suspend fun runEvents(bearer: String, runId: String, after: Long = 0): Pair<MessageRun, List<RunEvent>> = error("流式事件尚未配置")
     suspend fun cancelRun(bearer: String, runId: String): MessageRun = error("取消功能尚未配置")
@@ -295,7 +325,40 @@ class HttpIdentityGateway(
     override suspend fun deleteConversation(bearer: String, id: String): Conversation = request("DELETE", "/api/mobile/v1/conversations/$id", bearer = bearer).getJSONObject("conversation").toConversation()
 
     override suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String): MessageRun {
-        return request("POST", "/api/mobile/v1/conversations/$conversationId/runs", JSONObject().put("body", body).put("model", model), bearer).toMessageRun()
+        return sendMessageIdempotent(bearer, conversationId, body, model, java.util.UUID.randomUUID().toString())
+    }
+
+    override suspend fun sendMessageIdempotent(bearer: String, conversationId: String, body: String, model: String, idempotencyKey: String): MessageRun {
+        return request(
+            "POST",
+            "/api/mobile/v1/conversations/$conversationId/runs",
+            JSONObject().put("body", body).put("model", model).put("idempotency_key", idempotencyKey),
+            bearer,
+            mapOf("Idempotency-Key" to idempotencyKey),
+        ).toMessageRun()
+    }
+
+    override suspend fun startConversationFromFirstMessage(
+        bearer: String,
+        draftSessionId: String,
+        body: String,
+        model: String,
+        idempotencyKey: String,
+        temporary: Boolean,
+    ): FirstMessageResult {
+        val response = request(
+            "POST",
+            "/api/mobile/v1/conversations/from-first-message",
+            JSONObject()
+                .put("draft_session_id", draftSessionId)
+                .put("body", body)
+                .put("model", model)
+                .put("idempotency_key", idempotencyKey)
+                .put("temporary", temporary),
+            bearer,
+            mapOf("Idempotency-Key" to idempotencyKey),
+        )
+        return FirstMessageResult(response.getJSONObject("conversation").toConversation(), response.getJSONObject("run").toMessageRun())
     }
 
     override suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> {
@@ -345,11 +408,12 @@ class HttpIdentityGateway(
         path: String,
         body: JSONObject? = null,
         bearer: String? = null,
+        headers: Map<String, String> = emptyMap(),
     ): JSONObject = withContext(Dispatchers.IO) {
         var lastFailure: Throwable? = null
         repeat(2) { attempt ->
             try {
-                return@withContext requestOnce(method, path, body, bearer)
+                return@withContext requestOnce(method, path, body, bearer, headers)
             } catch (failure: java.io.IOException) {
                 lastFailure = failure
                 if (attempt == 0 && method == "GET") Thread.sleep(250)
@@ -363,6 +427,7 @@ class HttpIdentityGateway(
         path: String,
         body: JSONObject?,
         bearer: String?,
+        headers: Map<String, String>,
     ): JSONObject {
         val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
@@ -370,6 +435,7 @@ class HttpIdentityGateway(
             readTimeout = 15_000
             setRequestProperty("Accept", "application/json")
             if (!bearer.isNullOrBlank()) setRequestProperty("Authorization", "Bearer $bearer")
+            headers.forEach { (name, value) -> setRequestProperty(name, value) }
             if (body != null) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -409,6 +475,9 @@ class HttpIdentityGateway(
         status = optString("status", "active"),
         updatedAt = optString("updated_at"),
         archivedAt = optString("archived_at").ifBlank { null },
+        titleSource = optString("title_source"),
+        titleLocked = optBoolean("title_locked"),
+        temporary = optBoolean("temporary"),
     )
     private fun JSONObject.toMessageRun() = MessageRun(getString("id"), optString("conversation_id"), optString("status"), optLong("cursor"), optString("assistant_message_id").ifBlank { null })
     private fun JSONObject.toMessageRecord() = MessageRecord(getString("id"), optString("conversation_id"), optString("role"), optString("body"), optString("created_at"))
@@ -422,7 +491,7 @@ class HttpIdentityGateway(
         try {
             val status = connection.responseCode
             val raw = (if (status in 200..299) connection.inputStream else connection.errorStream)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            if (status !in 200..299) throw ApiException(status, "http_$status", "流式连接失败")
+            if (status !in 200..299) throw ApiException(status, "http_$status", "连接中断，请稍后重试")
             raw.split("\n\n").mapNotNull { block -> block.lineSequence().firstOrNull { it.startsWith("data:") }?.removePrefix("data:")?.trim()?.takeIf { it.isNotBlank() }?.let(::JSONObject) }
         } finally { connection.disconnect() }
     }

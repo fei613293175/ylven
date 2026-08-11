@@ -25,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.Conversation
 import cc.orbexa.ylven.identity.DeviceSession
+import cc.orbexa.ylven.identity.FirstMessageResult
 import cc.orbexa.ylven.identity.HomeSnapshot
 import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.MessageCitation
@@ -71,7 +72,8 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-019-root")
         captureProductionPage("YL-A-019-PRODUCTION", "YL-A-019-root")
         composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performScrollTo().performClick()
-        waitForTag("p03-active-conversation-created")
+        waitForTag("p03-local-draft-conversation")
+        assertTrue("Opening a blank chat must not persist a conversation", "create" !in gateway.calls)
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
@@ -86,7 +88,8 @@ class P03RealDeviceFlowTest {
         // The temporary-conversation action is pinned in the bottom action bar,
         // outside the home list's scroll container.
         composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
-        waitForTag("p03-active-conversation-temporary")
+        waitForTag("p03-local-draft-conversation")
+        assertTrue("Opening a temporary draft must not persist a conversation", "temporary" !in gateway.calls)
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
@@ -123,7 +126,6 @@ class P03RealDeviceFlowTest {
         gateway.releaseStream()
         waitForCondition { "events" in gateway.calls }
 
-        scrollChatTo("YL-A-026-C-P03_026-01")
         waitForTag("YL-A-025-C-P03_016-01")
         waitForTag("YL-A-023-C-P03_017-01")
         scrollChatTo("YL-A-026-C-P03_018-01")
@@ -219,7 +221,7 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-018-C-P03_001-01")
 
         val requiredCalls = setOf(
-            "home", "create", "temporary", "list-page-1", "list-page-2", "search",
+            "home", "list-page-1", "list-page-2", "search",
             "rename", "archive", "delete", "send", "events-retry", "cancel",
             "export-message", "export-conversation", "feedback-up", "feedback-down",
             "regenerate", "speak", "load-draft", "save-draft",
@@ -437,6 +439,20 @@ private class FlowGateway : IdentityGateway {
         sendGate.await()
         currentRunStatus = "streaming"
         return run("run-1")
+    }
+
+    override suspend fun startConversationFromFirstMessage(
+        bearer: String,
+        draftSessionId: String,
+        body: String,
+        model: String,
+        idempotencyKey: String,
+        temporary: Boolean,
+    ): FirstMessageResult {
+        calls += "first-message"
+        val created = Conversation("created", body.take(18), if (temporary) "temporary" else "active", "2026-08-08T00:00:00Z")
+        val createdRun = sendMessage(bearer, created.id, body, model)
+        return FirstMessageResult(created, createdRun)
     }
 
     override suspend fun runEvents(bearer: String, runId: String, after: Long): Pair<MessageRun, List<RunEvent>> {

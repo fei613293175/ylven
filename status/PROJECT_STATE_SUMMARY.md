@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-11T15:40:24+08:00`
+- Generated: `2026-08-11T15:42:23+08:00`
 - Current phase: `P03`
-- Phase status: `TODO`
+- Phase status: `DOING`
 - Current Work Packet: `P03-W06`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P03-W05`
 - Last closed phase: `P02`
 - Last closed version: `1.2.0`
 - Closed/deferred Work Packets recorded: `20`
 - Closed releases recorded: `3`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `7bfe4a85fcf932e4351abe2f841064674ed393ec`
+- Git HEAD: `cbd763f894acf2312df1ae8b07fa2d2182a7c2c3`
 
 ## Exact next action
 
-Release `P03` was reopened by `CO-P03-001`. Continue exactly `P03-W06`.
+Implement `P03-W06` (多轮上下文、延迟建会话与自动标题). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 

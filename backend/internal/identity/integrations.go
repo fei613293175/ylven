@@ -97,7 +97,14 @@ type OTPMailer interface {
 // ChatResponder is deliberately server-side only. Android clients use the
 // stable YLVEN run API and never receive provider addresses or credentials.
 type ChatResponder interface {
-	Respond(context.Context, string, string) (string, error)
+	Respond(context.Context, ChatRequest) (ChatResponse, error)
+}
+
+// ChatContinuationResponder is optional. A provider continuation is only an
+// optimization; callers must fall back to a locally compiled ChatRequest when
+// it fails or is unsupported.
+type ChatContinuationResponder interface {
+	Continue(context.Context, ChatRequest) (ChatResponse, error)
 }
 
 type OpenAICompatibleResponder struct {
@@ -111,26 +118,29 @@ type OpenAICompatibleResponder struct {
 // provider returns a controlled failure before the run context is cancelled.
 const upstreamChatHTTPTimeout = 90 * time.Second
 
-func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt string) (string, error) {
-	providerModel := strings.TrimSpace(model)
+func (r OpenAICompatibleResponder) Respond(ctx context.Context, request ChatRequest) (ChatResponse, error) {
+	providerModel := strings.TrimSpace(request.Model)
 	if providerModel == "" || providerModel == "ylven-default" {
 		providerModel = strings.TrimSpace(r.DefaultModel)
 	}
 	if strings.TrimSpace(r.Endpoint) == "" || strings.TrimSpace(r.APIKey) == "" || providerModel == "" {
-		return "", errors.New("chat_runtime_unavailable")
+		return ChatResponse{}, errors.New("chat_runtime_unavailable")
 	}
 	endpoint, err := openAIChatCompletionsEndpoint(r.Endpoint)
 	if err != nil {
-		return "", errors.New("chat_runtime_unavailable")
+		return ChatResponse{}, errors.New("chat_runtime_unavailable")
 	}
-	payload := map[string]any{"model": providerModel, "messages": []map[string]string{{"role": "user", "content": prompt}}, "stream": false}
+	if len(request.Messages) == 0 {
+		return ChatResponse{}, errors.New("chat_context_empty")
+	}
+	payload := map[string]any{"model": providerModel, "messages": request.Messages, "stream": false}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return "", err
+		return ChatResponse{}, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
 	if err != nil {
-		return "", err
+		return ChatResponse{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+r.APIKey)
@@ -140,17 +150,18 @@ func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt st
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("chat_provider_unavailable: %w", err)
+		return ChatResponse{}, fmt.Errorf("chat_provider_unavailable: %w", err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
-		return "", err
+		return ChatResponse{}, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("chat_provider_http_%d", resp.StatusCode)
+		return ChatResponse{}, fmt.Errorf("chat_provider_http_%d", resp.StatusCode)
 	}
 	var decoded struct {
+		ID      string `json:"id"`
 		Choices []struct {
 			Message struct {
 				Content string `json:"content"`
@@ -158,12 +169,12 @@ func (r OpenAICompatibleResponder) Respond(ctx context.Context, model, prompt st
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(raw, &decoded); err != nil {
-		return "", errors.New("chat_provider_response_invalid")
+		return ChatResponse{}, errors.New("chat_provider_response_invalid")
 	}
 	if len(decoded.Choices) == 0 || strings.TrimSpace(decoded.Choices[0].Message.Content) == "" {
-		return "", errors.New("chat_provider_empty_response")
+		return ChatResponse{}, errors.New("chat_provider_empty_response")
 	}
-	return strings.TrimSpace(decoded.Choices[0].Message.Content), nil
+	return ChatResponse{Content: strings.TrimSpace(decoded.Choices[0].Message.Content), ContinuationID: strings.TrimSpace(decoded.ID)}, nil
 }
 
 func openAIChatCompletionsEndpoint(baseURL string) (string, error) {

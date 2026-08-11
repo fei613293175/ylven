@@ -54,7 +54,7 @@ class P01IdentityUiTest {
         composeRule.onNodeWithTag("p01-security-confirm").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("验证注册邮箱").assertExists()
-        composeRule.onNodeWithTag("p01-debug-otp").assertExists()
+        composeRule.onNodeWithTag("p01-otp-code-preview").assertExists()
         capture("P01-AUTH-REGISTER-OTP")
 
         composeRule.onNodeWithTag("p01-otp-submit").performClick()

@@ -177,24 +177,34 @@ type NotificationDelivery struct {
 // records. They intentionally live behind the authenticated Store boundary so
 // callers can never address another user's records by guessing an ID.
 type Conversation struct {
-	ID         string     `json:"id"`
-	UserID     string     `json:"user_id"`
-	Title      string     `json:"title"`
-	Status     string     `json:"status"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	ArchivedAt *time.Time `json:"archived_at,omitempty"`
-	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
-	Temporary  bool       `json:"temporary,omitempty"`
+	ID                      string     `json:"id"`
+	UserID                  string     `json:"user_id"`
+	Title                   string     `json:"title"`
+	TitleSource             string     `json:"title_source"`
+	TitleLocked             bool       `json:"title_locked"`
+	ActiveBranchID          string     `json:"active_branch_id"`
+	SummaryThroughMessageID string     `json:"summary_through_message_id,omitempty"`
+	Status                  string     `json:"status"`
+	CreatedAt               time.Time  `json:"created_at"`
+	UpdatedAt               time.Time  `json:"updated_at"`
+	ArchivedAt              *time.Time `json:"archived_at,omitempty"`
+	DeletedAt               *time.Time `json:"deleted_at,omitempty"`
+	Temporary               bool       `json:"temporary,omitempty"`
 }
 
 type Message struct {
-	ID             string    `json:"id"`
-	ConversationID string    `json:"conversation_id"`
-	UserID         string    `json:"user_id"`
-	Role           string    `json:"role"`
-	Body           string    `json:"body"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID                string     `json:"id"`
+	ConversationID    string     `json:"conversation_id"`
+	UserID            string     `json:"user_id"`
+	BranchID          string     `json:"branch_id"`
+	Sequence          int64      `json:"sequence"`
+	ParentMessageID   string     `json:"parent_message_id,omitempty"`
+	ComparisonGroupID string     `json:"comparison_group_id,omitempty"`
+	Role              string     `json:"role"`
+	Body              string     `json:"body"`
+	Status            string     `json:"status"`
+	CreatedAt         time.Time  `json:"created_at"`
+	CompletedAt       *time.Time `json:"completed_at,omitempty"`
 }
 
 type ModelCatalogEntry struct {
@@ -211,21 +221,26 @@ type HomeConfig struct {
 }
 
 type MessageRun struct {
-	ID                 string     `json:"id"`
-	ConversationID     string     `json:"conversation_id"`
-	UserID             string     `json:"user_id"`
-	UserMessageID      string     `json:"user_message_id"`
-	AssistantMessageID string     `json:"assistant_message_id"`
-	Model              string     `json:"model"`
-	Status             string     `json:"status"`
-	ErrorCode          string     `json:"error_code,omitempty"`
-	Provider           string     `json:"provider,omitempty"`
-	StartedAt          time.Time  `json:"started_at"`
-	CompletedAt        *time.Time `json:"completed_at,omitempty"`
-	LatencyMs          int64      `json:"latency_ms,omitempty"`
-	Cursor             int64      `json:"cursor"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
+	ID                   string     `json:"id"`
+	ConversationID       string     `json:"conversation_id"`
+	UserID               string     `json:"user_id"`
+	UserMessageID        string     `json:"user_message_id"`
+	AssistantMessageID   string     `json:"assistant_message_id"`
+	Model                string     `json:"model"`
+	BranchID             string     `json:"branch_id"`
+	IdempotencyKey       string     `json:"idempotency_key,omitempty"`
+	ContextBuildID       string     `json:"context_build_id,omitempty"`
+	Status               string     `json:"status"`
+	ErrorCode            string     `json:"error_code,omitempty"`
+	Provider             string     `json:"provider,omitempty"`
+	ContinuationUsed     bool       `json:"continuation_used"`
+	ContinuationFallback bool       `json:"continuation_fallback"`
+	StartedAt            time.Time  `json:"started_at"`
+	CompletedAt          *time.Time `json:"completed_at,omitempty"`
+	LatencyMs            int64      `json:"latency_ms,omitempty"`
+	Cursor               int64      `json:"cursor"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 }
 
 type RunEvent struct {
@@ -270,42 +285,88 @@ type SpeechJob struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type ConversationBranch struct {
+	ID                  string    `json:"id"`
+	ConversationID      string    `json:"conversation_id"`
+	ParentBranchID      string    `json:"parent_branch_id,omitempty"`
+	ForkedFromMessageID string    `json:"forked_from_message_id,omitempty"`
+	Status              string    `json:"status"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type ProviderConversationState struct {
+	ID              string     `json:"id"`
+	ConversationID  string     `json:"conversation_id"`
+	BranchID        string     `json:"branch_id"`
+	Provider        string     `json:"provider"`
+	Model           string     `json:"model"`
+	ContinuationID  string     `json:"continuation_id"`
+	Status          string     `json:"status"`
+	ExpiresAt       *time.Time `json:"expires_at,omitempty"`
+	LastFailureCode string     `json:"last_failure_code,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type FirstMessageResult struct {
+	Conversation Conversation `json:"conversation"`
+	Run          MessageRun   `json:"run"`
+	Created      bool         `json:"-"`
+}
+
+type idempotencyRecord struct {
+	Operation   string    `json:"operation"`
+	RequestHash string    `json:"request_hash"`
+	ResourceID  string    `json:"resource_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
+}
+
 type state struct {
-	Challenges             map[string]Challenge         `json:"challenges"`
-	OTPs                   map[string]OTP               `json:"otps"`
-	Users                  map[string]User              `json:"users"`
-	Sessions               map[string]Session           `json:"sessions"`
-	RateLimits             map[string][]time.Time       `json:"rate_limits"`
-	Audit                  []AuditEvent                 `json:"audit"`
-	Settings               map[string]map[string]string `json:"settings"`
-	Roles                  map[string]Role              `json:"roles"`
-	AdminUsers             map[string]AdminUser         `json:"admin_users"`
-	AdminSessions          map[string]AdminSession      `json:"admin_sessions"`
-	StepUpChallenges       map[string]StepUpChallenge   `json:"step_up_challenges"`
-	EmailTemplates         map[string]EmailTemplate     `json:"email_templates"`
-	NotificationDeliveries []NotificationDelivery       `json:"notification_deliveries"`
-	Workspaces             map[string]Workspace         `json:"workspaces"`
-	Conversations          map[string]Conversation      `json:"conversations"`
-	Messages               map[string]Message           `json:"messages"`
-	ModelCatalog           []ModelCatalogEntry          `json:"model_catalog"`
-	HomeConfig             HomeConfig                   `json:"home_config"`
-	Runs                   map[string]MessageRun        `json:"runs"`
-	RunEvents              map[string][]RunEvent        `json:"run_events"`
-	Exports                map[string]ExportJob         `json:"exports"`
-	Drafts                 map[string]Draft             `json:"drafts"`
-	Metrics                []map[string]any             `json:"chat_metrics"`
-	Feedback               map[string]MessageFeedback   `json:"message_feedback"`
-	SpeechJobs             map[string]SpeechJob         `json:"speech_jobs"`
+	Challenges             map[string]Challenge                 `json:"challenges"`
+	OTPs                   map[string]OTP                       `json:"otps"`
+	Users                  map[string]User                      `json:"users"`
+	Sessions               map[string]Session                   `json:"sessions"`
+	RateLimits             map[string][]time.Time               `json:"rate_limits"`
+	Audit                  []AuditEvent                         `json:"audit"`
+	Settings               map[string]map[string]string         `json:"settings"`
+	Roles                  map[string]Role                      `json:"roles"`
+	AdminUsers             map[string]AdminUser                 `json:"admin_users"`
+	AdminSessions          map[string]AdminSession              `json:"admin_sessions"`
+	StepUpChallenges       map[string]StepUpChallenge           `json:"step_up_challenges"`
+	EmailTemplates         map[string]EmailTemplate             `json:"email_templates"`
+	NotificationDeliveries []NotificationDelivery               `json:"notification_deliveries"`
+	Workspaces             map[string]Workspace                 `json:"workspaces"`
+	Conversations          map[string]Conversation              `json:"conversations"`
+	ConversationBranches   map[string]ConversationBranch        `json:"conversation_branches"`
+	Messages               map[string]Message                   `json:"messages"`
+	MessageParts           map[string]MessagePart               `json:"message_parts"`
+	ModelCatalog           []ModelCatalogEntry                  `json:"model_catalog"`
+	HomeConfig             HomeConfig                           `json:"home_config"`
+	Runs                   map[string]MessageRun                `json:"runs"`
+	RunEvents              map[string][]RunEvent                `json:"run_events"`
+	Exports                map[string]ExportJob                 `json:"exports"`
+	Drafts                 map[string]Draft                     `json:"drafts"`
+	Metrics                []map[string]any                     `json:"chat_metrics"`
+	Feedback               map[string]MessageFeedback           `json:"message_feedback"`
+	SpeechJobs             map[string]SpeechJob                 `json:"speech_jobs"`
+	ContextBuilds          map[string]ContextBuild              `json:"context_builds"`
+	ConversationSummaries  map[string]ConversationSummary       `json:"conversation_summaries"`
+	ContextCompactions     map[string]ContextCompaction         `json:"context_compactions"`
+	ProviderStates         map[string]ProviderConversationState `json:"provider_conversation_states"`
+	Idempotency            map[string]idempotencyRecord         `json:"idempotency_records"`
 }
 
 type Store struct {
-	mu   sync.Mutex
-	path string
-	data state
+	mu              sync.Mutex
+	path            string
+	data            state
+	conversationSQL *postgresConversationStore
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, Messages: map[string]Message{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, ConversationBranches: map[string]ConversationBranch{}, Messages: map[string]Message{}, MessageParts: map[string]MessagePart{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ContextBuilds: map[string]ContextBuild{}, ConversationSummaries: map[string]ConversationSummary{}, ContextCompactions: map[string]ContextCompaction{}, ProviderStates: map[string]ProviderConversationState{}, Idempotency: map[string]idempotencyRecord{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
 	if path == "" {
 		return s, nil
 	}
@@ -361,14 +422,35 @@ func NewStore(path string) (*Store, error) {
 	if s.data.Conversations == nil {
 		s.data.Conversations = map[string]Conversation{}
 	}
+	if s.data.ConversationBranches == nil {
+		s.data.ConversationBranches = map[string]ConversationBranch{}
+	}
 	if s.data.Messages == nil {
 		s.data.Messages = map[string]Message{}
+	}
+	if s.data.MessageParts == nil {
+		s.data.MessageParts = map[string]MessagePart{}
 	}
 	if s.data.ModelCatalog == nil {
 		s.data.ModelCatalog = []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}
 	}
 	if s.data.HomeConfig.UpdatedAt.IsZero() {
 		s.data.HomeConfig = HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}
+	}
+	if s.data.ContextBuilds == nil {
+		s.data.ContextBuilds = map[string]ContextBuild{}
+	}
+	if s.data.ConversationSummaries == nil {
+		s.data.ConversationSummaries = map[string]ConversationSummary{}
+	}
+	if s.data.ContextCompactions == nil {
+		s.data.ContextCompactions = map[string]ContextCompaction{}
+	}
+	if s.data.ProviderStates == nil {
+		s.data.ProviderStates = map[string]ProviderConversationState{}
+	}
+	if s.data.Idempotency == nil {
+		s.data.Idempotency = map[string]idempotencyRecord{}
 	}
 	return s, nil
 }
@@ -875,10 +957,24 @@ func (s *Store) authenticatedUserLocked(access string) (User, Session, error) {
 	return User{}, Session{}, errors.New("session_invalid")
 }
 
+func (s *Store) authenticatedUser(access string) (User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	return user, err
+}
+
 func (s *Store) CreateConversation(access, title string) (Conversation, error) {
 	title = strings.TrimSpace(title)
 	if len([]rune(title)) > 160 {
 		return Conversation{}, errors.New("title_too_long")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.createConversation(user, title, false)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -891,16 +987,30 @@ func (s *Store) CreateConversation(access, title string) (Conversation, error) {
 		return Conversation{}, err
 	}
 	now := time.Now().UTC()
+	titleSource := "USER"
 	if title == "" {
 		title = "新对话"
+		titleSource = "AUTO_TEMP"
 	}
-	item := Conversation{ID: id, UserID: user.ID, Title: title, Status: "active", CreatedAt: now, UpdatedAt: now}
+	item := Conversation{ID: id, UserID: user.ID, Title: title, TitleSource: titleSource, TitleLocked: titleSource == "USER", ActiveBranchID: id, Status: "active", CreatedAt: now, UpdatedAt: now}
 	s.data.Conversations[id] = item
+	s.data.ConversationBranches[id] = ConversationBranch{ID: id, ConversationID: id, Status: "active", CreatedAt: now, UpdatedAt: now}
 	s.appendAuditLocked("conversation_created", user.Email, id)
 	return item, s.persistLocked()
 }
 
 func (s *Store) CreateTemporaryConversation(access, title string) (Conversation, error) {
+	if s.conversationSQL != nil {
+		title = strings.TrimSpace(title)
+		if len([]rune(title)) > 160 {
+			return Conversation{}, errors.New("title_too_long")
+		}
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.createConversation(user, title, true)
+	}
 	item, err := s.CreateConversation(access, title)
 	if err != nil {
 		return Conversation{}, err
@@ -921,6 +1031,13 @@ func (s *Store) ListConversations(access string, cursor string, limit int, inclu
 	}
 	if limit > 100 {
 		limit = 100
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return nil, "", err
+		}
+		return s.conversationSQL.listConversations(user.ID, cursor, limit, includeArchived)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -975,6 +1092,13 @@ func (s *Store) SearchConversations(access, query string, limit int) ([]Conversa
 	if limit > 100 {
 		limit = 100
 	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return nil, err
+		}
+		return s.conversationSQL.searchConversations(user.ID, query, limit)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1021,6 +1145,13 @@ func (s *Store) AppendMessage(access, conversationID, role, body string) (Messag
 	if len([]rune(body)) > 200000 {
 		return Message{}, errors.New("message_body_too_long")
 	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Message{}, err
+		}
+		return s.conversationSQL.appendMessage(user.ID, conversationID, role, body)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1036,45 +1167,262 @@ func (s *Store) AppendMessage(access, conversationID, role, body string) (Messag
 		return Message{}, err
 	}
 	now := time.Now().UTC()
-	message := Message{ID: id, ConversationID: conversationID, UserID: user.ID, Role: role, Body: body, CreatedAt: now}
+	sequence := s.nextMessageSequenceLocked(conversationID, conversation.ActiveBranchID)
+	message := Message{ID: id, ConversationID: conversationID, UserID: user.ID, BranchID: conversation.ActiveBranchID, Sequence: sequence, Role: role, Body: body, Status: "completed", CreatedAt: now, CompletedAt: &now}
 	s.data.Messages[id] = message
+	s.data.MessageParts[id] = MessagePart{ID: id, MessageID: id, Ordinal: 0, Kind: "TEXT", TextContent: body, Metadata: map[string]any{}, CreatedAt: now}
 	conversation.UpdatedAt = now
 	s.data.Conversations[conversationID] = conversation
 	s.appendAuditLocked("message_persisted:"+role, user.Email, id)
 	return message, s.persistLocked()
 }
 
-func (s *Store) StartRun(access, conversationID, body, model string) (MessageRun, error) {
-	model = strings.TrimSpace(model)
-	if model == "" {
-		model = "ylven-default"
+func (s *Store) AppendCanonicalMessage(access, conversationID, role, body, idempotencyKey string) (Message, bool, error) {
+	role = strings.TrimSpace(strings.ToLower(role))
+	body = strings.TrimSpace(body)
+	idempotencyKey = strings.TrimSpace(idempotencyKey)
+	if role != "system" && role != "user" && role != "assistant" && role != "tool" {
+		return Message{}, false, errors.New("message_role_invalid")
 	}
-	userMessage, err := s.AppendMessage(access, conversationID, "user", body)
-	if err != nil {
-		return MessageRun{}, err
+	if body == "" {
+		return Message{}, false, errors.New("message_body_required")
+	}
+	if len([]rune(body)) > 200000 {
+		return Message{}, false, errors.New("message_body_too_long")
+	}
+	if idempotencyKey == "" || len(idempotencyKey) > 160 {
+		return Message{}, false, errors.New("idempotency_key_invalid")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Message{}, false, err
+		}
+		return s.conversationSQL.appendCanonicalMessage(user.ID, conversationID, role, body, idempotencyKey)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
 	if err != nil {
-		return MessageRun{}, err
+		return Message{}, false, err
 	}
-	runID, err := randomToken(16)
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return Message{}, false, errors.New("conversation_not_found")
+	}
+	requestHash := conversationRequestHash(conversationID+"\x00"+body, role)
+	recordKey := user.ID + ":context_message:" + idempotencyKey
+	if record, exists := s.data.Idempotency[recordKey]; exists && record.ExpiresAt.After(time.Now().UTC()) {
+		if record.RequestHash != requestHash {
+			return Message{}, false, errors.New("idempotency_conflict")
+		}
+		message, found := s.data.Messages[record.ResourceID]
+		if !found || message.ConversationID != conversation.ID {
+			return Message{}, false, errors.New("idempotency_resource_missing")
+		}
+		return message, false, nil
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return Message{}, false, err
+	}
+	now := time.Now().UTC()
+	message := Message{ID: id, ConversationID: conversation.ID, UserID: user.ID, BranchID: conversation.ActiveBranchID,
+		Sequence: s.nextMessageSequenceLocked(conversation.ID, conversation.ActiveBranchID), Role: role, Body: body,
+		Status: "completed", CreatedAt: now, CompletedAt: &now}
+	s.data.Messages[id] = message
+	s.data.MessageParts[id] = MessagePart{ID: id, MessageID: id, Ordinal: 0, Kind: "TEXT", TextContent: body, Metadata: map[string]any{}, CreatedAt: now}
+	s.data.Idempotency[recordKey] = idempotencyRecord{Operation: "context_message", RequestHash: requestHash,
+		ResourceID: id, CreatedAt: now, ExpiresAt: now.Add(24 * time.Hour)}
+	conversation.UpdatedAt = now
+	s.data.Conversations[conversation.ID] = conversation
+	s.appendAuditLocked("canonical_context_message_persisted:"+role, user.Email, id)
+	return message, true, s.persistLocked()
+}
+
+func (s *Store) StartRun(access, conversationID, body, model string) (MessageRun, error) {
+	key, err := randomToken(16)
 	if err != nil {
 		return MessageRun{}, err
 	}
+	return s.StartRunIdempotent(access, conversationID, body, model, key)
+}
+
+func (s *Store) StartRunIdempotent(access, conversationID, body, model, idempotencyKey string) (MessageRun, error) {
+	run, _, err := s.StartRunIdempotentResult(access, conversationID, body, model, idempotencyKey)
+	return run, err
+}
+
+func (s *Store) StartRunIdempotentResult(access, conversationID, body, model, idempotencyKey string) (MessageRun, bool, error) {
+	body = strings.TrimSpace(body)
+	if body == "" {
+		return MessageRun{}, false, errors.New("message_body_required")
+	}
+	if len([]rune(body)) > 200000 {
+		return MessageRun{}, false, errors.New("message_body_too_long")
+	}
+	model = strings.TrimSpace(model)
+	if model == "" {
+		model = "ylven-default"
+	}
+	idempotencyKey = strings.TrimSpace(idempotencyKey)
+	if idempotencyKey == "" || len(idempotencyKey) > 160 {
+		return MessageRun{}, false, errors.New("idempotency_key_invalid")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, false, err
+		}
+		return s.conversationSQL.startRun(user, conversationID, body, model, idempotencyKey, "conversation_run")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return MessageRun{}, false, err
+	}
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return MessageRun{}, false, errors.New("conversation_not_found")
+	}
+	return s.startRunLocked(user, conversation, body, model, idempotencyKey, "conversation_run")
+}
+
+func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, model, idempotencyKey string, temporary bool) (FirstMessageResult, error) {
+	body = strings.TrimSpace(body)
+	if body == "" {
+		return FirstMessageResult{}, errors.New("message_body_required")
+	}
+	draftSessionID = strings.TrimSpace(draftSessionID)
+	if draftSessionID == "" || len(draftSessionID) > 160 {
+		return FirstMessageResult{}, errors.New("draft_session_id_invalid")
+	}
+	if strings.TrimSpace(idempotencyKey) == "" {
+		idempotencyKey = draftSessionID
+	}
+	model = strings.TrimSpace(model)
+	if model == "" {
+		model = "ylven-default"
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return FirstMessageResult{}, err
+		}
+		return s.conversationSQL.firstMessage(user, draftSessionID, body, model, idempotencyKey, temporary)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return FirstMessageResult{}, err
+	}
+	requestHash := conversationRequestHash(body, model)
+	recordKey := user.ID + "|first_message|" + idempotencyKey
+	if record, exists := s.data.Idempotency[recordKey]; exists {
+		if record.RequestHash != requestHash {
+			return FirstMessageResult{}, errors.New("idempotency_conflict")
+		}
+		run, runExists := s.data.Runs[record.ResourceID]
+		conversation, conversationExists := s.data.Conversations[run.ConversationID]
+		if runExists && conversationExists {
+			return FirstMessageResult{Conversation: conversation, Run: run, Created: false}, nil
+		}
+		return FirstMessageResult{}, errors.New("idempotency_resource_missing")
+	}
+	conversationID, err := randomToken(16)
+	if err != nil {
+		return FirstMessageResult{}, err
+	}
 	now := time.Now().UTC()
-	run := MessageRun{ID: runID, ConversationID: conversationID, UserID: user.ID, UserMessageID: userMessage.ID, Model: model, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
+	status := "active"
+	if temporary {
+		status = "temporary"
+	}
+	conversation := Conversation{ID: conversationID, UserID: user.ID, Title: TemporaryConversationTitle(body), TitleSource: "AUTO_TEMP", ActiveBranchID: conversationID, Status: status, CreatedAt: now, UpdatedAt: now, Temporary: temporary}
+	s.data.Conversations[conversationID] = conversation
+	s.data.ConversationBranches[conversationID] = ConversationBranch{ID: conversationID, ConversationID: conversationID, Status: "active", CreatedAt: now, UpdatedAt: now}
+	run, _, err := s.startRunLocked(user, conversation, body, model, idempotencyKey, "first_message")
+	if err != nil {
+		delete(s.data.Conversations, conversationID)
+		delete(s.data.ConversationBranches, conversationID)
+		return FirstMessageResult{}, err
+	}
+	s.data.Idempotency[recordKey] = idempotencyRecord{Operation: "first_message", RequestHash: requestHash, ResourceID: run.ID, CreatedAt: now, ExpiresAt: now.Add(24 * time.Hour)}
+	s.appendAuditLocked("conversation_created_from_first_message", user.Email, conversationID)
+	if err := s.persistLocked(); err != nil {
+		return FirstMessageResult{}, err
+	}
+	return FirstMessageResult{Conversation: conversation, Run: run, Created: true}, nil
+}
+
+func (s *Store) startRunLocked(user User, conversation Conversation, body, model, idempotencyKey, operation string) (MessageRun, bool, error) {
+	requestHash := conversationRequestHash(body, model)
+	recordKey := user.ID + "|" + operation + "|" + idempotencyKey
+	if record, exists := s.data.Idempotency[recordKey]; exists {
+		if record.RequestHash != requestHash {
+			return MessageRun{}, false, errors.New("idempotency_conflict")
+		}
+		if run, ok := s.data.Runs[record.ResourceID]; ok {
+			return run, false, nil
+		}
+		return MessageRun{}, false, errors.New("idempotency_resource_missing")
+	}
+	for _, existing := range s.data.Runs {
+		if existing.ConversationID == conversation.ID && existing.BranchID == conversation.ActiveBranchID && existing.Status == "streaming" {
+			return MessageRun{}, false, errors.New("conversation_busy")
+		}
+	}
+	userMessageID, err := randomToken(16)
+	if err != nil {
+		return MessageRun{}, false, err
+	}
+	runID, err := randomToken(16)
+	if err != nil {
+		return MessageRun{}, false, err
+	}
+	now := time.Now().UTC()
+	sequence := s.nextMessageSequenceLocked(conversation.ID, conversation.ActiveBranchID)
+	userMessage := Message{ID: userMessageID, ConversationID: conversation.ID, UserID: user.ID, BranchID: conversation.ActiveBranchID, Sequence: sequence, Role: "user", Body: body, Status: "completed", CreatedAt: now, CompletedAt: &now}
+	s.data.Messages[userMessageID] = userMessage
+	s.data.MessageParts[userMessageID] = MessagePart{ID: userMessageID, MessageID: userMessageID, Ordinal: 0, Kind: "TEXT", TextContent: body, Metadata: map[string]any{}, CreatedAt: now}
+	run := MessageRun{ID: runID, ConversationID: conversation.ID, UserID: user.ID, UserMessageID: userMessageID, Model: model, BranchID: conversation.ActiveBranchID, IdempotencyKey: idempotencyKey, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = []RunEvent{}
+	conversation.UpdatedAt = now
+	s.data.Conversations[conversation.ID] = conversation
+	s.data.Idempotency[recordKey] = idempotencyRecord{Operation: operation, RequestHash: requestHash, ResourceID: runID, CreatedAt: now, ExpiresAt: now.Add(24 * time.Hour)}
 	s.appendAuditLocked("message_run_started", user.Email, runID)
-	return run, s.persistLocked()
+	return run, true, s.persistLocked()
+}
+
+func (s *Store) nextMessageSequenceLocked(conversationID, branchID string) int64 {
+	var next int64 = 1
+	for _, message := range s.data.Messages {
+		if message.ConversationID == conversationID && message.BranchID == branchID && message.Sequence >= next {
+			next = message.Sequence + 1
+		}
+	}
+	return next
+}
+
+func conversationRequestHash(body, model string) string {
+	digest := sha256.Sum256([]byte(strings.TrimSpace(model) + "\x00" + strings.TrimSpace(body)))
+	return hex.EncodeToString(digest[:])
 }
 
 func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, error) {
 	assistantBody = strings.TrimSpace(assistantBody)
 	if assistantBody == "" {
 		return MessageRun{}, errors.New("chat_provider_empty_response")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, err
+		}
+		return s.conversationSQL.completeRun(user.ID, runID, assistantBody)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1097,8 +1445,10 @@ func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, er
 	if err != nil {
 		return MessageRun{}, err
 	}
-	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, Role: "assistant", Body: assistantBody, CreatedAt: now}
+	sequence := s.nextMessageSequenceLocked(run.ConversationID, run.BranchID)
+	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, BranchID: run.BranchID, Sequence: sequence, ParentMessageID: run.UserMessageID, Role: "assistant", Body: assistantBody, Status: "completed", CreatedAt: now, CompletedAt: &now}
 	s.data.Messages[assistantID] = assistant
+	s.data.MessageParts[assistantID] = MessagePart{ID: assistantID, MessageID: assistantID, Ordinal: 0, Kind: "TEXT", TextContent: assistantBody, Metadata: map[string]any{}, CreatedAt: now}
 	run.AssistantMessageID = assistantID
 	events := []RunEvent{}
 	for i, runeValue := range []rune(assistantBody) {
@@ -1119,6 +1469,13 @@ func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, er
 }
 
 func (s *Store) FailRun(access, runID, code string) (MessageRun, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, err
+		}
+		return s.conversationSQL.finishRunWithError(user.ID, runID, "failed")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1153,6 +1510,13 @@ func (s *Store) CreateRun(access, conversationID, body, model, assistantBody str
 }
 
 func (s *Store) Run(access, runID string) (MessageRun, []Message, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, nil, err
+		}
+		return s.conversationSQL.run(user.ID, runID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1174,6 +1538,13 @@ func (s *Store) Run(access, runID string) (MessageRun, []Message, error) {
 }
 
 func (s *Store) Events(access, runID string, after int64) (MessageRun, []RunEvent, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, nil, err
+		}
+		return s.conversationSQL.events(user.ID, runID, after)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1194,6 +1565,13 @@ func (s *Store) Events(access, runID string, after int64) (MessageRun, []RunEven
 }
 
 func (s *Store) CancelRun(access, runID string) (MessageRun, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, err
+		}
+		return s.conversationSQL.finishRunWithError(user.ID, runID, "cancelled")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1216,6 +1594,13 @@ func (s *Store) CancelRun(access, runID string) (MessageRun, error) {
 }
 
 func (s *Store) SaveDraft(access, conversationID, body string) (Draft, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Draft{}, err
+		}
+		return s.conversationSQL.saveDraft(user.ID, conversationID, body)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1231,6 +1616,13 @@ func (s *Store) SaveDraft(access, conversationID, body string) (Draft, error) {
 	return draft, s.persistLocked()
 }
 func (s *Store) GetDraft(access, conversationID string) (Draft, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Draft{}, err
+		}
+		return s.conversationSQL.getDraft(user.ID, conversationID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1244,6 +1636,13 @@ func (s *Store) GetDraft(access, conversationID string) (Draft, error) {
 	return d, nil
 }
 func (s *Store) ExportConversation(access, conversationID, messageID string) (ExportJob, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ExportJob{}, err
+		}
+		return s.conversationSQL.exportConversation(user.ID, conversationID, messageID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1290,6 +1689,13 @@ func (s *Store) UpdateConversation(access, id, title string) (Conversation, erro
 	if len([]rune(title)) > 160 {
 		return Conversation{}, errors.New("title_too_long")
 	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.updateTitle(user.ID, id, title, "USER", true)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1301,13 +1707,482 @@ func (s *Store) UpdateConversation(access, id, title string) (Conversation, erro
 		return Conversation{}, errors.New("conversation_not_found")
 	}
 	item.Title = title
+	item.TitleSource = "USER"
+	item.TitleLocked = true
 	item.UpdatedAt = time.Now().UTC()
 	s.data.Conversations[id] = item
 	s.appendAuditLocked("conversation_renamed", user.Email, id)
 	return item, s.persistLocked()
 }
 
+func (s *Store) ApplyAutomaticConversationTitle(access, id, title, source string) (Conversation, error) {
+	if source != "AUTO_TEMP" && source != "AUTO_FINAL" {
+		return Conversation{}, errors.New("title_source_invalid")
+	}
+	if source == "AUTO_FINAL" {
+		title = NormalizeFinalConversationTitle(title, "")
+	} else {
+		title = TemporaryConversationTitle(title)
+	}
+	if title == "" {
+		return Conversation{}, errors.New("title_required")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.updateTitle(user.ID, id, title, source, false)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return Conversation{}, err
+	}
+	item, ok := s.data.Conversations[id]
+	if !ok || item.UserID != user.ID || item.DeletedAt != nil {
+		return Conversation{}, errors.New("conversation_not_found")
+	}
+	if item.TitleLocked || item.TitleSource == "USER" || (source == "AUTO_FINAL" && item.TitleSource != "AUTO_TEMP") {
+		return item, nil
+	}
+	item.Title = title
+	item.TitleSource = source
+	item.UpdatedAt = time.Now().UTC()
+	s.data.Conversations[id] = item
+	s.appendAuditLocked("conversation_auto_title_updated", user.Email, id)
+	return item, s.persistLocked()
+}
+
+func (s *Store) ConversationNeedsFinalTitle(access, id string) (bool, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return false, err
+		}
+		return s.conversationSQL.needsFinalTitle(user.ID, id)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return false, err
+	}
+	item, ok := s.data.Conversations[id]
+	if !ok || item.UserID != user.ID || item.DeletedAt != nil {
+		return false, errors.New("conversation_not_found")
+	}
+	return !item.TitleLocked && item.TitleSource == "AUTO_TEMP", nil
+}
+
+func (s *Store) ConversationContext(access, conversationID string) (ConversationContext, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ConversationContext{}, err
+		}
+		return s.conversationSQL.conversationContext(user.ID, conversationID)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ConversationContext{}, err
+	}
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return ConversationContext{}, errors.New("conversation_not_found")
+	}
+	branch, ok := s.data.ConversationBranches[conversation.ActiveBranchID]
+	if !ok || branch.ConversationID != conversation.ID {
+		return ConversationContext{}, errors.New("conversation_branch_not_found")
+	}
+	snapshot := ConversationContext{Conversation: conversation, Branch: branch, Messages: []Message{}, MessageParts: []MessagePart{}, Items: []ContextBuildItem{}}
+	for _, message := range s.data.Messages {
+		if message.ConversationID == conversation.ID && message.BranchID == branch.ID && message.Status == "completed" {
+			snapshot.Messages = append(snapshot.Messages, message)
+		}
+	}
+	sort.SliceStable(snapshot.Messages, func(i, j int) bool { return snapshot.Messages[i].Sequence < snapshot.Messages[j].Sequence })
+	sequenceByMessage := map[string]int64{}
+	for _, message := range snapshot.Messages {
+		sequenceByMessage[message.ID] = message.Sequence
+		snapshot.Items = append(snapshot.Items, ContextBuildItem{Ordinal: len(snapshot.Items), ItemType: "message", SourceID: message.ID,
+			Role: message.Role, Content: message.Body, EstimatedTokens: EstimateTokens(message.Body), Included: true})
+		part, exists := s.data.MessageParts[message.ID]
+		if !exists {
+			part = MessagePart{ID: message.ID, MessageID: message.ID, Ordinal: 0, Kind: "TEXT", TextContent: message.Body, Metadata: map[string]any{}, CreatedAt: message.CreatedAt}
+		}
+		snapshot.MessageParts = append(snapshot.MessageParts, part)
+	}
+	for _, part := range s.data.MessageParts {
+		if part.Ordinal == 0 && part.ID == part.MessageID {
+			continue
+		}
+		if _, exists := sequenceByMessage[part.MessageID]; exists {
+			snapshot.MessageParts = append(snapshot.MessageParts, part)
+		}
+	}
+	sort.SliceStable(snapshot.MessageParts, func(i, j int) bool {
+		left, right := sequenceByMessage[snapshot.MessageParts[i].MessageID], sequenceByMessage[snapshot.MessageParts[j].MessageID]
+		if left == right {
+			return snapshot.MessageParts[i].Ordinal < snapshot.MessageParts[j].Ordinal
+		}
+		return left < right
+	})
+	for _, summary := range s.data.ConversationSummaries {
+		if summary.ConversationID == conversation.ID && summary.BranchID == branch.ID && (snapshot.Summary == nil || summary.SourceLastSequence > snapshot.Summary.SourceLastSequence) {
+			copyValue := summary
+			snapshot.Summary = &copyValue
+		}
+	}
+	return snapshot, nil
+}
+
+func (s *Store) CompileRunContext(access, runID, continuationMode string) (ContextBuild, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ContextBuild{}, err
+		}
+		return s.conversationSQL.compileRunContext(user.ID, runID, continuationMode)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ContextBuild{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return ContextBuild{}, errors.New("run_not_found")
+	}
+	history := make([]Message, 0)
+	for _, message := range s.data.Messages {
+		if message.ConversationID == run.ConversationID && message.BranchID == run.BranchID && message.Status == "completed" {
+			history = append(history, message)
+		}
+	}
+	var existingSummary *ConversationSummary
+	for _, summary := range s.data.ConversationSummaries {
+		if summary.ConversationID == run.ConversationID && summary.BranchID == run.BranchID && (existingSummary == nil || summary.SourceLastSequence > existingSummary.SourceLastSequence) {
+			copyValue := summary
+			existingSummary = &copyValue
+		}
+	}
+	buildID, err := randomToken(16)
+	if err != nil {
+		return ContextBuild{}, err
+	}
+	build := (ConversationContextCompiler{}).Compile(ContextBuildInput{
+		BuildID: buildID, RunID: run.ID, ConversationID: run.ConversationID, BranchID: run.BranchID, Model: run.Model,
+		SystemInstruction: "Follow YLVEN safety and product policy. Use only user-visible conversation facts; never reveal or request hidden chain-of-thought.",
+		Messages:          history, ExistingSummary: existingSummary, ContinuationMode: continuationMode,
+	})
+	if build.Summary != nil {
+		s.data.ConversationSummaries[build.Summary.ID] = *build.Summary
+		conversation := s.data.Conversations[run.ConversationID]
+		conversation.SummaryThroughMessageID = build.Summary.SourceLastMessageID
+		s.data.Conversations[conversation.ID] = conversation
+	}
+	s.data.ContextBuilds[build.ID] = build
+	run.ContextBuildID = build.ID
+	s.data.Runs[run.ID] = run
+	if err := s.persistLocked(); err != nil {
+		return ContextBuild{}, err
+	}
+	return build, nil
+}
+
+func (s *Store) ContextBuildOwned(access, runID string) (ContextBuild, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ContextBuild{}, err
+		}
+		return s.conversationSQL.contextBuildOwned(user.ID, runID)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ContextBuild{}, err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID || run.ContextBuildID == "" {
+		return ContextBuild{}, errors.New("context_build_not_found")
+	}
+	build, ok := s.data.ContextBuilds[run.ContextBuildID]
+	if !ok {
+		return ContextBuild{}, errors.New("context_build_not_found")
+	}
+	return build, nil
+}
+
+func (s *Store) QueueConversationCompaction(access, conversationID, idempotencyKey string) (ContextCompaction, bool, error) {
+	idempotencyKey = strings.TrimSpace(idempotencyKey)
+	if idempotencyKey == "" || len(idempotencyKey) > 160 {
+		return ContextCompaction{}, false, errors.New("idempotency_key_invalid")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ContextCompaction{}, false, err
+		}
+		return s.conversationSQL.queueConversationCompaction(user.ID, conversationID, idempotencyKey)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ContextCompaction{}, false, err
+	}
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return ContextCompaction{}, false, errors.New("conversation_not_found")
+	}
+	messages := []Message{}
+	for _, message := range s.data.Messages {
+		if message.ConversationID == conversation.ID && message.BranchID == conversation.ActiveBranchID && message.Status == "completed" {
+			messages = append(messages, message)
+		}
+	}
+	if len(messages) == 0 {
+		return ContextCompaction{}, false, errors.New("conversation_context_empty")
+	}
+	sort.SliceStable(messages, func(i, j int) bool { return messages[i].Sequence < messages[j].Sequence })
+	requestHash := conversationRequestHash(conversation.ID+"\x00"+conversation.ActiveBranchID+"\x00"+messages[len(messages)-1].ID, contextCompilerVersion)
+	recordKey := user.ID + ":conversation_compaction:" + idempotencyKey
+	if record, exists := s.data.Idempotency[recordKey]; exists && record.ExpiresAt.After(time.Now().UTC()) {
+		if record.RequestHash != requestHash {
+			return ContextCompaction{}, false, errors.New("idempotency_conflict")
+		}
+		item, found := s.data.ContextCompactions[record.ResourceID]
+		if !found {
+			return ContextCompaction{}, false, errors.New("idempotency_resource_missing")
+		}
+		return item, false, nil
+	}
+	id, err := randomToken(16)
+	if err != nil {
+		return ContextCompaction{}, false, err
+	}
+	jobID, err := randomToken(16)
+	if err != nil {
+		return ContextCompaction{}, false, err
+	}
+	now := time.Now().UTC()
+	item := ContextCompaction{ID: id, JobID: jobID, ConversationID: conversation.ID, BranchID: conversation.ActiveBranchID,
+		IdempotencyKey: idempotencyKey, SourceFirstSequence: messages[0].Sequence, SourceLastSequence: messages[len(messages)-1].Sequence,
+		SourceFirstMessageID: messages[0].ID, SourceLastMessageID: messages[len(messages)-1].ID,
+		SummaryVersion: contextCompilerVersion, Status: "queued", CreatedAt: now, UpdatedAt: now}
+	s.data.ContextCompactions[id] = item
+	s.data.Idempotency[recordKey] = idempotencyRecord{Operation: "conversation_compaction", RequestHash: requestHash,
+		ResourceID: id, CreatedAt: now, ExpiresAt: now.Add(24 * time.Hour)}
+	s.appendAuditLocked("conversation_compaction_queued", user.Email, id)
+	return item, true, s.persistLocked()
+}
+
+func (s *Store) ProcessConversationCompaction(access, compactionID string) (ContextCompaction, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ContextCompaction{}, err
+		}
+		return s.conversationSQL.processConversationCompaction(user.ID, compactionID)
+	}
+	s.mu.Lock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		s.mu.Unlock()
+		return ContextCompaction{}, err
+	}
+	item, ok := s.data.ContextCompactions[compactionID]
+	if !ok {
+		s.mu.Unlock()
+		return ContextCompaction{}, errors.New("context_compaction_not_found")
+	}
+	conversation, ok := s.data.Conversations[item.ConversationID]
+	if !ok || conversation.UserID != user.ID {
+		s.mu.Unlock()
+		return ContextCompaction{}, errors.New("context_compaction_not_found")
+	}
+	if item.Status != "queued" {
+		s.mu.Unlock()
+		return item, nil
+	}
+	now := time.Now().UTC()
+	item.Status = "running"
+	item.Attempts++
+	item.StartedAt = &now
+	item.UpdatedAt = now
+	s.data.ContextCompactions[item.ID] = item
+	messages := []Message{}
+	for _, message := range s.data.Messages {
+		if message.ConversationID == item.ConversationID && message.BranchID == item.BranchID && message.Status == "completed" && message.Sequence >= item.SourceFirstSequence && message.Sequence <= item.SourceLastSequence {
+			messages = append(messages, message)
+		}
+	}
+	s.mu.Unlock()
+	sort.SliceStable(messages, func(i, j int) bool { return messages[i].Sequence < messages[j].Sequence })
+	if len(messages) == 0 || messages[0].ID != item.SourceFirstMessageID || messages[len(messages)-1].ID != item.SourceLastMessageID {
+		s.mu.Lock()
+		failedAt := time.Now().UTC()
+		item.Status = "error"
+		item.ErrorCode = "compaction_source_changed"
+		item.CompletedAt = &failedAt
+		item.UpdatedAt = failedAt
+		s.data.ContextCompactions[item.ID] = item
+		_ = s.persistLocked()
+		s.mu.Unlock()
+		return item, errors.New("compaction source range is incomplete")
+	}
+	summary := BuildTraceableSummary(item.ConversationID, item.BranchID, messages)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	completedAt := time.Now().UTC()
+	item.Status = "success"
+	item.SummaryID = summary.ID
+	item.ErrorCode = ""
+	item.CompletedAt = &completedAt
+	item.UpdatedAt = completedAt
+	s.data.ContextCompactions[item.ID] = item
+	s.data.ConversationSummaries[summary.ID] = summary
+	conversation = s.data.Conversations[item.ConversationID]
+	conversation.SummaryThroughMessageID = summary.SourceLastMessageID
+	s.data.Conversations[conversation.ID] = conversation
+	s.appendAuditLocked("conversation_compaction_completed", user.Email, item.ID)
+	return item, s.persistLocked()
+}
+
+func (s *Store) ContextCompactionOwned(access, compactionID string) (ContextCompaction, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ContextCompaction{}, err
+		}
+		return s.conversationSQL.contextCompactionOwned(user.ID, compactionID)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ContextCompaction{}, err
+	}
+	item, ok := s.data.ContextCompactions[compactionID]
+	conversation, found := s.data.Conversations[item.ConversationID]
+	if !ok || !found || conversation.UserID != user.ID {
+		return ContextCompaction{}, errors.New("context_compaction_not_found")
+	}
+	return item, nil
+}
+
+func (s *Store) ProviderState(access, conversationID, branchID, provider, model string) (ProviderConversationState, bool, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return ProviderConversationState{}, false, err
+		}
+		return s.conversationSQL.providerState(user.ID, conversationID, branchID, provider, model)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return ProviderConversationState{}, false, err
+	}
+	conversation, ok := s.data.Conversations[conversationID]
+	if !ok || conversation.UserID != user.ID {
+		return ProviderConversationState{}, false, errors.New("conversation_not_found")
+	}
+	state, exists := s.data.ProviderStates[providerStateKey(conversationID, branchID, provider, model)]
+	if !exists || state.Status != "active" || (state.ExpiresAt != nil && state.ExpiresAt.Before(time.Now().UTC())) {
+		return ProviderConversationState{}, false, nil
+	}
+	return state, true, nil
+}
+
+func (s *Store) SaveProviderState(access string, state ProviderConversationState) error {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return err
+		}
+		return s.conversationSQL.saveProviderState(user.ID, state)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return err
+	}
+	conversation, ok := s.data.Conversations[state.ConversationID]
+	if !ok || conversation.UserID != user.ID {
+		return errors.New("conversation_not_found")
+	}
+	now := time.Now().UTC()
+	if state.ID == "" {
+		state.ID, err = randomToken(16)
+		if err != nil {
+			return err
+		}
+		state.CreatedAt = now
+	}
+	state.UpdatedAt = now
+	if state.Status == "" {
+		state.Status = "active"
+	}
+	s.data.ProviderStates[providerStateKey(state.ConversationID, state.BranchID, state.Provider, state.Model)] = state
+	return s.persistLocked()
+}
+
+func (s *Store) MarkProviderContinuationFallback(access, runID, failureCode string) error {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return err
+		}
+		return s.conversationSQL.markContinuationFallback(user.ID, runID)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return err
+	}
+	run, ok := s.data.Runs[runID]
+	if !ok || run.UserID != user.ID {
+		return errors.New("run_not_found")
+	}
+	run.ContinuationUsed = true
+	run.ContinuationFallback = true
+	s.data.Runs[runID] = run
+	for key, state := range s.data.ProviderStates {
+		if state.ConversationID == run.ConversationID && state.BranchID == run.BranchID && state.Model == run.Model {
+			state.Status = "failed"
+			state.LastFailureCode = stableProviderFailureCode(failureCode)
+			state.UpdatedAt = time.Now().UTC()
+			s.data.ProviderStates[key] = state
+		}
+	}
+	return s.persistLocked()
+}
+
+func providerStateKey(conversationID, branchID, provider, model string) string {
+	return strings.Join([]string{conversationID, branchID, strings.ToLower(provider), strings.ToLower(model)}, "|")
+}
+
+func stableProviderFailureCode(_ string) string { return "continuation_unavailable" }
+
 func (s *Store) ArchiveConversation(access, id string) (Conversation, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.setConversationStatus(user.ID, id, "archive")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1328,6 +2203,13 @@ func (s *Store) ArchiveConversation(access, id string) (Conversation, error) {
 }
 
 func (s *Store) DeleteConversation(access, id string) (Conversation, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Conversation{}, err
+		}
+		return s.conversationSQL.setConversationStatus(user.ID, id, "delete")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1348,6 +2230,17 @@ func (s *Store) DeleteConversation(access, id string) (Conversation, error) {
 }
 
 func (s *Store) Home(access string) (map[string]any, error) {
+	if s.conversationSQL != nil {
+		items, _, err := s.ListConversations(access, "", 5, false)
+		if err != nil {
+			return nil, err
+		}
+		s.mu.Lock()
+		catalog := append([]ModelCatalogEntry(nil), s.data.ModelCatalog...)
+		config := s.data.HomeConfig
+		s.mu.Unlock()
+		return map[string]any{"conversations": items, "projects": []any{}, "model_catalog": catalog, "config": config}, nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1368,6 +2261,13 @@ func (s *Store) Home(access string) (map[string]any, error) {
 }
 
 func (s *Store) ListAllConversations() []Conversation {
+	if s.conversationSQL != nil {
+		items, err := s.conversationSQL.listAllConversations()
+		if err != nil {
+			return []Conversation{}
+		}
+		return items
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := make([]Conversation, 0, len(s.data.Conversations))
@@ -1378,6 +2278,9 @@ func (s *Store) ListAllConversations() []Conversation {
 	return out
 }
 func (s *Store) ConversationDetail(id string) (Conversation, []Message, []MessageRun, bool) {
+	if s.conversationSQL != nil {
+		return s.conversationSQL.conversationDetail(id)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	c, ok := s.data.Conversations[id]
@@ -1401,6 +2304,13 @@ func (s *Store) ConversationDetail(id string) (Conversation, []Message, []Messag
 	return c, messages, runs, true
 }
 func (s *Store) MessageOwned(access, messageID string) (Message, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return Message{}, err
+		}
+		return s.conversationSQL.messageOwned(user.ID, messageID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1415,6 +2325,13 @@ func (s *Store) MessageOwned(access, messageID string) (Message, error) {
 }
 
 func (s *Store) CreateSpeechJob(access, messageID string) (SpeechJob, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return SpeechJob{}, err
+		}
+		return s.conversationSQL.createSpeechJob(user.ID, messageID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1439,6 +2356,13 @@ func (s *Store) CreateSpeechJob(access, messageID string) (SpeechJob, error) {
 }
 
 func (s *Store) RunForMessage(access, messageID string) (MessageRun, Message, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return MessageRun{}, Message{}, err
+		}
+		return s.conversationSQL.runForMessage(user.ID, messageID)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	user, _, err := s.authenticatedUserLocked(access)
@@ -1455,6 +2379,32 @@ func (s *Store) RunForMessage(access, messageID string) (MessageRun, Message, er
 		}
 	}
 	return MessageRun{}, m, errors.New("run_not_found")
+}
+
+func (s *Store) SaveMessageFeedback(access, messageID, value string) error {
+	if value != "up" && value != "down" {
+		return errors.New("feedback_invalid")
+	}
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return err
+		}
+		return s.conversationSQL.saveFeedback(user.ID, messageID, value)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return err
+	}
+	message, ok := s.data.Messages[messageID]
+	if !ok || message.UserID != user.ID {
+		return errors.New("message_not_found")
+	}
+	s.data.Feedback[messageID] = MessageFeedback{MessageID: messageID, UserID: user.ID, Value: value, CreatedAt: time.Now().UTC()}
+	s.appendAuditLocked("message_feedback", user.Email, messageID)
+	return s.persistLocked()
 }
 
 func (s *Store) UpdateHomeConfig(value HomeConfig, actorID string) (HomeConfig, error) {

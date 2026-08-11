@@ -102,6 +102,7 @@ import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.MessageCitation
 import cc.orbexa.ylven.identity.MessageRecord
 import cc.orbexa.ylven.identity.MessageRun
+import cc.orbexa.ylven.identity.isGenerating
 import cc.orbexa.ylven.ui.theme.YlvenDimensions
 import cc.orbexa.ylven.ui.theme.YlvenLightColors
 import kotlinx.coroutines.delay
@@ -165,23 +166,18 @@ internal fun P03HomePage(
     }
 
     fun createConversation(temporary: Boolean, title: String) {
-        scope.launch {
-            operationLoading = true
-            error = null
-            try {
-                val created = if (temporary) {
-                    gateway.createTemporaryConversation(session.bearer, title)
-                } else {
-                    gateway.createConversation(session.bearer, title)
-                }
-                conversations = listOf(created) + conversations.filterNot { it.id == created.id }
-                onOpenConversation(created)
-            } catch (reason: Exception) {
-                error = reason.message ?: if (temporary) "无法创建临时会话" else "无法新建会话"
-            } finally {
-                operationLoading = false
-            }
-        }
+        val draftSessionId = java.util.UUID.randomUUID().toString()
+        onOpenConversation(
+            Conversation(
+                id = "draft-$draftSessionId",
+                title = title.trim().ifBlank { "新对话" },
+                status = "draft",
+                updatedAt = "",
+                draftSessionId = draftSessionId,
+                initialDraft = title,
+                temporary = temporary,
+            ),
+        )
     }
 
     LaunchedEffect(session.bearer) { loadHome() }
@@ -637,8 +633,11 @@ internal fun P03ChatPage(
     conversation: Conversation,
     onBack: () -> Unit,
 ) {
+    var conversationId by rememberSaveable(conversation.id) { mutableStateOf(conversation.id) }
+    var draftSessionId by rememberSaveable(conversation.id) { mutableStateOf(conversation.draftSessionId.orEmpty()) }
+    var formalConversation by rememberSaveable(conversation.id) { mutableStateOf(conversation.draftSessionId == null) }
     var title by remember(conversation.id) { mutableStateOf(conversation.title.ifBlank { "新对话" }) }
-    var draft by rememberSaveable(conversation.id) { mutableStateOf("") }
+    var draft by rememberSaveable(conversation.id) { mutableStateOf(conversation.initialDraft) }
     var draftLoaded by remember(conversation.id) { mutableStateOf(false) }
     var messages by remember(conversation.id) { mutableStateOf<List<MessageRecord>>(emptyList()) }
     var run by remember(conversation.id) { mutableStateOf<MessageRun?>(null) }
@@ -653,6 +652,8 @@ internal fun P03ChatPage(
     var confirmDelete by rememberSaveable(conversation.id) { mutableStateOf(false) }
     var menuBusy by remember(conversation.id) { mutableStateOf(false) }
     var menuMessage by remember(conversation.id) { mutableStateOf<String?>(null) }
+    var pendingIdempotencyKey by rememberSaveable(conversation.id) { mutableStateOf("") }
+    var pendingBody by rememberSaveable(conversation.id) { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
@@ -665,14 +666,16 @@ internal fun P03ChatPage(
     DisposableEffect(tts) { onDispose { tts.shutdown() } }
 
     LaunchedEffect(conversation.id) {
-        messages = cache.load(conversation.id)
-        runCatching { gateway.loadDraft(session.bearer, conversation.id) }.onSuccess { draft = it }
+        if (formalConversation) {
+            messages = cache.load(conversationId)
+            runCatching { gateway.loadDraft(session.bearer, conversationId) }.onSuccess { draft = it }
+        }
         draftLoaded = true
     }
-    LaunchedEffect(draftLoaded, draft) {
-        if (!draftLoaded) return@LaunchedEffect
+    LaunchedEffect(draftLoaded, draft, formalConversation, conversationId) {
+        if (!draftLoaded || !formalConversation) return@LaunchedEffect
         delay(500)
-        runCatching { gateway.saveDraft(session.bearer, conversation.id, draft) }
+        runCatching { gateway.saveDraft(session.bearer, conversationId, draft) }
     }
     LaunchedEffect(messages) {
         messages.filter { it.role == "assistant" && !citations.containsKey(it.id) }.forEach { message ->
@@ -693,10 +696,17 @@ internal fun P03ChatPage(
                 val snapshot = gateway.runStatus(session.bearer, runId)
                 run = snapshot.first
                 messages = snapshot.second
-                cache.save(conversation.id, messages)
+                cache.save(conversationId, messages)
                 reconnecting = false
                 consecutiveFailures = 0
-                if (snapshot.first.status.lowercase() in setOf("completed", "cancelled", "failed", "content_blocked")) return
+                if (snapshot.first.status.lowercase() in setOf("completed", "cancelled", "failed", "content_blocked")) {
+                    if (snapshot.first.status.equals("completed", ignoreCase = true)) {
+                        runCatching { gateway.listConversations(session.bearer).first.firstOrNull { it.id == conversationId } }
+                            .getOrNull()
+                            ?.let { title = it.title }
+                    }
+                    return
+                }
                 delay(350)
             } catch (reason: Exception) {
                 consecutiveFailures += 1
@@ -709,7 +719,7 @@ internal fun P03ChatPage(
 
     fun leaveChat() {
         scope.launch {
-            if (draftLoaded) runCatching { gateway.saveDraft(session.bearer, conversation.id, draft) }
+            if (draftLoaded && formalConversation) runCatching { gateway.saveDraft(session.bearer, conversationId, draft) }
             onBack()
         }
     }
@@ -725,23 +735,44 @@ internal fun P03ChatPage(
     fun send() {
         val body = draft.trim()
         if (body.isEmpty() || sending) return
+        if (pendingBody != body || pendingIdempotencyKey.isBlank()) {
+            pendingBody = body
+            pendingIdempotencyKey = java.util.UUID.randomUUID().toString()
+        }
+        val idempotencyKey = pendingIdempotencyKey
         focusManager.clearFocus(force = true)
         scope.launch {
             sending = true
             error = null
             retryBody = null
-            messages = messages + MessageRecord("optimistic-${System.currentTimeMillis()}", conversation.id, "user", body, "")
+            messages = messages + MessageRecord("optimistic-${System.currentTimeMillis()}", conversationId, "user", body, "")
             try {
-                val created = gateway.sendMessage(session.bearer, conversation.id, body)
+                val created = if (formalConversation) {
+                    gateway.sendMessageIdempotent(session.bearer, conversationId, body, idempotencyKey = idempotencyKey)
+                } else {
+                    val first = gateway.startConversationFromFirstMessage(
+                        bearer = session.bearer,
+                        draftSessionId = draftSessionId,
+                        body = body,
+                        idempotencyKey = idempotencyKey,
+                        temporary = conversation.temporary,
+                    )
+                    conversationId = first.conversation.id
+                    title = first.conversation.title
+                    formalConversation = true
+                    first.run
+                }
                 draft = ""
+                pendingBody = ""
+                pendingIdempotencyKey = ""
                 run = created
                 observeRun(created.id)
-                cache.save(conversation.id, messages)
+                cache.save(conversationId, messages)
             } catch (reason: Exception) {
                 error = reason.message ?: "发送失败，请重试"
                 retryBody = body
             } finally {
-                runCatching { gateway.saveDraft(session.bearer, conversation.id, draft) }
+                if (formalConversation) runCatching { gateway.saveDraft(session.bearer, conversationId, draft) }
                 sending = false
             }
         }
@@ -757,15 +788,17 @@ internal fun P03ChatPage(
                 title = title,
                 subtitle = "GPT-5.6 Sol · 深度推理",
                 onBack = ::leaveChat,
-                actionIcon = Icons.Default.MoreHoriz,
+                actionIcon = if (formalConversation) Icons.Default.MoreHoriz else null,
                 actionDescription = "会话操作",
                 actionTag = "p03-open-conversation-menu",
-                onAction = {
+                onAction = if (formalConversation) {
+                    {
                     renameMode = false
                     confirmDelete = false
                     menuMessage = null
                     menuOpen = true
-                },
+                    }
+                } else null,
             )
         },
         bottomBar = {
@@ -789,7 +822,7 @@ internal fun P03ChatPage(
                 P03Composer(
                     draft = draft,
                     onDraftChange = { draft = it },
-                    sending = sending || run?.status.equals("streaming", ignoreCase = true),
+					sending = sending || run?.isGenerating == true,
                     onSend = ::send,
                     onStop = {
                         run?.let { active ->
@@ -805,7 +838,12 @@ internal fun P03ChatPage(
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).testTag("p03-active-conversation-${conversation.id}")) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .testTag(if (formalConversation) "p03-active-conversation-$conversationId" else "p03-local-draft-conversation"),
+        ) {
             Box(Modifier.fillMaxSize().testTag("YL-A-023-C-P03_017-01")) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().testTag("YL-A-025-C-P03_016-01"),
@@ -824,7 +862,7 @@ internal fun P03ChatPage(
                     )
                 }
                 if (messages.isEmpty() && !sending) {
-                    item { P03EmptyState("开始这次对话", "在下方输入问题，回答会流式显示") }
+                    item { P03EmptyState("开始这次对话", "在下方输入问题，回答会显示在这里") }
                 }
                 items(messages, key = { it.id }) { message ->
                     if (message.role == "user") {
@@ -872,27 +910,17 @@ internal fun P03ChatPage(
                     }
                 }
                 if (sending) item {
-                    Text("正在连接并接收回答…", color = YlvenLightColors.Primary, modifier = Modifier.testTag("YL-A-023-C-P03_010-01"))
+                    Text("正在思考…", color = YlvenLightColors.Primary, modifier = Modifier.testTag("YL-A-023-C-P03_010-01"))
                 }
                 if (reconnecting) item {
-                    Text("连接中断，正在按游标恢复…", color = YlvenLightColors.Warning, modifier = Modifier.testTag("YL-A-023-C-P03_012-01"))
-                }
-                run?.let { activeRun ->
-                    item {
-                        Text(
-                            "生成状态：${activeRun.status}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = YlvenLightColors.TextTertiary,
-                            modifier = Modifier.testTag("YL-A-026-C-P03_026-01"),
-                        )
-                    }
+                    Text("网络不稳定，正在恢复…", color = YlvenLightColors.Warning, modifier = Modifier.testTag("YL-A-023-C-P03_012-01"))
                 }
             }
             }
         }
     }
 
-    if (menuOpen) {
+    if (menuOpen && formalConversation) {
         P03ConversationMenu(
             title = title,
             renameText = renameText,
@@ -907,7 +935,7 @@ internal fun P03ChatPage(
                 scope.launch {
                     menuBusy = true
                     menuMessage = null
-                    runCatching { gateway.renameConversation(session.bearer, conversation.id, renameText.trim()) }
+                    runCatching { gateway.renameConversation(session.bearer, conversationId, renameText.trim()) }
                         .onSuccess { updated -> title = updated.title; renameMode = false; menuOpen = false }
                         .onFailure { menuMessage = it.message ?: "重命名失败" }
                     menuBusy = false
@@ -916,7 +944,7 @@ internal fun P03ChatPage(
             onArchive = {
                 scope.launch {
                     menuBusy = true
-                    runCatching { gateway.archiveConversation(session.bearer, conversation.id) }
+                    runCatching { gateway.archiveConversation(session.bearer, conversationId) }
                         .onSuccess { menuOpen = false; leaveChat() }
                         .onFailure { menuMessage = it.message ?: "归档失败" }
                     menuBusy = false
@@ -925,7 +953,7 @@ internal fun P03ChatPage(
             onExport = {
                 scope.launch {
                     menuBusy = true
-                    runCatching { gateway.exportConversation(session.bearer, conversation.id) }
+                    runCatching { gateway.exportConversation(session.bearer, conversationId) }
                         .onSuccess { markdown -> clipboard.setText(AnnotatedString(markdown)); menuOpen = false }
                         .onFailure { menuMessage = it.message ?: "会话导出失败" }
                     menuBusy = false
@@ -935,7 +963,7 @@ internal fun P03ChatPage(
             onDelete = {
                 scope.launch {
                     menuBusy = true
-                    runCatching { gateway.deleteConversation(session.bearer, conversation.id) }
+                    runCatching { gateway.deleteConversation(session.bearer, conversationId) }
                         .onSuccess { menuOpen = false; leaveChat() }
                         .onFailure { menuMessage = it.message ?: "删除失败" }
                     menuBusy = false

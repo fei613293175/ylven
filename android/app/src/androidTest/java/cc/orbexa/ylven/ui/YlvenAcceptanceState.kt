@@ -1,5 +1,7 @@
 package cc.orbexa.ylven.ui
 
+// Instrumentation-only renderer for approved visual-state screenshots.
+
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper

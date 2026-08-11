@@ -569,13 +569,13 @@ type blockingChatResponder struct {
 	release chan struct{}
 }
 
-func (r blockingChatResponder) Respond(ctx context.Context, _ string, _ string) (string, error) {
+func (r blockingChatResponder) Respond(ctx context.Context, _ ChatRequest) (ChatResponse, error) {
 	close(r.started)
 	select {
 	case <-r.release:
-		return "late answer", nil
+		return ChatResponse{Content: "late answer"}, nil
 	case <-ctx.Done():
-		return "", ctx.Err()
+		return ChatResponse{}, ctx.Err()
 	}
 }
 
@@ -787,8 +787,8 @@ func TestP03W05SpeechOwnershipMetricsAndAdminDiagnostics(t *testing.T) {
 
 type staticErrorChatResponder struct{}
 
-func (staticErrorChatResponder) Respond(context.Context, string, string) (string, error) {
-	return "", errors.New("provider_secret_detail")
+func (staticErrorChatResponder) Respond(context.Context, ChatRequest) (ChatResponse, error) {
+	return ChatResponse{}, errors.New("provider_secret_detail")
 }
 
 func TestP03GeneratedTitleUsesProviderAndPersists(t *testing.T) {
@@ -803,19 +803,19 @@ func TestP03GeneratedTitleUsesProviderAndPersists(t *testing.T) {
 	api.ChatRuntimeMode = "upstream"
 	api.ChatResponder = staticChatResponder{value: "项目周报"}
 	response := requestJSON(t, api.Handler(), http.MethodPost, "/internal/v1/conversations/"+conversation.ID+"/title", map[string]string{}, access, "")
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "项目周报") {
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "项目周报相关讨论") {
 		t.Fatalf("title response=%d body=%s", response.Code, response.Body.String())
 	}
 	items, _, err := s.ListConversations(access, "", 10, false)
-	if err != nil || len(items) != 1 || items[0].Title != "项目周报" {
+	if err != nil || len(items) != 1 || items[0].Title != "项目周报相关讨论" || len([]rune(items[0].Title)) < 6 || len([]rune(items[0].Title)) > 18 {
 		t.Fatalf("persisted title=%+v err=%v", items, err)
 	}
 }
 
 type staticChatResponder struct{ value string }
 
-func (r staticChatResponder) Respond(context.Context, string, string) (string, error) {
-	return r.value, nil
+func (r staticChatResponder) Respond(context.Context, ChatRequest) (ChatResponse, error) {
+	return ChatResponse{Content: r.value}, nil
 }
 
 func TestP03RunLifecycleEventsDraftAndExport(t *testing.T) {

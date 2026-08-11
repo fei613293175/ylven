@@ -174,11 +174,15 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
 	mux.HandleFunc("/api/mobile/v1/home", a.mobileHome)
 	mux.HandleFunc("/api/mobile/v1/conversations/search", a.mobileConversationSearch)
+	mux.HandleFunc("/api/mobile/v1/conversations/from-first-message", a.mobileConversationFromFirstMessage)
 	mux.HandleFunc("/api/mobile/v1/conversations/", a.mobileConversationByID)
 	mux.HandleFunc("/api/mobile/v1/conversations", a.mobileConversations)
 	mux.HandleFunc("/api/mobile/v1/runs/", a.mobileRunByID)
 	mux.HandleFunc("/api/mobile/v1/messages/", a.mobileMessageByID)
 	mux.HandleFunc("/internal/v1/conversations/", a.internalConversationByID)
+	mux.HandleFunc("/internal/v1/context/build", a.internalContextBuild)
+	mux.HandleFunc("/internal/v1/context/recompile", a.internalContextBuild)
+	mux.HandleFunc("/internal/v1/provider-state/fallback", a.internalProviderFallback)
 	mux.HandleFunc("/internal/metrics/chat", a.chatMetrics)
 	mux.HandleFunc("/admin/v1/settings/email", a.adminSetting("email"))
 	mux.HandleFunc("/admin/v1/settings/turnstile", a.adminSetting("turnstile"))
@@ -195,6 +199,40 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/admin/v1/conversations", a.adminConversations)
 	mux.HandleFunc("/admin/v1/conversations/", a.adminConversationDetail)
 	return requestGuard(mux)
+}
+
+func (a *API) mobileConversationFromFirstMessage(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+		writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI runtime is unavailable")
+		return
+	}
+	var in struct {
+		DraftSessionID string `json:"draft_session_id"`
+		Body           string `json:"body"`
+		Model          string `json:"model"`
+		IdempotencyKey string `json:"idempotency_key"`
+		Temporary      bool   `json:"temporary"`
+	}
+	if !decode(r, &in) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	if key == "" {
+		key = strings.TrimSpace(in.IdempotencyKey)
+	}
+	result, err := a.Store.StartConversationFromFirstMessage(bearer(r), in.DraftSessionID, in.Body, in.Model, key, in.Temporary)
+	if err != nil {
+		a.writeConversationRunError(w, err)
+		return
+	}
+	if result.Created {
+		a.dispatchRun(result.Run, bearer(r), true)
+	}
+	writeJSON(w, http.StatusAccepted, result)
 }
 
 func requestGuard(next http.Handler) http.Handler {
@@ -870,49 +908,31 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var in struct {
-			Body  string `json:"body"`
-			Model string `json:"model"`
+			Body           string `json:"body"`
+			Model          string `json:"model"`
+			IdempotencyKey string `json:"idempotency_key"`
 		}
 		if !decode(r, &in) {
 			writeError(w, 400, "invalid_json", "Invalid JSON")
 			return
 		}
 		access := bearer(r)
-		run, err := a.Store.StartRun(access, id, in.Body, in.Model)
+		key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+		if key == "" {
+			key = strings.TrimSpace(in.IdempotencyKey)
+		}
+		if key == "" {
+			key, _ = randomToken(16)
+		}
+		run, created, err := a.Store.StartRunIdempotentResult(access, id, in.Body, in.Model, key)
 		if err != nil {
-			if err.Error() == "session_invalid" {
-				writeError(w, 401, "session_invalid", "Session is invalid")
-			} else {
-				writeError(w, 422, err.Error(), "Unable to create run")
-			}
+			a.writeConversationRunError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusAccepted, run)
-		go func(runID, accessToken, model, prompt string) {
-			started := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
-			a.runMu.Lock()
-			a.runCancels[runID] = cancel
-			a.runMu.Unlock()
-			defer func() {
-				cancel()
-				a.runMu.Lock()
-				delete(a.runCancels, runID)
-				a.runMu.Unlock()
-			}()
-			answer, providerErr := a.ChatResponder.Respond(ctx, model, prompt)
-			if providerErr != nil {
-				_, _ = a.Store.FailRun(accessToken, runID, providerErr.Error())
-			} else {
-				_, _ = a.Store.CompleteRun(accessToken, runID, answer)
-			}
-			a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
-				if providerErr != nil {
-					return "chat_provider_error"
-				}
-				return ""
-			}())
-		}(run.ID, access, in.Model, in.Body)
+		if created {
+			a.dispatchRun(run, access, true)
+		}
 		return
 	}
 	if len(parts) > 1 && parts[1] == "exports" {
@@ -997,17 +1017,137 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (a *API) writeConversationRunError(w http.ResponseWriter, err error) {
+	switch err.Error() {
+	case "session_invalid":
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+	case "conversation_busy", "idempotency_conflict":
+		writeError(w, http.StatusConflict, err.Error(), "The conversation changed; retry the pending message")
+	case "conversation_not_found":
+		writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+	default:
+		writeError(w, http.StatusUnprocessableEntity, err.Error(), "Unable to create run")
+	}
+}
+
+func (a *API) dispatchRun(run MessageRun, accessToken string, optimizeTitle bool) {
+	go func() {
+		started := time.Now()
+		ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
+		a.runMu.Lock()
+		a.runCancels[run.ID] = cancel
+		a.runMu.Unlock()
+		defer func() {
+			cancel()
+			a.runMu.Lock()
+			delete(a.runCancels, run.ID)
+			a.runMu.Unlock()
+		}()
+
+		continuationMode := "local_rebuild"
+		var response ChatResponse
+		var providerErr error
+		if state, ok, stateErr := a.Store.ProviderState(accessToken, run.ConversationID, run.BranchID, "upstream", run.Model); stateErr == nil && ok {
+			if continuationResponder, supported := a.ChatResponder.(ChatContinuationResponder); supported {
+				continuationMode = "provider_continuation"
+				build, buildErr := a.Store.CompileRunContext(accessToken, run.ID, continuationMode)
+				if buildErr == nil {
+					response, providerErr = continuationResponder.Continue(ctx, ChatRequest{Model: run.Model, Messages: build.Messages, ContinuationID: state.ContinuationID})
+				} else {
+					providerErr = buildErr
+				}
+				if providerErr != nil {
+					_ = a.Store.MarkProviderContinuationFallback(accessToken, run.ID, providerErr.Error())
+					continuationMode = "local_rebuild_after_continuation_failure"
+				}
+			}
+		}
+		if continuationMode != "provider_continuation" || providerErr != nil {
+			build, buildErr := a.Store.CompileRunContext(accessToken, run.ID, continuationMode)
+			if buildErr != nil {
+				providerErr = buildErr
+			} else {
+				response, providerErr = a.ChatResponder.Respond(ctx, ChatRequest{Model: run.Model, Messages: build.Messages})
+			}
+		}
+		if providerErr != nil {
+			_, _ = a.Store.FailRun(accessToken, run.ID, providerErr.Error())
+		} else {
+			if response.ContinuationID != "" {
+				expiresAt := time.Now().UTC().Add(24 * time.Hour)
+				_ = a.Store.SaveProviderState(accessToken, ProviderConversationState{ConversationID: run.ConversationID, BranchID: run.BranchID, Provider: "upstream", Model: run.Model, ContinuationID: response.ContinuationID, Status: "active", ExpiresAt: &expiresAt})
+			}
+			_, providerErr = a.Store.CompleteRun(accessToken, run.ID, response.Content)
+			if providerErr == nil && optimizeTitle {
+				a.optimizeConversationTitle(accessToken, run)
+			}
+		}
+		a.Store.RecordMetric("chat.run", time.Since(started).Seconds(), func() string {
+			if providerErr != nil {
+				return "chat_provider_error"
+			}
+			return ""
+		}())
+	}()
+}
+
+func (a *API) optimizeConversationTitle(accessToken string, run MessageRun) {
+	needed, err := a.Store.ConversationNeedsFinalTitle(accessToken, run.ConversationID)
+	if err != nil || !needed {
+		return
+	}
+	_, messages, err := a.Store.Run(accessToken, run.ID)
+	if err != nil || len(messages) == 0 {
+		return
+	}
+	var userBody string
+	for _, message := range messages {
+		if message.Role == "user" {
+			userBody = message.Body
+			break
+		}
+	}
+	if IsLowInformationMessage(userBody) {
+		return
+	}
+	prompt := "Create a concise Chinese conversation title of 6 to 18 characters. Return only the title.\n"
+	for _, message := range messages {
+		prompt += message.Role + ": " + message.Body + "\n"
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	response, err := a.ChatResponder.Respond(ctx, ChatRequest{Model: run.Model, Messages: []ProviderMessage{{Role: "system", Content: "Return a title only; do not expose hidden reasoning."}, {Role: "user", Content: prompt}}})
+	if err != nil {
+		return
+	}
+	_, _ = a.Store.ApplyAutomaticConversationTitle(accessToken, run.ConversationID, NormalizeFinalConversationTitle(response.Content, userBody), "AUTO_FINAL")
+}
+
 func (a *API) internalConversationByID(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/internal/v1/conversations/"), "/")
 	parts := strings.Split(path, "/")
-	if len(parts) < 2 || parts[0] == "" || parts[1] != "title" {
+	if len(parts) != 2 || parts[0] == "" {
 		writeError(w, 404, "not_found", "Endpoint not found")
 		return
 	}
+	switch parts[1] {
+	case "title":
+		a.internalConversationTitle(w, r, parts[0])
+	case "context":
+		a.internalConversationContext(w, r, parts[0], false)
+	case "context-items":
+		a.internalConversationContext(w, r, parts[0], true)
+	case "compact":
+		a.internalConversationCompact(w, r, parts[0])
+	default:
+		writeError(w, 404, "not_found", "Endpoint not found")
+	}
+}
+
+func (a *API) internalConversationTitle(w http.ResponseWriter, r *http.Request, id string) {
 	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
-	id := parts[0]
 	var in struct {
 		Title string `json:"title"`
 	}
@@ -1021,14 +1161,14 @@ func (a *API) internalConversationByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
 			return
 		}
-		generated, generateErr := a.ChatResponder.Respond(r.Context(), "ylven-default", "请为这段会话生成一个简洁标题："+id)
+		generated, generateErr := a.ChatResponder.Respond(r.Context(), ChatRequest{Model: "ylven-default", Messages: []ProviderMessage{{Role: "system", Content: "Return only a concise Chinese title of 6 to 18 characters."}, {Role: "user", Content: "为会话生成标题：" + id}}})
 		if generateErr != nil {
 			writeError(w, http.StatusBadGateway, "chat_provider_unavailable", "Unable to generate title")
 			return
 		}
-		title = strings.TrimSpace(generated)
+		title = NormalizeFinalConversationTitle(generated.Content, id)
 	}
-	item, err := a.Store.UpdateConversation(bearer(r), id, title)
+	item, err := a.Store.ApplyAutomaticConversationTitle(bearer(r), id, title, "AUTO_FINAL")
 	if err != nil {
 		if err.Error() == "session_invalid" {
 			writeError(w, 401, "session_invalid", "Session is invalid")
@@ -1038,6 +1178,165 @@ func (a *API) internalConversationByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"conversation": item, "generated": true})
+}
+
+func (a *API) internalConversationContext(w http.ResponseWriter, r *http.Request, conversationID string, itemsOnly bool) {
+	if r.Method == http.MethodGet {
+		snapshot, err := a.Store.ConversationContext(bearer(r), conversationID)
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+			} else {
+				writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+			}
+			return
+		}
+		if itemsOnly {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"conversation_id": snapshot.Conversation.ID,
+				"branch_id":       snapshot.Branch.ID,
+				"status": func() string {
+					if len(snapshot.Items) == 0 {
+						return "empty"
+					}
+					return "success"
+				}(),
+				"items":         snapshot.Items,
+				"message_parts": snapshot.MessageParts,
+				"summary":       snapshot.Summary,
+			})
+			return
+		}
+		writeJSON(w, http.StatusOK, snapshot)
+		return
+	}
+	if itemsOnly || !requireMethod(w, r, http.MethodPost) {
+		if itemsOnly && r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", http.MethodGet+" required")
+		}
+		return
+	}
+	var in struct {
+		Role           string `json:"role"`
+		Body           string `json:"body"`
+		IdempotencyKey string `json:"idempotency_key"`
+	}
+	if !decode(r, &in) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	if strings.TrimSpace(in.IdempotencyKey) == "" {
+		in.IdempotencyKey = strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	}
+	message, created, err := a.Store.AppendCanonicalMessage(bearer(r), conversationID, in.Role, in.Body, in.IdempotencyKey)
+	if err != nil {
+		switch err.Error() {
+		case "session_invalid":
+			writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		case "conversation_not_found":
+			writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+		case "idempotency_conflict":
+			writeError(w, http.StatusConflict, "idempotency_conflict", "Idempotency key was already used for another request")
+		default:
+			writeError(w, http.StatusBadRequest, err.Error(), "Invalid conversation context message")
+		}
+		return
+	}
+	status := http.StatusOK
+	if created {
+		status = http.StatusCreated
+	}
+	writeJSON(w, status, map[string]any{"message": message, "created": created})
+}
+
+func (a *API) internalConversationCompact(w http.ResponseWriter, r *http.Request, conversationID string) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	var in struct {
+		IdempotencyKey string `json:"idempotency_key"`
+	}
+	if !decode(r, &in) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	if strings.TrimSpace(in.IdempotencyKey) == "" {
+		in.IdempotencyKey = strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	}
+	access := bearer(r)
+	item, created, err := a.Store.QueueConversationCompaction(access, conversationID, in.IdempotencyKey)
+	if err != nil {
+		switch err.Error() {
+		case "session_invalid":
+			writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		case "conversation_not_found":
+			writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+		case "conversation_context_empty":
+			writeError(w, http.StatusUnprocessableEntity, "conversation_context_empty", "Conversation has no context to compact")
+		case "idempotency_conflict":
+			writeError(w, http.StatusConflict, "idempotency_conflict", "Idempotency key was already used for another request")
+		default:
+			writeError(w, http.StatusBadRequest, err.Error(), "Unable to queue conversation compaction")
+		}
+		return
+	}
+	if created {
+		go func() {
+			_, _ = a.Store.ProcessConversationCompaction(access, item.ID)
+		}()
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"compaction": item, "created": created})
+}
+
+func (a *API) internalContextBuild(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	var in struct {
+		RunID string `json:"run_id"`
+	}
+	if !decode(r, &in) || strings.TrimSpace(in.RunID) == "" {
+		writeError(w, http.StatusBadRequest, "run_id_required", "Run ID required")
+		return
+	}
+	mode := "local_rebuild"
+	if strings.HasSuffix(r.URL.Path, "/recompile") {
+		mode = "model_switch_recompile"
+	}
+	build, err := a.Store.CompileRunContext(bearer(r), in.RunID, mode)
+	if err != nil {
+		if err.Error() == "session_invalid" {
+			writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		} else {
+			writeError(w, http.StatusNotFound, err.Error(), "Run context not found")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, build)
+}
+
+func (a *API) internalProviderFallback(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	var in struct {
+		RunID string `json:"run_id"`
+	}
+	if !decode(r, &in) || strings.TrimSpace(in.RunID) == "" {
+		writeError(w, http.StatusBadRequest, "run_id_required", "Run ID required")
+		return
+	}
+	if err := a.Store.MarkProviderContinuationFallback(bearer(r), in.RunID, "manual_fallback"); err != nil {
+		writeError(w, http.StatusNotFound, err.Error(), "Run not found")
+		return
+	}
+	build, err := a.Store.CompileRunContext(bearer(r), in.RunID, "local_rebuild_after_continuation_failure")
+	if err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err.Error(), "Unable to rebuild context")
+		return
+	}
+	writeJSON(w, http.StatusOK, build)
 }
 
 func (a *API) mobileRunByID(w http.ResponseWriter, r *http.Request) {
@@ -1161,16 +1460,8 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, 400, "feedback_invalid", "Feedback value must be up or down")
 			return
 		}
-		a.Store.mu.Lock()
-		user, _, authErr := a.Store.authenticatedUserLocked(bearer(r))
-		if authErr == nil {
-			a.Store.data.Feedback[m.ID] = MessageFeedback{MessageID: m.ID, UserID: user.ID, Value: in.Value, CreatedAt: time.Now().UTC()}
-			a.Store.appendAuditLocked("message_feedback", user.Email, m.ID)
-			_ = a.Store.persistLocked()
-		}
-		a.Store.mu.Unlock()
-		if authErr != nil {
-			writeError(w, 401, "session_invalid", "Session is invalid")
+		if err := a.Store.SaveMessageFeedback(bearer(r), m.ID, in.Value); err != nil {
+			writeError(w, http.StatusUnprocessableEntity, err.Error(), "Feedback unavailable")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"message_id": m.ID, "value": in.Value, "saved": true})
@@ -1183,32 +1474,14 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		access := bearer(r)
-		run, err := a.Store.StartRun(access, m.ConversationID, "重新生成："+m.Body, "ylven-default")
+		key, _ := randomToken(16)
+		run, _, err := a.Store.StartRunIdempotentResult(access, m.ConversationID, "重新生成："+m.Body, "ylven-default", key)
 		if err != nil {
 			writeError(w, 422, err.Error(), "Regeneration unavailable")
 			return
 		}
 		writeJSON(w, http.StatusAccepted, run)
-		go func(runID, accessToken string) {
-			started := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
-			a.runMu.Lock()
-			a.runCancels[runID] = cancel
-			a.runMu.Unlock()
-			defer func() { cancel(); a.runMu.Lock(); delete(a.runCancels, runID); a.runMu.Unlock() }()
-			answer, providerErr := a.ChatResponder.Respond(ctx, "ylven-default", "重新生成："+m.Body)
-			if providerErr != nil {
-				_, _ = a.Store.FailRun(accessToken, runID, providerErr.Error())
-			} else {
-				_, _ = a.Store.CompleteRun(accessToken, runID, answer)
-			}
-			a.Store.RecordMetric("chat.regenerate", time.Since(started).Seconds(), func() string {
-				if providerErr != nil {
-					return "chat_provider_error"
-				}
-				return ""
-			}())
-		}(run.ID, access)
+		a.dispatchRun(run, access, false)
 	default:
 		writeError(w, 404, "not_found", "Endpoint not found")
 	}
