@@ -114,6 +114,11 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-020-root")
         Espresso.pressBack()
         waitForTagAbsent("YL-A-020-root")
+        // Older physical devices can remove drawer semantics before the close
+        // transition has released its gesture state. Wait for the UI thread to
+        // settle so the next explicit open tap is not consumed by that close.
+        composeRule.waitForIdle()
+        SystemClock.sleep(350)
 
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
