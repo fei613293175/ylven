@@ -108,22 +108,17 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-020-root")
         captureProductionPage("YL-A-020-PRODUCTION", "YL-A-020-root")
         composeRule.onNodeWithTag("p03-drawer-scrim").performClick()
-        waitForTagAbsent("YL-A-020-root")
+        waitForDrawerClosed()
 
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("YL-A-020-root")
         Espresso.pressBack()
-        waitForTagAbsent("YL-A-020-root")
-        // Older physical devices can remove drawer semantics before the close
-        // transition has released its gesture state. Wait for the UI thread to
-        // settle so the next explicit open tap is not consumed by that close.
-        composeRule.waitForIdle()
-        SystemClock.sleep(350)
+        waitForDrawerClosed()
 
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
         composeRule.onNodeWithTag("p03-conversation-drawer").performTouchInput { swipeLeft() }
-        waitForTagAbsent("YL-A-020-root")
+        waitForDrawerClosed()
 
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
@@ -285,6 +280,15 @@ class P03RealDeviceFlowTest {
 
     private fun waitForTagAbsent(tag: String) = waitForCondition {
         composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty()
+    }
+
+    private fun waitForDrawerClosed() {
+        waitForTagAbsent("YL-A-020-root")
+        // Older physical devices can remove drawer semantics before the close
+        // transition releases its gesture state and restores the opener.
+        composeRule.waitForIdle()
+        SystemClock.sleep(350)
+        waitForTag("p03-open-conversation-drawer")
     }
 
     private fun assertTemporaryConversationScope() {
