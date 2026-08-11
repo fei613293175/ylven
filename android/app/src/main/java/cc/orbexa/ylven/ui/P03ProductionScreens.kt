@@ -440,7 +440,9 @@ private fun P03HistoryDrawerOverlay(
         val drawerWidth = if (maxWidth >= 360.dp) 304.dp else if (maxWidth > 56.dp) maxWidth - 56.dp else maxWidth
         Box(
             Modifier
-                .fillMaxSize()
+                .width(maxWidth - drawerWidth)
+                .fillMaxHeight()
+                .align(Alignment.CenterEnd)
                 .background(Color.Black.copy(alpha = 0.32f))
                 .clickable(onClick = onDismiss)
                 .testTag("p03-drawer-scrim"),
