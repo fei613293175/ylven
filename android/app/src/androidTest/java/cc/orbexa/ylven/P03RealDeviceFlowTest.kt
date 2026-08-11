@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -220,7 +221,8 @@ class P03RealDeviceFlowTest {
             .performScrollToNode(hasTestTag("p03-conversation-alpha"))
         composeRule.onNodeWithTag("p03-conversation-alpha").performClick()
         waitForTag("YL-A-032-C-P03_032-01")
-        composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").assertTextContains("retry me")
+        waitForCondition { composeRule.onAllNodesWithText("retry me").fetchSemanticsNodes().size == 1 }
+        composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").assertTextEquals("")
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_031-01").performClick()
         returnFromVoiceInputIfLaunched()
