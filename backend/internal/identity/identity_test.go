@@ -493,6 +493,40 @@ func TestP03ConversationOwnershipPaginationSearchAndRecycle(t *testing.T) {
 	}
 }
 
+func TestP03W07MobileModelCatalogReturnsAuthenticatedStableIDs(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "model-catalog@example.com")
+	access := createAuthenticatedTestSession(t, s, "model-catalog@example.com")
+	s.mu.Lock()
+	s.data.ModelCatalog = []ModelCatalogEntry{
+		{ID: "gpt-5.6-sol", Name: "GPT-5.6 Sol", Enabled: true, Description: "complex work"},
+		{ID: "disabled-model", Name: "Disabled", Enabled: false},
+	}
+	s.mu.Unlock()
+
+	handler := NewAPI(s).Handler()
+	response := requestJSON(t, handler, http.MethodGet, "/api/mobile/v1/models", nil, access, "")
+	if response.Code != http.StatusOK {
+		t.Fatalf("model catalog status=%d body=%s", response.Code, response.Body.String())
+	}
+	var body struct {
+		Items []ModelCatalogEntry `json:"items"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Items) != 1 || body.Items[0].ID != "gpt-5.6-sol" || body.Items[0].Name != "GPT-5.6 Sol" {
+		t.Fatalf("unexpected model catalog: %+v", body.Items)
+	}
+	if len(body.Items[0].ReasoningProfiles) != 1 || body.Items[0].ReasoningProfiles[0] != "auto" {
+		t.Fatalf("unsupported reasoning capability advertised: %+v", body.Items[0].ReasoningProfiles)
+	}
+	unauthorized := requestJSON(t, handler, http.MethodGet, "/api/mobile/v1/models", nil, "", "")
+	if unauthorized.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated model catalog status=%d body=%s", unauthorized.Code, unauthorized.Body.String())
+	}
+}
+
 func TestP03RunEndpointRejectsUnconfiguredProvider(t *testing.T) {
 	s, _ := NewStore("")
 	createTestUser(t, s, "runtime-api@example.com")

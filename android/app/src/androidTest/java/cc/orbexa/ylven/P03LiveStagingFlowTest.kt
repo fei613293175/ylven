@@ -43,12 +43,9 @@ class P03LiveStagingFlowTest {
         reportStage("home_ready")
         val marker = "device-${Instant.now().epochSecond}"
 
-        composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
-        waitForTag("YL-A-019-root", 20_000)
-        reportStage("new_conversation_form_ready")
-        composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performClick()
+        composeRule.onNodeWithTag("CO-P03-001-HOME-SEND").performClick()
         waitForTag("YL-A-023-C-P03_013-01", 20_000)
-        reportStage("conversation_created")
+        reportStage("local_draft_ready")
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextClearance()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("P03 physical staging $marker")
@@ -62,8 +59,8 @@ class P03LiveStagingFlowTest {
         // that budget so slow successful replies are not reported as failures.
         waitForTag("YL-A-023-C-P03_009-01", 110_000)
         composeRule.onNodeWithTag("YL-A-025-C-P03_016-01")
-            .performScrollToNode(hasTestTag("YL-A-026-C-P03_026-01"))
-        waitForTagText("YL-A-026-C-P03_026-01", "completed", 10_000)
+            .performScrollToNode(hasTestTag("YL-A-030-C-P03_022-01"))
+        waitForTag("YL-A-030-C-P03_022-01", 10_000)
         assertNoInlineError()
         captureCompletedProductionPage()
         reportStage("message_completed")
@@ -75,18 +72,16 @@ class P03LiveStagingFlowTest {
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("p03-open-rename-current").performClick()
-        waitForTag("p03-rename-input", 20_000)
-        composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
-        composeRule.onNodeWithTag("p03-rename-input").performTextInput("P03 $marker")
+        waitForTag("YL-A-022-C-P03_005-01", 20_000)
+        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performTextClearance()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performTextInput("P03 $marker")
         Espresso.closeSoftKeyboard()
-        performSheetActionAndWaitForDismiss("YL-A-022-C-P03_005-01", 20_000)
+        performSheetActionAndWaitForDismiss("CO-P03-001-TITLE-RENAME", 20_000)
         assertNoInlineError()
         reportStage("conversation_renamed")
 
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
-        composeRule.onNodeWithTag("p03-home-list")
-            .performScrollToNode(hasTestTag("p03-open-conversation-drawer"))
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer", 20_000)
         composeRule.onNodeWithTag("p03-open-search").performClick()
@@ -101,24 +96,18 @@ class P03LiveStagingFlowTest {
         assertNoInlineError()
         reportStage("conversation_archived")
 
-        composeRule.onNodeWithTag("p03-home-list")
-            .performScrollToNode(hasTestTag("p03-open-temporary-conversation"))
-        composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
-        waitForTag("YL-A-031-root", 20_000)
-        assertTemporaryConversationScope()
-        composeRule.onNodeWithTag("p03-temporary-title").performTextInput("P03 temporary $marker")
-        Espresso.closeSoftKeyboard()
-        // The temporary-conversation action is pinned in the bottom action bar,
-        // outside the home list's scroll container.
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
-        waitForTag("YL-A-023-C-P03_013-01", 20_000)
+        composeRule.onNodeWithTag("CO-P03-001-HOME-SEND").performClick()
+        waitForTag("p03-local-draft-conversation", 20_000)
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_007-01").performClick()
-        waitForTag("p03-confirm-delete", 20_000)
-        performSheetActionAndWaitForDismiss("p03-confirm-delete", 20_000)
+        waitForTag("YL-A-031-C-P03_028-01", 20_000)
+        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
+        waitForTag("p03-local-draft-conversation", 20_000)
+        assertTemporaryConversationScope()
+        Espresso.closeSoftKeyboard()
+        Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
-        reportStage("temporary_conversation_deleted")
+        reportStage("temporary_draft_closed")
     }
 
     private fun waitForTag(tag: String, timeout: Long) {
@@ -158,15 +147,6 @@ class P03LiveStagingFlowTest {
             error("Conversation action sheet did not close within $timeout ms after $tag")
         } finally {
             composeRule.mainClock.autoAdvance = true
-        }
-    }
-
-    private fun waitForTagText(tag: String, expected: String, timeout: Long) {
-        composeRule.waitUntil(timeoutMillis = timeout) {
-            composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().any { node ->
-                node.config.getOrNull(SemanticsProperties.Text)
-                    ?.any { text -> text.text.contains(expected, ignoreCase = true) } == true
-            }
         }
     }
 

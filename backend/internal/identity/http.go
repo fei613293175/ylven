@@ -173,6 +173,7 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/account/devices", a.devices)
 	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
 	mux.HandleFunc("/api/mobile/v1/home", a.mobileHome)
+	mux.HandleFunc("/api/mobile/v1/models", a.mobileModels)
 	mux.HandleFunc("/api/mobile/v1/conversations/search", a.mobileConversationSearch)
 	mux.HandleFunc("/api/mobile/v1/conversations/from-first-message", a.mobileConversationFromFirstMessage)
 	mux.HandleFunc("/api/mobile/v1/conversations/", a.mobileConversationByID)
@@ -834,6 +835,17 @@ func (a *API) mobileHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, value)
+}
+
+func (a *API) mobileModels(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	items, err := a.Store.MobileModelCatalog(bearer(r))
+	if mobileAuthError(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
 func (a *API) mobileConversations(w http.ResponseWriter, r *http.Request) {

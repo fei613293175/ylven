@@ -15,6 +15,7 @@ $TestPackageId = 'cc.orbexa.ylven.test'
 $QueueOwned = $false
 $TicketPath = $null
 $ActiveLock = $null
+$testResults = $null
 
 function Invoke-Adb {
     param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
@@ -537,8 +538,17 @@ try {
     $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ConversationStateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P03ConversationStateUiTest.txt')) -join "`n"
     if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
 
-    $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object { $_.surface -eq 'ANDROID' -and ($_.phases -split '\|') -contains $Phase }
-    if ($Phase -eq 'P03' -and @($stateRows).Count -ne 93) { throw "Expected 93 P03 Android states, got $(@($stateRows).Count)." }
+    $deprecatedP03Pages = @('YL-A-019', 'YL-A-031')
+    $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object {
+        if ($_.surface -ne 'ANDROID') { return $false }
+        $rowPhases = $_.phases -split '\|'
+        if ($Phase -ne 'P03') { return $rowPhases -contains $Phase }
+        $rowWorkPackets = $_.work_packets -split '\|'
+        return $_.page_id -notin $deprecatedP03Pages -and (
+            $rowPhases -contains 'P03' -or $rowWorkPackets -contains 'P03-W07'
+        )
+    }
+    if ($Phase -eq 'P03' -and @($stateRows).Count -ne 89) { throw "Expected 89 effective P03 Android states, got $(@($stateRows).Count)." }
     $indexRows = @()
     foreach ($row in $stateRows) {
         $remote = "$remoteStateScreenshotDirectory/$($row.state_id).png"
@@ -555,12 +565,12 @@ try {
 
     $productionPages = [ordered]@{
         'YL-A-018'='YL-A-018-S02_POPULATED'
-        'YL-A-019'='YL-A-019-S02_POPULATED'
         'YL-A-020'='YL-A-020-S02_POPULATED'
-        'YL-A-021'='YL-A-021-S02_POPULATED'
-        'YL-A-022'='YL-A-022-S01_DEFAULT'
         'YL-A-023'='YL-A-023-S07_COMPLETED'
-        'YL-A-031'='YL-A-031-S01_DEFAULT'
+        'YL-A-024'='YL-A-024-S06_TOOL_TRAY_OPEN'
+        'YL-A-026'='YL-A-026-S04_COMPLETED'
+        'YL-A-033'='YL-A-033-S01_POPULATED'
+        'YL-A-034'='YL-A-034-S01_POPULATED'
     }
     $productionIndex = @()
     foreach ($entry in $productionPages.GetEnumerator()) {
@@ -631,7 +641,7 @@ try {
 - Device: $manufacturer $model ($Serial)
 - $stagingSessionNote
 - P03RealDeviceFlowTest: PASS（物理设备 UI 交互；确定性 Fake 网关，不替代 staging）
-- P03ConversationStateUiTest: PASS（物理设备 93 状态截图）
+- P03ConversationStateUiTest: PASS（物理设备 89 个有效状态截图）
 - Interaction coverage: PASS
 - Crash/ANR/log review: PASS
 - Result: PENDING_CODEX_PRODUCTION_VISUAL_REVIEW
@@ -700,12 +710,81 @@ try {
     Write-Warning 'Production-page screenshots require direct Codex comparison with the representative approved mockups. The APK is not deliverable yet.'
     Write-Output "PHYSICAL_ACCEPTANCE_DIR=$output"
 } finally {
-    if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) {
-        $activeFull = [System.IO.Path]::GetFullPath($ActiveLock)
-        if ($activeFull.StartsWith([System.IO.Path]::GetFullPath((Split-Path -Parent $ActiveLock)), [System.StringComparison]::OrdinalIgnoreCase)) {
-            Remove-Item -LiteralPath $ActiveLock -Recurse -Force
+    $releaseLog = @()
+    $releaseErrors = @()
+    if (-not [string]::IsNullOrWhiteSpace($script:AdbPath) -and -not [string]::IsNullOrWhiteSpace($script:Serial)) {
+        try {
+            $releaseDevice = @(Get-DeviceRows | Where-Object { $_.Serial -eq $script:Serial }) | Select-Object -First 1
+            if ($releaseDevice -and $releaseDevice.State -eq 'device') {
+                $releaseLog += "adb_state_before_release=device"
+                $releaseLog += @(Invoke-Adb shell am force-stop $script:TestPackageId)
+                $releaseLog += @(Invoke-Adb shell am force-stop $script:PackageId)
+                $releaseLog += @(Invoke-Adb shell input keyevent KEYCODE_HOME)
+                Start-Sleep -Milliseconds 750
+
+                foreach ($stoppedPackage in @($script:TestPackageId, $script:PackageId)) {
+                    $pidResult = Invoke-AdbOptional shell pidof $stoppedPackage
+                    if (-not [string]::IsNullOrWhiteSpace(($pidResult.Lines -join '').Trim())) {
+                        throw "Package $stoppedPackage is still running after force-stop."
+                    }
+                    $releaseLog += "$stoppedPackage`_pid=absent"
+                }
+
+                $homeLines = @(Invoke-Adb shell cmd package resolve-activity '--brief' '-a' android.intent.action.MAIN '-c' android.intent.category.HOME)
+                $homeComponent = $homeLines | Where-Object { $_ -match '^[^/]+/.+$' } | Select-Object -Last 1
+                if ([string]::IsNullOrWhiteSpace($homeComponent)) { throw 'Unable to resolve the device HOME activity.' }
+                $homePackage = ($homeComponent -split '/', 2)[0]
+                $activityLines = @(Invoke-Adb shell dumpsys activity activities)
+                $resumedActivity = $activityLines | Where-Object { $_ -match 'mResumedActivity|topResumedActivity' } | Select-Object -First 1
+                if (
+                    [string]::IsNullOrWhiteSpace($resumedActivity) -or
+                    $resumedActivity.IndexOf($homePackage, [System.StringComparison]::OrdinalIgnoreCase) -lt 0
+                ) {
+                    throw "HOME activity $homeComponent is not the resumed foreground activity: $resumedActivity"
+                }
+                $releaseDeviceAfter = @(Get-DeviceRows | Where-Object { $_.Serial -eq $script:Serial }) | Select-Object -First 1
+                if (-not $releaseDeviceAfter -or $releaseDeviceAfter.State -ne 'device') {
+                    $releaseStateAfter = if ($releaseDeviceAfter) { $releaseDeviceAfter.State } else { 'absent' }
+                    throw "Device state after release is $releaseStateAfter, expected device."
+                }
+                $releaseLog += "adb_state_after_release=device"
+                $releaseLog += "home_component=$homeComponent"
+                $releaseLog += "resumed_activity=$($resumedActivity.Trim())"
+                $releaseLog += "foreground=HOME"
+            } else {
+                $releaseState = if ($releaseDevice) { $releaseDevice.State } else { 'absent' }
+                throw "Device state before release is $releaseState, expected device."
+            }
+        } catch {
+            $releaseErrors += $_.Exception.Message
+            $releaseLog += "device_release_error=$($_.Exception.Message)"
         }
     }
-    if ($TicketPath -and (Test-Path -LiteralPath $TicketPath)) { Remove-Item -LiteralPath $TicketPath -Force }
+
+    try {
+        if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) {
+            $activeFull = [System.IO.Path]::GetFullPath($ActiveLock)
+            if ($activeFull.StartsWith([System.IO.Path]::GetFullPath((Split-Path -Parent $ActiveLock)), [System.StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $ActiveLock -Recurse -Force
+            } else {
+                throw "Refusing to release unexpected queue lock path $activeFull."
+            }
+        }
+        if ($TicketPath -and (Test-Path -LiteralPath $TicketPath)) { Remove-Item -LiteralPath $TicketPath -Force }
+        if ($QueueOwned -and $ActiveLock -and (Test-Path -LiteralPath $ActiveLock)) { throw 'Device queue lock still exists after release.' }
+        if ($TicketPath -and (Test-Path -LiteralPath $TicketPath)) { throw 'Device queue ticket still exists after release.' }
+        $releaseLog += "queue_lock_released=$QueueOwned"
+        $releaseLog += "queue_ticket_released=$(-not [string]::IsNullOrWhiteSpace($TicketPath))"
+    } catch {
+        $releaseErrors += $_.Exception.Message
+        $releaseLog += "queue_release_error=$($_.Exception.Message)"
+    }
+
+    if ($testResults -and (Test-Path -LiteralPath $testResults)) {
+        $releaseLog | Set-Content -LiteralPath (Join-Path $testResults 'device-release.txt') -Encoding UTF8
+    }
     Pop-Location
+    if ($releaseErrors.Count -gt 0) {
+        throw "Physical-device release verification failed: $($releaseErrors -join '; ')"
+    }
 }

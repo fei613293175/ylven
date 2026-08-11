@@ -4,6 +4,14 @@ import argparse, csv, json, math
 from pathlib import Path
 from PIL import Image, ImageChops, ImageFilter, ImageStat
 ROOT=Path(__file__).resolve().parents[1]
+P03_DEPRECATED_PAGES={"YL-A-019","YL-A-031"}
+
+def applies_to_phase(row:dict[str,str],phase:str)->bool:
+ if row.get('surface')!='ANDROID': return False
+ phases=row.get('phases','').split('|')
+ if phase!='P03': return phase in phases
+ work_packets=row.get('work_packets','').split('|')
+ return row.get('page_id') not in P03_DEPRECATED_PAGES and ('P03' in phases or 'P03-W07' in work_packets)
 
 def score(a:Image.Image,b:Image.Image)->tuple[float,float]:
  a=a.convert('RGB'); b=b.convert('RGB')
@@ -30,7 +38,7 @@ def structural_score(a:Image.Image,b:Image.Image,radius:float)->tuple[float,floa
 def main()->int:
  p=argparse.ArgumentParser(); p.add_argument('--phase',required=True); p.add_argument('--screenshots',required=True); p.add_argument('--report',required=True); a=p.parse_args()
  phase=a.phase.upper(); shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
- with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if phase in r.get('phases','').split('|') and r.get('surface') == 'ANDROID']
+ with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase)]
  exception=font_exception(phase)
  errors=[]; lines=[f'# Visual Diff Report — {phase}','']
  if exception:

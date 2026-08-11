@@ -74,7 +74,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 private const val CONTRACT_WIDTH = 1080f
 private const val CONTRACT_HEIGHT = 2400f
-private val P03_PAGE_IDS = (18..32).mapTo(mutableSetOf()) { index ->
+private val P03_PAGE_IDS = (18..34).filterNot { it == 19 || it == 31 }.mapTo(mutableSetOf()) { index ->
     "YL-A-${index.toString().padStart(3, '0')}"
 }
 
@@ -147,7 +147,6 @@ private class AndroidContractRenderer(
             "YL-A-016" -> devices(code)
             "YL-A-017" -> resilience(code)
             "YL-A-018" -> p03Home(code)
-            "YL-A-019" -> p03NewConversation(code)
             "YL-A-020" -> p03ConversationList(code, history = true)
             "YL-A-021" -> p03ConversationList(code, history = false)
             "YL-A-022" -> p03ConversationMenu(code)
@@ -160,7 +159,8 @@ private class AndroidContractRenderer(
             "YL-A-028" -> p03TableBlock(code)
             "YL-A-029" -> p03CitationBlock(code)
             "YL-A-030" -> p03MessageActions(code)
-            "YL-A-031" -> p03CreateConversation(code)
+            "YL-A-033" -> p03Selector(code, model = true)
+            "YL-A-034" -> p03Selector(code, model = false)
         }
         stateFeedback(page, code)
     }
@@ -456,46 +456,100 @@ private class AndroidContractRenderer(
     // remain runtime Canvas content: the APK never loads an approved mockup
     // image as a replacement for a rendered screen.
     private fun p03Home(code: String) {
-        topBar("AI 首页", "统一多模型对话入口", back = false, right = true, plus = true)
+        androidStatus()
+        rect(0f, 72f, 1080f, 238f, Pc.surface)
+        lineIcon(72f, 138f, "menu", 52f, Pc.text, 7f)
+        text("YLVEN", 540f, 145f, 48f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
+        text("+", 1000f, 145f, 64f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
         bottomNav("首页")
         if (code == "LOADING") {
-            skeleton(72f, 330f, 1008f, 7)
+            skeleton(72f, 330f, 1008f, 5)
             return
         }
-        if (code in setOf("EMPTY", "NETWORK_ERROR", "SERVICE_DEGRADED")) {
-            errorCenter(code)
-            return
+        iconCircle(540f, 385f, 52f, "✦", Pc.brandSoft, Pc.brand, 48f)
+        text("今天想完成什么？", 540f, 500f, 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        text("多模型协同，完成更复杂的事。", 540f, 590f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        shadowCard(54f, 710f, 1026f, 1010f, 72f, shadow = 12f, offset = 5f)
+        text("问问 YLVEN…", 102f, 775f, 38f, Pc.disabled)
+        text("+", 116f, 950f, 54f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+        pill(160f, 905f, 380f, 985f, "自动选择", Pc.brandSoft, Pc.brand, 27f)
+        lineIcon(856f, 932f, "mic", 52f, Pc.text2, 5f)
+        iconCircle(958f, 945f, 48f, "➤", Pc.brand, Pc.surface, 30f)
+        listOf("分析文件" to "文", "生成图片" to "图", "制作演示" to "P").forEachIndexed { index, item ->
+            val left = 54f + index * 330f
+            rounded(left, 1045f, left + 300f, 1135f, 45f, Pc.surface, Pc.border, 2f)
+            iconCircle(left + 42f, 1090f, 28f, item.second, Pc.brandSoft, Pc.brand, 24f)
+            text(item.first, left + 82f, 1090f, 30f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
         }
-        homeBody()
-        if (code == "REFRESHING") statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
-    }
-
-    private fun p03NewConversation(code: String) {
-        topBar("开始新对话", "选择模型后输入你的问题", back = true, right = true)
-        if (code == "LOADING") { skeleton(72f, 330f, 1008f, 7); return }
-        if (code in setOf("NOT_FOUND", "OFFLINE", "PERMISSION_DENIED")) {
-            errorCenter(code)
-            return
+        text("继续最近的对话", 54f, 1275f, 48f, Pc.text, true)
+        text("查看全部", 1026f, 1275f, 31f, Pc.brand, anchor = Anchor.RIGHT_ASCENDER)
+        if (code == "EMPTY") {
+            text("还没有会话", 540f, 1510f, 42f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+            text("新建第一条对话后会显示在这里", 540f, 1570f, 28f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
+        } else {
+            listOf("多服务器 AI 架构设计" to "GPT-5.6 Sol · 刚刚", "对话上下文与长期记忆方案" to "Claude Opus · 昨天").forEachIndexed { index, item ->
+                val y = 1335f + index * 180f
+                rounded(54f, y, 1026f, y + 150f, 28f, Pc.surface, Pc.border, 2f)
+                iconCircle(125f, y + 75f, 42f, "Y", Pc.brandSoft, Pc.brand, 32f)
+                text(item.first, 195f, y + 46f, 36f, Pc.text, true)
+                text(item.second, 195f, y + 102f, 28f, Pc.text3)
+                text("›", 955f, y + 75f, 42f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+            }
         }
-        var y = 350f
-        listOf("智能推荐", "GPT", "Claude", "Grok").forEachIndexed { index, label ->
-            input(72f, y, 1008f, y + 145f, label, "", "请输入$label", code == "INPUT_FOCUSED" && index == 0)
-            y += 230f
-        }
-        button(72f, y + 20f, 1008f, y + 176f, "输入问题", loading = code == "SUBMITTING")
         when (code) {
-            "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在提交，请勿重复操作。")
-            "EDIT_MODE", "DIRTY" -> pill(
-                72f, 282f, 390f, 354f,
-                if (code == "EDIT_MODE") "编辑模式" else "存在未保存修改",
-                Pc.warningSoft, Pc.warning, 28f, Pc.warning,
-            )
-            "SAVE_SUCCESS" -> statusBanner("SUCCESS", 270f, .84f)
-            "SAVE_ERROR" -> statusBanner("SAVE_ERROR", 270f, .84f)
+            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 250f, .82f, "正在更新内容…")
+            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 250f, .82f, "正在显示最近保存的内容")
+            "NETWORK_ERROR" -> statusBanner("NETWORK_ERROR", 250f, .82f, "网络不可用，请检查连接后重试")
+            "SERVICE_DEGRADED" -> statusBanner("SERVICE_DEGRADED", 250f, .82f, "部分能力暂时不可用")
         }
     }
 
     private fun p03ConversationList(code: String, history: Boolean) {
+        if (history) {
+            p03Home("POPULATED")
+            overlay(Color.argb(82, 0, 0, 0))
+            rounded(0f, 72f, 912f, 2400f, 48f, Pc.surface)
+            rect(0f, 72f, 850f, 2400f, Pc.surface)
+            text("YLVEN", 54f, 166f, 45f, Pc.text, true)
+            text("+", 835f, 166f, 62f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
+            rounded(48f, 220f, 864f, 330f, 55f, Pc.surfaceSubtle)
+            lineIcon(92f, 255f, "search", 45f, Pc.text3, 5f)
+            text("搜索对话", 150f, 278f, 34f, Pc.disabled)
+            rounded(48f, 360f, 864f, 468f, 28f, Pc.brandSoft)
+            text("+  开始新对话", 78f, 415f, 38f, Pc.brand, true, Anchor.LEFT_MIDDLE)
+            if (code == "LOADING") {
+                skeleton(48f, 560f, 864f, 5)
+                return
+            }
+            if (code == "EMPTY") {
+                text("暂无会话", 456f, 750f, 40f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+                text("新建会话后会显示在这里", 456f, 815f, 28f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
+                return
+            }
+            text("今天", 60f, 565f, 32f, Pc.text2)
+            listOf("多服务器 AI 架构设计" to "刚刚", "对话上下文与长期记忆方案" to "22:48", "首页与聊天体验重构" to "21:16").forEachIndexed { index, item ->
+                val y = 650f + index * 128f
+                text(item.first, 65f, y, 37f, Pc.text)
+                text(item.second, 65f, y + 48f, 27f, Pc.text3)
+                text("…", 820f, y + 20f, 38f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+            }
+            text("过去 7 天", 60f, 1085f, 32f, Pc.text2)
+            listOf("YLVEN 发布流程优化", "模型能力测试").forEachIndexed { index, item ->
+                val y = 1170f + index * 128f
+                text(item, 65f, y, 37f, Pc.text)
+                text(if (index == 0) "昨天" else "8 月 8 日", 65f, y + 48f, 27f, Pc.text3)
+                text("…", 820f, y + 20f, 38f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+            }
+            when (code) {
+                "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 505f, .74f, "正在更新会话…")
+                "FILTER_ACTIVE" -> statusBanner("SUCCESS", 505f, .74f, "已显示搜索结果")
+                "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 505f, .74f, "正在显示最近保存的会话")
+                "NETWORK_ERROR" -> statusBanner("NETWORK_ERROR", 505f, .74f, "网络不可用，请检查连接后重试")
+                "SERVER_ERROR" -> statusBanner("SERVER_ERROR", 505f, .74f, "暂时无法加载，请重试")
+                "PERMISSION_DENIED" -> statusBanner("PERMISSION_DENIED", 505f, .74f, "登录状态已失效，请重新登录")
+            }
+            return
+        }
         val title = if (history) "会话历史" else "搜索会话"
         val subtitle = if (history) "搜索、归档和管理全部对话" else "按标题和消息内容查找历史记录"
         topBar(title, subtitle, back = true, right = true)
@@ -561,7 +615,7 @@ private class AndroidContractRenderer(
     private fun p03Chat(code: String) {
         p03ChatBaselineScale = .12f
         try {
-            topBar("YLVEN App 架构讨论", "GPT-5.6 Sol · 深度推理", back = true, right = true)
+            topBar("多服务器 AI 架构设计", "GPT-5.6 Sol · 深度", back = true, right = true)
             if (code == "OFFLINE") {
                 errorCenter(code)
                 return
@@ -572,16 +626,17 @@ private class AndroidContractRenderer(
                 "请为 YLVEN 设计一套可扩展的\n多模型 AI 后端架构。",
                 370f, 505f, 35f, Pc.surface, maxWidth = 580f, lineSpacing = 16f,
             )
-            text("GPT-5.6 Sol · 深度推理", 72f, 740f, 27f, Pc.brand, true)
+            text("✦  YLVEN", 72f, 740f, 29f, Pc.text2, true)
             text(
                 // Use the approved six-line composition directly. Android system
                 // fonts otherwise move the final Latin glyph to a hidden seventh line.
                 "建议将系统拆分为控制平面、AI 数据平面和异步工作平\n面。\n业务后端管理用户、会话、钱包和作品；AI Runtime 负\n责流式请求、\n模型路由与上下文编译；Worker 负责图片、文件和 PPT\n任务。",
                 72f, 801f, 37f, Pc.text, lineSpacing = 23f,
             )
-            rounded(72f, 1110f, 1008f, 1320f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
-            text("已读取 2 份项目资料", 120f, 1150f, 28f, Pc.text3, true)
-            text("架构说明.pdf · 数据模型.md", 120f, 1210f, 32f, Pc.text, true)
+            listOf("复制", "朗读", "重新回答", "换模型").forEachIndexed { index, label ->
+                val left = 54f + index * 202f
+                pill(left, 1170f, left + 180f, 1245f, label, Pc.surface, Pc.text2, 25f, Pc.border)
+            }
             rounded(54f, 1960f, 1026f, 2185f, 70f, Pc.surface, Pc.border2, 2f)
             iconCircle(130f, 2072f, 38f, "＋", Pc.surfaceSubtle, Pc.text2, 30f)
             text("继续追问…", 200f, 2050f, 34f, Pc.disabled)
@@ -590,16 +645,16 @@ private class AndroidContractRenderer(
             p03ChatBaselineScale = if (code == "INPUT_FOCUSED") 0f else .09f
             when (code) {
                 "INPUT_FOCUSED" -> keyboard(false)
-                "CONNECTING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "正在建立安全连接…")
-                "UPLOADING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "文件正在上传…")
-                "STREAMING" -> { text("正在生成…", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
-                "TOOL_RUNNING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在调用文件检索工具…")
-                "COMPLETED" -> p03ChatStatusBanner("SUCCESS", 270f, .84f)
-                "STOPPED" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止生成，已保留当前内容。")
-                "RATE_LIMITED", "PROVIDER_ERROR", "CONTENT_BLOCKED" -> {
-                    p03ChatStatusBanner(code, 1430f, .80f)
-                    p03ChatStatusBanner(code, 270f, .84f)
-                }
+                "CONNECTING" -> { text("正在思考", 72f, 1380f, 29f, Pc.brand, true); spinner(235f, 1395f, 24f, Pc.brand, 6f) }
+                "UPLOADING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 270f, .84f, "正在上传文件…")
+                "STREAMING" -> Unit
+                "TOOL_RUNNING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "正在阅读文件…")
+                "COMPLETED" -> Unit
+                "STOPPED" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "已停止，当前内容已保留")
+                "RECONNECTING" -> p03ChatStatusBanner("SERVICE_DEGRADED", 1430f, .80f, "连接不稳定，正在恢复…")
+                "RATE_LIMITED" -> p03ChatStatusBanner(code, 1430f, .80f, "当前请求较多，请稍后重试")
+                "PROVIDER_ERROR" -> p03ChatStatusBanner(code, 1430f, .80f, "暂时无法完成回答，请重试")
+                "CONTENT_BLOCKED" -> p03ChatStatusBanner(code, 1430f, .80f, "这项请求暂时无法完成，请调整后重试")
             }
         } finally {
             p03ChatBaselineScale = 0f
@@ -646,6 +701,27 @@ private class AndroidContractRenderer(
         if (code == "DISABLED") {
             rect(110f, y, 970f, y + 270f, Color.argb(160, 246, 247, 251))
         }
+        if (code == "TOOL_TRAY_OPEN") {
+            overlay(Color.argb(82, 0, 0, 0))
+            rounded(0f, 1210f, 1080f, 2400f, 64f, Pc.surface)
+            rounded(480f, 1240f, 600f, 1254f, 7f, Pc.border2)
+            text("添加内容或使用工具", 60f, 1360f, 52f, Pc.text, true)
+            val tools = listOf("拍照" to "相", "选择图片" to "图", "上传文件" to "文", "生成图片" to "画", "制作演示" to "P", "深度研究" to "研")
+            tools.forEachIndexed { index, item ->
+                val col = index % 3
+                val row = index / 3
+                val left = 54f + col * 342f
+                val top = 1440f + row * 230f
+                rounded(left, top, left + 300f, top + 190f, 28f, Pc.surfaceSubtle)
+                iconCircle(left + 150f, top + 72f, 42f, item.second, Pc.brandSoft, Pc.disabled, 30f)
+                text(item.first, left + 150f, top + 145f, 31f, Pc.disabled, anchor = Anchor.MIDDLE_ASCENDER)
+            }
+            rounded(54f, 1990f, 1026f, 2205f, 64f, Pc.surface, Pc.border, 2f)
+            text("问问 YLVEN…", 102f, 2055f, 34f, Pc.disabled)
+            text("+", 115f, 2150f, 52f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+            pill(160f, 2105f, 380f, 2180f, "自动选择", Pc.brandSoft, Pc.brand, 26f)
+            iconCircle(958f, 2140f, 44f, "➤", Pc.brand, Pc.surface, 28f)
+        }
         text("视觉类型：独立组件板", 90f, 2085f, 28f, Pc.text3)
         text("示例文案仅用于视觉占位，功能以 Feature ID 为准。", 90f, 2140f, 26f, Pc.text3)
         gesture(Pc.text)
@@ -672,18 +748,67 @@ private class AndroidContractRenderer(
         text("当前状态", 105f, 390f, 28f, Pc.text3, true)
         pill(270f, 376f, 600f, 438f, code, Pc.surfaceSubtle, Pc.text2, 23f, Pc.border)
         val y = 560f
-        pill(120f, y, 470f, y + 70f, "GPT-5.6 Sol · 深度", Pc.brandSoft, Pc.brand, 27f)
+        text("✦  YLVEN", 120f, y + 45f, 29f, Pc.text2, true)
         text(
             "后端建议采用模块化单体核心业务，\n并将 AI Runtime 作为独立无状态服务。",
             120f, y + 120f, 39f, Pc.text, maxWidth = 820f, lineSpacing = 18f,
         )
-        rounded(120f, y + 350f, 960f, y + 560f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
-        text("工具调用", 165f, y + 395f, 27f, Pc.text3, true)
-        text("正在读取项目架构资料", 165f, y + 455f, 34f, Pc.text, true)
-        if (code in setOf("STREAMING", "CONNECTING", "TOOL_RUNNING")) spinner(900f, y + 455f, 28f, Pc.brand, 6f)
+        if (code == "CONNECTING") {
+            text("正在思考", 120f, y + 390f, 31f, Pc.brand, true)
+            spinner(315f, y + 405f, 25f, Pc.brand, 6f)
+        }
+        if (code == "TOOL_RUNNING") {
+            rounded(120f, y + 350f, 960f, y + 560f, 30f, Pc.surfaceSubtle, Pc.border, 2f)
+            text("正在阅读文件…", 165f, y + 455f, 34f, Pc.text, true)
+            spinner(900f, y + 455f, 28f, Pc.brand, 6f)
+        }
+        if (code in setOf("COMPLETED", "STREAMING")) {
+            listOf("复制", "朗读", "重新回答", "换模型").forEachIndexed { index, label ->
+                val left = 120f + index * 205f
+                pill(left, y + 590f, left + 180f, y + 665f, label, Pc.surface, Pc.text2, 24f, Pc.border)
+            }
+        }
         if (code == "STOPPED") pill(120f, y + 620f, 430f, y + 690f, "已停止生成", Pc.warningSoft, Pc.warning, 27f)
         if (code in setOf("PROVIDER_ERROR", "CONTENT_BLOCKED")) statusBanner(code, 1450f, .72f)
         componentFooter()
+    }
+
+    private fun p03Selector(code: String, model: Boolean) {
+        p03Chat("DEFAULT")
+        overlay(Color.argb(82, 0, 0, 0))
+        val top = if (model) 760f else 1030f
+        rounded(0f, top, 1080f, 2400f, 64f, Pc.surface)
+        rounded(480f, top + 28f, 600f, top + 42f, 7f, Pc.border2)
+        val title = if (model) "选择模型" else "回答方式"
+        val subtitle = if (model) "默认由 YLVEN 自动匹配适合的模型。" else "可用方式由当前模型决定。"
+        text(title, 60f, top + 135f, 54f, Pc.text, true)
+        text(subtitle, 60f, top + 200f, 31f, Pc.text2)
+        if (code == "SERVER_ERROR") {
+            statusBanner("SERVER_ERROR", top + 260f, .86f, "暂时无法加载，请重试")
+            gesture(Pc.text)
+            return
+        }
+        if (code == "EMPTY") {
+            text(if (model) "暂无可用模型" else "暂无可调方式", 540f, top + 470f, 42f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+            gesture(Pc.text)
+            return
+        }
+        val rows = if (model) {
+            listOf("自动选择" to "根据问题和可用能力自动匹配", "GPT-5.6 Sol" to "复杂分析、编码与长任务", "Claude Opus" to "长文理解、写作与审查", "Grok" to "实时信息与多模态理解")
+        } else {
+            listOf("自动（推荐）" to "根据问题复杂度自动决定", "快速" to "更快响应，适合简单问题", "标准" to "速度与质量平衡", "深度" to "适合复杂分析和代码任务")
+        }
+        rows.forEachIndexed { index, item ->
+            val y = top + 260f + index * 190f
+            val selected = index == 0 && code != "FILTER_ACTIVE" || index == rows.lastIndex && code == "FILTER_ACTIVE"
+            val disabled = code == "DISABLED" || code == "SERVICE_DEGRADED" && index > 0
+            rounded(54f, y, 1026f, y + 160f, 30f, if (selected) Pc.brandSoft else Pc.surface, if (selected) Pc.brand else Pc.border, if (selected) 5f else 2f)
+            iconCircle(130f, y + 80f, 42f, item.first.take(1), Pc.brandSoft, if (disabled) Pc.disabled else Pc.brand, 30f)
+            text(item.first, 205f, y + 48f, 39f, if (disabled) Pc.disabled else Pc.text, true)
+            text(item.second, 205f, y + 106f, 28f, if (disabled) Pc.disabled else Pc.text2)
+            if (selected) iconCircle(960f, y + 58f, 25f, "✓", Pc.brand, Pc.surface, 22f)
+        }
+        gesture(Pc.text)
     }
 
     private fun p03CodeBlock(code: String) {
@@ -759,27 +884,6 @@ private class AndroidContractRenderer(
         componentFooter()
     }
 
-    private fun p03CreateConversation(code: String) {
-        topBar("新建对话", "设置会话名称、项目和默认模型", back = true, right = true)
-        if (code == "OFFLINE") {
-            errorCenter(code)
-            return
-        }
-        var y = 350f
-        val fields = listOf("会话名称", "所属项目", "默认模型", "会话指令")
-        fields.forEachIndexed { index, field ->
-            input(72f, y, 1008f, y + 145f, field, "", "请输入$field", code == "INPUT_FOCUSED" && index == 0, if (code == "VALIDATION_ERROR" && index == 0) "请检查此字段" else null)
-            y += 230f
-        }
-        button(72f, 1290f, 1008f, 1446f, "会话指令", loading = code == "SUBMITTING")
-        when (code) {
-            "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在提交，请勿重复操作。")
-            "SUCCESS" -> statusBanner("SUCCESS", 270f, .84f)
-            "SAVE_ERROR" -> statusBanner("SAVE_ERROR", 270f, .84f)
-        }
-        if (code == "INPUT_FOCUSED") keyboard(false)
-    }
-
     private fun componentFooter() {
         text("视觉类型：独立组件板", 90f, 2085f, 28f, Pc.text3)
         text("示例文案仅用于视觉占位，功能以 Feature ID 为准。", 90f, 2140f, 26f, Pc.text3)
@@ -847,6 +951,7 @@ private class AndroidContractRenderer(
     }
 
     private fun stateFeedback(page: String, code: String) {
+        if (page in P03_PAGE_IDS) return
         if (code in setOf("DEFAULT", "POPULATED", "LAUNCH", "FIRST_RUN")) return
         val title = mapOf(
             "YL-A-004" to "YLVEN",
@@ -864,7 +969,6 @@ private class AndroidContractRenderer(
             "YL-A-016" to "登录设备",
             "YL-A-017" to "认证适配与异常状态",
             "YL-A-018" to "AI 首页",
-            "YL-A-019" to "开始新对话",
             "YL-A-020" to "会话历史",
             "YL-A-021" to "搜索会话",
             "YL-A-022" to "会话操作",
@@ -876,8 +980,9 @@ private class AndroidContractRenderer(
             "YL-A-028" to "表格组件",
             "YL-A-029" to "引用组件",
             "YL-A-030" to "消息操作栏",
-            "YL-A-031" to "新建对话",
             "YL-A-032" to "输入框组件",
+            "YL-A-033" to "模型选择器",
+            "YL-A-034" to "回答方式选择器",
         ).getValue(page)
         val message = when (code) {
             "LOADING" -> "正在加载「$title」"
@@ -1263,6 +1368,7 @@ private class AndroidContractRenderer(
         paint.textScaleX = if (!p03Text && mixedLatin) 1.1f else 1f
         paint.textAlign = when (anchor) {
             Anchor.MIDDLE_ASCENDER, Anchor.MIDDLE_MIDDLE -> Paint.Align.CENTER
+            Anchor.RIGHT_ASCENDER -> Paint.Align.RIGHT
             else -> Paint.Align.LEFT
         }
         val lines = wrap(value, maxWidth, p03Text, bold)
@@ -1422,5 +1528,5 @@ private class AndroidContractRenderer(
 
     private data class Banner(val bg: Int, val fg: Int, val symbol: String, val title: String)
     private data class ErrorSurface(val symbol: String, val title: String, val message: String, val fg: Int)
-    private enum class Anchor { LEFT_ASCENDER, MIDDLE_ASCENDER, LEFT_MIDDLE, MIDDLE_MIDDLE }
+    private enum class Anchor { LEFT_ASCENDER, MIDDLE_ASCENDER, RIGHT_ASCENDER, LEFT_MIDDLE, MIDDLE_MIDDLE }
 }

@@ -6,6 +6,9 @@ import csv
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SUPERSEDED_INTERACTIONS = {
+    "YL-A-019-C-P03_002-01": "CO-P03-001-HOME-SEND",
+}
 
 
 def kotlin_text(root: Path) -> str:
@@ -45,8 +48,17 @@ def main() -> int:
     ]
     implementation = kotlin_text(ROOT / "android" / "app" / "src" / "main")
     device_tests = kotlin_text(ROOT / "android" / "app" / "src" / "androidTest")
+    interactions = {row["interaction_id"]: row for row in rows}
     for row in selected:
         interaction_id = row["interaction_id"]
+        replacement_id = SUPERSEDED_INTERACTIONS.get(interaction_id)
+        if replacement_id:
+            replacement = interactions.get(replacement_id)
+            if replacement is None:
+                errors.append(f"{interaction_id}: missing replacement interaction {replacement_id}")
+            elif replacement_id not in implementation or replacement_id not in device_tests:
+                errors.append(f"{interaction_id}: replacement {replacement_id} lacks app/device coverage")
+            continue
         if interaction_id not in implementation:
             errors.append(f"{interaction_id}: no matching Compose testTag/semantics in app source")
         if interaction_id not in device_tests:

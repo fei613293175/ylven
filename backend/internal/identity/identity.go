@@ -208,9 +208,11 @@ type Message struct {
 }
 
 type ModelCatalogEntry struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
+	ID                string   `json:"id"`
+	Name              string   `json:"name"`
+	Enabled           bool     `json:"enabled"`
+	Description       string   `json:"description,omitempty"`
+	ReasoningProfiles []string `json:"reasoning_profiles"`
 }
 
 type HomeConfig struct {
@@ -2258,6 +2260,27 @@ func (s *Store) Home(access string) (map[string]any, error) {
 		conversations = conversations[:5]
 	}
 	return map[string]any{"conversations": conversations, "projects": []any{}, "model_catalog": s.data.ModelCatalog, "config": s.data.HomeConfig}, nil
+}
+
+func (s *Store) MobileModelCatalog(access string) ([]ModelCatalogEntry, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, _, err := s.authenticatedUserLocked(access); err != nil {
+		return nil, err
+	}
+	items := make([]ModelCatalogEntry, 0, len(s.data.ModelCatalog))
+	for _, item := range s.data.ModelCatalog {
+		if !item.Enabled {
+			continue
+		}
+		copyItem := item
+		copyItem.ReasoningProfiles = append([]string(nil), item.ReasoningProfiles...)
+		if len(copyItem.ReasoningProfiles) == 0 {
+			copyItem.ReasoningProfiles = []string{"auto"}
+		}
+		items = append(items, copyItem)
+	}
+	return items, nil
 }
 
 func (s *Store) ListAllConversations() []Conversation {

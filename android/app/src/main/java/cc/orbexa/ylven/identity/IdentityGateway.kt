@@ -59,11 +59,20 @@ data class Conversation(
     val draftSessionId: String? = null,
     val initialDraft: String = "",
     val temporary: Boolean = false,
+    val initialToolTrayOpen: Boolean = false,
 )
 
 data class HomeSnapshot(
     val conversations: List<Conversation>,
-    val modelCatalog: List<String>,
+    val modelCatalog: List<ModelOption>,
+)
+
+data class ModelOption(
+    val id: String,
+    val name: String,
+    val enabled: Boolean = true,
+    val description: String = "",
+    val reasoningProfiles: List<String> = listOf("auto"),
 )
 
 data class MessageRecord(val id: String, val conversationId: String, val role: String, val body: String, val createdAt: String)
@@ -100,6 +109,7 @@ interface IdentityGateway {
     suspend fun revokeDevice(bearer: String, sessionId: String)
     suspend fun logout(bearer: String, allDevices: Boolean)
     suspend fun home(bearer: String): HomeSnapshot = HomeSnapshot(emptyList(), emptyList())
+    suspend fun models(bearer: String): List<ModelOption> = home(bearer).modelCatalog
     suspend fun listConversations(bearer: String, cursor: String? = null, includeArchived: Boolean = false): Pair<List<Conversation>, String?> = Pair(emptyList(), null)
     suspend fun searchConversations(bearer: String, query: String): List<Conversation> = emptyList()
     suspend fun createConversation(bearer: String, title: String = ""): Conversation = error("会话功能尚未配置")
@@ -307,6 +317,11 @@ class HttpIdentityGateway(
         return HomeSnapshot(parseConversations(items), parseModelCatalog(body.optJSONArray("model_catalog")))
     }
 
+    override suspend fun models(bearer: String): List<ModelOption> {
+        val body = request("GET", "/api/mobile/v1/models", bearer = bearer)
+        return parseModelCatalog(body.optJSONArray("items"))
+    }
+
     override suspend fun listConversations(bearer: String, cursor: String?, includeArchived: Boolean): Pair<List<Conversation>, String?> {
         val suffix = buildString { if (!cursor.isNullOrBlank()) append("&cursor=").append(java.net.URLEncoder.encode(cursor, "UTF-8")); if (includeArchived) append("&include_archived=true") }
         val body = request("GET", "/api/mobile/v1/conversations?limit=30${suffix}", bearer = bearer)
@@ -401,7 +416,31 @@ class HttpIdentityGateway(
 
     private fun parseConversations(items: org.json.JSONArray): List<Conversation> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toConversation()) }
     private fun parseMessages(items: org.json.JSONArray): List<MessageRecord> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toMessageRecord()) }
-    private fun parseModelCatalog(items: org.json.JSONArray?): List<String> = buildList { if (items != null) for (index in 0 until items.length()) items.optJSONObject(index)?.optString("name")?.takeIf { it.isNotBlank() }?.let(::add) }
+    private fun parseModelCatalog(items: org.json.JSONArray?): List<ModelOption> = buildList {
+        if (items == null) return@buildList
+        for (index in 0 until items.length()) {
+            val item = items.optJSONObject(index) ?: continue
+            val id = item.optString("id").trim()
+            val name = item.optString("name").trim()
+            if (id.isBlank() || name.isBlank()) continue
+            val profiles = item.optJSONArray("reasoning_profiles")?.let { values ->
+                buildList {
+                    for (profileIndex in 0 until values.length()) {
+                        values.optString(profileIndex).trim().takeIf(String::isNotBlank)?.let(::add)
+                    }
+                }
+            }.orEmpty().ifEmpty { listOf("auto") }
+            add(
+                ModelOption(
+                    id = id,
+                    name = name,
+                    enabled = item.optBoolean("enabled", true),
+                    description = item.optString("description"),
+                    reasoningProfiles = profiles,
+                ),
+            )
+        }
+    }
 
     private suspend fun request(
         method: String,

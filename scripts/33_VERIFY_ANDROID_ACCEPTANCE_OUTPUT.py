@@ -13,6 +13,11 @@ from pathlib import Path
 from PIL import Image, ImageStat
 
 ROOT = Path(__file__).resolve().parents[1]
+P03_DEPRECATED_PAGES = {"YL-A-019", "YL-A-031"}
+P03_PRODUCTION_PAGES = {
+    "YL-A-018", "YL-A-020", "YL-A-023", "YL-A-024",
+    "YL-A-026", "YL-A-033", "YL-A-034",
+}
 
 
 def sha256(path: Path) -> str:
@@ -30,7 +35,16 @@ def phase_android_screenshots(phase: str) -> list[str]:
         return [
             f"{row['state_id']}.png"
             for row in csv.DictReader(source)
-            if row.get("surface") == "ANDROID" and phase in row.get("phases", "").split("|")
+            if row.get("surface") == "ANDROID"
+            and (
+                phase != "P03" and phase in row.get("phases", "").split("|")
+                or phase == "P03"
+                and row.get("page_id") not in P03_DEPRECATED_PAGES
+                and (
+                    "P03" in row.get("phases", "").split("|")
+                    or "P03-W07" in row.get("work_packets", "").split("|")
+                )
+            )
         ]
 
 
@@ -200,10 +214,7 @@ def main() -> int:
         else:
             digests[digest] = name
 
-    expected_production_pages = {
-        "YL-A-018", "YL-A-019", "YL-A-020", "YL-A-021",
-        "YL-A-022", "YL-A-023", "YL-A-031",
-    }
+    expected_production_pages = P03_PRODUCTION_PAGES if phase == "P03" else set()
     production_dir = root / "真实页面截图"
     production_files = {path.name for path in production_dir.glob("*.png")}
     expected_production_files = {f"{page_id}-PRODUCTION.png" for page_id in expected_production_pages}

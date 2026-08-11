@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 EXPECTED_PAGES = {
-    "YL-A-018", "YL-A-019", "YL-A-020", "YL-A-021",
-    "YL-A-022", "YL-A-023", "YL-A-031",
+    "YL-A-018", "YL-A-020", "YL-A-023", "YL-A-024",
+    "YL-A-026", "YL-A-033", "YL-A-034",
 }
 CHECKS = {"layout", "font", "color", "spacing", "icons", "interaction_state"}
 

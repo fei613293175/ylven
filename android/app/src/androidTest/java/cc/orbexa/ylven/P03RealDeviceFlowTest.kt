@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -17,6 +18,8 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.core.view.ViewCompat
@@ -31,6 +34,7 @@ import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.MessageCitation
 import cc.orbexa.ylven.identity.MessageRecord
 import cc.orbexa.ylven.identity.MessageRun
+import cc.orbexa.ylven.identity.ModelOption
 import cc.orbexa.ylven.identity.OtpChallenge
 import cc.orbexa.ylven.identity.RunEvent
 import cc.orbexa.ylven.ui.YlvenApp
@@ -68,37 +72,56 @@ class P03RealDeviceFlowTest {
 
         waitForTag("YL-A-018-C-P03_001-01")
         captureProductionPage("YL-A-018-PRODUCTION", "YL-A-018-C-P03_001-01")
-        composeRule.onNodeWithTag("p03-open-new-conversation").performClick()
-        waitForTag("YL-A-019-root")
-        captureProductionPage("YL-A-019-PRODUCTION", "YL-A-019-root")
-        composeRule.onNodeWithTag("YL-A-019-C-P03_002-01").performScrollTo().performClick()
+        composeRule.onNodeWithTag("CO-P03-001-HOME-COMPOSER").performClick()
         waitForTag("p03-local-draft-conversation")
         assertTrue("Opening a blank chat must not persist a conversation", "create" !in gateway.calls)
+        hideKeyboardIfVisible()
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
-        composeRule.onNodeWithTag("p03-home-list")
-            .performScrollToNode(hasTestTag("p03-open-temporary-conversation"))
-        composeRule.onNodeWithTag("p03-open-temporary-conversation").performClick()
-        waitForTag("YL-A-031-root")
-        captureProductionPage("YL-A-031-PRODUCTION", "YL-A-031-root")
-        assertTemporaryConversationScope()
-        composeRule.onNodeWithTag("p03-temporary-title").performTextInput("临时架构讨论")
-        Espresso.closeSoftKeyboard()
-        // The temporary-conversation action is pinned in the bottom action bar,
-        // outside the home list's scroll container.
+        composeRule.onNodeWithTag("p03-home-list").performScrollToNode(hasTestTag("CO-P03-001-HOME-TOOL"))
+        composeRule.onNodeWithTag("CO-P03-001-HOME-TOOL").performClick()
+        waitForTag("YL-A-024-S06-tool-tray")
+        captureProductionPage("YL-A-024-PRODUCTION", "YL-A-024-S06-tool-tray")
+        composeRule.onNodeWithTag("p03-tool-0").assertIsNotEnabled()
+        composeRule.onNodeWithTag("p03-tool-5").assertIsNotEnabled()
+        Espresso.pressBack()
+        waitForTag("p03-local-draft-conversation")
+        hideKeyboardIfVisible()
+        Espresso.pressBack()
+        waitForTag("YL-A-018-C-P03_001-01")
+
+        composeRule.onNodeWithTag("CO-P03-001-HOME-SEND").performClick()
+        waitForTag("p03-local-draft-conversation")
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        waitForTag("YL-A-031-C-P03_028-01")
         composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
         waitForTag("p03-local-draft-conversation")
+        assertTemporaryConversationScope()
         assertTrue("Opening a temporary draft must not persist a conversation", "temporary" !in gateway.calls)
+        hideKeyboardIfVisible()
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
 
-        composeRule.onNodeWithTag("p03-home-list")
-            .performScrollToNode(hasTestTag("p03-open-conversation-drawer"))
         composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
         waitForTag("p03-conversation-drawer")
         waitForTag("YL-A-020-root")
         captureProductionPage("YL-A-020-PRODUCTION", "YL-A-020-root")
+        composeRule.onNodeWithTag("p03-drawer-scrim").performClick()
+        waitForTagAbsent("YL-A-020-root")
+
+        composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
+        waitForTag("YL-A-020-root")
+        Espresso.pressBack()
+        waitForTagAbsent("YL-A-020-root")
+
+        composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
+        waitForTag("p03-conversation-drawer")
+        composeRule.onNodeWithTag("p03-conversation-drawer").performTouchInput { swipeLeft() }
+        waitForTagAbsent("YL-A-020-root")
+
+        composeRule.onNodeWithTag("p03-open-conversation-drawer").performClick()
+        waitForTag("p03-conversation-drawer")
         waitForTag("YL-A-020-C-P03_003-01")
         composeRule.onNodeWithTag("YL-A-020-C-P03_003-01").performScrollTo().performClick()
         composeRule.onNodeWithTag("p03-open-search").performClick()
@@ -110,9 +133,21 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-023-C-P03_013-01")
         waitForTag("YL-A-032-C-P03_032-01")
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").assertTextContains("saved draft")
+        composeRule.onNodeWithTag("CO-P03-001-CHAT-MODEL").performClick()
+        waitForTag("YL-A-033-root")
+        waitForModalSheetToSettle()
+        captureProductionPage("YL-A-033-PRODUCTION", "YL-A-033-root")
+        composeRule.onNodeWithTag("p03-model-gpt-5.6-sol").performClick()
+        composeRule.onNodeWithTag("CO-P03-001-CHAT-REASONING").performClick()
+        waitForTag("YL-A-034-root")
+        waitForModalSheetToSettle()
+        captureProductionPage("YL-A-034-PRODUCTION", "YL-A-034-root")
+        composeRule.onNodeWithTag("p03-response-mode-quick").assertIsNotEnabled()
+        composeRule.onNodeWithTag("p03-response-mode-auto").performClick()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextClearance()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("physical flow message")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
+        waitForCondition { gateway.sentModel == "gpt-5.6-sol" }
         scrollChatTo("YL-A-023-C-P03_010-01")
         gateway.releaseSend()
         waitForCondition { "events-attempt" in gateway.calls }
@@ -128,7 +163,9 @@ class P03RealDeviceFlowTest {
 
         waitForTag("YL-A-025-C-P03_016-01")
         waitForTag("YL-A-023-C-P03_017-01")
+        waitForTag("YL-A-026-C-P03_026-01")
         scrollChatTo("YL-A-026-C-P03_018-01")
+        captureProductionPage("YL-A-026-PRODUCTION", "YL-A-026-C-P03_018-01")
         scrollChatTo("YL-A-027-C-P03_019-01")
         scrollChatTo("YL-A-028-C-P03_020-01")
         scrollChatTo("YL-A-029-C-P03_021-01")
@@ -166,7 +203,15 @@ class P03RealDeviceFlowTest {
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01").performTextInput("retry me")
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         waitForTag("YL-A-023-C-P03_027-01")
-        composeRule.onNodeWithTag("YL-A-023-C-P03_027-01").performClick()
+        waitForTag("CO-P03-001-CHAT-RETRY")
+        composeRule.onNodeWithText("网络不可用，请检查连接后重试").assertExists()
+        composeRule.onNodeWithTag("CO-P03-001-CHAT-RETRY").performClick()
+        waitForCondition { gateway.sendAttempts >= 3 }
+        waitForCondition {
+            composeRule.onAllNodesWithTag("YL-A-023-C-P03_009-01").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithTag("YL-A-023-C-P03_027-01").fetchSemanticsNodes().isEmpty() &&
+                composeRule.onAllNodesWithText("retry me").fetchSemanticsNodes().size == 1
+        }
         hideKeyboardIfVisible()
         Espresso.pressBack()
         waitForTag("YL-A-018-C-P03_001-01")
@@ -197,11 +242,11 @@ class P03RealDeviceFlowTest {
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
         composeRule.onNodeWithTag("p03-open-rename-current").performClick()
-        waitForTag("p03-rename-input")
-        composeRule.onNodeWithTag("p03-rename-input").performTextClearance()
-        composeRule.onNodeWithTag("p03-rename-input").performTextInput("Alpha renamed")
+        waitForTag("YL-A-022-C-P03_005-01")
+        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performTextClearance()
+        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performTextInput("Alpha renamed")
         Espresso.closeSoftKeyboard()
-        composeRule.onNodeWithTag("YL-A-022-C-P03_005-01").performClick()
+        composeRule.onNodeWithTag("CO-P03-001-TITLE-RENAME").performClick()
         waitForCondition { "rename" in gateway.calls }
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
@@ -221,7 +266,7 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-018-C-P03_001-01")
 
         val requiredCalls = setOf(
-            "home", "list-page-1", "list-page-2", "search",
+            "home", "models", "list-page-1", "list-page-2", "search",
             "rename", "archive", "delete", "send", "events-retry", "cancel",
             "export-message", "export-conversation", "feedback-up", "feedback-down",
             "regenerate", "speak", "load-draft", "save-draft",
@@ -231,6 +276,10 @@ class P03RealDeviceFlowTest {
 
     private fun waitForTag(tag: String) = waitForCondition {
         composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun waitForTagAbsent(tag: String) = waitForCondition {
+        composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty()
     }
 
     private fun assertTemporaryConversationScope() {
@@ -358,6 +407,9 @@ class P03RealDeviceFlowTest {
 private class FlowGateway : IdentityGateway {
     val calls = CopyOnWriteArraySet<String>()
     var failNextSend = false
+    @Volatile var sentModel = ""
+    @Volatile var sendAttempts = 0
+    @Volatile var lastSentBody = "physical flow message"
     private var failFirstEvent = true
     private var currentRunStatus = "streaming"
     private var draft = "saved draft"
@@ -378,7 +430,12 @@ private class FlowGateway : IdentityGateway {
 
     override suspend fun home(bearer: String): HomeSnapshot {
         calls += "home"
-        return HomeSnapshot(listOf(alpha, beta), listOf("GPT-5.6 Sol", "Claude Opus", "Grok"))
+        return HomeSnapshot(listOf(alpha, beta), modelOptions())
+    }
+
+    override suspend fun models(bearer: String): List<ModelOption> {
+        calls += "models"
+        return modelOptions()
     }
 
     override suspend fun listConversations(
@@ -431,13 +488,16 @@ private class FlowGateway : IdentityGateway {
         body: String,
         model: String,
     ): MessageRun {
+        sendAttempts += 1
         calls += "send"
+        sentModel = model
+        lastSentBody = body
         if (failNextSend) {
             failNextSend = false
             throw IOException("controlled network failure")
         }
         sendGate.await()
-        currentRunStatus = "streaming"
+        currentRunStatus = if (sendAttempts >= 3) "completed" else "streaming"
         return run("run-1")
     }
 
@@ -532,7 +592,7 @@ private class FlowGateway : IdentityGateway {
     private fun run(id: String) = MessageRun(id, alpha.id, currentRunStatus, 1, "assistant")
 
     private fun messages() = listOf(
-        MessageRecord("user", alpha.id, "user", "physical flow message", "2026-08-08T00:00:01Z"),
+        MessageRecord("user", alpha.id, "user", lastSentBody, "2026-08-08T00:00:01Z"),
         MessageRecord(
             "assistant",
             alpha.id,
@@ -542,6 +602,12 @@ private class FlowGateway : IdentityGateway {
                 "```kotlin\nprintln(\"ok\")\n```\nA | B\n--- | ---\n1 | 2",
             "2026-08-08T00:00:02Z",
         ),
+    )
+
+    private fun modelOptions() = listOf(
+        ModelOption("gpt-5.6-sol", "GPT-5.6 Sol", description = "复杂分析、编码与长任务"),
+        ModelOption("claude-opus", "Claude Opus", description = "长文理解、写作与审查"),
+        ModelOption("grok", "Grok", description = "实时信息与多模态理解"),
     )
 
     private fun session() = AuthSession("owner@example.invalid", "session", "access", "refresh")

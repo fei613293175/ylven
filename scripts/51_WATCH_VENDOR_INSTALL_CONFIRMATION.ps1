@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)][string]$AdbPath,
     [Parameter(Mandatory=$true)][string]$Serial,
     [Parameter(Mandatory=$true)][int]$MonitorPid,

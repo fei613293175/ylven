@@ -11,10 +11,30 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 VISUAL_KINDS = {'PAGE', 'OVERLAY', 'COMPONENT_BOARD', 'SYSTEM_OVERLAY', 'SYSTEM_STATE_BOARD', 'DESIGN_BOARD'}
 SURFACE_DIR = {'ANDROID': 'android', 'ADMIN': 'admin', 'DEVELOPER': 'developer', 'WEB': 'web', 'DESIGN_SYSTEM': 'design-system'}
+CHANGE_ORDER_APPROVALS = {
+    'APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION': ('CO-P03-001', 'OWNER_REQUESTED_CO_P03_001'),
+    'APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1': ('CO-P03-001', 'OWNER_REQUESTED_CO_P03_001_R1'),
+}
 
 
 def load(path: Path):
     return yaml.safe_load(path.read_text(encoding='utf-8')) or {}
+
+
+def is_implementation_approved(mockup: dict[str, str]) -> bool:
+    status = mockup.get('status', '')
+    if status == 'APPROVED':
+        return True
+    approval = CHANGE_ORDER_APPROVALS.get(status)
+    if not approval:
+        return False
+    change_order_id, approved_by = approval
+    change_order = ROOT / 'change-orders' / change_order_id / 'CHANGE_ORDER.yaml'
+    return (
+        mockup.get('approved_by') == approved_by
+        and change_order.is_file()
+        and load(change_order).get('status') == 'APPROVED_FOR_IMPLEMENTATION'
+    )
 
 
 def main() -> int:
@@ -94,8 +114,10 @@ def main() -> int:
         for mockup in mockups:
             if mockup['page_id'] not in selected:
                 continue
-            if mockup['status'] != 'APPROVED':
-                errors.append(f"{mockup['mockup_id']}: status {mockup['status']} not APPROVED")
+            if not is_implementation_approved(mockup):
+                errors.append(
+                    f"{mockup['mockup_id']}: status {mockup['status']} is not implementation-approved"
+                )
             path = ROOT / mockup['relative_path']
             if not path.is_file() or not mockup.get('sha256'):
                 errors.append(f"{mockup['mockup_id']}: missing file or SHA-256")
