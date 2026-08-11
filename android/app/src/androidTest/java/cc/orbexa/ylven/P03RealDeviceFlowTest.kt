@@ -183,10 +183,10 @@ class P03RealDeviceFlowTest {
         scrollChatTo("YL-A-030-C-P03_025-01")
         val feedbackNodes = composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")
         check(feedbackNodes.fetchSemanticsNodes().size >= 2) { "Both feedback controls are not present" }
-        feedbackNodes[0].performClick()
+        feedbackNodes[0].performScrollTo().performClick()
         waitForCondition { "feedback-up" in gateway.calls || "feedback-down" in gateway.calls }
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[1].performClick()
+        composeRule.onAllNodesWithTag("YL-A-030-C-P03_025-01")[1].performScrollTo().performClick()
         waitForCall(gateway, "feedback-up")
         waitForCall(gateway, "feedback-down")
         composeRule.waitForIdle()
