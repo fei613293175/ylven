@@ -467,30 +467,31 @@ private class AndroidContractRenderer(
         lineIcon(48f, 122f, "menu", 56f, Pc.text, 7f)
         text("YLVEN", 540f, 145f, 48f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
         lineIcon(972f, 117f, "plus", 56f, Pc.text, 7f)
-        bottomNav("首页")
+        p03HomeGlow()
+        p03HomeBottomNav()
         if (code == "LOADING") {
             p03HomeLoading()
             return
         }
         val hasBanner = code in setOf("REFRESHING", "OFFLINE_CACHE", "NETWORK_ERROR", "SERVICE_DEGRADED")
         if (hasBanner) p03HomeBanner(code)
-        p03Spark(540f, 385f, 46f)
-        text("今天想完成什么？", 540f, 500f, 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-        text("多模型协同，完成更复杂的事。", 540f, 590f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        p03Spark(540f, 390f, 54f)
+        text("今天想完成什么？", 540f, 473f, 80f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        text("多模型协同，完成更复杂的事。", 540f, 590f, 40f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
         shadowCard(54f, 710f, 1026f, 1010f, 72f, shadow = 12f, offset = 5f)
-        text("问问 YLVEN…", 102f, 775f, 38f, Pc.disabled)
-        text("+", 116f, 950f, 54f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
-        pill(160f, 905f, 380f, 985f, "自动选择", color("#EEF0FF"), Pc.brand, 27f)
-        lineIcon(830f, 922f, "mic", 54f, Pc.text2, 5f)
-        iconCircle(958f, 945f, 48f, "➤", if (code == "NETWORK_ERROR") Pc.border2 else Pc.brand, Pc.surface, 30f)
+        text("问问 YLVEN…", 102f, 747f, 46f, Pc.disabled)
+        text("+", 116f, 965f, 54f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+        pill(160f, 922f, 380f, 992f, "自动选择", color("#EEF0FF"), Pc.brand, 32f)
+        lineIcon(830f, 937f, "mic", 54f, Pc.text2, 5f)
+        iconCircle(958f, 960f, 48f, "➤", if (code == "NETWORK_ERROR") Pc.border2 else Pc.brand, Pc.surface, 30f)
         listOf("分析文件" to "文", "生成图片" to "图", "制作演示" to "P").forEachIndexed { index, item ->
             val left = 54f + index * 330f
             rounded(left, 1045f, left + 300f, 1135f, 45f, Pc.surface, Pc.border, 2f)
             iconCircle(left + 42f, 1090f, 28f, item.second, color("#EEF0FF"), Pc.brand, 24f)
-            text(item.first, left + 82f, 1090f, 30f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
+            text(item.first, left + 82f, 1090f, 38f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
         }
-        text("继续最近的对话", 54f, 1275f, 48f, Pc.text, true)
-        text("查看全部", 1026f, 1275f, 31f, Pc.brand, anchor = Anchor.RIGHT_ASCENDER)
+        text("继续最近的对话", 54f, 1247f, 58f, Pc.text, true)
+        text("查看全部", 1026f, 1255f, 40f, Pc.brand, anchor = Anchor.RIGHT_ASCENDER)
         if (code == "EMPTY") {
             rounded(54f, 1335f, 1026f, 1495f, 28f, Pc.surface, Pc.border, 2f)
             p03Spark(132f, 1415f, 22f)
@@ -500,10 +501,76 @@ private class AndroidContractRenderer(
             listOf("多服务器 AI 架构设计" to "GPT-5.6 Sol · 刚刚", "对话上下文与长期记忆方案" to "Claude Opus · 昨天").forEachIndexed { index, item ->
                 val y = 1335f + index * 180f
                 rounded(54f, y, 1026f, y + 150f, 28f, Pc.surface, Pc.border, 2f)
-                iconCircle(125f, y + 75f, 42f, "Y", Pc.brandSoft, Pc.brand, 32f)
-                text(item.first, 195f, y + 46f, 36f, Pc.text, true)
-                text(item.second, 195f, y + 102f, 28f, Pc.text3)
+                iconCircle(125f, y + 75f, 42f, "Y", Pc.brandSoft, Pc.brand, 42f)
+                text(item.first, 195f, y + 52f, 48f, Pc.text, true)
+                text(item.second, 195f, y + 108f, 40f, Pc.text2)
                 text("›", 955f, y + 75f, 42f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+            }
+        }
+    }
+
+    private fun p03HomeGlow() {
+        val checkpoint = canvas.save()
+        canvas.clipRect(0f, 238f, 1080f, 2160f)
+        var radius = 680f
+        while (radius >= 120f) {
+            val strength = .03f + (680f - radius) / 560f * .22f
+            circle(540f, 420f, radius, mix(color("#F7F8FC"), color("#EEF0FF"), strength))
+            radius -= 16f
+        }
+        canvas.restoreToCount(checkpoint)
+    }
+
+    private fun p03HomeBottomNav() {
+        val top = 2160f
+        rect(0f, top, 1080f, 2400f, Pc.surface)
+        line(0f, top, 1080f, top, Pc.divider, 2f)
+        listOf("首页" to "home", "工作" to "briefcase", "发现" to "compass", "我的" to "user").forEachIndexed { index, item ->
+            val cx = 135f + index * 270f
+            val fill = if (index == 0) Pc.brand else Pc.text2
+            p03HomeNavIcon(cx, 2228f, item.second, fill)
+            text(item.first, cx, 2310f, 36f, fill, index == 0, Anchor.MIDDLE_ASCENDER)
+        }
+        gesture(Pc.text)
+    }
+
+    private fun p03HomeNavIcon(cx: Float, top: Float, kind: String, fill: Int) {
+        when (kind) {
+            "home" -> {
+                filledPath(
+                    listOf(
+                        cx to top,
+                        cx - 38f to top + 32f,
+                        cx - 29f to top + 32f,
+                        cx - 29f to top + 66f,
+                        cx + 29f to top + 66f,
+                        cx + 29f to top + 32f,
+                        cx + 38f to top + 32f,
+                        cx to top,
+                    ),
+                    fill,
+                )
+            }
+            "briefcase" -> {
+                rounded(cx - 31f, top + 15f, cx + 31f, top + 66f, 8f, fill)
+                rounded(cx - 15f, top, cx + 15f, top + 24f, 6f, null, fill, 7f)
+            }
+            "compass" -> {
+                oval(cx - 27f, top + 5f, cx + 27f, top + 59f, null, fill, 7f)
+                filledPath(
+                    listOf(
+                        cx + 12f to top + 17f,
+                        cx + 3f to top + 39f,
+                        cx - 12f to top + 47f,
+                        cx - 3f to top + 25f,
+                        cx + 12f to top + 17f,
+                    ),
+                    fill,
+                )
+            }
+            else -> {
+                circle(cx, top + 18f, 17f, fill)
+                arc(cx - 34f, top + 36f, cx + 34f, top + 76f, 190f, 160f, fill, 13f)
             }
         }
     }
@@ -781,11 +848,9 @@ private class AndroidContractRenderer(
         )
         p03ChatBaselineScale = .09f
         try {
-            topBar(
+            p03ChatTopBar(
                 if (isNewConversation) "新对话" else "多服务器 AI 架构设计",
                 if (isNewConversation) "自动选择" else "GPT-5.6 Sol · 深度",
-                back = true,
-                right = true,
             )
             when (code) {
                 "DEFAULT" -> p03EmptyChatHero("有什么想一起完成的？", "直接提问，YLVEN 会自动选择合适的模型。")
@@ -815,6 +880,16 @@ private class AndroidContractRenderer(
         }
     }
 
+    private fun p03ChatTopBar(title: String, subtitle: String) {
+        androidStatus()
+        rect(0f, 72f, 1080f, 246f, Pc.surface)
+        line(0f, 245f, 1080f, 245f, Pc.divider, 2f)
+        lineIcon(48f, 122f, "back", 60f, Pc.text, 5f)
+        text(title, 130f, 124f, 66f, Pc.text, true)
+        text(subtitle, 130f, 204f, 39f, Pc.text2)
+        lineIcon(970f, 128f, "more", 56f, Pc.text2, 5f)
+    }
+
     private fun p03Spark(cx: Float, cy: Float, size: Float = 54f) {
         filledPath(
             listOf(
@@ -834,9 +909,14 @@ private class AndroidContractRenderer(
     }
 
     private fun p03EmptyChatHero(title: String, subtitle: String?) {
-        p03Spark(540f, 810f, if (subtitle == null) 40f else 54f)
-        text(title, 540f, if (subtitle == null) 905f else 930f, if (subtitle == null) 46f else 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-        if (subtitle != null) text(subtitle, 540f, 1032f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        val hero = when {
+            subtitle != null -> listOf(810f, 54f, 903f, 80f)
+            title == "从一个问题开始" -> listOf(760f, 54f, 840f, 58f)
+            else -> listOf(700f, 50f, 775f, 58f)
+        }
+        p03Spark(540f, hero[0], hero[1])
+        text(title, 540f, hero[2], hero[3], Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        if (subtitle != null) text(subtitle, 540f, 1015f, 40f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
     }
 
     private fun p03ChatUserMessage() {
@@ -845,22 +925,23 @@ private class AndroidContractRenderer(
             "如何让多模型对话具备上下文\n，并为多服务器部署做好准备\n？",
             391f,
             394f,
-            39f,
+            45f,
             Pc.surface,
             lineSpacing = 16f,
         )
     }
 
     private fun p03ChatAssistantLabel() {
+        circle(78f, 743f, 24f, color("#EEF0FF"))
         p03Spark(78f, 743f, 12f)
-        text("YLVEN", 108f, 724f, 26f, Pc.text2)
+        text("YLVEN", 108f, 724f, 30f, Pc.text2)
     }
 
     private fun p03ChatConnecting() {
         p03ChatAssistantLabel()
-        text("正在思考", 54f, 815f, 34f, Pc.text, true)
+        text("正在思考", 54f, 800f, 46f, Pc.text, true)
         listOf(330f, 405f, 350f).forEachIndexed { index, width ->
-            rounded(54f + index * 70f, 885f + index * 34f, 54f + index * 70f + width, 909f + index * 34f, 12f, color("#E8EAFF"))
+            rounded(54f, 865f + index * 50f, 54f + width, 895f + index * 50f, 15f, color("#E8EAFF"))
         }
     }
 
@@ -874,21 +955,21 @@ private class AndroidContractRenderer(
         text(
             "可以。建议把当前系统设计为无状态 AI Runti\nme，并由 PostgreSQL 保存完整会话事实。",
             54f,
-            790f,
-            39f,
+            801f,
+            45f,
             Pc.text,
             lineSpacing = 18f,
         )
         text(
             "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，",
             54f,
-            980f,
-            39f,
+            991f,
+            45f,
             Pc.text,
             lineSpacing = 18f,
         )
         if (!partial) {
-            text("这样后续切换模型时，上下文仍然连续。", 54f, 1170f, 39f, Pc.text)
+            text("这样后续切换模型时，上下文仍然连续。", 54f, 1181f, 45f, Pc.text)
         } else {
             rounded(58f, 1117f, 66f, 1170f, 4f, Pc.brand)
         }
@@ -904,7 +985,7 @@ private class AndroidContractRenderer(
 
     private fun p03ChatToolProgress() {
         p03ChatAssistantLabel()
-        text("正在阅读你提供的资料", 54f, 812f, 34f, Pc.text, true)
+        text("正在阅读你提供的资料", 54f, 800f, 45f, Pc.text, true)
         rounded(54f, 870f, 1026f, 1055f, 30f, Pc.surface, Pc.border, 2f)
         spinner(112f, 950f, 26f, Pc.brand, 6f)
         text("正在分析 2 份文件", 160f, 900f, 33f, Pc.text, true)
@@ -924,10 +1005,10 @@ private class AndroidContractRenderer(
         val fg = if (kind == "error") Pc.error else Pc.warning
         rounded(54f, 700f, 1026f, 955f, 34f, bg)
         circle(100f, 762f, 16f, fg)
-        text(title, 132f, 735f, 38f, Pc.text, true)
-        text(body, 132f, 795f, 28f, Pc.text2)
-        pill(132f, 860f, 330f, 925f, primaryAction, Pc.brand, Pc.surface, 24f)
-        pill(350f, 860f, 550f, 925f, secondaryAction, Pc.surface, Pc.text2, 24f, Pc.border)
+        text(title, 132f, 730f, 48f, Pc.text, true)
+        text(body, 132f, 795f, 36f, Pc.text2)
+        pill(132f, 860f, 330f, 925f, primaryAction, Pc.brand, Pc.surface, 30f)
+        pill(350f, 860f, 550f, 925f, secondaryAction, Pc.surface, Pc.text2, 30f, Pc.border)
     }
 
     private fun p03ChatComposer(code: String) {
@@ -966,21 +1047,21 @@ private class AndroidContractRenderer(
         if (code == "UPLOADING") {
             pill(82f, top + 28f, 340f, top + 88f, "架构说明.pdf", color("#F2F4F7"), Pc.text2, 22f, Pc.border)
             pill(354f, top + 28f, 620f, top + 88f, "部署清单.md", color("#F2F4F7"), Pc.text2, 22f, Pc.border)
-            text(placeholder, 82f, top + 78f, 31f, Pc.text2)
+            text(placeholder, 82f, top + 78f, 40f, Pc.text2)
         } else {
-            text(placeholder, 82f, top + 28f, 31f, if (code == "INPUT_FOCUSED") Pc.text2 else Pc.disabled, maxWidth = 760f)
+            text(placeholder, 82f, top + 28f, 40f, Pc.disabled, maxWidth = 760f)
         }
-        text("+", 112f, top + 126f, 46f, if (disabled) Pc.border2 else Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+        text("+", 112f, top + 114f, 46f, if (disabled) Pc.border2 else Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
         pill(
-            150f, top + 86f, if (code in setOf("DEFAULT", "DISABLED", "OFFLINE_NEW")) 380f else 410f, top + 166f,
+            150f, top + 74f, if (code in setOf("DEFAULT", "DISABLED", "OFFLINE_NEW")) 380f else 410f, top + 154f,
             if (code in setOf("DEFAULT", "DISABLED", "OFFLINE_NEW")) "自动选择" else "GPT-5.6 Sol",
             if (disabled) color("#F2F4F7") else color("#EEF0FF"),
             if (disabled) Pc.disabled else Pc.brand,
-            24f,
+            30f,
         )
-        lineIcon(830f, top + 99f, "mic", 54f, if (disabled) Pc.disabled else Pc.text2, 5f)
+        lineIcon(830f, top + 87f, "mic", 54f, if (disabled) Pc.disabled else Pc.text2, 5f)
         iconCircle(
-            950f, top + 126f, 48f, if (sending) "■" else "➤",
+            950f, top + 114f, 48f, if (sending) "■" else "➤",
             if (disabled) Pc.border2 else Pc.brand, Pc.surface, if (sending) 22f else 30f,
         )
     }
@@ -1016,7 +1097,7 @@ private class AndroidContractRenderer(
                 rect(0f, 72f, 1080f, 2400f, Color.argb(82, 0, 0, 0))
                 rounded(0f, 1180f, 1080f, 2400f, 72f, Pc.surface)
                 rounded(480f, 1210f, 600f, 1224f, 7f, Pc.border2)
-                text("添加内容或使用工具", 60f, 1300f, 52f, Pc.text, true)
+                text("添加内容或使用工具", 60f, 1300f, 66f, Pc.text, true)
                 val tools = listOf(
                     "拍照" to "相", "选择图片" to "图", "上传文件" to "文",
                     "生成图片" to "画", "制作演示" to "P", "深度研究" to "研",
@@ -1027,8 +1108,8 @@ private class AndroidContractRenderer(
                     val left = 54f + col * 342f
                     val top = 1380f + row * 220f
                     rounded(left, top, left + 300f, top + 190f, 28f, color("#F7F8FC"))
-                    iconCircle(left + 150f, top + 72f, 42f, item.second, color("#EEF0FF"), Pc.brand, 30f)
-                    text(item.first, left + 150f, top + 145f, 31f, Pc.text, anchor = Anchor.MIDDLE_ASCENDER)
+                    iconCircle(left + 150f, top + 72f, 42f, item.second, color("#EEF0FF"), Pc.brand, 44f)
+                    text(item.first, left + 150f, top + 145f, 42f, Pc.text, anchor = Anchor.MIDDLE_ASCENDER)
                 }
                 p03ChatComposer("DEFAULT")
             }
@@ -1115,8 +1196,8 @@ private class AndroidContractRenderer(
         rounded(480f, top + 28f, 600f, top + 42f, 7f, Pc.border2)
         val title = if (model) "选择模型" else "回答方式"
         val subtitle = if (model) "默认由 YLVEN 自动匹配适合的模型。" else "无需每次设置，默认由模型自动判断。"
-        text(title, 60f, top + 135f, 54f, Pc.text, true)
-        text(subtitle, 60f, top + 200f, 31f, Pc.text2)
+        text(title, 60f, top + 105f, 60f, Pc.text, true)
+        text(subtitle, 60f, top + 180f, 38f, Pc.text2)
         if (model) {
             var chipX = 60f
             listOf("全部", "推理", "视觉", "快速").forEachIndexed { index, label ->
@@ -1133,11 +1214,11 @@ private class AndroidContractRenderer(
             if (model) p03Spark(540f, top + 650f, 34f)
             text(
                 if (model) "没有符合条件的模型" else "当前模型没有可调整选项",
-                540f, top + if (model) 750f else 610f, 42f, Pc.text, true, Anchor.MIDDLE_ASCENDER,
+                540f, top + if (model) 750f else 610f, 54f, Pc.text, true, Anchor.MIDDLE_ASCENDER,
             )
             text(
                 if (model) "清除筛选后查看全部可用模型。" else "继续使用自动模式即可。",
-                540f, top + if (model) 825f else 680f, 29f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER,
+                540f, top + if (model) 825f else 680f, 38f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER,
             )
             gesture(Pc.text)
             return
@@ -1163,13 +1244,13 @@ private class AndroidContractRenderer(
                 else -> false
             }
             val rowHeight = if (model) 190f else 160f
-            rounded(54f, y, 1026f, y + rowHeight, 30f, if (selected) Pc.brandSoft else Pc.surface, if (selected) Pc.brand else Pc.border, if (selected) 5f else 2f)
+            rounded(54f, y, 1026f, y + rowHeight, 30f, if (selected) color("#EEF0FF") else Pc.surface, if (selected) Pc.brand else Pc.border, if (selected) 3f else 2f)
             val textX = if (model) 205f else 90f
             if (model) {
-                iconCircle(130f, y + 95f, 48f, item.first.take(1), color("#EEF0FF"), if (disabled) Pc.disabled else Pc.brand, 32f)
+                iconCircle(130f, y + 95f, 48f, item.first.take(1), color("#EEF0FF"), if (disabled) Pc.disabled else Pc.brand, 40f)
             }
-            text(item.first, textX, y + if (model) 45f else 34f, 39f, if (disabled) Pc.disabled else Pc.text, true)
-            text(item.second, textX, y + if (model) 108f else 92f, 28f, if (disabled) Pc.disabled else Pc.text2)
+            text(item.first, textX, y + if (model) 54f else 42f, 50f, if (disabled) Pc.disabled else Pc.text, true)
+            text(item.second, textX, y + if (model) 118f else 114f, 39f, if (disabled) Pc.disabled else Pc.text2)
             if (model) {
                 val tag = if (disabled) "暂不可用" else listOf("推荐", "推理", "长文", "多模态")[index]
                 val tagWidth = if (tag.length > 2) 150f else 112f
@@ -1177,19 +1258,22 @@ private class AndroidContractRenderer(
                     996f - tagWidth, y + 52f, 996f, y + 112f, tag,
                     if (disabled) Pc.warningSoft else color("#F2F4F7"),
                     if (disabled) Pc.warning else Pc.text2,
-                    24f,
+                    28f,
                 )
             } else if (disabled) {
-                pill(840f, y + 50f, 990f, y + 110f, "不可用", Pc.warningSoft, Pc.warning, 24f)
+                pill(840f, y + 50f, 990f, y + 110f, "不可用", Pc.warningSoft, Pc.warning, 30f)
             }
-            if (selected) iconCircle(960f, y + 48f, 25f, "✓", Pc.brand, Pc.surface, 22f)
+            if (selected) {
+                circle(960f, y + 48f, 25f, Pc.brand)
+                lineIcon(945f, y + 33f, "check", 30f, Pc.surface, 4f)
+            }
         }
         if (code == "SERVICE_DEGRADED") {
             rounded(54f, top + 55f, 1026f, top + 163f, 28f, Pc.warningSoft)
             circle(96f, top + 109f, 18f, Pc.warning)
             text(
                 if (model) "部分模型暂不可用" else "当前模型仅支持自动模式",
-                132f, top + 80f, 31f, Pc.text,
+                132f, top + 80f, 40f, Pc.text,
             )
         }
         gesture(Pc.text)
@@ -1198,13 +1282,13 @@ private class AndroidContractRenderer(
     private fun p03SelectorRecovery(top: Float, model: Boolean) {
         rounded(54f, top, 1026f, top + 255f, 34f, Pc.errorSoft)
         circle(102f, top + 64f, 18f, Pc.error)
-        text(if (model) "暂时无法加载模型" else "暂时无法加载设置", 148f, top + 34f, 38f, Pc.text, true)
+        text(if (model) "暂时无法加载模型" else "暂时无法加载设置", 148f, top + 30f, 50f, Pc.text, true)
         text(
             if (model) "请稍后重试，当前选择不会改变。" else "请稍后重试，当前会继续使用自动模式。",
-            148f, top + 94f, 28f, Pc.text2,
+            148f, top + 94f, 38f, Pc.text2,
         )
-        pill(148f, top + 160f, 330f, top + 225f, "重试", Pc.brand, Pc.surface, 24f)
-        pill(350f, top + 160f, 570f, top + 225f, "更换模型", Pc.surface, Pc.text2, 24f, Pc.border)
+        pill(148f, top + 160f, 330f, top + 225f, "重试", Pc.brand, Pc.surface, 30f)
+        pill(350f, top + 160f, 570f, top + 225f, "更换模型", Pc.surface, Pc.text2, 30f, Pc.border)
     }
 
     private fun p03CodeBlock(code: String) {
@@ -1347,7 +1431,7 @@ private class AndroidContractRenderer(
     }
 
     private fun stateFeedback(page: String, code: String) {
-        val p03ComponentFeedbackPages = setOf("YL-A-027", "YL-A-028", "YL-A-029")
+        val p03ComponentFeedbackPages = setOf("YL-A-022", "YL-A-025", "YL-A-027", "YL-A-028", "YL-A-029")
         if (page in P03_PAGE_IDS && page !in p03ComponentFeedbackPages) return
         if (code in setOf("DEFAULT", "POPULATED", "LAUNCH", "FIRST_RUN")) return
         val title = mapOf(
