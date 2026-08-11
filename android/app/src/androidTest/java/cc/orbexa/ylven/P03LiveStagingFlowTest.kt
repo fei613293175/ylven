@@ -65,6 +65,7 @@ class P03LiveStagingFlowTest {
             .performScrollToNode(hasTestTag("YL-A-026-C-P03_026-01"))
         waitForTagText("YL-A-026-C-P03_026-01", "completed", 10_000)
         assertNoInlineError()
+        captureCompletedProductionPage()
         reportStage("message_completed")
 
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
@@ -187,6 +188,27 @@ class P03LiveStagingFlowTest {
             "The live staging flow displayed an application error",
             composeRule.onAllNodesWithTag("p01-inline-error").fetchSemanticsNodes().isEmpty(),
         )
+    }
+
+    private fun captureCompletedProductionPage() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        composeRule.waitForIdle()
+        instrumentation.waitForIdleSync()
+        val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
+            "Could not capture the completed live staging conversation"
+        }
+        try {
+            P03ScreenshotStorage.writePng(
+                context = instrumentation.targetContext,
+                bitmap = bitmap,
+                legacyDirectory = "live-staging-screenshots",
+                scopedDownloadDirectory = "ylven-p03-live-staging",
+                fileName = "YL-A-023-PRODUCTION-COMPLETED.png",
+                subject = "P03 completed live staging screenshot",
+            )
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     private fun reportStage(stage: String) {
