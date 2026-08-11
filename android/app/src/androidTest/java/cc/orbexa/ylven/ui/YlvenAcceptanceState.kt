@@ -460,38 +460,42 @@ private class AndroidContractRenderer(
     // image as a replacement for a rendered screen.
     private fun p03Home(code: String) {
         androidStatus()
-        rect(0f, 72f, 1080f, 238f, Pc.surface)
-        lineIcon(72f, 138f, "menu", 52f, Pc.text, 7f)
+        rect(0f, 72f, 1080f, 240f, Pc.surface)
+        lineIcon(48f, 126f, "menu", 48f, Pc.text, 6f)
         text("YLVEN", 540f, 145f, 48f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
-        text("+", 1000f, 145f, 64f, Pc.text, true, Anchor.MIDDLE_MIDDLE)
+        lineIcon(972f, 117f, "plus", 56f, Pc.text, 6f)
         bottomNav("首页")
         if (code == "LOADING") {
-            skeleton(72f, 330f, 1008f, 5)
+            p03HomeLoading()
             return
         }
-        iconCircle(540f, 385f, 52f, "✦", Pc.brandSoft, Pc.brand, 48f)
-        text("今天想完成什么？", 540f, 500f, 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-        text("多模型协同，完成更复杂的事。", 540f, 590f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
-        shadowCard(54f, 710f, 1026f, 1010f, 72f, shadow = 12f, offset = 5f)
-        text("问问 YLVEN…", 102f, 775f, 38f, Pc.disabled)
-        text("+", 116f, 950f, 54f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
-        pill(160f, 905f, 380f, 985f, "自动选择", Pc.brandSoft, Pc.brand, 27f)
-        lineIcon(856f, 932f, "mic", 52f, Pc.text2, 5f)
-        iconCircle(958f, 945f, 48f, "➤", Pc.brand, Pc.surface, 30f)
+        val hasBanner = code in setOf("REFRESHING", "OFFLINE_CACHE", "NETWORK_ERROR", "SERVICE_DEGRADED")
+        if (hasBanner) p03HomeBanner(code)
+        p03Spark(540f, if (hasBanner) 385f else 335f, 46f)
+        text("今天想完成什么？", 540f, if (hasBanner) 480f else 460f, 64f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
+        text("多模型协同，完成更复杂的事。", 540f, if (hasBanner) 570f else 550f, 34f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        shadowCard(54f, 620f, 1026f, 920f, 72f, shadow = 12f, offset = 5f)
+        text("问问 YLVEN…", 102f, 685f, 38f, Pc.disabled)
+        text("+", 116f, 860f, 54f, Pc.text2, anchor = Anchor.MIDDLE_MIDDLE)
+        pill(160f, 815f, 380f, 895f, "自动选择", color("#EEF0FF"), Pc.brand, 27f)
+        lineIcon(830f, 832f, "mic", 54f, Pc.text2, 5f)
+        iconCircle(958f, 855f, 48f, "➤", if (code == "NETWORK_ERROR") Pc.border2 else Pc.brand, Pc.surface, 30f)
         listOf("分析文件" to "文", "生成图片" to "图", "制作演示" to "P").forEachIndexed { index, item ->
             val left = 54f + index * 330f
-            rounded(left, 1045f, left + 300f, 1135f, 45f, Pc.surface, Pc.border, 2f)
-            iconCircle(left + 42f, 1090f, 28f, item.second, Pc.brandSoft, Pc.brand, 24f)
-            text(item.first, left + 82f, 1090f, 30f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
+            rounded(left, 955f, left + 300f, 1045f, 45f, Pc.surface, Pc.border, 2f)
+            iconCircle(left + 42f, 1000f, 28f, item.second, color("#EEF0FF"), Pc.brand, 24f)
+            text(item.first, left + 82f, 1000f, 30f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
         }
-        text("继续最近的对话", 54f, 1275f, 48f, Pc.text, true)
-        text("查看全部", 1026f, 1275f, 31f, Pc.brand, anchor = Anchor.RIGHT_ASCENDER)
+        text("继续最近的对话", 54f, 1185f, 48f, Pc.text, true)
+        text("查看全部", 1026f, 1185f, 31f, Pc.brand, anchor = Anchor.RIGHT_ASCENDER)
         if (code == "EMPTY") {
-            text("还没有会话", 540f, 1510f, 42f, Pc.text, true, Anchor.MIDDLE_ASCENDER)
-            text("新建第一条对话后会显示在这里", 540f, 1570f, 28f, Pc.text3, anchor = Anchor.MIDDLE_ASCENDER)
+            rounded(54f, 1250f, 1026f, 1410f, 28f, Pc.surface, Pc.border, 2f)
+            p03Spark(115f, 1330f, 22f)
+            text("从一个问题开始", 175f, 1280f, 36f, Pc.text, true)
+            text("第一条消息发送后才会创建正式会话。", 175f, 1340f, 28f, Pc.text3)
         } else {
             listOf("多服务器 AI 架构设计" to "GPT-5.6 Sol · 刚刚", "对话上下文与长期记忆方案" to "Claude Opus · 昨天").forEachIndexed { index, item ->
-                val y = 1335f + index * 180f
+                val y = 1250f + index * 180f
                 rounded(54f, y, 1026f, y + 150f, 28f, Pc.surface, Pc.border, 2f)
                 iconCircle(125f, y + 75f, 42f, "Y", Pc.brandSoft, Pc.brand, 32f)
                 text(item.first, 195f, y + 46f, 36f, Pc.text, true)
@@ -499,12 +503,31 @@ private class AndroidContractRenderer(
                 text("›", 955f, y + 75f, 42f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
             }
         }
-        when (code) {
-            "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 250f, .82f, "正在更新内容…")
-            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 250f, .82f, "正在显示最近保存的内容")
-            "NETWORK_ERROR" -> statusBanner("NETWORK_ERROR", 250f, .82f, "网络不可用，请检查连接后重试")
-            "SERVICE_DEGRADED" -> statusBanner("SERVICE_DEGRADED", 250f, .82f, "部分能力暂时不可用")
+    }
+
+    private fun p03HomeLoading() {
+        val skeleton = color("#EAECF0")
+        val skeletonSoft = color("#F2F4F7")
+        circle(540f, 335f, 52f, skeletonSoft)
+        rounded(300f, 440f, 780f, 500f, 30f, skeleton)
+        rounded(380f, 535f, 700f, 568f, 16f, skeletonSoft)
+        rounded(54f, 620f, 1026f, 920f, 72f, skeleton)
+        rounded(54f, 1035f, 390f, 1075f, 20f, skeleton)
+        rounded(54f, 1140f, 1026f, 1300f, 28f, skeleton)
+        rounded(54f, 1340f, 1026f, 1500f, 28f, skeleton)
+    }
+
+    private fun p03HomeBanner(code: String) {
+        val spec = when (code) {
+            "REFRESHING" -> HomeBannerSpec(Pc.infoSoft, Pc.info, "正在更新最近内容", "")
+            "OFFLINE_CACHE" -> HomeBannerSpec(Pc.warningSoft, Pc.warning, "当前离线，仍可查看最近内容", "重试")
+            "NETWORK_ERROR" -> HomeBannerSpec(Pc.errorSoft, Pc.error, "网络暂不可用，请检查连接后重试", "重试")
+            else -> HomeBannerSpec(Pc.warningSoft, Pc.warning, "部分模型暂不可用，已为你保留可用模型", "查看")
         }
+        rounded(40f, 258f, 1040f, 334f, 24f, spec.bg)
+        if (code == "REFRESHING") spinner(78f, 296f, 14f, spec.fg, 5f) else circle(78f, 296f, 14f, spec.fg)
+        text(spec.label, 108f, 273f, 28f, spec.fg)
+        if (spec.action.isNotEmpty()) text(spec.action, 1010f, 273f, 27f, spec.fg, true, Anchor.RIGHT_ASCENDER)
     }
 
     private fun p03ConversationList(code: String, history: Boolean) {
@@ -1792,6 +1815,7 @@ private class AndroidContractRenderer(
     )
 
     private data class Banner(val bg: Int, val fg: Int, val symbol: String, val title: String)
+    private data class HomeBannerSpec(val bg: Int, val fg: Int, val label: String, val action: String)
     private data class ErrorSurface(val symbol: String, val title: String, val message: String, val fg: Int)
     private enum class Anchor { LEFT_ASCENDER, MIDDLE_ASCENDER, RIGHT_ASCENDER, LEFT_MIDDLE, MIDDLE_MIDDLE }
 }
