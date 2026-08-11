@@ -22,6 +22,12 @@ class P03ConversationStateUiTest {
     @Test
     fun everyP03AndroidStateIsRuntimeCaptured() {
         check(P03_STATE_IDS.size == 89) { "P03 state catalog changed; update this acceptance test." }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        P03ScreenshotStorage.resetDirectory(
+            context = context,
+            legacyDirectory = "screenshots",
+            scopedDownloadDirectory = "ylven-p03",
+        )
         val activeState = mutableStateOf(P03_STATE_IDS.first())
         val activity = launchP03TargetActivity()
         composeRule.runOnUiThread {
