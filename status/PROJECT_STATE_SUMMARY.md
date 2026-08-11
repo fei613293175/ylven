@@ -1,6 +1,6 @@
 # Project State Summary
 
-- Generated: `2026-08-11T14:47:46+08:00`
+- Generated: `2026-08-11T15:29:07+08:00`
 - Current phase: `P04`
 - Phase status: `TODO`
 - Current Work Packet: `P04-W01`
@@ -11,11 +11,11 @@
 - Closed/deferred Work Packets recorded: `20`
 - Closed releases recorded: `4`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `23968d94dc3e900ba1210f9e59172e2643b3d676`
+- Git HEAD: `6100ac06331f4a57a7d41880929909e539d8fb18`
 
 ## Exact next action
 
-Release `1.3.0` is closed. The exact next work is `P04-W01` in `P04`.
+Continue exactly `P04-W01` using `work-packets/P04-W01.md` and the current phase specification. Do not reselect work from chat history.
 
 ## New-conversation rule
 

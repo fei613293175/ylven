@@ -31,6 +31,7 @@ commands:
   defer_packet: .\ylven.ps1 defer-packet -Packet <Pxx-Wyy> -Reason <reason>
   dispatch_release: .\ylven.ps1 release -Phase <Pxx>
   close_release: .\ylven.ps1 close-release -Phase <Pxx>
+  reopen_release: .\ylven.ps1 reopen-release -Phase <Pxx> -ChangeOrder <CO-ID> -Reason <reason>
 work_packet_close_gate:
 - The packet is the mechanically selected current packet.
 - All bound Feature IDs are final and contain evidence.
@@ -43,6 +44,11 @@ release_close_gate:
 - The exact server build artifact was delivered and OWNER_ACCEPTANCE.md contains APPROVED.
 - The controller validates commit/version/provenance, creates or verifies an immutable version tag, appends the hash-chained release ledger, advances to the next phase, creates a state
   commit and attempts to push it.
+release_reopen_gate:
+- A later owner-approved change order may reopen only the most recently closed phase, and only while the next phase remains unstarted.
+- The approved change-order Work Packets must already exist and contain unfinished scope.
+- The controller preserves the old immutable tag and RELEASE_CLOSED row, then appends a hash-chained RELEASE_REOPENED event.
+- A replacement release uses a change-order-suffixed immutable tag; the original release tag is never moved or deleted.
 new_conversation_recovery:
 - Run resume before planning or editing.
 - Never infer next work from chat wording or memory.

@@ -1,0 +1,8 @@
+﻿interaction_id,feature_id,page_id,surface,binding_role,user_action,endpoint_or_event,permission,billing_rule,visual_source,functional_source,status
+CO-P03-001-HOME-COMPOSER,P03-048,YL-A-018,ANDROID,PRIMARY_VISIBLE,聚焦首页输入框,android://chat-draft,authenticated_user,none,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-HOME-SEND,P03-043,YL-A-018,ANDROID,PRIMARY_VISIBLE,发送第一条消息并创建正式会话,POST /mobile/v1/conversations/from-first-message,authenticated_user,usage,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-HOME-TOOL,P03-049,YL-A-018,ANDROID,SECONDARY_VISIBLE,打开输入区工具面板,ui://composer-tool-tray,authenticated_user,none,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-CHAT-MODEL,P03-050,YL-A-023,ANDROID,SECONDARY_VISIBLE,打开模型选择器,ui://model-selector,authenticated_user,none,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-CHAT-REASONING,P03-050,YL-A-034,ANDROID,SECONDARY_VISIBLE,选择回答方式,ui://reasoning-selector,authenticated_user,none,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-CHAT-RETRY,P03-047,YL-A-023,ANDROID,RECOVERY,重试失败回答,POST /mobile/v1/conversations/{conversationId}/runs,authenticated_user,usage,CO-P03-001 mockup,feature-map additions,PLANNED
+CO-P03-001-TITLE-RENAME,P03-045,YL-A-020,ANDROID,SECONDARY_VISIBLE,重命名并锁定会话标题,PATCH /mobile/v1/conversations/{conversationId}/title,authenticated_user,none,CO-P03-001 mockup,feature-map additions,PLANNED

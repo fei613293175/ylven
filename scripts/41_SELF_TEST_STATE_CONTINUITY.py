@@ -52,7 +52,28 @@ def main():
   (release/'覆盖安装证据.md').write_text('结果：PASS\n',encoding='utf-8')
   run(r,'close-release','--phase','P00','--no-push'); run(r,'validate')
   phase=yaml.safe_load((r/'CURRENT_PHASE.yaml').read_text()); packet=yaml.safe_load((r/'CURRENT_WORK_PACKET.yaml').read_text()); assert phase['phase_id']=='P01' and packet['work_packet_id']=='P01-W01'
-  ledger=[json.loads(x) for x in (r/'status/RELEASE_LEDGER.jsonl').read_text().splitlines() if x.strip()]; assert ledger[-1]['version_name']=='1.0.0' and ledger[-1]['owner_result']=='APPROVED'
-  hist=[json.loads(x) for x in (r/'status/WORK_PACKET_HISTORY.jsonl').read_text().splitlines() if x.strip()]; assert sum(x.get('event')=='WORK_PACKET_CLOSED' for x in hist)==2
- print('PASS: Work Packet closure, state commits, release ledger, immutable tag and next-session recovery')
+
+  definitions.append({'work_packet_id':'P00-W03','phase':'P00','sequence':3,'title':'change order','feature_ids':['P00-003']})
+  wy(r/'contracts/work-packet-map.yaml',{'work_packets':definitions})
+  runtime=yaml.safe_load((r/'status/WORK_PACKET_STATUS.yaml').read_text())
+  runtime['work_packets'].append({'work_packet_id':'P00-W03','phase':'P00','sequence':3,'status':'PLANNED','started_at':None,'closed_at':None,'started_commit':None,'closed_commit':None,'result':None,'reason':'','evidence':[]})
+  wy(r/'status/WORK_PACKET_STATUS.yaml',runtime); feature(r,'P00',['P00-001','P00-002','P00-003']); commit(r,'install change order')
+  run(r,'reopen-release','--phase','P00','--change-order','CO-TEST-001','--reason','approved incremental scope','--no-push'); run(r,'validate')
+  phase=yaml.safe_load((r/'CURRENT_PHASE.yaml').read_text()); packet=yaml.safe_load((r/'CURRENT_WORK_PACKET.yaml').read_text()); assert phase['phase_id']=='P00' and packet['work_packet_id']=='P00-W03'
+  run(r,'start-packet'); commit(r,'implement change order'); run(r,'close-packet','--no-push')
+  sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip()
+  (release/'构建信息.json').write_text(json.dumps({'commit_sha':sha,'version_name':'1.0.0','version_code':1000000,'apk_sha256':apksha}),encoding='utf-8')
+  (release/'服务器构建来源证明.json').write_text(json.dumps({'commit_sha':sha,'build_host_class':'connected_online_server','build_run_id':'self-test-r2','apk':'sample.apk','apk_sha256':apksha}),encoding='utf-8')
+  (release/'本机下载校验证明.json').write_text(json.dumps({'commit_sha':sha,'server_manifest_verified':True}),encoding='utf-8')
+  (release/'真机验收证据.json').write_text(json.dumps({'commit_sha':sha,'result':'PASS','real_staging_business_flow':'PASS','production_page_visual_review':'PASS','device':{'serial':'self-test'}}),encoding='utf-8')
+  manifest='- Phase: P00\n- Version: 1.0.0\nP00-001 P00-002 P00-003\n'
+  for name in ('原功能清单.md','功能完成对比清单.md','完整测试清单.md'): (release/name).write_text(manifest,encoding='utf-8')
+  run(r,'close-release','--phase','P00','--no-push'); run(r,'validate')
+  phase=yaml.safe_load((r/'CURRENT_PHASE.yaml').read_text()); assert phase['phase_id']=='P01'
+  ledger=[json.loads(x) for x in (r/'status/RELEASE_LEDGER.jsonl').read_text().splitlines() if x.strip()]
+  assert sum(x.get('event')=='RELEASE_CLOSED' and x.get('phase_id')=='P00' for x in ledger)==2
+  assert sum(x.get('event')=='RELEASE_REOPENED' and x.get('phase_id')=='P00' for x in ledger)==1
+  assert ledger[-1]['git_tag']=='sample-v1.0.0-co-test-001' and ledger[-1]['owner_result']=='APPROVED'
+  hist=[json.loads(x) for x in (r/'status/WORK_PACKET_HISTORY.jsonl').read_text().splitlines() if x.strip()]; assert sum(x.get('event')=='WORK_PACKET_CLOSED' for x in hist)==3
+ print('PASS: packet closure, release reopen, replacement immutable tag and next-session recovery')
 if __name__=='__main__': raise SystemExit(main())

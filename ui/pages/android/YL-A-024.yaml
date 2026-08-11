@@ -1,4 +1,4 @@
-schema_version: '1.4'
+schema_version: 1.7-correction
 page_id: YL-A-024
 name: 会话输入区
 surface: ANDROID
@@ -7,111 +7,101 @@ primary_phase: P03
 phases:
 - P03
 work_packets:
-- P03-W02
+- P03-W07
 feature_ids:
 - P03-011
-layout_profile: android_chat
-resolved_layout:
-  surface: ANDROID
-  top_bar: chat
-  bottom_navigation: false
-  horizontal_padding_dp: 16
-  content_bottom_anchor: composer
-  message_gap_dp: 20
+- P03-049
+- P03-050
+layout_profile: android_component_board
 design_system_version: YL-DS-1.2.0
 visual_kind: COMPONENT_BOARD
 parent_page_id: YL-A-023
 visual_identity:
-  template: composer
-  title: 会话输入区组件
-  subtitle: 附件、输入、语音与发送/停止状态
+  template: chat_composer_and_tool_tray
+  title: 会话输入区
+  subtitle: 模型与工具均为可选入口
   required_elements:
-  - 附件按钮
-  - 多行输入
-  - 语音按钮
-  - 发送/停止
-  screen_signature: 6fd4fa3285c8263e
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+  - 附件
+  - 输入
+  - 模型胶囊
+  - 语音
+  - 发送
+  - 工具面板
+  screen_signature: 5bb9118999d527f8
+  identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 critical_token_snapshot:
-  design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
-  android_page_horizontal_dp: 16
-  android_auth_horizontal_dp: 24
-  android_top_bar_height_dp: 56
-  android_bottom_navigation_content_height_dp: 64
-  android_primary_button: 52dp height / 14dp radius
-  android_text_field: 52dp min height / 14dp radius
-  android_card: 16dp radius / 16dp padding / 1dp border
-  android_gaps: inline 8dp / card 12dp / section 24dp
-  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
-  android_icon_and_touch: 24dp icon / 48dp minimum touch
-  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
-  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
-  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
-  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+  page_horizontal_dp: 16
+  top_bar_height_dp: 56
+  bottom_navigation_content_height_dp: 64
+  home_composer: 100dp min height / 24dp radius / 16dp padding
+  chat_composer: 56–148dp / 24dp radius
+  user_bubble: max 84% / 18dp radius
+  title: 24/32sp 700
+  hero: 28/36sp 600–700
+  body: 16/24sp
+  secondary: 14/20sp
+  caption: 12/16sp
+  colors: '#F7F8FC background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
+  copy_rule: consumer UI must use ordinary-user language; raw statuses such as streaming, connecting, provider error, request id are forbidden
 states:
 - state_id: YL-A-024-S01_DEFAULT
   code: DEFAULT
-  name: 默认/可操作
-  description: 数据与控件处于正常可操作状态。
-  recovery: none
+  name: 默认
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-024-S01_DEFAULT
   mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S01_DEFAULT.png
-  mockup_status: APPROVED
-  mockup_sha256: f8e9b151eb0fe1426c00712c794c3f22c01babcd2ab940d032e8a4f391babb69
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 4d62e2f984f8837958c2324ee877e5500bff11788cb0957a1970b53fc1f76614
 - state_id: YL-A-024-S02_INPUT_FOCUSED
   code: INPUT_FOCUSED
   name: 输入聚焦
-  description: 键盘弹出、焦点环和辅助文案布局稳定。
-  recovery: none
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-024-S02_INPUT_FOCUSED
   mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S02_INPUT_FOCUSED.png
-  mockup_status: APPROVED
-  mockup_sha256: d5fadfe257c686c24a056e496c12747e96cde843a56a8ed438a02c2351d31d63
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 380a20147cf38748c6c4afb17401a41819f0cfb969e997fe78c8a2f638efbe51
 - state_id: YL-A-024-S03_UPLOADING
   code: UPLOADING
-  name: 上传中
-  description: 显示文件名、进度、取消和后台继续策略。
-  recovery: cancel_or_wait
+  name: 附件上传
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-024-S03_UPLOADING
   mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S03_UPLOADING.png
-  mockup_status: APPROVED
-  mockup_sha256: cff6471095336f282698aa85cea5e0fa167195d81590a8cca7891005f5a04183
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: b97bff401350545f7fa77813306e04fbcc9ce9c82867f6f36b5b0046469dd675
 - state_id: YL-A-024-S04_DISABLED
   code: DISABLED
-  name: 不可用
-  description: 控件不可用并提供原因，不仅降低透明度。
-  recovery: resolve_prerequisite
+  name: 不可发送
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-024-S04_DISABLED
   mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S04_DISABLED.png
-  mockup_status: APPROVED
-  mockup_sha256: a86ad8a7ef053cef8ab2724394d4e5e7e8aa6f1437bd613cccb2d0b9a49c3694
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 0669e8880ac025080393c394fd0301b518bfabd7b84f162d357d23552f24abd5
 - state_id: YL-A-024-S05_OFFLINE
   code: OFFLINE
   name: 离线
-  description: 说明当前离线；有缓存时显示缓存来源与时间。
-  recovery: retry_when_online
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-024-S05_OFFLINE
   mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S05_OFFLINE.png
-  mockup_status: APPROVED
-  mockup_sha256: 9270f8c132d80dd8990d94a7f0712e5bf058f0f26dbda51f6f6518bc39fcee73
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 675fd0516a189363f70c9b69b4647509bccf73a72ea69de97e9cbb63e25e2689
+- state_id: YL-A-024-S06_TOOL_TRAY_OPEN
+  code: TOOL_TRAY_OPEN
+  name: 工具面板展开
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
+  mockup_id: YL-A-024-S06_TOOL_TRAY_OPEN
+  mockup_path: ui/mockups/android/YL-A-024/YL-A-024-S06_TOOL_TRAY_OPEN.png
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 97123020f10dfb6ad79b53917abc7fd50a712e630d7b15a02bdb9aaa4955b041
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
-  visual_authority: Approved mockup + this resolved numeric contract.
-  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
-  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
-    parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
-    and updated mockup.
+  supersession: All V1.6 mockups and page body descriptions for this Page ID are superseded by CO-P03-001.
+  visual_authority: Approved CO-P03-001 replacement mockup + resolved numeric contract.
+  functional_authority: Feature map and change-order feature additions.
+  no_invention: Sample content does not create functionality. Deprecated pages YL-A-019 and YL-A-031 must not remain in navigation.
+  production_copy: No consumer-facing demo, debug, transport, provider or raw state text is permitted.

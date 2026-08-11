@@ -1,0 +1,65 @@
+schema_version: '1.0'
+work_packets:
+- work_packet_id: P03-W06
+  phase: P03
+  sequence: 6
+  title: 多轮上下文、延迟建会话与自动标题
+  feature_ids:
+  - P03-036
+  - P03-037
+  - P03-038
+  - P03-039
+  - P03-040
+  - P03-041
+  - P03-042
+  - P03-043
+  - P03-044
+  - P03-045
+  page_ids:
+  - YL-A-020
+  - YL-A-023
+  - YL-M-048
+  - YL-M-061
+  owner_approval_required: false
+  spec_kit_scope: Use CO-P03-001 documents. Do not regenerate the full project or repeat earlier P03 planning.
+  visual_gate: Use replacement mockups in CO-P03-001 for listed Android pages.
+  production_gate: No demo, stub, fake success, raw debug copy, or local-only runtime state.
+- work_packet_id: P03-W07
+  phase: P03
+  sequence: 7
+  title: 首页、会话页、输入区与正式运营文案重构
+  feature_ids:
+  - P03-047
+  - P03-048
+  - P03-049
+  - P03-050
+  - P03-051
+  - P03-052
+  page_ids:
+  - YL-A-018
+  - YL-A-020
+  - YL-A-023
+  - YL-A-024
+  - YL-A-026
+  - YL-A-033
+  - YL-A-034
+  owner_approval_required: false
+  spec_kit_scope: Use CO-P03-001 documents. Do not regenerate the full project or repeat earlier P03 planning.
+  visual_gate: Use replacement mockups in CO-P03-001 for listed Android pages.
+  production_gate: No demo, stub, fake success, raw debug copy, or local-only runtime state.
+- work_packet_id: P03-W08
+  phase: P03
+  sequence: 8
+  title: 分布式就绪、上下文诊断与P03最终回归
+  feature_ids:
+  - P03-046
+  - P03-053
+  - P03-054
+  - P03-055
+  page_ids:
+  - YL-A-023
+  - YL-M-061
+  owner_approval_required: false
+  spec_kit_scope: Use CO-P03-001 documents. Do not regenerate the full project or repeat earlier P03 planning.
+  visual_gate: Use replacement mockups in CO-P03-001 for listed Android pages.
+  production_gate: No demo, stub, fake success, raw debug copy, or local-only runtime state.

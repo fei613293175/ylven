@@ -1,4 +1,4 @@
-schema_version: '1.4'
+schema_version: 1.7-correction
 page_id: YL-A-018
 name: 首页
 surface: ANDROID
@@ -7,134 +7,111 @@ primary_phase: P03
 phases:
 - P03
 work_packets:
-- P03-W01
+- P03-W07
 feature_ids:
-- P03-001
+- P03-048
+- P03-049
+- P03-050
+- P03-051
+- P03-052
 layout_profile: android_main_tab
-resolved_layout:
-  surface: ANDROID
-  top_bar: standard
-  bottom_navigation: true
-  horizontal_padding_dp: 16
-  section_gap_dp: 24
-  card_gap_dp: 12
 design_system_version: YL-DS-1.2.0
 visual_kind: PAGE
 parent_page_id: null
 visual_identity:
-  template: home
-  title: AI 首页
-  subtitle: 统一多模型对话入口
+  template: conversation_first_home
+  title: 今天想完成什么？
+  subtitle: 多模型协同，完成更复杂的事。
   required_elements:
-  - 新建对话
-  - 分析文件
-  - 生成图片
-  - 制作 PPT
-  - 最近对话
-  screen_signature: d19b8eef33c3a1fb
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+  - YLVEN 品牌
+  - 主输入框
+  - 自动选择模型
+  - 紧凑能力入口
+  - 最近会话
+  screen_signature: 9505a4626a3b55ba
+  identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 critical_token_snapshot:
-  design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
-  android_page_horizontal_dp: 16
-  android_auth_horizontal_dp: 24
-  android_top_bar_height_dp: 56
-  android_bottom_navigation_content_height_dp: 64
-  android_primary_button: 52dp height / 14dp radius
-  android_text_field: 52dp min height / 14dp radius
-  android_card: 16dp radius / 16dp padding / 1dp border
-  android_gaps: inline 8dp / card 12dp / section 24dp
-  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
-  android_icon_and_touch: 24dp icon / 48dp minimum touch
-  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
-  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
-  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
-  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+  page_horizontal_dp: 16
+  top_bar_height_dp: 56
+  bottom_navigation_content_height_dp: 64
+  home_composer: 100dp min height / 24dp radius / 16dp padding
+  chat_composer: 56–148dp / 24dp radius
+  user_bubble: max 84% / 18dp radius
+  title: 24/32sp 700
+  hero: 28/36sp 600–700
+  body: 16/24sp
+  secondary: 14/20sp
+  caption: 12/16sp
+  colors: '#F7F8FC background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
+  copy_rule: consumer UI must use ordinary-user language; raw statuses such as streaming, connecting, provider error, request id are forbidden
 states:
 - state_id: YL-A-018-S01_LOADING
   code: LOADING
   name: 加载中
-  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
-  recovery: automatic_or_retry
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S01_LOADING
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S01_LOADING.png
-  mockup_status: APPROVED
-  mockup_sha256: 9bb0e529dcd12a9bc3d237e0aae9802f94fa294ee4e62c2a4db0d24fa5aa5693
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 22f273fec7e8cd306b4972817eacdb3b421fbfa83d03d47a28173a8de2799abb
 - state_id: YL-A-018-S02_POPULATED
   code: POPULATED
   name: 有数据
-  description: 真实结构化数据已加载。
-  recovery: none
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S02_POPULATED
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S02_POPULATED.png
-  mockup_status: APPROVED
-  mockup_sha256: e1b1bef98afaf24ba7b0c486dff955214c995e48d1cad730841396e352d91161
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: fafb2e9f6bcfd262d10ec781aa03bb3ef8d04b894de83b9c605a77c5c0598bff
 - state_id: YL-A-018-S03_EMPTY
   code: EMPTY
-  name: 空数据
-  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
-  recovery: primary_action_or_refresh
+  name: 无历史会话
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S03_EMPTY
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S03_EMPTY.png
-  mockup_status: APPROVED
-  mockup_sha256: d20ea8b1105ee6508f721b98801bcb38ecf81c082b9742f5f309e4898a110dfe
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: e76fab9d09386ccb5d01c26ee244e5c882cd782860af45e4a17a795e38d5ab26
 - state_id: YL-A-018-S04_REFRESHING
   code: REFRESHING
-  name: 刷新中
-  description: 保留已有内容并显示局部刷新，不清空整页。
-  recovery: automatic
+  name: 更新中
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S04_REFRESHING
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S04_REFRESHING.png
-  mockup_status: APPROVED
-  mockup_sha256: da1587497c07ae7998438e4c181a3f2b9379d808b6e5c64ac997ceaf522423c0
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 2452535c59db4a6f28e2bb1e7056e4594c3cb28169d77f91c3bbd8ad54386dd1
 - state_id: YL-A-018-S05_OFFLINE_CACHE
   code: OFFLINE_CACHE
   name: 离线缓存
-  description: 展示可用缓存并明确其不是最新数据。
-  recovery: refresh_when_online
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S05_OFFLINE_CACHE
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S05_OFFLINE_CACHE.png
-  mockup_status: APPROVED
-  mockup_sha256: 081795785063a59611d9482a82c14d6b0e18510f39529ad4d30d11cf79b4822c
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 63938de82b08ee7987a6394ad6d9a2dd078f161fe9b0216757e191aa23c12201
 - state_id: YL-A-018-S06_NETWORK_ERROR
   code: NETWORK_ERROR
-  name: 网络连接失败
-  description: 网络不可达或 DNS/TLS 失败，提供重试。
-  recovery: retry
+  name: 网络不可用
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S06_NETWORK_ERROR
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S06_NETWORK_ERROR.png
-  mockup_status: APPROVED
-  mockup_sha256: 7dbbdb3f25c48f68e621547d27dc8bb0828c6bfe3a3b8158110ea68bf2f3a005
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 5b79340121a9a96ec624a85662ae94a11891f05e09a8597263bd2f180b312377
 - state_id: YL-A-018-S07_SERVICE_DEGRADED
   code: SERVICE_DEGRADED
-  name: 服务降级
-  description: 展示受影响能力、替代通道和状态页入口。
-  recovery: choose_alternative_or_retry
+  name: 部分能力不可用
+  description: CO-P03-001 production UX state; user-facing copy is ordinary-user language and contains no raw transport/provider status.
+  recovery: contextual_action
   mockup_id: YL-A-018-S07_SERVICE_DEGRADED
   mockup_path: ui/mockups/android/YL-A-018/YL-A-018-S07_SERVICE_DEGRADED.png
-  mockup_status: APPROVED
-  mockup_sha256: 61beb9f9ba7ae19146dfd034cc86aaed839b0074ee37a4de4acb51ef2da1b670
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: cc7f2240f9949460bfe8d2f56958633d75d343c957a6940a0ee4c02edb54b453
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
-  visual_authority: Approved mockup + this resolved numeric contract.
-  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
-  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
-    parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
-    and updated mockup.
+  supersession: All V1.6 mockups and page body descriptions for this Page ID are superseded by CO-P03-001.
+  visual_authority: Approved CO-P03-001 replacement mockup + resolved numeric contract.
+  functional_authority: Feature map and change-order feature additions.
+  no_invention: Sample content does not create functionality. Deprecated pages YL-A-019 and YL-A-031 must not remain in navigation.
+  production_copy: No consumer-facing demo, debug, transport, provider or raw state text is permitted.

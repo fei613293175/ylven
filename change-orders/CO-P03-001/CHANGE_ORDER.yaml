@@ -1,0 +1,51 @@
+schema_version: '1.0'
+change_order_id: CO-P03-001
+title: 多轮上下文、首页/会话体验、正式运营文案与分布式就绪修正
+status: APPROVED_FOR_IMPLEMENTATION
+created_at: '2026-08-10T00:00:00+08:00'
+base_package: YLVEN_AI_Development_Package_V1.6.0
+required_current_phase: P03
+forbid_close_release_until:
+- P03-W06
+- P03-W07
+- P03-W08
+new_features:
+- P03-036
+- P03-037
+- P03-038
+- P03-039
+- P03-040
+- P03-041
+- P03-042
+- P03-043
+- P03-044
+- P03-045
+- P03-046
+- P03-047
+- P03-048
+- P03-049
+- P03-050
+- P03-051
+- P03-052
+- P03-053
+- P03-054
+- P03-055
+replacement_page_ids:
+- YL-A-018
+- YL-A-020
+- YL-A-023
+- YL-A-024
+- YL-A-026
+- YL-A-033
+- YL-A-034
+deprecated_page_ids:
+- YL-A-019
+- YL-A-031
+global_policy_ids:
+- GLOBAL-PRODUCTION-READY-001
+package_revision: 1.0.1
+visual_revision: YL-A-020-DRAWER-R1
+revision_notes:
+- Redesigned all nine YL-A-020 states as a true modal navigation drawer.
+- Replaced the opaque black outside rail with the actual parent page under a 32% scrim.
+- Added reproducible renderer and CI visual validator.

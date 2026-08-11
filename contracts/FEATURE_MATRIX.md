@@ -1,6 +1,6 @@
 # YLVEN 前端—后端—后台—数据—测试功能追踪矩阵
 
-> 版本：1.4.0；总功能数：**362**；HTTP/API 功能数：**236**。
+> 版本：1.4.0；总功能数：**382**；HTTP/API 功能数：**251**。
 
 本文件是可读索引；机器校验使用 `feature-map.yaml`、`feature-map.schema.json`、`feature-map.csv`、`api-inventory.csv` 与 `test-catalog.csv`。任何前端功能、后台菜单、收费能力或异步任务都必须具有 Feature ID。
 
@@ -166,6 +166,26 @@
 | `P03-033` | 按用户权限校验会话所有权 | Security / 会话访问 | `N/A policy://conversation-ownership` | Authorization Service | conversations、workspace_members | 安全与审计/访问拒绝 | none / none |
 | `P03-034` | 记录聊天链路延迟和错误指标 | Operations / 聊天指标 | `GET /internal/metrics/chat` | Observability | service_metrics、traces | 可观测性/AI运行 | none / none |
 | `P03-035` | 后台查询会话、消息和运行记录 | Admin / 对话与内容/会话详情 | `GET /admin/v1/conversations/{conversationId}` | Conversation Service | conversations、messages、message_runs | 对话与内容/会话列表 | none / none |
+| `P03-036` | 建立规范化会话事实源 | Backend / Conversation Service | `POST/GET /internal/v1/conversations/{conversationId}/context` | Conversation Service | conversations、conversation_branches、messages、message_parts | 对话与内容/会话详情 | none / none |
+| `P03-037` | 按当前分支加载历史上下文 | Backend / Context Compiler | `GET /internal/v1/conversations/{conversationId}/context-items` | AI Runtime | conversation_branches、messages、message_parts | 可观测性/AI运行 | none / none |
+| `P03-038` | 按模型能力执行 Token 预算与裁剪 | Backend / Context Compiler | `POST /internal/v1/context/build` | AI Runtime | context_builds、context_build_items、model_capabilities | 模型与供应商/模型目录 | none / none |
+| `P03-039` | 生成可追溯会话摘要 | Backend / Compaction Worker | `POST /internal/v1/conversations/{conversationId}/compact` | Worker | conversation_summaries、context_compactions、jobs | 对话与内容/上下文策略 | none / conversation_compaction |
+| `P03-040` | 切换模型时重新编译中立上下文 | Backend / Provider Adapter | `POST /internal/v1/context/recompile` | AI Runtime | context_builds、provider_conversation_states | 模型与供应商/路由 | none / none |
+| `P03-041` | Provider continuation 失败自动回退 | Backend / Provider Adapter | `POST /internal/v1/provider-state/fallback` | AI Runtime | provider_conversation_states、context_builds | 可观测性/AI运行 | none / none |
+| `P03-042` | 会话级并发锁与消息幂等 | Backend / Conversation Run | `POST /mobile/v1/conversations/{conversationId}/runs` | AI Runtime | message_runs、idempotency_records、conversation_locks | 可观测性/AI运行 | none / none |
+| `P03-043` | 延迟创建正式会话 | Android/Backend / 首页与空白会话 | `POST /mobile/v1/conversations/from-first-message` | Conversation Service | conversations、messages、drafts | 对话与内容/会话列表 | none / none |
+| `P03-044` | 第一条有效消息后自动生成标题 | Android/Backend / 会话标题 | `POST /internal/v1/conversations/{conversationId}/title` | AI Runtime | conversations、jobs | 对话与内容/标题模型 | none / conversation_title |
+| `P03-045` | 用户重命名后锁定标题 | Android/Backend / 会话菜单 | `PATCH /mobile/v1/conversations/{conversationId}/title` | Conversation Service | conversations | 对话与内容/会话详情 | none / none |
+| `P03-046` | 后台查看上下文构建诊断 | Admin / 可观测性/AI运行 | `GET /admin/v1/ai-runs/{runId}/context-debug` | Observability Service | context_builds、context_build_items、message_runs | 可观测性/AI运行 | none / none |
+| `P03-047` | 建立用户可见状态文案映射 | Android / 会话页 | `GET config://consumer-copy-catalog` | Mobile BFF | system_configs | 内容运营/客户端文案 | none / none |
+| `P03-048` | 将首页重构为对话优先入口 | Android / 首页 | `GET /mobile/v1/home` | Core API | conversations、home_config | 内容运营/首页配置 | none / none |
+| `P03-049` | 把文件图片PPT入口收敛到输入区工具面板 | Android / 会话输入区 | `GET config://composer-tool-tray` | Mobile BFF | feature_flags、home_config | 内容运营/工具入口 | none / none |
+| `P03-050` | 模型和回答方式改为可选高级入口 | Android / 会话输入区 | `GET /mobile/v1/models` | Model Catalog | models、reasoning_profiles | 模型与供应商/模型目录 | none / none |
+| `P03-051` | 普通用户界面禁止技术性调试文案 | Android / 全局消费者界面 | `GET policy://consumer-copy` | Mobile BFF | system_configs | 内容运营/客户端文案 | none / none |
+| `P03-052` | 前后端禁止 Demo 与伪完成实现 | All / 全局 | `GET policy://production-readiness` | Core API | audit_logs、system_configs | 系统运营/发布门禁 | none / none |
+| `P03-053` | 运行事件进入共享事件流并支持游标恢复 | Backend / AI Runtime | `GET /mobile/v1/runs/{runId}/events` | AI Runtime | run_events、redis_streams | 可观测性/AI运行 | none / none |
+| `P03-054` | AI Runtime 保持无状态并支持水平扩容 | Backend / AI Runtime | `GET /internal/v1/health/ai-runtime` | AI Runtime | service_instances、health_checks | 可观测性/服务健康 | none / none |
+| `P03-055` | 执行多实例上下文与流式恢复测试 | CI/Backend / GitHub Actions | `POST ci://p03-distributed-chat` | CI | test_runs、run_events | 可观测性/测试报告 | none / none |
 
 ### P03 统一验收要求
 

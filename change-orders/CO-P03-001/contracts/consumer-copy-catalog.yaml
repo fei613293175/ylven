@@ -1,0 +1,35 @@
+version: CO-P03-001
+scope: consumer Android app
+mappings:
+- internal: CONNECTING
+  user: 正在思考
+- internal: STREAMING
+  user: ''
+- internal: TOOL_FILE_PARSE
+  user: 正在阅读文件
+- internal: TOOL_IMAGE
+  user: 正在生成图片
+- internal: TOOL_PPT
+  user: 正在制作演示文稿
+- internal: RECONNECTING
+  user: 连接不稳定，正在恢复…
+- internal: RATE_LIMITED
+  user: 当前请求较多，请稍后再试
+- internal: PROVIDER_ERROR
+  user: 暂时无法完成回答，请重试
+- internal: OFFLINE
+  user: 当前网络不可用
+- internal: CONTENT_BLOCKED
+  user: 这个请求暂时无法处理，请调整后重试
+forbidden_consumer_literals:
+- 生成状态：streaming
+- 正在连接并接收回答
+- AI 正在流式生成
+- provider error
+- request id
+- Sub2API
+- SSE
+- WebSocket
+- debug
+- demo
+- mock

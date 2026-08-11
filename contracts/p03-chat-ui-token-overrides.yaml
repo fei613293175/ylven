@@ -1,0 +1,43 @@
+base_design_system: YL-DS-1.2.0
+scope:
+- YL-A-018
+- YL-A-020
+- YL-A-023
+- YL-A-024
+- YL-A-026
+- YL-A-033
+- YL-A-034
+home:
+  hero_title: 28/36sp 700
+  brand_slogan: 14/20sp
+  composer_min_height_dp: 100
+  composer_radius_dp: 24
+  recent_row_height_dp: 76
+  large_feature_cards: FORBIDDEN
+chat:
+  top_title: 20/28sp 700
+  model_subtitle: 14/20sp
+  composer_min_height_dp: 56
+  composer_max_height_dp: 148
+  composer_radius_dp: 24
+  user_bubble_max_width_percent: 84
+  user_bubble_radius_dp: 18
+  ai_reply_large_bubble: FORBIDDEN
+states:
+  thinking_copy: 正在思考
+  thinking_visual: subtle shimmer / three-point breathing; no technical status
+  reconnecting_copy: 连接不稳定，正在恢复…
+drawer:
+  page_id: YL-A-020
+  type: modal_navigation_drawer
+  width_dp: 304
+  visible_parent_width_dp: 56
+  end_corner_radius_dp: 16
+  scrim_color: '#000000'
+  scrim_alpha_percent: 32
+  starts_below_system_status_bar: true
+  parent_page_visible_under_scrim: true
+  solid_opaque_black_rail: FORBIDDEN
+  dismiss_on_scrim_tap: true
+  dismiss_on_back: true
+  dismiss_on_swipe: true

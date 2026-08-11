@@ -20,3 +20,8 @@ P03 的实现覆盖会话实体、搜索与回收、provider-backed 异步 run/S
 4. 最终交付包通过发布校验后，由项目所有者将 `所有者验收.md` 标记为 `APPROVED`，再执行 `close-release`。
 
 在最终发布校验和所有者批准完成前，不执行 `close-release`，也不启动 P04。
+
+<!-- CO_P03_001_IMPLEMENTATION_STATUS -->
+## CO-P03-001 未关闭补充
+
+P03新增 P03-W06、P03-W07、P03-W08；三者全部关闭、CI与项目所有者验收通过前，P03不得 close-release，不得推进P04。

@@ -784,18 +784,22 @@ pages:
   name: 首页
   route: android://018
   layout_profile: android_main_tab
-  state_profile: main_tab
+  state_profile: co_p03_production_ux
   feature_ids:
-  - P03-001
+  - P03-048
+  - P03-049
+  - P03-050
+  - P03-051
+  - P03-052
   phases:
   - P03
   primary_phase: P03
   work_packets:
-  - P03-W01
+  - P03-W07
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 7
   state_ids:
@@ -817,17 +821,17 @@ pages:
   visual_kind: PAGE
   parent_page_id: null
   visual_identity:
-    template: home
-    title: AI 首页
-    subtitle: 统一多模型对话入口
+    template: conversation_first_home
+    title: 今天想完成什么？
+    subtitle: 多模型协同，完成更复杂的事。
     required_elements:
-    - 新建对话
-    - 分析文件
-    - 生成图片
-    - 制作 PPT
-    - 最近对话
-    screen_signature: d19b8eef33c3a1fb
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - YLVEN 品牌
+    - 主输入框
+    - 自动选择模型
+    - 紧凑能力入口
+    - 最近会话
+    screen_signature: 9505a4626a3b55ba
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-019
   surface: ANDROID
   name: 首页/新对话
@@ -885,19 +889,23 @@ pages:
   surface: ANDROID
   name: 会话抽屉
   route: android://020
-  layout_profile: android_list
-  state_profile: list
+  layout_profile: android_modal_navigation_drawer
+  state_profile: co_p03_production_ux
   feature_ids:
   - P03-003
+  - P03-004
+  - P03-044
+  - P03-045
   phases:
   - P03
   primary_phase: P03
   work_packets:
-  - P03-W01
+  - P03-W06
+  - P03-W07
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 V1.0.1 approved modal drawer mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 9
   state_ids:
@@ -920,19 +928,34 @@ pages:
   - ui/mockups/android/YL-A-020/YL-A-020-S07_NETWORK_ERROR.png
   - ui/mockups/android/YL-A-020/YL-A-020-S08_SERVER_ERROR.png
   - ui/mockups/android/YL-A-020/YL-A-020-S09_PERMISSION_DENIED.png
-  visual_kind: PAGE
+  visual_kind: OVERLAY
   parent_page_id: YL-A-018
   visual_identity:
-    template: conversation_drawer
-    title: 会话历史
-    subtitle: 搜索、归档和管理全部对话
+    template: modal_conversation_navigation_drawer_with_visible_parent_scrim
+    title: 会话
+    subtitle: 真实会话标题、时间分组与可感知的父页面遮罩
     required_elements:
-    - 今天
-    - 昨天
-    - 最近 7 天
-    - 新建对话
-    screen_signature: aa4f015bb7f11d81
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - 搜索
+    - 开始新对话
+    - 自动标题
+    - 时间分组
+    - 父页面可见
+    - 32%半透明遮罩
+    screen_signature: d9b68c34e8af6142
+    identity_rule: CO-P03-001 V1.0.1 supersedes the first drawer rendering; solid opaque outside rails are forbidden.
+  supported_parent_page_ids:
+  - YL-A-018
+  - YL-A-023
+  overlay_behavior:
+    drawer_width_dp: 304
+    outside_visible_width_dp: 56
+    end_corner_radius_dp: 16
+    scrim: '#000000 @ 32%'
+    parent_content_visible: true
+    dismiss_on_scrim_tap: true
+    dismiss_on_back: true
+    dismiss_on_swipe: true
+    solid_opaque_outside_rail: FORBIDDEN
 - page_id: YL-A-021
   surface: ANDROID
   name: 会话搜索
@@ -1040,26 +1063,32 @@ pages:
   surface: ANDROID
   name: 会话页
   route: android://023
-  layout_profile: android_chat
-  state_profile: chat
+  layout_profile: android_detail
+  state_profile: co_p03_production_ux
   feature_ids:
-  - P03-009
-  - P03-010
-  - P03-012
-  - P03-013
-  - P03-017
-  - P03-027
+  - P03-036
+  - P03-037
+  - P03-038
+  - P03-039
+  - P03-040
+  - P03-041
+  - P03-042
+  - P03-043
+  - P03-044
+  - P03-047
+  - P03-053
+  - P03-054
   phases:
   - P03
   primary_phase: P03
   work_packets:
-  - P03-W02
-  - P03-W03
-  - P03-W04
+  - P03-W06
+  - P03-W07
+  - P03-W08
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 13
   state_ids:
@@ -1093,60 +1122,67 @@ pages:
   visual_kind: PAGE
   parent_page_id: null
   visual_identity:
-    template: chat
-    title: YLVEN App 架构讨论
-    subtitle: GPT-5.6 Sol · 深度推理
+    template: production_chat
+    title: 自动生成的会话标题
+    subtitle: 模型信息作为次级信息
     required_elements:
     - 用户消息
-    - AI 回复
-    - 模型标签
-    - 输入区
-    screen_signature: 75edd175b81c0189
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - AI 回答
+    - 自然语言状态
+    - 底部输入区
+    - 自动标题
+    screen_signature: d54a37fe83ef7061
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-024
   surface: ANDROID
   name: 会话输入区
   route: android://024
-  layout_profile: android_chat
-  state_profile: component_composer
+  layout_profile: android_component_board
+  state_profile: co_p03_production_ux
   feature_ids:
   - P03-011
+  - P03-049
+  - P03-050
   phases:
   - P03
   primary_phase: P03
   work_packets:
-  - P03-W02
+  - P03-W07
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 5
+  state_count: 6
   state_ids:
   - YL-A-024-S01_DEFAULT
   - YL-A-024-S02_INPUT_FOCUSED
   - YL-A-024-S03_UPLOADING
   - YL-A-024-S04_DISABLED
   - YL-A-024-S05_OFFLINE
+  - YL-A-024-S06_TOOL_TRAY_OPEN
   mockup_paths:
   - ui/mockups/android/YL-A-024/YL-A-024-S01_DEFAULT.png
   - ui/mockups/android/YL-A-024/YL-A-024-S02_INPUT_FOCUSED.png
   - ui/mockups/android/YL-A-024/YL-A-024-S03_UPLOADING.png
   - ui/mockups/android/YL-A-024/YL-A-024-S04_DISABLED.png
   - ui/mockups/android/YL-A-024/YL-A-024-S05_OFFLINE.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S06_TOOL_TRAY_OPEN.png
   visual_kind: COMPONENT_BOARD
   parent_page_id: YL-A-023
   visual_identity:
-    template: composer
-    title: 会话输入区组件
-    subtitle: 附件、输入、语音与发送/停止状态
+    template: chat_composer_and_tool_tray
+    title: 会话输入区
+    subtitle: 模型与工具均为可选入口
     required_elements:
-    - 附件按钮
-    - 多行输入
-    - 语音按钮
-    - 发送/停止
-    screen_signature: 6fd4fa3285c8263e
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - 附件
+    - 输入
+    - 模型胶囊
+    - 语音
+    - 发送
+    - 工具面板
+    screen_signature: 5bb9118999d527f8
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-025
   surface: ANDROID
   name: 离线缓存
@@ -1190,21 +1226,22 @@ pages:
   surface: ANDROID
   name: AI 回复
   route: android://026
-  layout_profile: android_chat
-  state_profile: component_response
+  layout_profile: android_component_board
+  state_profile: co_p03_production_ux
   feature_ids:
   - P03-018
   - P03-026
+  - P03-047
+  - P03-051
   phases:
   - P03
   primary_phase: P03
   work_packets:
-  - P03-W03
-  - P03-W04
+  - P03-W07
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 7
   state_ids:
@@ -1226,16 +1263,17 @@ pages:
   visual_kind: COMPONENT_BOARD
   parent_page_id: YL-A-023
   visual_identity:
-    template: ai_response
-    title: AI 回复组件
-    subtitle: 流式内容、工具调用与完成态
+    template: ai_reply_user_copy
+    title: AI 回复
+    subtitle: 不显示底层技术状态
     required_elements:
-    - 模型来源
+    - 正在思考
     - 流式正文
-    - 工具卡
-    - 操作栏
-    screen_signature: e7ccc090e139b3e1
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - 工具进度
+    - 完成操作栏
+    - 可恢复错误
+    screen_signature: 6312db9a26c4eefe
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-027
   surface: ANDROID
   name: AI 回复/代码块
@@ -1506,20 +1544,22 @@ pages:
   name: 模型选择器
   route: android://033
   layout_profile: android_sheet
-  state_profile: selector_content
+  state_profile: co_p03_production_ux
   feature_ids:
   - P04-001
   - P04-002
   - P04-003
+  - P03-050
   phases:
   - P04
   primary_phase: P04
   work_packets:
+  - P03-W07
   - P04-W01
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 6
   state_ids:
@@ -1539,33 +1579,35 @@ pages:
   visual_kind: OVERLAY
   parent_page_id: YL-A-023
   visual_identity:
-    template: model_selector
-    title: 选择 AI 模型
-    subtitle: 按供应商与能力选择当前模型
+    template: optional_model_selector
+    title: 选择模型
+    subtitle: 自动选择为默认，手动选择为高级入口
     required_elements:
-    - 智能推荐
-    - GPT-5.6 Sol
-    - Claude Opus
-    - Grok
-    screen_signature: 7d2f682246da6b41
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - 自动选择
+    - 供应商模型
+    - 能力说明
+    - 可用状态
+    screen_signature: dc3946f565f3581b
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-034
   surface: ANDROID
-  name: 推理选择器
+  name: 回答方式选择器
   route: android://034
   layout_profile: android_sheet
-  state_profile: selector_content
+  state_profile: co_p03_production_ux
   feature_ids:
   - P04-005
+  - P03-050
   phases:
   - P04
   primary_phase: P04
   work_packets:
+  - P03-W07
   - P04-W01
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
   state_count: 6
   state_ids:
@@ -1585,16 +1627,17 @@ pages:
   visual_kind: OVERLAY
   parent_page_id: YL-A-023
   visual_identity:
-    template: reasoning_selector
-    title: 推理强度
-    subtitle: 仅展示当前模型实际支持的档位
+    template: optional_reasoning_selector
+    title: 回答方式
+    subtitle: 默认自动，且只展示模型真实支持的选项
     required_elements:
+    - 自动
     - 快速
     - 标准
     - 深度
-    - 极致
-    screen_signature: c1123b371c4e66c8
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+    - 能力说明
+    screen_signature: 195beb56fc46047c
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
 - page_id: YL-A-035
   surface: ANDROID
   name: 我的/AI设置
@@ -4911,6 +4954,1288 @@ pages:
     - 外部 API
     screen_signature: 125a81a3b75445e2
     identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-001
+  surface: DEVELOPER
+  name: 开发者中心
+  route: /developer/001
+  layout_profile: developer_list
+  state_profile: developer_list
+  feature_ids:
+  - P00-024
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W05
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-D-001-S01_LOADING
+  - YL-D-001-S02_POPULATED
+  - YL-D-001-S03_EMPTY
+  - YL-D-001-S04_FILTER_ACTIVE
+  - YL-D-001-S05_BULK_SELECTED
+  - YL-D-001-S06_PERMISSION_DENIED
+  - YL-D-001-S07_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-001/YL-D-001-S01_LOADING.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S04_FILTER_ACTIVE.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S05_BULK_SELECTED.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S06_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-001/YL-D-001-S07_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: 开发者中心
+    subtitle: YLVEN
+    required_elements:
+    - 建立开发者门户应用壳
+    screen_signature: 15d7631dec0632df
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-002
+  surface: DEVELOPER
+  name: 绑定 Sub2API
+  route: /developer/002
+  layout_profile: developer_detail
+  state_profile: developer_detail
+  feature_ids:
+  - P10-018
+  phases:
+  - P10
+  primary_phase: P10
+  work_packets:
+  - P10-W03
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-002-S01_LOADING
+  - YL-D-002-S02_POPULATED
+  - YL-D-002-S03_EDIT_MODE
+  - YL-D-002-S04_DIRTY
+  - YL-D-002-S05_VALIDATION_ERROR
+  - YL-D-002-S06_SUBMITTING
+  - YL-D-002-S07_SAVE_SUCCESS
+  - YL-D-002-S08_VERSION_CONFLICT
+  - YL-D-002-S09_PERMISSION_DENIED
+  - YL-D-002-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-002/YL-D-002-S01_LOADING.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S03_EDIT_MODE.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S08_VERSION_CONFLICT.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-002/YL-D-002-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: 绑定 Sub2API
+    subtitle: YLVEN
+    required_elements:
+    - 绑定已有 Sub2API 用户且保留余额和 Key
+    screen_signature: 7090b1ba7528a3d1
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-003
+  surface: DEVELOPER
+  name: 开发者概览
+  route: /developer/003
+  layout_profile: developer_dashboard
+  state_profile: developer_dashboard
+  feature_ids:
+  - P11-001
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-D-003-S01_LOADING
+  - YL-D-003-S02_POPULATED
+  - YL-D-003-S03_EMPTY
+  - YL-D-003-S04_PARTIAL_DATA
+  - YL-D-003-S05_BUDGET_EXHAUSTED
+  - YL-D-003-S06_SERVICE_DEGRADED
+  - YL-D-003-S07_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-003/YL-D-003-S01_LOADING.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S04_PARTIAL_DATA.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S05_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S06_SERVICE_DEGRADED.png
+  - ui/mockups/developer/YL-D-003/YL-D-003-S07_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_dashboard
+    title: 开发者概览
+    subtitle: YLVEN
+    required_elements:
+    - 展示开发者中心概览
+    screen_signature: 6a1d4f4dd605e140
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-004
+  surface: DEVELOPER
+  name: 开发者开通
+  route: /developer/004
+  layout_profile: developer_detail
+  state_profile: developer_detail
+  feature_ids:
+  - P11-002
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-004-S01_LOADING
+  - YL-D-004-S02_POPULATED
+  - YL-D-004-S03_EDIT_MODE
+  - YL-D-004-S04_DIRTY
+  - YL-D-004-S05_VALIDATION_ERROR
+  - YL-D-004-S06_SUBMITTING
+  - YL-D-004-S07_SAVE_SUCCESS
+  - YL-D-004-S08_VERSION_CONFLICT
+  - YL-D-004-S09_PERMISSION_DENIED
+  - YL-D-004-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-004/YL-D-004-S01_LOADING.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S03_EDIT_MODE.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S08_VERSION_CONFLICT.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-004/YL-D-004-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: 开发者开通
+    subtitle: YLVEN
+    required_elements:
+    - 激活开发者功能并同意 API 条款
+    screen_signature: 14afd89e6e5b0b45
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-005
+  surface: DEVELOPER
+  name: Sub2API登录
+  route: /developer/005
+  layout_profile: developer_detail
+  state_profile: developer_detail
+  feature_ids:
+  - P11-003
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-005-S01_LOADING
+  - YL-D-005-S02_POPULATED
+  - YL-D-005-S03_EDIT_MODE
+  - YL-D-005-S04_DIRTY
+  - YL-D-005-S05_VALIDATION_ERROR
+  - YL-D-005-S06_SUBMITTING
+  - YL-D-005-S07_SAVE_SUCCESS
+  - YL-D-005-S08_VERSION_CONFLICT
+  - YL-D-005-S09_PERMISSION_DENIED
+  - YL-D-005-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-005/YL-D-005-S01_LOADING.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S03_EDIT_MODE.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S08_VERSION_CONFLICT.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-005/YL-D-005-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: Sub2API登录
+    subtitle: YLVEN
+    required_elements:
+    - 使用 YLVEN OIDC 单点登录 Sub2API
+    screen_signature: 4b0b6dec2ccb3bef
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-006
+  surface: DEVELOPER
+  name: API Key
+  route: /developer/006
+  layout_profile: developer_detail
+  state_profile: developer_key
+  feature_ids:
+  - P11-004
+  - P11-006
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-006-S01_LOADING
+  - YL-D-006-S02_POPULATED
+  - YL-D-006-S03_CREATED_ONCE
+  - YL-D-006-S04_DIRTY
+  - YL-D-006-S05_VALIDATION_ERROR
+  - YL-D-006-S06_SUBMITTING
+  - YL-D-006-S07_SAVE_SUCCESS
+  - YL-D-006-S08_BUDGET_EXHAUSTED
+  - YL-D-006-S09_PERMISSION_DENIED
+  - YL-D-006-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-006/YL-D-006-S01_LOADING.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S03_CREATED_ONCE.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S08_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-006/YL-D-006-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Key
+    subtitle: YLVEN
+    required_elements:
+    - 创建 YLVEN 开发者 API Key
+    - 分页查询 API Key 和最近使用状态
+    screen_signature: a1ac330009bafcab
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-007
+  surface: DEVELOPER
+  name: API Key创建结果
+  route: /developer/007
+  layout_profile: developer_detail
+  state_profile: developer_key
+  feature_ids:
+  - P11-005
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-007-S01_LOADING
+  - YL-D-007-S02_POPULATED
+  - YL-D-007-S03_CREATED_ONCE
+  - YL-D-007-S04_DIRTY
+  - YL-D-007-S05_VALIDATION_ERROR
+  - YL-D-007-S06_SUBMITTING
+  - YL-D-007-S07_SAVE_SUCCESS
+  - YL-D-007-S08_BUDGET_EXHAUSTED
+  - YL-D-007-S09_PERMISSION_DENIED
+  - YL-D-007-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-007/YL-D-007-S01_LOADING.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S03_CREATED_ONCE.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S08_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-007/YL-D-007-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Key创建结果
+    subtitle: YLVEN
+    required_elements:
+    - 仅创建时显示完整 API Key 一次
+    screen_signature: 11e0218658c893c7
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-008
+  surface: DEVELOPER
+  name: API Key详情
+  route: /developer/008
+  layout_profile: developer_detail
+  state_profile: developer_key
+  feature_ids:
+  - P11-007
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-008-S01_LOADING
+  - YL-D-008-S02_POPULATED
+  - YL-D-008-S03_CREATED_ONCE
+  - YL-D-008-S04_DIRTY
+  - YL-D-008-S05_VALIDATION_ERROR
+  - YL-D-008-S06_SUBMITTING
+  - YL-D-008-S07_SAVE_SUCCESS
+  - YL-D-008-S08_BUDGET_EXHAUSTED
+  - YL-D-008-S09_PERMISSION_DENIED
+  - YL-D-008-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-008/YL-D-008-S01_LOADING.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S03_CREATED_ONCE.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S08_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-008/YL-D-008-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Key详情
+    subtitle: YLVEN
+    required_elements:
+    - 轮换、禁用和删除 API Key
+    screen_signature: 5dd014f5063407a2
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-009
+  surface: DEVELOPER
+  name: API Key预算
+  route: /developer/009
+  layout_profile: developer_detail
+  state_profile: finance
+  feature_ids:
+  - P11-008
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W02
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-009-S01_LOADING
+  - YL-D-009-S02_POPULATED
+  - YL-D-009-S03_EMPTY
+  - YL-D-009-S04_PAYMENT_PENDING
+  - YL-D-009-S05_CREDIT_PENDING
+  - YL-D-009-S06_REFUND_PENDING
+  - YL-D-009-S07_BUDGET_EXHAUSTED
+  - YL-D-009-S08_SUCCESS
+  - YL-D-009-S09_SERVER_ERROR
+  - YL-D-009-S10_OFFLINE
+  mockup_paths:
+  - ui/mockups/developer/YL-D-009/YL-D-009-S01_LOADING.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S04_PAYMENT_PENDING.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S05_CREDIT_PENDING.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S06_REFUND_PENDING.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S07_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S08_SUCCESS.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S09_SERVER_ERROR.png
+  - ui/mockups/developer/YL-D-009/YL-D-009-S10_OFFLINE.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Key预算
+    subtitle: YLVEN
+    required_elements:
+    - 配置单 Key 总额和月度预算
+    screen_signature: 664b32537993cf38
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-010
+  surface: DEVELOPER
+  name: 预算与告警
+  route: /developer/010
+  layout_profile: developer_list
+  state_profile: finance
+  feature_ids:
+  - P11-009
+  - P11-027
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W02
+  - P11-W05
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-010-S01_LOADING
+  - YL-D-010-S02_POPULATED
+  - YL-D-010-S03_EMPTY
+  - YL-D-010-S04_PAYMENT_PENDING
+  - YL-D-010-S05_CREDIT_PENDING
+  - YL-D-010-S06_REFUND_PENDING
+  - YL-D-010-S07_BUDGET_EXHAUSTED
+  - YL-D-010-S08_SUCCESS
+  - YL-D-010-S09_SERVER_ERROR
+  - YL-D-010-S10_OFFLINE
+  mockup_paths:
+  - ui/mockups/developer/YL-D-010/YL-D-010-S01_LOADING.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S04_PAYMENT_PENDING.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S05_CREDIT_PENDING.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S06_REFUND_PENDING.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S07_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S08_SUCCESS.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S09_SERVER_ERROR.png
+  - ui/mockups/developer/YL-D-010/YL-D-010-S10_OFFLINE.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: 预算与告警
+    subtitle: YLVEN
+    required_elements:
+    - 配置 API 账号总预算
+    - 配置余额和异常用量告警
+    screen_signature: b4eeeff99e57ec84
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-011
+  surface: DEVELOPER
+  name: API Key安全
+  route: /developer/011
+  layout_profile: developer_detail
+  state_profile: developer_key
+  feature_ids:
+  - P11-010
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W02
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-011-S01_LOADING
+  - YL-D-011-S02_POPULATED
+  - YL-D-011-S03_CREATED_ONCE
+  - YL-D-011-S04_DIRTY
+  - YL-D-011-S05_VALIDATION_ERROR
+  - YL-D-011-S06_SUBMITTING
+  - YL-D-011-S07_SAVE_SUCCESS
+  - YL-D-011-S08_BUDGET_EXHAUSTED
+  - YL-D-011-S09_PERMISSION_DENIED
+  - YL-D-011-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-011/YL-D-011-S01_LOADING.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S03_CREATED_ONCE.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S08_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-011/YL-D-011-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Key安全
+    subtitle: YLVEN
+    required_elements:
+    - 配置 IP 白名单和模型白名单
+    screen_signature: 4e9861487ee94315
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-012
+  surface: DEVELOPER
+  name: 用量统计
+  route: /developer/012
+  layout_profile: developer_list
+  state_profile: finance
+  feature_ids:
+  - P11-022
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W04
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-012-S01_LOADING
+  - YL-D-012-S02_POPULATED
+  - YL-D-012-S03_EMPTY
+  - YL-D-012-S04_PAYMENT_PENDING
+  - YL-D-012-S05_CREDIT_PENDING
+  - YL-D-012-S06_REFUND_PENDING
+  - YL-D-012-S07_BUDGET_EXHAUSTED
+  - YL-D-012-S08_SUCCESS
+  - YL-D-012-S09_SERVER_ERROR
+  - YL-D-012-S10_OFFLINE
+  mockup_paths:
+  - ui/mockups/developer/YL-D-012/YL-D-012-S01_LOADING.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S04_PAYMENT_PENDING.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S05_CREDIT_PENDING.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S06_REFUND_PENDING.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S07_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S08_SUCCESS.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S09_SERVER_ERROR.png
+  - ui/mockups/developer/YL-D-012/YL-D-012-S10_OFFLINE.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: 用量统计
+    subtitle: YLVEN
+    required_elements:
+    - 查询按日期、模型、Key和来源的用量
+    screen_signature: 2f35bc9821ae5a7b
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-013
+  surface: DEVELOPER
+  name: 调用日志
+  route: /developer/013
+  layout_profile: developer_list
+  state_profile: developer_list
+  feature_ids:
+  - P11-023
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W04
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-D-013-S01_LOADING
+  - YL-D-013-S02_POPULATED
+  - YL-D-013-S03_EMPTY
+  - YL-D-013-S04_FILTER_ACTIVE
+  - YL-D-013-S05_BULK_SELECTED
+  - YL-D-013-S06_PERMISSION_DENIED
+  - YL-D-013-S07_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-013/YL-D-013-S01_LOADING.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S04_FILTER_ACTIVE.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S05_BULK_SELECTED.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S06_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-013/YL-D-013-S07_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: 调用日志
+    subtitle: YLVEN
+    required_elements:
+    - 查询逐请求 API 日志
+    screen_signature: 0e772061b985ce4b
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-014
+  surface: DEVELOPER
+  name: API Playground
+  route: /developer/014
+  layout_profile: developer_detail
+  state_profile: developer_detail
+  feature_ids:
+  - P11-024
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W04
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-014-S01_LOADING
+  - YL-D-014-S02_POPULATED
+  - YL-D-014-S03_EDIT_MODE
+  - YL-D-014-S04_DIRTY
+  - YL-D-014-S05_VALIDATION_ERROR
+  - YL-D-014-S06_SUBMITTING
+  - YL-D-014-S07_SAVE_SUCCESS
+  - YL-D-014-S08_VERSION_CONFLICT
+  - YL-D-014-S09_PERMISSION_DENIED
+  - YL-D-014-S10_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-014/YL-D-014-S01_LOADING.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S03_EDIT_MODE.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S04_DIRTY.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S05_VALIDATION_ERROR.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S06_SUBMITTING.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S07_SAVE_SUCCESS.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S08_VERSION_CONFLICT.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S09_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-014/YL-D-014-S10_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_detail
+    title: API Playground
+    subtitle: YLVEN
+    required_elements:
+    - 在 Playground 测试模型和参数
+    screen_signature: c75d08a41d0be5b9
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-015
+  surface: DEVELOPER
+  name: 模型与价格
+  route: /developer/015
+  layout_profile: developer_list
+  state_profile: finance
+  feature_ids:
+  - P11-025
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W04
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 10
+  state_ids:
+  - YL-D-015-S01_LOADING
+  - YL-D-015-S02_POPULATED
+  - YL-D-015-S03_EMPTY
+  - YL-D-015-S04_PAYMENT_PENDING
+  - YL-D-015-S05_CREDIT_PENDING
+  - YL-D-015-S06_REFUND_PENDING
+  - YL-D-015-S07_BUDGET_EXHAUSTED
+  - YL-D-015-S08_SUCCESS
+  - YL-D-015-S09_SERVER_ERROR
+  - YL-D-015-S10_OFFLINE
+  mockup_paths:
+  - ui/mockups/developer/YL-D-015/YL-D-015-S01_LOADING.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S04_PAYMENT_PENDING.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S05_CREDIT_PENDING.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S06_REFUND_PENDING.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S07_BUDGET_EXHAUSTED.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S08_SUCCESS.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S09_SERVER_ERROR.png
+  - ui/mockups/developer/YL-D-015/YL-D-015-S10_OFFLINE.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: 模型与价格
+    subtitle: YLVEN
+    required_elements:
+    - 展示动态模型能力和价格文档
+    screen_signature: 1a7fc2c49541b36a
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-016
+  surface: DEVELOPER
+  name: API文档
+  route: /developer/016
+  layout_profile: developer_docs
+  state_profile: developer_docs
+  feature_ids:
+  - P11-026
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W04
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 6
+  state_ids:
+  - YL-D-016-S01_LOADING
+  - YL-D-016-S02_POPULATED
+  - YL-D-016-S03_FILTER_ACTIVE
+  - YL-D-016-S04_NOT_FOUND
+  - YL-D-016-S05_SERVICE_DEGRADED
+  - YL-D-016-S06_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-016/YL-D-016-S01_LOADING.png
+  - ui/mockups/developer/YL-D-016/YL-D-016-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-016/YL-D-016-S03_FILTER_ACTIVE.png
+  - ui/mockups/developer/YL-D-016/YL-D-016-S04_NOT_FOUND.png
+  - ui/mockups/developer/YL-D-016/YL-D-016-S05_SERVICE_DEGRADED.png
+  - ui/mockups/developer/YL-D-016/YL-D-016-S06_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_docs
+    title: API文档
+    subtitle: YLVEN
+    required_elements:
+    - 发布版本化 API 文档和代码示例
+    screen_signature: f44823028de9b4af
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-D-017
+  surface: DEVELOPER
+  name: Webhook
+  route: /developer/017
+  layout_profile: developer_list
+  state_profile: developer_list
+  feature_ids:
+  - P11-028
+  phases:
+  - P11
+  primary_phase: P11
+  work_packets:
+  - P11-W05
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-D-017-S01_LOADING
+  - YL-D-017-S02_POPULATED
+  - YL-D-017-S03_EMPTY
+  - YL-D-017-S04_FILTER_ACTIVE
+  - YL-D-017-S05_BULK_SELECTED
+  - YL-D-017-S06_PERMISSION_DENIED
+  - YL-D-017-S07_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/developer/YL-D-017/YL-D-017-S01_LOADING.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S02_POPULATED.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S03_EMPTY.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S04_FILTER_ACTIVE.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S05_BULK_SELECTED.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S06_PERMISSION_DENIED.png
+  - ui/mockups/developer/YL-D-017/YL-D-017-S07_SERVER_ERROR.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: developer_list
+    title: Webhook
+    subtitle: YLVEN
+    required_elements:
+    - 注册 Webhook 并验证签名
+    screen_signature: 4f6a5e14c5e9df98
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-001
+  surface: DESIGN_SYSTEM
+  name: 颜色、主题与对比度基准板
+  route: design://board/001
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 颜色 Token、浅色/深色、品牌渐变、语义色
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-001-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-001/YL-DS-001-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 颜色、主题与对比度基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 9fc076de3a468e43
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-002
+  surface: DESIGN_SYSTEM
+  name: 字体、字号、行高与字重基准板
+  route: design://board/002
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: Android 和 Web 字体层级及文本截断
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-002-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-002/YL-DS-002-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 字体、字号、行高与字重基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 2889b5d6c3eb652c
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-003
+  surface: DESIGN_SYSTEM
+  name: 间距、网格、圆角、边框与阴影基准板
+  route: design://board/003
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 8pt 网格及所有固定尺寸
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-003-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-003/YL-DS-003-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 间距、网格、圆角、边框与阴影基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: e424781229aef484
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-004
+  surface: DESIGN_SYSTEM
+  name: 按钮、图标、Chip 与分段控件基准板
+  route: design://board/004
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 全部交互状态
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-004-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-004/YL-DS-004-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 按钮、图标、Chip 与分段控件基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: f14c3e54dcf7507b
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-005
+  surface: DESIGN_SYSTEM
+  name: 输入框、验证码、搜索和表单基准板
+  route: design://board/005
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 聚焦、错误、禁用和辅助文本
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-005-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-005/YL-DS-005-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 输入框、验证码、搜索和表单基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 8a67b4993eb75b7e
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-006
+  surface: DESIGN_SYSTEM
+  name: 顶部栏、底部导航、侧栏和标签页基准板
+  route: design://board/006
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: Android 与 Web 导航
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-006-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-006/YL-DS-006-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 顶部栏、底部导航、侧栏和标签页基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: b6dec54ccb7ee846
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-007
+  surface: DESIGN_SYSTEM
+  name: 卡片、列表、表格、筛选和分页基准板
+  route: design://board/007
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 移动端与后台数据结构
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-007-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-007/YL-DS-007-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 卡片、列表、表格、筛选和分页基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 30a723b1cc6990bc
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-008
+  surface: DESIGN_SYSTEM
+  name: Dialog、Bottom Sheet、Snackbar 与菜单基准板
+  route: design://board/008
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 覆盖层层级和操作顺序
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-008-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-008/YL-DS-008-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: Dialog、Bottom Sheet、Snackbar 与菜单基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 32d5d9a21e8647f5
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-009
+  surface: DESIGN_SYSTEM
+  name: Loading、Skeleton、Empty、Offline 与 Error 基准板
+  route: design://board/009
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 统一状态组件
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-009-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-009/YL-DS-009-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: Loading、Skeleton、Empty、Offline 与 Error 基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 5a713a74f797f01d
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-010
+  surface: DESIGN_SYSTEM
+  name: 聊天消息、模型标签、代码、表格和引用基准板
+  route: design://board/010
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 多模型会话内容
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-010-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-010/YL-DS-010-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 聊天消息、模型标签、代码、表格和引用基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 938198dee9375332
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-011
+  surface: DESIGN_SYSTEM
+  name: 文件、附件、上传、解析和资料库基准板
+  route: design://board/011
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 多模态文件状态
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-011-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-011/YL-DS-011-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 文件、附件、上传、解析和资料库基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 0a22a7d33f91e0c0
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-012
+  surface: DESIGN_SYSTEM
+  name: 图片工作台、任务、结果和编辑基准板
+  route: design://board/012
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: 图片生成与作品
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-012-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-012/YL-DS-012-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 图片工作台、任务、结果和编辑基准板
+    subtitle: YLVEN
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: 4db8baa7cd3e90d2
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+- page_id: YL-DS-013
+  surface: DESIGN_SYSTEM
+  name: PPT 工作台、缩略图、预览和后台/开发者组件基准板
+  route: design://board/013
+  layout_profile: design_board
+  state_profile: design_board
+  feature_ids:
+  - P00-004
+  scope: PPT 与 Web 视觉统一
+  phases:
+  - P00
+  primary_phase: P00
+  work_packets:
+  - P00-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 1
+  state_ids:
+  - YL-DS-013-S01_DEFAULT
+  mockup_paths:
+  - ui/mockups/design-system/YL-DS-013/YL-DS-013-S01_DEFAULT.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: design_board
+    title: 开发者组件基准板
+    subtitle: PPT 工作台、缩略图、预览和后台
+    required_elements:
+    - 建立 YLVEN 浅色与深色主题 Token
+    screen_signature: f4296400a9e254bc
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 - page_id: YL-M-001
   surface: ADMIN
   name: 系统设置/工程信息
@@ -8034,17 +9359,20 @@ pages:
   state_profile: admin_list
   feature_ids:
   - P03-034
+  - P03-046
+  - P03-055
   phases:
   - P03
   primary_phase: P03
   work_packets:
   - P03-W05
+  - P03-W08
   design_system_version: YL-DS-1.2.0
   mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
   functional_authority: contracts/feature-map.yaml
   visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
   sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 8
+  state_count: 9
   state_ids:
   - YL-M-061-S01_LOADING
   - YL-M-061-S02_POPULATED
@@ -8054,6 +9382,7 @@ pages:
   - YL-M-061-S06_PERMISSION_DENIED
   - YL-M-061-S07_NETWORK_ERROR
   - YL-M-061-S08_SERVER_ERROR
+  - YL-M-061-S09_CONTEXT_DEBUG_OPEN
   mockup_paths:
   - ui/mockups/admin/YL-M-061/YL-M-061-S01_LOADING.png
   - ui/mockups/admin/YL-M-061/YL-M-061-S02_POPULATED.png
@@ -8063,6 +9392,7 @@ pages:
   - ui/mockups/admin/YL-M-061/YL-M-061-S06_PERMISSION_DENIED.png
   - ui/mockups/admin/YL-M-061/YL-M-061-S07_NETWORK_ERROR.png
   - ui/mockups/admin/YL-M-061/YL-M-061-S08_SERVER_ERROR.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S09_CONTEXT_DEBUG_OPEN.png
   visual_kind: PAGE
   parent_page_id: null
   visual_identity:
@@ -14835,846 +16165,6 @@ pages:
     - 项目所有者完成 APK 和后台最终验收
     screen_signature: 2dddc0303a40f8b6
     identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-001
-  surface: DEVELOPER
-  name: 开发者中心
-  route: /developer/001
-  layout_profile: developer_list
-  state_profile: developer_list
-  feature_ids:
-  - P00-024
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W05
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 7
-  state_ids:
-  - YL-D-001-S01_LOADING
-  - YL-D-001-S02_POPULATED
-  - YL-D-001-S03_EMPTY
-  - YL-D-001-S04_FILTER_ACTIVE
-  - YL-D-001-S05_BULK_SELECTED
-  - YL-D-001-S06_PERMISSION_DENIED
-  - YL-D-001-S07_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-001/YL-D-001-S01_LOADING.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S04_FILTER_ACTIVE.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S05_BULK_SELECTED.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S06_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-001/YL-D-001-S07_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: 开发者中心
-    subtitle: YLVEN
-    required_elements:
-    - 建立开发者门户应用壳
-    screen_signature: 15d7631dec0632df
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-002
-  surface: DEVELOPER
-  name: 绑定 Sub2API
-  route: /developer/002
-  layout_profile: developer_detail
-  state_profile: developer_detail
-  feature_ids:
-  - P10-018
-  phases:
-  - P10
-  primary_phase: P10
-  work_packets:
-  - P10-W03
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-002-S01_LOADING
-  - YL-D-002-S02_POPULATED
-  - YL-D-002-S03_EDIT_MODE
-  - YL-D-002-S04_DIRTY
-  - YL-D-002-S05_VALIDATION_ERROR
-  - YL-D-002-S06_SUBMITTING
-  - YL-D-002-S07_SAVE_SUCCESS
-  - YL-D-002-S08_VERSION_CONFLICT
-  - YL-D-002-S09_PERMISSION_DENIED
-  - YL-D-002-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-002/YL-D-002-S01_LOADING.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S03_EDIT_MODE.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S08_VERSION_CONFLICT.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-002/YL-D-002-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: 绑定 Sub2API
-    subtitle: YLVEN
-    required_elements:
-    - 绑定已有 Sub2API 用户且保留余额和 Key
-    screen_signature: 7090b1ba7528a3d1
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-003
-  surface: DEVELOPER
-  name: 开发者概览
-  route: /developer/003
-  layout_profile: developer_dashboard
-  state_profile: developer_dashboard
-  feature_ids:
-  - P11-001
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 7
-  state_ids:
-  - YL-D-003-S01_LOADING
-  - YL-D-003-S02_POPULATED
-  - YL-D-003-S03_EMPTY
-  - YL-D-003-S04_PARTIAL_DATA
-  - YL-D-003-S05_BUDGET_EXHAUSTED
-  - YL-D-003-S06_SERVICE_DEGRADED
-  - YL-D-003-S07_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-003/YL-D-003-S01_LOADING.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S04_PARTIAL_DATA.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S05_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S06_SERVICE_DEGRADED.png
-  - ui/mockups/developer/YL-D-003/YL-D-003-S07_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_dashboard
-    title: 开发者概览
-    subtitle: YLVEN
-    required_elements:
-    - 展示开发者中心概览
-    screen_signature: 6a1d4f4dd605e140
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-004
-  surface: DEVELOPER
-  name: 开发者开通
-  route: /developer/004
-  layout_profile: developer_detail
-  state_profile: developer_detail
-  feature_ids:
-  - P11-002
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-004-S01_LOADING
-  - YL-D-004-S02_POPULATED
-  - YL-D-004-S03_EDIT_MODE
-  - YL-D-004-S04_DIRTY
-  - YL-D-004-S05_VALIDATION_ERROR
-  - YL-D-004-S06_SUBMITTING
-  - YL-D-004-S07_SAVE_SUCCESS
-  - YL-D-004-S08_VERSION_CONFLICT
-  - YL-D-004-S09_PERMISSION_DENIED
-  - YL-D-004-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-004/YL-D-004-S01_LOADING.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S03_EDIT_MODE.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S08_VERSION_CONFLICT.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-004/YL-D-004-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: 开发者开通
-    subtitle: YLVEN
-    required_elements:
-    - 激活开发者功能并同意 API 条款
-    screen_signature: 14afd89e6e5b0b45
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-005
-  surface: DEVELOPER
-  name: Sub2API登录
-  route: /developer/005
-  layout_profile: developer_detail
-  state_profile: developer_detail
-  feature_ids:
-  - P11-003
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-005-S01_LOADING
-  - YL-D-005-S02_POPULATED
-  - YL-D-005-S03_EDIT_MODE
-  - YL-D-005-S04_DIRTY
-  - YL-D-005-S05_VALIDATION_ERROR
-  - YL-D-005-S06_SUBMITTING
-  - YL-D-005-S07_SAVE_SUCCESS
-  - YL-D-005-S08_VERSION_CONFLICT
-  - YL-D-005-S09_PERMISSION_DENIED
-  - YL-D-005-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-005/YL-D-005-S01_LOADING.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S03_EDIT_MODE.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S08_VERSION_CONFLICT.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-005/YL-D-005-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: Sub2API登录
-    subtitle: YLVEN
-    required_elements:
-    - 使用 YLVEN OIDC 单点登录 Sub2API
-    screen_signature: 4b0b6dec2ccb3bef
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-006
-  surface: DEVELOPER
-  name: API Key
-  route: /developer/006
-  layout_profile: developer_detail
-  state_profile: developer_key
-  feature_ids:
-  - P11-004
-  - P11-006
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-006-S01_LOADING
-  - YL-D-006-S02_POPULATED
-  - YL-D-006-S03_CREATED_ONCE
-  - YL-D-006-S04_DIRTY
-  - YL-D-006-S05_VALIDATION_ERROR
-  - YL-D-006-S06_SUBMITTING
-  - YL-D-006-S07_SAVE_SUCCESS
-  - YL-D-006-S08_BUDGET_EXHAUSTED
-  - YL-D-006-S09_PERMISSION_DENIED
-  - YL-D-006-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-006/YL-D-006-S01_LOADING.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S03_CREATED_ONCE.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S08_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-006/YL-D-006-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Key
-    subtitle: YLVEN
-    required_elements:
-    - 创建 YLVEN 开发者 API Key
-    - 分页查询 API Key 和最近使用状态
-    screen_signature: a1ac330009bafcab
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-007
-  surface: DEVELOPER
-  name: API Key创建结果
-  route: /developer/007
-  layout_profile: developer_detail
-  state_profile: developer_key
-  feature_ids:
-  - P11-005
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-007-S01_LOADING
-  - YL-D-007-S02_POPULATED
-  - YL-D-007-S03_CREATED_ONCE
-  - YL-D-007-S04_DIRTY
-  - YL-D-007-S05_VALIDATION_ERROR
-  - YL-D-007-S06_SUBMITTING
-  - YL-D-007-S07_SAVE_SUCCESS
-  - YL-D-007-S08_BUDGET_EXHAUSTED
-  - YL-D-007-S09_PERMISSION_DENIED
-  - YL-D-007-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-007/YL-D-007-S01_LOADING.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S03_CREATED_ONCE.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S08_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-007/YL-D-007-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Key创建结果
-    subtitle: YLVEN
-    required_elements:
-    - 仅创建时显示完整 API Key 一次
-    screen_signature: 11e0218658c893c7
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-008
-  surface: DEVELOPER
-  name: API Key详情
-  route: /developer/008
-  layout_profile: developer_detail
-  state_profile: developer_key
-  feature_ids:
-  - P11-007
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-008-S01_LOADING
-  - YL-D-008-S02_POPULATED
-  - YL-D-008-S03_CREATED_ONCE
-  - YL-D-008-S04_DIRTY
-  - YL-D-008-S05_VALIDATION_ERROR
-  - YL-D-008-S06_SUBMITTING
-  - YL-D-008-S07_SAVE_SUCCESS
-  - YL-D-008-S08_BUDGET_EXHAUSTED
-  - YL-D-008-S09_PERMISSION_DENIED
-  - YL-D-008-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-008/YL-D-008-S01_LOADING.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S03_CREATED_ONCE.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S08_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-008/YL-D-008-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Key详情
-    subtitle: YLVEN
-    required_elements:
-    - 轮换、禁用和删除 API Key
-    screen_signature: 5dd014f5063407a2
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-009
-  surface: DEVELOPER
-  name: API Key预算
-  route: /developer/009
-  layout_profile: developer_detail
-  state_profile: finance
-  feature_ids:
-  - P11-008
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W02
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-009-S01_LOADING
-  - YL-D-009-S02_POPULATED
-  - YL-D-009-S03_EMPTY
-  - YL-D-009-S04_PAYMENT_PENDING
-  - YL-D-009-S05_CREDIT_PENDING
-  - YL-D-009-S06_REFUND_PENDING
-  - YL-D-009-S07_BUDGET_EXHAUSTED
-  - YL-D-009-S08_SUCCESS
-  - YL-D-009-S09_SERVER_ERROR
-  - YL-D-009-S10_OFFLINE
-  mockup_paths:
-  - ui/mockups/developer/YL-D-009/YL-D-009-S01_LOADING.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S04_PAYMENT_PENDING.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S05_CREDIT_PENDING.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S06_REFUND_PENDING.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S07_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S08_SUCCESS.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S09_SERVER_ERROR.png
-  - ui/mockups/developer/YL-D-009/YL-D-009-S10_OFFLINE.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Key预算
-    subtitle: YLVEN
-    required_elements:
-    - 配置单 Key 总额和月度预算
-    screen_signature: 664b32537993cf38
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-010
-  surface: DEVELOPER
-  name: 预算与告警
-  route: /developer/010
-  layout_profile: developer_list
-  state_profile: finance
-  feature_ids:
-  - P11-009
-  - P11-027
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W02
-  - P11-W05
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-010-S01_LOADING
-  - YL-D-010-S02_POPULATED
-  - YL-D-010-S03_EMPTY
-  - YL-D-010-S04_PAYMENT_PENDING
-  - YL-D-010-S05_CREDIT_PENDING
-  - YL-D-010-S06_REFUND_PENDING
-  - YL-D-010-S07_BUDGET_EXHAUSTED
-  - YL-D-010-S08_SUCCESS
-  - YL-D-010-S09_SERVER_ERROR
-  - YL-D-010-S10_OFFLINE
-  mockup_paths:
-  - ui/mockups/developer/YL-D-010/YL-D-010-S01_LOADING.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S04_PAYMENT_PENDING.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S05_CREDIT_PENDING.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S06_REFUND_PENDING.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S07_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S08_SUCCESS.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S09_SERVER_ERROR.png
-  - ui/mockups/developer/YL-D-010/YL-D-010-S10_OFFLINE.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: 预算与告警
-    subtitle: YLVEN
-    required_elements:
-    - 配置 API 账号总预算
-    - 配置余额和异常用量告警
-    screen_signature: b4eeeff99e57ec84
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-011
-  surface: DEVELOPER
-  name: API Key安全
-  route: /developer/011
-  layout_profile: developer_detail
-  state_profile: developer_key
-  feature_ids:
-  - P11-010
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W02
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-011-S01_LOADING
-  - YL-D-011-S02_POPULATED
-  - YL-D-011-S03_CREATED_ONCE
-  - YL-D-011-S04_DIRTY
-  - YL-D-011-S05_VALIDATION_ERROR
-  - YL-D-011-S06_SUBMITTING
-  - YL-D-011-S07_SAVE_SUCCESS
-  - YL-D-011-S08_BUDGET_EXHAUSTED
-  - YL-D-011-S09_PERMISSION_DENIED
-  - YL-D-011-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-011/YL-D-011-S01_LOADING.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S03_CREATED_ONCE.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S08_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-011/YL-D-011-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Key安全
-    subtitle: YLVEN
-    required_elements:
-    - 配置 IP 白名单和模型白名单
-    screen_signature: 4e9861487ee94315
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-012
-  surface: DEVELOPER
-  name: 用量统计
-  route: /developer/012
-  layout_profile: developer_list
-  state_profile: finance
-  feature_ids:
-  - P11-022
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W04
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-012-S01_LOADING
-  - YL-D-012-S02_POPULATED
-  - YL-D-012-S03_EMPTY
-  - YL-D-012-S04_PAYMENT_PENDING
-  - YL-D-012-S05_CREDIT_PENDING
-  - YL-D-012-S06_REFUND_PENDING
-  - YL-D-012-S07_BUDGET_EXHAUSTED
-  - YL-D-012-S08_SUCCESS
-  - YL-D-012-S09_SERVER_ERROR
-  - YL-D-012-S10_OFFLINE
-  mockup_paths:
-  - ui/mockups/developer/YL-D-012/YL-D-012-S01_LOADING.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S04_PAYMENT_PENDING.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S05_CREDIT_PENDING.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S06_REFUND_PENDING.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S07_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S08_SUCCESS.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S09_SERVER_ERROR.png
-  - ui/mockups/developer/YL-D-012/YL-D-012-S10_OFFLINE.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: 用量统计
-    subtitle: YLVEN
-    required_elements:
-    - 查询按日期、模型、Key和来源的用量
-    screen_signature: 2f35bc9821ae5a7b
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-013
-  surface: DEVELOPER
-  name: 调用日志
-  route: /developer/013
-  layout_profile: developer_list
-  state_profile: developer_list
-  feature_ids:
-  - P11-023
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W04
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 7
-  state_ids:
-  - YL-D-013-S01_LOADING
-  - YL-D-013-S02_POPULATED
-  - YL-D-013-S03_EMPTY
-  - YL-D-013-S04_FILTER_ACTIVE
-  - YL-D-013-S05_BULK_SELECTED
-  - YL-D-013-S06_PERMISSION_DENIED
-  - YL-D-013-S07_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-013/YL-D-013-S01_LOADING.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S04_FILTER_ACTIVE.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S05_BULK_SELECTED.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S06_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-013/YL-D-013-S07_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: 调用日志
-    subtitle: YLVEN
-    required_elements:
-    - 查询逐请求 API 日志
-    screen_signature: 0e772061b985ce4b
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-014
-  surface: DEVELOPER
-  name: API Playground
-  route: /developer/014
-  layout_profile: developer_detail
-  state_profile: developer_detail
-  feature_ids:
-  - P11-024
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W04
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-014-S01_LOADING
-  - YL-D-014-S02_POPULATED
-  - YL-D-014-S03_EDIT_MODE
-  - YL-D-014-S04_DIRTY
-  - YL-D-014-S05_VALIDATION_ERROR
-  - YL-D-014-S06_SUBMITTING
-  - YL-D-014-S07_SAVE_SUCCESS
-  - YL-D-014-S08_VERSION_CONFLICT
-  - YL-D-014-S09_PERMISSION_DENIED
-  - YL-D-014-S10_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-014/YL-D-014-S01_LOADING.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S03_EDIT_MODE.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S04_DIRTY.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S05_VALIDATION_ERROR.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S06_SUBMITTING.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S07_SAVE_SUCCESS.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S08_VERSION_CONFLICT.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S09_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-014/YL-D-014-S10_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_detail
-    title: API Playground
-    subtitle: YLVEN
-    required_elements:
-    - 在 Playground 测试模型和参数
-    screen_signature: c75d08a41d0be5b9
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-015
-  surface: DEVELOPER
-  name: 模型与价格
-  route: /developer/015
-  layout_profile: developer_list
-  state_profile: finance
-  feature_ids:
-  - P11-025
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W04
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 10
-  state_ids:
-  - YL-D-015-S01_LOADING
-  - YL-D-015-S02_POPULATED
-  - YL-D-015-S03_EMPTY
-  - YL-D-015-S04_PAYMENT_PENDING
-  - YL-D-015-S05_CREDIT_PENDING
-  - YL-D-015-S06_REFUND_PENDING
-  - YL-D-015-S07_BUDGET_EXHAUSTED
-  - YL-D-015-S08_SUCCESS
-  - YL-D-015-S09_SERVER_ERROR
-  - YL-D-015-S10_OFFLINE
-  mockup_paths:
-  - ui/mockups/developer/YL-D-015/YL-D-015-S01_LOADING.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S04_PAYMENT_PENDING.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S05_CREDIT_PENDING.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S06_REFUND_PENDING.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S07_BUDGET_EXHAUSTED.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S08_SUCCESS.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S09_SERVER_ERROR.png
-  - ui/mockups/developer/YL-D-015/YL-D-015-S10_OFFLINE.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: 模型与价格
-    subtitle: YLVEN
-    required_elements:
-    - 展示动态模型能力和价格文档
-    screen_signature: 1a7fc2c49541b36a
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-016
-  surface: DEVELOPER
-  name: API文档
-  route: /developer/016
-  layout_profile: developer_docs
-  state_profile: developer_docs
-  feature_ids:
-  - P11-026
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W04
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 6
-  state_ids:
-  - YL-D-016-S01_LOADING
-  - YL-D-016-S02_POPULATED
-  - YL-D-016-S03_FILTER_ACTIVE
-  - YL-D-016-S04_NOT_FOUND
-  - YL-D-016-S05_SERVICE_DEGRADED
-  - YL-D-016-S06_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-016/YL-D-016-S01_LOADING.png
-  - ui/mockups/developer/YL-D-016/YL-D-016-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-016/YL-D-016-S03_FILTER_ACTIVE.png
-  - ui/mockups/developer/YL-D-016/YL-D-016-S04_NOT_FOUND.png
-  - ui/mockups/developer/YL-D-016/YL-D-016-S05_SERVICE_DEGRADED.png
-  - ui/mockups/developer/YL-D-016/YL-D-016-S06_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_docs
-    title: API文档
-    subtitle: YLVEN
-    required_elements:
-    - 发布版本化 API 文档和代码示例
-    screen_signature: f44823028de9b4af
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-D-017
-  surface: DEVELOPER
-  name: Webhook
-  route: /developer/017
-  layout_profile: developer_list
-  state_profile: developer_list
-  feature_ids:
-  - P11-028
-  phases:
-  - P11
-  primary_phase: P11
-  work_packets:
-  - P11-W05
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 7
-  state_ids:
-  - YL-D-017-S01_LOADING
-  - YL-D-017-S02_POPULATED
-  - YL-D-017-S03_EMPTY
-  - YL-D-017-S04_FILTER_ACTIVE
-  - YL-D-017-S05_BULK_SELECTED
-  - YL-D-017-S06_PERMISSION_DENIED
-  - YL-D-017-S07_SERVER_ERROR
-  mockup_paths:
-  - ui/mockups/developer/YL-D-017/YL-D-017-S01_LOADING.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S02_POPULATED.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S03_EMPTY.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S04_FILTER_ACTIVE.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S05_BULK_SELECTED.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S06_PERMISSION_DENIED.png
-  - ui/mockups/developer/YL-D-017/YL-D-017-S07_SERVER_ERROR.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: developer_list
-    title: Webhook
-    subtitle: YLVEN
-    required_elements:
-    - 注册 Webhook 并验证签名
-    screen_signature: 4f6a5e14c5e9df98
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
 - page_id: YL-W-001
   surface: WEB
   name: 安全验证承载页
@@ -16029,446 +16519,4 @@ pages:
     - 创建事故、更新状态和复盘
     - 生成最终 APK 和完整交付包
     screen_signature: 7c2c17faa117dfcb
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-001
-  surface: DESIGN_SYSTEM
-  name: 颜色、主题与对比度基准板
-  route: design://board/001
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 颜色 Token、浅色/深色、品牌渐变、语义色
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-001-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-001/YL-DS-001-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 颜色、主题与对比度基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 9fc076de3a468e43
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-002
-  surface: DESIGN_SYSTEM
-  name: 字体、字号、行高与字重基准板
-  route: design://board/002
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: Android 和 Web 字体层级及文本截断
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-002-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-002/YL-DS-002-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 字体、字号、行高与字重基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 2889b5d6c3eb652c
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-003
-  surface: DESIGN_SYSTEM
-  name: 间距、网格、圆角、边框与阴影基准板
-  route: design://board/003
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 8pt 网格及所有固定尺寸
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-003-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-003/YL-DS-003-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 间距、网格、圆角、边框与阴影基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: e424781229aef484
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-004
-  surface: DESIGN_SYSTEM
-  name: 按钮、图标、Chip 与分段控件基准板
-  route: design://board/004
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 全部交互状态
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-004-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-004/YL-DS-004-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 按钮、图标、Chip 与分段控件基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: f14c3e54dcf7507b
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-005
-  surface: DESIGN_SYSTEM
-  name: 输入框、验证码、搜索和表单基准板
-  route: design://board/005
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 聚焦、错误、禁用和辅助文本
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-005-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-005/YL-DS-005-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 输入框、验证码、搜索和表单基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 8a67b4993eb75b7e
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-006
-  surface: DESIGN_SYSTEM
-  name: 顶部栏、底部导航、侧栏和标签页基准板
-  route: design://board/006
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: Android 与 Web 导航
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-006-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-006/YL-DS-006-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 顶部栏、底部导航、侧栏和标签页基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: b6dec54ccb7ee846
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-007
-  surface: DESIGN_SYSTEM
-  name: 卡片、列表、表格、筛选和分页基准板
-  route: design://board/007
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 移动端与后台数据结构
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-007-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-007/YL-DS-007-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 卡片、列表、表格、筛选和分页基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 30a723b1cc6990bc
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-008
-  surface: DESIGN_SYSTEM
-  name: Dialog、Bottom Sheet、Snackbar 与菜单基准板
-  route: design://board/008
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 覆盖层层级和操作顺序
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-008-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-008/YL-DS-008-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: Dialog、Bottom Sheet、Snackbar 与菜单基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 32d5d9a21e8647f5
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-009
-  surface: DESIGN_SYSTEM
-  name: Loading、Skeleton、Empty、Offline 与 Error 基准板
-  route: design://board/009
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 统一状态组件
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-009-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-009/YL-DS-009-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: Loading、Skeleton、Empty、Offline 与 Error 基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 5a713a74f797f01d
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-010
-  surface: DESIGN_SYSTEM
-  name: 聊天消息、模型标签、代码、表格和引用基准板
-  route: design://board/010
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 多模型会话内容
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-010-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-010/YL-DS-010-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 聊天消息、模型标签、代码、表格和引用基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 938198dee9375332
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-011
-  surface: DESIGN_SYSTEM
-  name: 文件、附件、上传、解析和资料库基准板
-  route: design://board/011
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 多模态文件状态
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-011-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-011/YL-DS-011-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 文件、附件、上传、解析和资料库基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 0a22a7d33f91e0c0
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-012
-  surface: DESIGN_SYSTEM
-  name: 图片工作台、任务、结果和编辑基准板
-  route: design://board/012
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: 图片生成与作品
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-012-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-012/YL-DS-012-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 图片工作台、任务、结果和编辑基准板
-    subtitle: YLVEN
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: 4db8baa7cd3e90d2
-    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
-- page_id: YL-DS-013
-  surface: DESIGN_SYSTEM
-  name: PPT 工作台、缩略图、预览和后台/开发者组件基准板
-  route: design://board/013
-  layout_profile: design_board
-  state_profile: design_board
-  feature_ids:
-  - P00-004
-  scope: PPT 与 Web 视觉统一
-  phases:
-  - P00
-  primary_phase: P00
-  work_packets:
-  - P00-W01
-  design_system_version: YL-DS-1.2.0
-  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
-  functional_authority: contracts/feature-map.yaml
-  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
-  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
-  state_count: 1
-  state_ids:
-  - YL-DS-013-S01_DEFAULT
-  mockup_paths:
-  - ui/mockups/design-system/YL-DS-013/YL-DS-013-S01_DEFAULT.png
-  visual_kind: PAGE
-  parent_page_id: null
-  visual_identity:
-    template: design_board
-    title: 开发者组件基准板
-    subtitle: PPT 工作台、缩略图、预览和后台
-    required_elements:
-    - 建立 YLVEN 浅色与深色主题 Token
-    screen_signature: f4296400a9e254bc
     identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.

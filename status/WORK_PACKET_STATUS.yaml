@@ -259,6 +259,39 @@ work_packets:
   evidence:
   - git:c60f59de80a016d2113c79ef028991dd061f129a
   - history:da15aa34f832eeb28811b96980d3997b423d46c721c40b972dc23880846d84a5
+- work_packet_id: P03-W06
+  phase: P03
+  sequence: 6
+  status: PLANNED
+  started_at: null
+  closed_at: null
+  started_commit: null
+  closed_commit: null
+  result: null
+  reason: ''
+  evidence: []
+- work_packet_id: P03-W07
+  phase: P03
+  sequence: 7
+  status: PLANNED
+  started_at: null
+  closed_at: null
+  started_commit: null
+  closed_commit: null
+  result: null
+  reason: ''
+  evidence: []
+- work_packet_id: P03-W08
+  phase: P03
+  sequence: 8
+  status: PLANNED
+  started_at: null
+  closed_at: null
+  started_commit: null
+  closed_commit: null
+  result: null
+  reason: ''
+  evidence: []
 - work_packet_id: P04-W01
   phase: P04
   sequence: 1

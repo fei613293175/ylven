@@ -1,0 +1,14 @@
+{
+  "name": "YLVEN_P03_Context_Home_Chat_Production_Correction_Package_V1.0.1_20260810",
+  "version": "1.0.1",
+  "created_date": "2026-08-10",
+  "base": "YLVEN V1.6.0",
+  "change_order_id": "CO-P03-001",
+  "revision": "YL-A-020-DRAWER-R1",
+  "payload_files": 125,
+  "total_files_including_manifests": 130,
+  "android_mockups": 54,
+  "admin_mockups": 1,
+  "drawer_states": 9,
+  "validation": "PASS"
+}

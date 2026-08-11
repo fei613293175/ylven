@@ -2147,6 +2147,386 @@ features:
   test_ids: P03-035-UNIT|P03-035-API|P03-035-E2E
   implementation_notes: ''
   status: PLANNED
+- phase: P03
+  feature_id: P03-036
+  name: 建立规范化会话事实源
+  surface: Backend
+  screen_or_menu: Conversation Service
+  user_action: 保存同一 conversation_id 下的完整可见消息与顺序
+  ui_states: idle|success|conflict|error
+  http_method: POST|GET
+  endpoint_or_event: /internal/v1/conversations/{conversationId}/context
+  backend_service: Conversation Service
+  data_entities: conversations|conversation_branches|messages|message_parts
+  admin_control: 对话与内容/会话详情
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 建立规范化会话事实源必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-036-UNIT|P03-036-API|P03-036-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-037
+  name: 按当前分支加载历史上下文
+  surface: Backend
+  screen_or_menu: Context Compiler
+  user_action: 加载最近完整轮次与当前分支
+  ui_states: loading|success|empty|error
+  http_method: GET
+  endpoint_or_event: /internal/v1/conversations/{conversationId}/context-items
+  backend_service: AI Runtime
+  data_entities: conversation_branches|messages|message_parts
+  admin_control: 可观测性/AI运行
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 按当前分支加载历史上下文必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-037-UNIT|P03-037-API|P03-037-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-038
+  name: 按模型能力执行 Token 预算与裁剪
+  surface: Backend
+  screen_or_menu: Context Compiler
+  user_action: 计算可用输入预算并保留完整轮次
+  ui_states: success|compacted|error
+  http_method: POST
+  endpoint_or_event: /internal/v1/context/build
+  backend_service: AI Runtime
+  data_entities: context_builds|context_build_items|model_capabilities
+  admin_control: 模型与供应商/模型目录
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 按模型能力执行 Token 预算与裁剪必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-038-UNIT|P03-038-API|P03-038-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-039
+  name: 生成可追溯会话摘要
+  surface: Backend
+  screen_or_menu: Compaction Worker
+  user_action: 压缩较早消息但不删除原始记录
+  ui_states: queued|running|success|error
+  http_method: POST
+  endpoint_or_event: /internal/v1/conversations/{conversationId}/compact
+  backend_service: Worker
+  data_entities: conversation_summaries|context_compactions|jobs
+  admin_control: 对话与内容/上下文策略
+  permission: authenticated_user
+  billing_rule: none
+  async_job: conversation_compaction
+  acceptance_criteria: 生成可追溯会话摘要必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-039-UNIT|P03-039-API|P03-039-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-040
+  name: 切换模型时重新编译中立上下文
+  surface: Backend
+  screen_or_menu: Provider Adapter
+  user_action: 使用同一会话事实重建目标模型输入
+  ui_states: success|fallback|error
+  http_method: POST
+  endpoint_or_event: /internal/v1/context/recompile
+  backend_service: AI Runtime
+  data_entities: context_builds|provider_conversation_states
+  admin_control: 模型与供应商/路由
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 切换模型时重新编译中立上下文必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-040-UNIT|P03-040-API|P03-040-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-041
+  name: Provider continuation 失败自动回退
+  surface: Backend
+  screen_or_menu: Provider Adapter
+  user_action: 上游续聊状态失效时本地重建
+  ui_states: success|fallback|error
+  http_method: POST
+  endpoint_or_event: /internal/v1/provider-state/fallback
+  backend_service: AI Runtime
+  data_entities: provider_conversation_states|context_builds
+  admin_control: 可观测性/AI运行
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: Provider continuation 失败自动回退必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-041-UNIT|P03-041-API|P03-041-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-042
+  name: 会话级并发锁与消息幂等
+  surface: Backend
+  screen_or_menu: Conversation Run
+  user_action: 防止重复消息、重复运行和乱序
+  ui_states: success|duplicate|conflict|error
+  http_method: POST
+  endpoint_or_event: /mobile/v1/conversations/{conversationId}/runs
+  backend_service: AI Runtime
+  data_entities: message_runs|idempotency_records|conversation_locks
+  admin_control: 可观测性/AI运行
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 会话级并发锁与消息幂等必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-042-UNIT|P03-042-API|P03-042-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-043
+  name: 延迟创建正式会话
+  surface: Android|Backend
+  screen_or_menu: 首页与空白会话
+  user_action: 第一条消息发送前只保留本地草稿
+  ui_states: draft|submitting|success|error
+  http_method: POST
+  endpoint_or_event: /mobile/v1/conversations/from-first-message
+  backend_service: Conversation Service
+  data_entities: conversations|messages|drafts
+  admin_control: 对话与内容/会话列表
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 延迟创建正式会话必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-043-UNIT|P03-043-API|P03-043-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-044
+  name: 第一条有效消息后自动生成标题
+  surface: Android|Backend
+  screen_or_menu: 会话标题
+  user_action: 先本地临时标题，再异步优化
+  ui_states: temporary|generating|success|fallback
+  http_method: POST
+  endpoint_or_event: /internal/v1/conversations/{conversationId}/title
+  backend_service: AI Runtime
+  data_entities: conversations|jobs
+  admin_control: 对话与内容/标题模型
+  permission: authenticated_user
+  billing_rule: none
+  async_job: conversation_title
+  acceptance_criteria: 第一条有效消息后自动生成标题必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-044-UNIT|P03-044-API|P03-044-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-045
+  name: 用户重命名后锁定标题
+  surface: Android|Backend
+  screen_or_menu: 会话菜单
+  user_action: 手动标题不得被自动任务覆盖
+  ui_states: default|submitting|success|error
+  http_method: PATCH
+  endpoint_or_event: /mobile/v1/conversations/{conversationId}/title
+  backend_service: Conversation Service
+  data_entities: conversations
+  admin_control: 对话与内容/会话详情
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 用户重命名后锁定标题必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-045-UNIT|P03-045-API|P03-045-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-046
+  name: 后台查看上下文构建诊断
+  surface: Admin
+  screen_or_menu: 可观测性/AI运行
+  user_action: 查看本次上下文组成、裁剪与回退
+  ui_states: loading|populated|not_found|error
+  http_method: GET
+  endpoint_or_event: /admin/v1/ai-runs/{runId}/context-debug
+  backend_service: Observability Service
+  data_entities: context_builds|context_build_items|message_runs
+  admin_control: 可观测性/AI运行
+  permission: admin.ai_runs.read
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 后台查看上下文构建诊断必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-046-UNIT|P03-046-API|P03-046-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-047
+  name: 建立用户可见状态文案映射
+  surface: Android
+  screen_or_menu: 会话页
+  user_action: 把内部状态映射为普通用户语言
+  ui_states: thinking|streaming|tool_running|reconnecting|error
+  http_method: GET
+  endpoint_or_event: config://consumer-copy-catalog
+  backend_service: Mobile BFF
+  data_entities: system_configs
+  admin_control: 内容运营/客户端文案
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 建立用户可见状态文案映射必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-047-UNIT|P03-047-API|P03-047-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-048
+  name: 将首页重构为对话优先入口
+  surface: Android
+  screen_or_menu: 首页
+  user_action: 直接输入并开始对话
+  ui_states: loading|populated|empty|offline|error
+  http_method: GET
+  endpoint_or_event: /mobile/v1/home
+  backend_service: Core API
+  data_entities: conversations|home_config
+  admin_control: 内容运营/首页配置
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 将首页重构为对话优先入口必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-048-UNIT|P03-048-API|P03-048-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-049
+  name: 把文件图片PPT入口收敛到输入区工具面板
+  surface: Android
+  screen_or_menu: 会话输入区
+  user_action: 从加号工具面板选择能力
+  ui_states: default|open|selected|disabled
+  http_method: GET
+  endpoint_or_event: config://composer-tool-tray
+  backend_service: Mobile BFF
+  data_entities: feature_flags|home_config
+  admin_control: 内容运营/工具入口
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 把文件图片PPT入口收敛到输入区工具面板必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-049-UNIT|P03-049-API|P03-049-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-050
+  name: 模型和回答方式改为可选高级入口
+  surface: Android
+  screen_or_menu: 会话输入区
+  user_action: 默认自动，用户需要时手动选择
+  ui_states: auto|selected|disabled|degraded
+  http_method: GET
+  endpoint_or_event: /mobile/v1/models
+  backend_service: Model Catalog
+  data_entities: models|reasoning_profiles
+  admin_control: 模型与供应商/模型目录
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 模型和回答方式改为可选高级入口必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-050-UNIT|P03-050-API|P03-050-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-051
+  name: 普通用户界面禁止技术性调试文案
+  surface: Android
+  screen_or_menu: 全局消费者界面
+  user_action: 展示正式运营文案
+  ui_states: pass|violation
+  http_method: GET
+  endpoint_or_event: policy://consumer-copy
+  backend_service: Mobile BFF
+  data_entities: system_configs
+  admin_control: 内容运营/客户端文案
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 普通用户界面禁止技术性调试文案必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-051-UNIT|P03-051-API|P03-051-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-052
+  name: 前后端禁止 Demo 与伪完成实现
+  surface: All
+  screen_or_menu: 全局
+  user_action: 使用真实数据库、接口、权限、日志和错误处理
+  ui_states: pass|violation
+  http_method: GET
+  endpoint_or_event: policy://production-readiness
+  backend_service: Core API
+  data_entities: audit_logs|system_configs
+  admin_control: 系统运营/发布门禁
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 前后端禁止 Demo 与伪完成实现必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-052-UNIT|P03-052-API|P03-052-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-053
+  name: 运行事件进入共享事件流并支持游标恢复
+  surface: Backend
+  screen_or_menu: AI Runtime
+  user_action: 任意实例均可恢复 SSE
+  ui_states: running|reconnecting|completed|error
+  http_method: GET
+  endpoint_or_event: /mobile/v1/runs/{runId}/events
+  backend_service: AI Runtime
+  data_entities: run_events|redis_streams
+  admin_control: 可观测性/AI运行
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 运行事件进入共享事件流并支持游标恢复必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-053-UNIT|P03-053-API|P03-053-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-054
+  name: AI Runtime 保持无状态并支持水平扩容
+  surface: Backend
+  screen_or_menu: AI Runtime
+  user_action: 多实例处理同一类请求
+  ui_states: healthy|degraded|error
+  http_method: GET
+  endpoint_or_event: /internal/v1/health/ai-runtime
+  backend_service: AI Runtime
+  data_entities: service_instances|health_checks
+  admin_control: 可观测性/服务健康
+  permission: authenticated_user
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: AI Runtime 保持无状态并支持水平扩容必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-054-UNIT|P03-054-API|P03-054-E2E
+  implementation_notes: ''
+  status: PLANNED
+- phase: P03
+  feature_id: P03-055
+  name: 执行多实例上下文与流式恢复测试
+  surface: CI|Backend
+  screen_or_menu: GitHub Actions
+  user_action: 验证跨实例连续对话和恢复
+  ui_states: running|pass|fail
+  http_method: POST
+  endpoint_or_event: ci://p03-distributed-chat
+  backend_service: CI
+  data_entities: test_runs|run_events
+  admin_control: 可观测性/测试报告
+  permission: ci
+  billing_rule: none
+  async_job: none
+  acceptance_criteria: 执行多实例上下文与流式恢复测试必须以正式运营标准实现：真实数据持久化、稳定错误码、幂等与权限校验齐全；普通用户界面不得出现 demo、debug、transport、provider 或 raw state 文案；相关自动化测试全部通过。
+  test_ids: P03-055-UNIT|P03-055-API|P03-055-E2E
+  implementation_notes: ''
+  status: PLANNED
 - phase: P04
   feature_id: P04-001
   name: 从后台动态加载可用模型目录
@@ -5329,8 +5709,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“内部调用凭据”完成“为 App 后端创建隐藏内部 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“Sub2API与通道/API
-    Key映射”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“内部调用凭据”完成“为 App 后端创建隐藏内部 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“Sub2API与通道/API Key映射”能够查询或控制该能力，变更写入审计日志。
   test_ids: P10-019-UNIT|P10-019-API|P10-019-E2E
   implementation_notes: ''
   status: PLANNED
@@ -5621,8 +6000,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key”完成“创建 YLVEN 开发者 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key”完成“创建 YLVEN 开发者 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-004-UNIT|P11-004-API|P11-004-E2E
   implementation_notes: ''
   status: PLANNED
@@ -5641,8 +6019,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key创建结果”完成“仅创建时显示完整 API Key 一次”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key创建结果”完成“仅创建时显示完整 API Key 一次”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-005-UNIT|P11-005-API|P11-005-E2E
   implementation_notes: ''
   status: PLANNED
@@ -5661,8 +6038,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key”完成“分页查询 API Key 和最近使用状态”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key”完成“分页查询 API Key 和最近使用状态”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-006-UNIT|P11-006-API|P11-006-E2E
   implementation_notes: ''
   status: PLANNED
@@ -5681,8 +6057,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key详情”完成“轮换、禁用和删除 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key详情”完成“轮换、禁用和删除 API Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-007-UNIT|P11-007-API|P11-007-E2E
   implementation_notes: ''
   status: PLANNED
@@ -5739,8 +6114,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key安全”完成“配置 IP 白名单和模型白名单”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key策略”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key安全”完成“配置 IP 白名单和模型白名单”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key策略”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-010-UNIT|P11-010-API|P11-010-E2E
   implementation_notes: ''
   status: PLANNED
@@ -6122,8 +6496,7 @@ features:
   permission: authenticated_user
   billing_rule: none
   async_job: none
-  acceptance_criteria: 用户可在“API Key隔离”完成“分离 App 内部调用 Key 与开发者 Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API
-    Key策略”能够查询或控制该能力，变更写入审计日志。
+  acceptance_criteria: 用户可在“API Key隔离”完成“分离 App 内部调用 Key 与开发者 Key”，成功结果与服务端持久化状态一致；无权限、参数错误、重复提交、网络超时和服务异常均返回稳定错误码并呈现可恢复状态；管理后台“开发者平台/API Key策略”能够查询或控制该能力，变更写入审计日志。
   test_ids: P11-030-UNIT|P11-030-API|P11-030-E2E
   implementation_notes: ''
   status: PLANNED

@@ -1,0 +1,9 @@
+schema_version: '1.0'
+change_order_id: CO-P03-001
+status: ACTIVE
+phase: P03
+required_work_packets:
+- P03-W06
+- P03-W07
+- P03-W08
+forbid_close_release_until_all_closed: true

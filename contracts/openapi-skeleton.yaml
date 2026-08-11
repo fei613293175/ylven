@@ -8,6 +8,41 @@ servers:
 - url: https://api.orbexa.cc
 - url: https://gateway.orbexa.cc
 paths:
+  /admin/v1/ai-runs/{runId}/context-debug:
+    get:
+      operationId: p03_046_get_admin_v1_ai_runs_runid_context_debug
+      summary: 后台查看上下文构建诊断
+      tags:
+      - Admin
+      - Observability Service
+      x-feature-id: P03-046
+      x-feature-ids:
+      - P03-046
+      x-phases:
+      - P03
+      x-services:
+      - Observability Service
+      x-permissions:
+      - admin.ai_runs.read
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /admin/v1/alerts:
     get:
       operationId: p12_011_get_admin_v1_alerts
@@ -7315,16 +7350,16 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
-  /internal/v1/conversations/{conversationId}/title:
+  /internal/v1/context/build:
     post:
-      operationId: p03_008_post_internal_v1_conversations_conversationid_title
-      summary: 自动生成会话标题
+      operationId: p03_038_post_internal_v1_context_build
+      summary: 按模型能力执行 Token 预算与裁剪
       tags:
       - AI Runtime
       - Backend
-      x-feature-id: P03-008
+      x-feature-id: P03-038
       x-feature-ids:
-      - P03-008
+      - P03-038
       x-phases:
       - P03
       x-services:
@@ -7335,6 +7370,217 @@ paths:
       - none
       x-async-jobs:
       - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/v1/context/recompile:
+    post:
+      operationId: p03_040_post_internal_v1_context_recompile
+      summary: 切换模型时重新编译中立上下文
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-040
+      x-feature-ids:
+      - P03-040
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/v1/conversations/{conversationId}/compact:
+    post:
+      operationId: p03_039_post_internal_v1_conversations_conversationid_compact
+      summary: 生成可追溯会话摘要
+      tags:
+      - Backend
+      - Worker
+      x-feature-id: P03-039
+      x-feature-ids:
+      - P03-039
+      x-phases:
+      - P03
+      x-services:
+      - Worker
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - conversation_compaction
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/v1/conversations/{conversationId}/context:
+    get:
+      operationId: p03_036_get_internal_v1_conversations_conversationid_context
+      summary: 建立规范化会话事实源
+      tags:
+      - Backend
+      - Conversation Service
+      x-feature-id: P03-036
+      x-feature-ids:
+      - P03-036
+      x-phases:
+      - P03
+      x-services:
+      - Conversation Service
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      operationId: p03_036_post_internal_v1_conversations_conversationid_context
+      summary: 建立规范化会话事实源
+      tags:
+      - Backend
+      - Conversation Service
+      x-feature-id: P03-036
+      x-feature-ids:
+      - P03-036
+      x-phases:
+      - P03
+      x-services:
+      - Conversation Service
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/v1/conversations/{conversationId}/context-items:
+    get:
+      operationId: p03_037_get_internal_v1_conversations_conversationid_context_items
+      summary: 按当前分支加载历史上下文
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-037
+      x-feature-ids:
+      - P03-037
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/v1/conversations/{conversationId}/title:
+    post:
+      operationId: p03_008_post_internal_v1_conversations_conversationid_title
+      summary: 自动生成会话标题 / 第一条有效消息后自动生成标题
+      tags:
+      - AI Runtime
+      - Android|Backend
+      - Backend
+      x-feature-id: P03-008
+      x-feature-ids:
+      - P03-008
+      - P03-044
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - conversation_title
       responses:
         '200':
           description: Success
@@ -7490,6 +7736,41 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+  /internal/v1/health/ai-runtime:
+    get:
+      operationId: p03_054_get_internal_v1_health_ai_runtime
+      summary: AI Runtime 保持无状态并支持水平扩容
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-054
+      x-feature-ids:
+      - P03-054
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /internal/v1/projects/{projectId}/retrieve:
     post:
       operationId: p06_012_post_internal_v1_projects_projectid_retrieve
@@ -7525,6 +7806,41 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+  /internal/v1/provider-state/fallback:
+    post:
+      operationId: p03_041_post_internal_v1_provider_state_fallback
+      summary: Provider continuation 失败自动回退
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-041
+      x-feature-ids:
+      - P03-041
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /internal/v1/security/turnstile/verify:
     post:
       operationId: p01_003_post_internal_v1_security_turnstile_verify
@@ -7539,6 +7855,216 @@ paths:
       - P01
       x-services:
       - Security Service
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/conversations/from-first-message:
+    post:
+      operationId: p03_043_post_mobile_v1_conversations_from_first_message
+      summary: 延迟创建正式会话
+      tags:
+      - Android|Backend
+      - Conversation Service
+      x-feature-id: P03-043
+      x-feature-ids:
+      - P03-043
+      x-phases:
+      - P03
+      x-services:
+      - Conversation Service
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/conversations/{conversationId}/runs:
+    post:
+      operationId: p03_042_post_mobile_v1_conversations_conversationid_runs
+      summary: 会话级并发锁与消息幂等
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-042
+      x-feature-ids:
+      - P03-042
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/conversations/{conversationId}/title:
+    patch:
+      operationId: p03_045_patch_mobile_v1_conversations_conversationid_title
+      summary: 用户重命名后锁定标题
+      tags:
+      - Android|Backend
+      - Conversation Service
+      x-feature-id: P03-045
+      x-feature-ids:
+      - P03-045
+      x-phases:
+      - P03
+      x-services:
+      - Conversation Service
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/home:
+    get:
+      operationId: p03_048_get_mobile_v1_home
+      summary: 将首页重构为对话优先入口
+      tags:
+      - Android
+      - Core API
+      x-feature-id: P03-048
+      x-feature-ids:
+      - P03-048
+      x-phases:
+      - P03
+      x-services:
+      - Core API
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/models:
+    get:
+      operationId: p03_050_get_mobile_v1_models
+      summary: 模型和回答方式改为可选高级入口
+      tags:
+      - Android
+      - Model Catalog
+      x-feature-id: P03-050
+      x-feature-ids:
+      - P03-050
+      x-phases:
+      - P03
+      x-services:
+      - Model Catalog
+      x-permissions:
+      - authenticated_user
+      x-billing-rules:
+      - none
+      x-async-jobs:
+      - none
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mobile/v1/runs/{runId}/events:
+    get:
+      operationId: p03_053_get_mobile_v1_runs_runid_events
+      summary: 运行事件进入共享事件流并支持游标恢复
+      tags:
+      - AI Runtime
+      - Backend
+      x-feature-id: P03-053
+      x-feature-ids:
+      - P03-053
+      x-phases:
+      - P03
+      x-services:
+      - AI Runtime
       x-permissions:
       - authenticated_user
       x-billing-rules:

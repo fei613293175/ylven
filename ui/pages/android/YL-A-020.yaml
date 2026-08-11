@@ -1,4 +1,4 @@
-schema_version: '1.4'
+schema_version: 1.7-correction-r1
 page_id: YL-A-020
 name: 会话抽屉
 surface: ANDROID
@@ -7,155 +7,151 @@ primary_phase: P03
 phases:
 - P03
 work_packets:
-- P03-W01
+- P03-W06
+- P03-W07
 feature_ids:
 - P03-003
-layout_profile: android_list
-resolved_layout:
-  surface: ANDROID
-  top_bar: standard
-  bottom_navigation: false
-  horizontal_padding_dp: 16
-  list_gap_dp: 8
-  section_gap_dp: 20
+- P03-004
+- P03-044
+- P03-045
+layout_profile: android_modal_navigation_drawer
 design_system_version: YL-DS-1.2.0
-visual_kind: PAGE
+visual_kind: OVERLAY
 parent_page_id: YL-A-018
 visual_identity:
-  template: conversation_drawer
-  title: 会话历史
-  subtitle: 搜索、归档和管理全部对话
+  template: modal_conversation_navigation_drawer_with_visible_parent_scrim
+  title: 会话
+  subtitle: 真实会话标题、时间分组与可感知的父页面遮罩
   required_elements:
-  - 今天
-  - 昨天
-  - 最近 7 天
-  - 新建对话
-  screen_signature: aa4f015bb7f11d81
-  identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.
+  - 搜索
+  - 开始新对话
+  - 自动标题
+  - 时间分组
+  - 父页面可见
+  - 32%半透明遮罩
+  screen_signature: d9b68c34e8af6142
+  identity_rule: CO-P03-001 package revision 1.0.1 supersedes the first drawer rendering. Outside the drawer must show the actual parent page under a 32% scrim, never
+    a solid black rail.
 critical_token_snapshot:
-  design_system_version: YL-DS-1.2.0
   android_canvas: 360x800dp / 1080x2400px @3x
-  android_page_horizontal_dp: 16
-  android_auth_horizontal_dp: 24
-  android_top_bar_height_dp: 56
-  android_bottom_navigation_content_height_dp: 64
-  android_primary_button: 52dp height / 14dp radius
-  android_text_field: 52dp min height / 14dp radius
-  android_card: 16dp radius / 16dp padding / 1dp border
-  android_gaps: inline 8dp / card 12dp / section 24dp
-  android_typography: page 24/32sp 700; section 20/28sp 700; card 17/24sp 600; body 16/24sp; secondary 14/20sp; caption 12/16sp
-  android_icon_and_touch: 24dp icon / 48dp minimum touch
-  android_chat: composer 52–148dp radius 24; user bubble max 84% radius 18; message gap 20dp
-  android_sheet_dialog: bottom sheet radius 28dp; dialog radius 20dp max width 312dp
-  light_colors: '#F6F7FB background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
-  admin_shell: 1440px canonical; 248px sidebar; 64px topbar; 24px content padding; 48px table row
-  developer_shell: 1440px canonical; 240px sidebar; 64px topbar; 32px content padding
+  page_horizontal_dp: 16
+  top_bar_height_dp: 56
+  bottom_navigation_content_height_dp: 64
+  home_composer: 100dp min height / 24dp radius / 16dp padding
+  chat_composer: 56–148dp / 24dp radius
+  user_bubble: max 84% / 18dp radius
+  title: 24/32sp 700
+  hero: 28/36sp 600–700
+  body: 16/24sp
+  secondary: 14/20sp
+  caption: 12/16sp
+  colors: '#F7F8FC background; #FFFFFF surface; #5B61F6 primary; #101828 primary text; #475467 secondary text; #E4E7EC border'
+  copy_rule: consumer UI must use ordinary-user language; raw statuses such as streaming, connecting, provider error, request id are forbidden
+  drawer_overlay: '304dp drawer / 56dp visible parent / 16dp end corners / #000000 at 32% scrim'
+  drawer_status_bar: system status bar remains full width; drawer and scrim start below it
+  drawer_black_rail_rule: a fully opaque uniform dark strip is forbidden
 states:
 - state_id: YL-A-020-S01_LOADING
   code: LOADING
   name: 加载中
-  description: 使用与最终布局一致的 Skeleton，禁止无限 Loading。
-  recovery: automatic_or_retry
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S01_LOADING
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S01_LOADING.png
-  mockup_status: APPROVED
-  mockup_sha256: 27e4e1abcf5ababf3a81780927bac5e654664be0b66100c657d082b167e00fbe
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: e3e71951070c04d4bf3775ff16f5273c7a2f207fa56401d32c3c84de24fea40e
 - state_id: YL-A-020-S02_POPULATED
   code: POPULATED
   name: 有数据
-  description: 真实结构化数据已加载。
-  recovery: none
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S02_POPULATED
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S02_POPULATED.png
-  mockup_status: APPROVED
-  mockup_sha256: cef9f3bf7d1c5d13523cf590cdd185ee55352284719d4c565571ae0f09f371d6
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: a91eb2a389108860bca9d6166320095b8cebe8febbcb4804fc5cf4b98e9ad759
 - state_id: YL-A-020-S03_EMPTY
   code: EMPTY
   name: 空数据
-  description: 显示原因、下一步和主操作；不得使用伪造内容填满。
-  recovery: primary_action_or_refresh
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S03_EMPTY
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S03_EMPTY.png
-  mockup_status: APPROVED
-  mockup_sha256: f6affed25aa8d432e38cead331d1506734ec43be2d44d5457b39050f7df0296b
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: a26ae5220ed7f7ffdd0d07e928a8e17617a188d8120a1808036d7ac3f6238d9b
 - state_id: YL-A-020-S04_REFRESHING
   code: REFRESHING
   name: 刷新中
-  description: 保留已有内容并显示局部刷新，不清空整页。
-  recovery: automatic
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S04_REFRESHING
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S04_REFRESHING.png
-  mockup_status: APPROVED
-  mockup_sha256: bb2977bea995b998317db74b916407b21017b7014b1e0deab02ae543bbd759f2
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: 837dd57b999bd6294a5330a4be672aeb2a5c79fd41d655548eac723b21e1a80b
 - state_id: YL-A-020-S05_FILTER_ACTIVE
   code: FILTER_ACTIVE
-  name: 筛选生效
-  description: 清晰展示筛选条件和结果数量。
-  recovery: clear_filter
+  name: 搜索结果
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S05_FILTER_ACTIVE
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S05_FILTER_ACTIVE.png
-  mockup_status: APPROVED
-  mockup_sha256: 17e86da6d53916e308409af834e2093a699d1d1ca099dd2737a9dcdc2a517881
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: f5b9d6759daa3894e514c2ed0616cb2e46ab9ad476cf640d173e1250dc5c8c9d
 - state_id: YL-A-020-S06_OFFLINE_CACHE
   code: OFFLINE_CACHE
   name: 离线缓存
-  description: 展示可用缓存并明确其不是最新数据。
-  recovery: refresh_when_online
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S06_OFFLINE_CACHE
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S06_OFFLINE_CACHE.png
-  mockup_status: APPROVED
-  mockup_sha256: 3f10a2201424df7aca88f56fe40300d93b119687543d96766eb7e248c1dfcba4
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: 0fbaa249f4e2795b9b133d5685cabd3556622f2f5864ea3a053064d29ac487ee
 - state_id: YL-A-020-S07_NETWORK_ERROR
   code: NETWORK_ERROR
-  name: 网络连接失败
-  description: 网络不可达或 DNS/TLS 失败，提供重试。
-  recovery: retry
+  name: 网络不可用
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S07_NETWORK_ERROR
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S07_NETWORK_ERROR.png
-  mockup_status: APPROVED
-  mockup_sha256: 069f7035dfe672cd33f844be18ee46eef8a3f41e3f2e8a5e067dd06995e6a26f
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: f0ee4b8124731e13c2417b7f34fc2c66bffceb5cef240230e02dcdb1f36c084f
 - state_id: YL-A-020-S08_SERVER_ERROR
   code: SERVER_ERROR
-  name: 服务异常
-  description: 服务端 5xx，显示请求 ID，不暴露堆栈。
-  recovery: retry_or_status
+  name: 暂时无法加载
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S08_SERVER_ERROR
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S08_SERVER_ERROR.png
-  mockup_status: APPROVED
-  mockup_sha256: 086c28ae2e0f3f711b8bb43991d5b37e6a5768513ed07bda8c44b3ab5d8b487b
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: c5534d7320318506f57043df5f8fd24217500dca870686dfd19b532564ca9a47
 - state_id: YL-A-020-S09_PERMISSION_DENIED
   code: PERMISSION_DENIED
-  name: 权限不足
-  description: 不泄露资源存在性，说明所需权限或返回。
-  recovery: back_or_request_access
+  name: 登录失效
+  description: CO-P03-001-R1 modal drawer state. The parent page remains visibly rendered under a 32% scrim; no opaque black edge or technical user-facing copy.
+  recovery: contextual_action
   mockup_id: YL-A-020-S09_PERMISSION_DENIED
   mockup_path: ui/mockups/android/YL-A-020/YL-A-020-S09_PERMISSION_DENIED.png
-  mockup_status: APPROVED
-  mockup_sha256: bee6ccf5a8e8ec095252415c0a841fd7a501cb7de1525f2ea42c86cb6695310c
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION_R1
+  mockup_sha256: 0dcd485e7485e7e6c6a965c64431ad72a092daf02ff6f9a8738b7d5fd7db9975
 binding_rules:
-  visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
-  visual_authority: Approved mockup + this resolved numeric contract.
-  functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
-  no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
-    parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
-    and updated mockup.
+  supersession: All V1.6 mockups and the first CO-P03-001 YL-A-020 render are superseded by CO-P03-001 package revision 1.0.1.
+  visual_authority: CO-P03-001 V1.0.1 approved replacement mockups + resolved numeric modal drawer contract.
+  functional_authority: Feature map and change-order feature additions.
+  no_invention: Sample content does not create functionality. Deprecated pages YL-A-019 and YL-A-031 must not remain in navigation.
+  production_copy: No consumer-facing demo, debug, transport, provider or raw state text is permitted.
+  overlay_rule: Outside the 304dp drawer, the real parent page must remain visible beneath a 32% black scrim. A flat opaque dark rail is a release-blocking visual
+    defect.
+supported_parent_page_ids:
+- YL-A-018
+- YL-A-023
+overlay_behavior:
+  drawer_width_dp: 304
+  outside_visible_width_dp: 56
+  top_inset_behavior: drawer starts below system status bar
+  end_corner_radius_dp: 16
+  scrim_color: '#000000'
+  scrim_alpha_percent: 32
+  parent_content_visible_under_scrim: true
+  dismiss_on_scrim_tap: true
+  dismiss_on_back: true
+  dismiss_on_swipe: true
+  solid_opaque_outside_rail: FORBIDDEN

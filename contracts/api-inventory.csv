@@ -72,6 +72,21 @@ P03,P03-029,Android,POST,/api/mobile/v1/conversations/{conversationId}/exports,E
 P03,P03-030,Android,POST,/api/mobile/v1/messages/{messageId}/speech,Voice Service,authenticated_user,none,none,jobs|artifacts,AI工具/语音配置
 P03,P03-034,Operations,GET,/internal/metrics/chat,Observability,authenticated_user,none,none,service_metrics|traces,可观测性/AI运行
 P03,P03-035,Admin,GET,/admin/v1/conversations/{conversationId},Conversation Service,authenticated_user,none,none,conversations|messages|message_runs,对话与内容/会话列表
+P03,P03-036,Backend,POST|GET,/internal/v1/conversations/{conversationId}/context,Conversation Service,authenticated_user,none,none,conversations|conversation_branches|messages|message_parts,对话与内容/会话详情
+P03,P03-037,Backend,GET,/internal/v1/conversations/{conversationId}/context-items,AI Runtime,authenticated_user,none,none,conversation_branches|messages|message_parts,可观测性/AI运行
+P03,P03-038,Backend,POST,/internal/v1/context/build,AI Runtime,authenticated_user,none,none,context_builds|context_build_items|model_capabilities,模型与供应商/模型目录
+P03,P03-039,Backend,POST,/internal/v1/conversations/{conversationId}/compact,Worker,authenticated_user,none,conversation_compaction,conversation_summaries|context_compactions|jobs,对话与内容/上下文策略
+P03,P03-040,Backend,POST,/internal/v1/context/recompile,AI Runtime,authenticated_user,none,none,context_builds|provider_conversation_states,模型与供应商/路由
+P03,P03-041,Backend,POST,/internal/v1/provider-state/fallback,AI Runtime,authenticated_user,none,none,provider_conversation_states|context_builds,可观测性/AI运行
+P03,P03-042,Backend,POST,/mobile/v1/conversations/{conversationId}/runs,AI Runtime,authenticated_user,none,none,message_runs|idempotency_records|conversation_locks,可观测性/AI运行
+P03,P03-043,Android|Backend,POST,/mobile/v1/conversations/from-first-message,Conversation Service,authenticated_user,none,none,conversations|messages|drafts,对话与内容/会话列表
+P03,P03-044,Android|Backend,POST,/internal/v1/conversations/{conversationId}/title,AI Runtime,authenticated_user,none,conversation_title,conversations|jobs,对话与内容/标题模型
+P03,P03-045,Android|Backend,PATCH,/mobile/v1/conversations/{conversationId}/title,Conversation Service,authenticated_user,none,none,conversations,对话与内容/会话详情
+P03,P03-046,Admin,GET,/admin/v1/ai-runs/{runId}/context-debug,Observability Service,admin.ai_runs.read,none,none,context_builds|context_build_items|message_runs,可观测性/AI运行
+P03,P03-048,Android,GET,/mobile/v1/home,Core API,authenticated_user,none,none,conversations|home_config,内容运营/首页配置
+P03,P03-050,Android,GET,/mobile/v1/models,Model Catalog,authenticated_user,none,none,models|reasoning_profiles,模型与供应商/模型目录
+P03,P03-053,Backend,GET,/mobile/v1/runs/{runId}/events,AI Runtime,authenticated_user,none,none,run_events|redis_streams,可观测性/AI运行
+P03,P03-054,Backend,GET,/internal/v1/health/ai-runtime,AI Runtime,authenticated_user,none,none,service_instances|health_checks,可观测性/服务健康
 P04,P04-001,Android,GET,/api/mobile/v1/models,Model Catalog Service,authenticated_user,none,none,models|model_capabilities,模型与供应商/模型目录
 P04,P04-002,Android,GET,/api/mobile/v1/models?group=provider,Model Catalog Service,authenticated_user,none,none,providers|models,模型与供应商/供应商
 P04,P04-003,Android,GET,/api/mobile/v1/models/{modelId},Model Catalog Service,authenticated_user,none,none,models|model_capabilities,模型与供应商/模型目录

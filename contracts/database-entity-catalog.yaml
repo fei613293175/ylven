@@ -251,6 +251,7 @@ entities:
   phases:
   - P00
   - P01
+  - P03
   - P07
   - P08
   - P11
@@ -258,6 +259,7 @@ entities:
   services:
   - API Key Service
   - Audit Service
+  - Core API
   - Job Service
   - Observability
   - User Service
@@ -265,6 +267,7 @@ entities:
   - P00-017
   - P01-018
   - P01-024
+  - P03-052
   - P07-022
   - P08-024
   - P11-007
@@ -404,17 +407,61 @@ entities:
   - Content Safety Service
   feature_ids:
   - P07-018
+- entity: context_build_items
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  - Observability Service
+  feature_ids:
+  - P03-038
+  - P03-046
+- entity: context_builds
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  - Observability Service
+  feature_ids:
+  - P03-038
+  - P03-040
+  - P03-041
+  - P03-046
+- entity: context_compactions
+  phases:
+  - P03
+  services:
+  - Worker
+  feature_ids:
+  - P03-039
 - entity: conversation_branches
   phases:
+  - P03
   - P04
   services:
   - AI Runtime
   - Conversation Service
   feature_ids:
+  - P03-036
+  - P03-037
   - P04-011
   - P04-012
   - P04-013
   - P04-016
+- entity: conversation_locks
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  feature_ids:
+  - P03-042
+- entity: conversation_summaries
+  phases:
+  - P03
+  services:
+  - Worker
+  feature_ids:
+  - P03-039
 - entity: conversations
   phases:
   - P03
@@ -425,6 +472,7 @@ entities:
   - AI Runtime
   - Authorization Service
   - Conversation Service
+  - Core API
   - Developer Gateway
   - Mobile BFF
   - Project Service
@@ -441,6 +489,11 @@ entities:
   - P03-028
   - P03-033
   - P03-035
+  - P03-036
+  - P03-043
+  - P03-044
+  - P03-045
+  - P03-048
   - P04-008
   - P06-003
   - P06-007
@@ -564,6 +617,13 @@ entities:
   - P05-018
   - P07-016
   - P08-020
+- entity: drafts
+  phases:
+  - P03
+  services:
+  - Conversation Service
+  feature_ids:
+  - P03-043
 - entity: edge_security_configs
   phases:
   - P12
@@ -678,12 +738,15 @@ entities:
 - entity: feature_flags
   phases:
   - P00
+  - P03
   - P09
   services:
   - Android App
   - CMS Service
+  - Mobile BFF
   feature_ids:
   - P00-005
+  - P03-049
   - P09-010
   - P09-011
 - entity: file_extractions
@@ -765,6 +828,29 @@ entities:
   - P10-017
   - P10-018
   - P11-003
+- entity: health_checks
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  feature_ids:
+  - P03-054
+- entity: home_config
+  phases:
+  - P03
+  services:
+  - Core API
+  - Mobile BFF
+  feature_ids:
+  - P03-048
+  - P03-049
+- entity: idempotency_records
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  feature_ids:
+  - P03-042
 - entity: image_edit_requests
   phases:
   - P07
@@ -865,6 +951,8 @@ entities:
   - P00-009
   - P03-008
   - P03-030
+  - P03-039
+  - P03-044
   - P05-005
   - P05-013
   - P05-022
@@ -1052,6 +1140,8 @@ entities:
   - P03-019
   - P03-020
   - P03-022
+  - P03-036
+  - P03-037
   - P05-007
   - P05-014
   - P05-019
@@ -1066,6 +1156,7 @@ entities:
   - Comparison Orchestrator
   - Context Compiler
   - Conversation Service
+  - Observability Service
   - Workflow Orchestrator
   feature_ids:
   - P03-009
@@ -1076,6 +1167,8 @@ entities:
   - P03-024
   - P03-026
   - P03-035
+  - P03-042
+  - P03-046
   - P04-006
   - P04-009
   - P04-010
@@ -1103,6 +1196,9 @@ entities:
   - P03-014
   - P03-024
   - P03-035
+  - P03-036
+  - P03-037
+  - P03-043
   - P04-012
   - P04-015
   - P04-016
@@ -1128,15 +1224,18 @@ entities:
 - entity: model_capabilities
   phases:
   - P00
+  - P03
   - P04
   - P07
   - P09
   services:
+  - AI Runtime
   - Capability Probe
   - Capability Registry
   - Model Catalog Service
   feature_ids:
   - P00-021
+  - P03-038
   - P04-001
   - P04-003
   - P04-004
@@ -1182,15 +1281,18 @@ entities:
   - P11-025
 - entity: models
   phases:
+  - P03
   - P04
   - P07
   - P09
   - P11
   services:
   - Developer Gateway
+  - Model Catalog
   - Model Catalog Service
   - Pricing Service
   feature_ids:
+  - P03-050
   - P04-001
   - P04-002
   - P04-003
@@ -1478,6 +1580,14 @@ entities:
   - P13-006
   - P13-007
   - P13-008
+- entity: provider_conversation_states
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  feature_ids:
+  - P03-040
+  - P03-041
 - entity: provider_runtime_policies
   phases:
   - P04
@@ -1527,11 +1637,14 @@ entities:
   - P13-012
 - entity: reasoning_profiles
   phases:
+  - P03
   - P04
   services:
   - AI Runtime
+  - Model Catalog
   - Model Catalog Service
   feature_ids:
+  - P03-050
   - P04-005
   - P04-006
   - P04-023
@@ -1549,6 +1662,13 @@ entities:
   - Reconciliation Service
   feature_ids:
   - P10-023
+- entity: redis_streams
+  phases:
+  - P03
+  services:
+  - AI Runtime
+  feature_ids:
+  - P03-053
 - entity: refresh_tokens
   phases:
   - P01
@@ -1665,11 +1785,14 @@ entities:
   - P11
   services:
   - AI Runtime
+  - CI
   - Developer Gateway
   feature_ids:
   - P03-010
   - P03-011
   - P03-012
+  - P03-053
+  - P03-055
   - P11-016
 - entity: runbook_versions
   phases:
@@ -1747,6 +1870,7 @@ entities:
 - entity: service_instances
   phases:
   - P00
+  - P03
   services:
   - AI Runtime
   - Core API
@@ -1755,6 +1879,7 @@ entities:
   - P00-006
   - P00-007
   - P00-008
+  - P03-054
 - entity: service_metrics
   phases:
   - P00
@@ -1827,16 +1952,25 @@ entities:
 - entity: system_configs
   phases:
   - P00
+  - P03
   services:
   - Configuration Service
+  - Core API
+  - Mobile BFF
   feature_ids:
   - P00-002
+  - P03-047
+  - P03-051
+  - P03-052
 - entity: test_runs
   phases:
+  - P03
   - P13
   services:
+  - CI
   - QA
   feature_ids:
+  - P03-055
   - P13-001
   - P13-003
   - P13-009

@@ -1,0 +1,454 @@
+schema_version: 1.7-correction
+design_system_version: YL-DS-1.2.0
+pages:
+- page_id: YL-A-018
+  surface: ANDROID
+  name: 首页
+  route: android://018
+  layout_profile: android_main_tab
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P03-048
+  - P03-049
+  - P03-050
+  - P03-051
+  - P03-052
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W07
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-A-018-S01_LOADING
+  - YL-A-018-S02_POPULATED
+  - YL-A-018-S03_EMPTY
+  - YL-A-018-S04_REFRESHING
+  - YL-A-018-S05_OFFLINE_CACHE
+  - YL-A-018-S06_NETWORK_ERROR
+  - YL-A-018-S07_SERVICE_DEGRADED
+  mockup_paths:
+  - ui/mockups/android/YL-A-018/YL-A-018-S01_LOADING.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S02_POPULATED.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S03_EMPTY.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S04_REFRESHING.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S05_OFFLINE_CACHE.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S06_NETWORK_ERROR.png
+  - ui/mockups/android/YL-A-018/YL-A-018-S07_SERVICE_DEGRADED.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: conversation_first_home
+    title: 今天想完成什么？
+    subtitle: 多模型协同，完成更复杂的事。
+    required_elements:
+    - YLVEN 品牌
+    - 主输入框
+    - 自动选择模型
+    - 紧凑能力入口
+    - 最近会话
+    screen_signature: 9505a4626a3b55ba
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-A-020
+  surface: ANDROID
+  name: 会话抽屉
+  route: android://020
+  layout_profile: android_modal_navigation_drawer
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P03-003
+  - P03-004
+  - P03-044
+  - P03-045
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W06
+  - P03-W07
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 V1.0.1 approved modal drawer mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 9
+  state_ids:
+  - YL-A-020-S01_LOADING
+  - YL-A-020-S02_POPULATED
+  - YL-A-020-S03_EMPTY
+  - YL-A-020-S04_REFRESHING
+  - YL-A-020-S05_FILTER_ACTIVE
+  - YL-A-020-S06_OFFLINE_CACHE
+  - YL-A-020-S07_NETWORK_ERROR
+  - YL-A-020-S08_SERVER_ERROR
+  - YL-A-020-S09_PERMISSION_DENIED
+  mockup_paths:
+  - ui/mockups/android/YL-A-020/YL-A-020-S01_LOADING.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S02_POPULATED.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S03_EMPTY.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S04_REFRESHING.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S05_FILTER_ACTIVE.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S06_OFFLINE_CACHE.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S07_NETWORK_ERROR.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S08_SERVER_ERROR.png
+  - ui/mockups/android/YL-A-020/YL-A-020-S09_PERMISSION_DENIED.png
+  visual_kind: OVERLAY
+  parent_page_id: YL-A-018
+  visual_identity:
+    template: modal_conversation_navigation_drawer_with_visible_parent_scrim
+    title: 会话
+    subtitle: 真实会话标题、时间分组与可感知的父页面遮罩
+    required_elements:
+    - 搜索
+    - 开始新对话
+    - 自动标题
+    - 时间分组
+    - 父页面可见
+    - 32%半透明遮罩
+    screen_signature: d9b68c34e8af6142
+    identity_rule: CO-P03-001 V1.0.1 supersedes the first drawer rendering; solid opaque outside rails are forbidden.
+  supported_parent_page_ids:
+  - YL-A-018
+  - YL-A-023
+  overlay_behavior:
+    drawer_width_dp: 304
+    outside_visible_width_dp: 56
+    end_corner_radius_dp: 16
+    scrim: '#000000 @ 32%'
+    parent_content_visible: true
+    dismiss_on_scrim_tap: true
+    dismiss_on_back: true
+    dismiss_on_swipe: true
+    solid_opaque_outside_rail: FORBIDDEN
+- page_id: YL-A-023
+  surface: ANDROID
+  name: 会话页
+  route: android://023
+  layout_profile: android_detail
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P03-036
+  - P03-037
+  - P03-038
+  - P03-039
+  - P03-040
+  - P03-041
+  - P03-042
+  - P03-043
+  - P03-044
+  - P03-047
+  - P03-053
+  - P03-054
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W06
+  - P03-W07
+  - P03-W08
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 13
+  state_ids:
+  - YL-A-023-S01_DEFAULT
+  - YL-A-023-S02_INPUT_FOCUSED
+  - YL-A-023-S03_UPLOADING
+  - YL-A-023-S04_CONNECTING
+  - YL-A-023-S05_STREAMING
+  - YL-A-023-S06_TOOL_RUNNING
+  - YL-A-023-S07_COMPLETED
+  - YL-A-023-S08_STOPPED
+  - YL-A-023-S09_RECONNECTING
+  - YL-A-023-S10_OFFLINE
+  - YL-A-023-S11_RATE_LIMITED
+  - YL-A-023-S12_PROVIDER_ERROR
+  - YL-A-023-S13_CONTENT_BLOCKED
+  mockup_paths:
+  - ui/mockups/android/YL-A-023/YL-A-023-S01_DEFAULT.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S02_INPUT_FOCUSED.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S03_UPLOADING.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S04_CONNECTING.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S05_STREAMING.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S06_TOOL_RUNNING.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S07_COMPLETED.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S08_STOPPED.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S09_RECONNECTING.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S10_OFFLINE.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S11_RATE_LIMITED.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S12_PROVIDER_ERROR.png
+  - ui/mockups/android/YL-A-023/YL-A-023-S13_CONTENT_BLOCKED.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: production_chat
+    title: 自动生成的会话标题
+    subtitle: 模型信息作为次级信息
+    required_elements:
+    - 用户消息
+    - AI 回答
+    - 自然语言状态
+    - 底部输入区
+    - 自动标题
+    screen_signature: d54a37fe83ef7061
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-A-024
+  surface: ANDROID
+  name: 会话输入区
+  route: android://024
+  layout_profile: android_component_board
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P03-011
+  - P03-049
+  - P03-050
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W07
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 6
+  state_ids:
+  - YL-A-024-S01_DEFAULT
+  - YL-A-024-S02_INPUT_FOCUSED
+  - YL-A-024-S03_UPLOADING
+  - YL-A-024-S04_DISABLED
+  - YL-A-024-S05_OFFLINE
+  - YL-A-024-S06_TOOL_TRAY_OPEN
+  mockup_paths:
+  - ui/mockups/android/YL-A-024/YL-A-024-S01_DEFAULT.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S02_INPUT_FOCUSED.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S03_UPLOADING.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S04_DISABLED.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S05_OFFLINE.png
+  - ui/mockups/android/YL-A-024/YL-A-024-S06_TOOL_TRAY_OPEN.png
+  visual_kind: COMPONENT_BOARD
+  parent_page_id: YL-A-023
+  visual_identity:
+    template: chat_composer_and_tool_tray
+    title: 会话输入区
+    subtitle: 模型与工具均为可选入口
+    required_elements:
+    - 附件
+    - 输入
+    - 模型胶囊
+    - 语音
+    - 发送
+    - 工具面板
+    screen_signature: 5bb9118999d527f8
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-A-026
+  surface: ANDROID
+  name: AI 回复
+  route: android://026
+  layout_profile: android_component_board
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P03-018
+  - P03-026
+  - P03-047
+  - P03-051
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W07
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 7
+  state_ids:
+  - YL-A-026-S01_CONNECTING
+  - YL-A-026-S02_STREAMING
+  - YL-A-026-S03_TOOL_RUNNING
+  - YL-A-026-S04_COMPLETED
+  - YL-A-026-S05_STOPPED
+  - YL-A-026-S06_PROVIDER_ERROR
+  - YL-A-026-S07_CONTENT_BLOCKED
+  mockup_paths:
+  - ui/mockups/android/YL-A-026/YL-A-026-S01_CONNECTING.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S02_STREAMING.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S03_TOOL_RUNNING.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S04_COMPLETED.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S05_STOPPED.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S06_PROVIDER_ERROR.png
+  - ui/mockups/android/YL-A-026/YL-A-026-S07_CONTENT_BLOCKED.png
+  visual_kind: COMPONENT_BOARD
+  parent_page_id: YL-A-023
+  visual_identity:
+    template: ai_reply_user_copy
+    title: AI 回复
+    subtitle: 不显示底层技术状态
+    required_elements:
+    - 正在思考
+    - 流式正文
+    - 工具进度
+    - 完成操作栏
+    - 可恢复错误
+    screen_signature: 6312db9a26c4eefe
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-A-033
+  surface: ANDROID
+  name: 模型选择器
+  route: android://033
+  layout_profile: android_sheet
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P04-001
+  - P04-002
+  - P04-003
+  - P03-050
+  phases:
+  - P04
+  primary_phase: P04
+  work_packets:
+  - P03-W07
+  - P04-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 6
+  state_ids:
+  - YL-A-033-S01_POPULATED
+  - YL-A-033-S02_FILTER_ACTIVE
+  - YL-A-033-S03_EMPTY
+  - YL-A-033-S04_DISABLED
+  - YL-A-033-S05_SERVICE_DEGRADED
+  - YL-A-033-S06_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/android/YL-A-033/YL-A-033-S01_POPULATED.png
+  - ui/mockups/android/YL-A-033/YL-A-033-S02_FILTER_ACTIVE.png
+  - ui/mockups/android/YL-A-033/YL-A-033-S03_EMPTY.png
+  - ui/mockups/android/YL-A-033/YL-A-033-S04_DISABLED.png
+  - ui/mockups/android/YL-A-033/YL-A-033-S05_SERVICE_DEGRADED.png
+  - ui/mockups/android/YL-A-033/YL-A-033-S06_SERVER_ERROR.png
+  visual_kind: OVERLAY
+  parent_page_id: YL-A-023
+  visual_identity:
+    template: optional_model_selector
+    title: 选择模型
+    subtitle: 自动选择为默认，手动选择为高级入口
+    required_elements:
+    - 自动选择
+    - 供应商模型
+    - 能力说明
+    - 可用状态
+    screen_signature: dc3946f565f3581b
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-A-034
+  surface: ANDROID
+  name: 回答方式选择器
+  route: android://034
+  layout_profile: android_sheet
+  state_profile: co_p03_production_ux
+  feature_ids:
+  - P04-005
+  - P03-050
+  phases:
+  - P04
+  primary_phase: P04
+  work_packets:
+  - P03-W07
+  - P04-W01
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml + change-orders/CO-P03-001/contracts/feature-map-additions.yaml
+  visual_authority: CO-P03-001 approved replacement mockups + p03-chat-ui-token-overrides.yaml
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 6
+  state_ids:
+  - YL-A-034-S01_POPULATED
+  - YL-A-034-S02_FILTER_ACTIVE
+  - YL-A-034-S03_EMPTY
+  - YL-A-034-S04_DISABLED
+  - YL-A-034-S05_SERVICE_DEGRADED
+  - YL-A-034-S06_SERVER_ERROR
+  mockup_paths:
+  - ui/mockups/android/YL-A-034/YL-A-034-S01_POPULATED.png
+  - ui/mockups/android/YL-A-034/YL-A-034-S02_FILTER_ACTIVE.png
+  - ui/mockups/android/YL-A-034/YL-A-034-S03_EMPTY.png
+  - ui/mockups/android/YL-A-034/YL-A-034-S04_DISABLED.png
+  - ui/mockups/android/YL-A-034/YL-A-034-S05_SERVICE_DEGRADED.png
+  - ui/mockups/android/YL-A-034/YL-A-034-S06_SERVER_ERROR.png
+  visual_kind: OVERLAY
+  parent_page_id: YL-A-023
+  visual_identity:
+    template: optional_reasoning_selector
+    title: 回答方式
+    subtitle: 默认自动，且只展示模型真实支持的选项
+    required_elements:
+    - 自动
+    - 快速
+    - 标准
+    - 深度
+    - 能力说明
+    screen_signature: 195beb56fc46047c
+    identity_rule: This replacement visual identity supersedes the V1.6 page body for this Page ID.
+- page_id: YL-M-061
+  surface: ADMIN
+  name: 可观测性/AI运行
+  route: /admin/061
+  layout_profile: admin_list
+  state_profile: admin_list
+  feature_ids:
+  - P03-034
+  - P03-046
+  - P03-055
+  phases:
+  - P03
+  primary_phase: P03
+  work_packets:
+  - P03-W05
+  - P03-W08
+  design_system_version: YL-DS-1.2.0
+  mockup_gate: APPROVED_REQUIRED_BEFORE_VISUAL_IMPLEMENTATION
+  functional_authority: contracts/feature-map.yaml
+  visual_authority: contracts/ui-design-tokens.yaml + approved mockup state
+  sample_content_policy: NON_FUNCTIONAL_SAMPLE_ONLY
+  state_count: 9
+  state_ids:
+  - YL-M-061-S01_LOADING
+  - YL-M-061-S02_POPULATED
+  - YL-M-061-S03_EMPTY
+  - YL-M-061-S04_FILTER_ACTIVE
+  - YL-M-061-S05_BULK_SELECTED
+  - YL-M-061-S06_PERMISSION_DENIED
+  - YL-M-061-S07_NETWORK_ERROR
+  - YL-M-061-S08_SERVER_ERROR
+  - YL-M-061-S09_CONTEXT_DEBUG_OPEN
+  mockup_paths:
+  - ui/mockups/admin/YL-M-061/YL-M-061-S01_LOADING.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S02_POPULATED.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S03_EMPTY.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S04_FILTER_ACTIVE.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S05_BULK_SELECTED.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S06_PERMISSION_DENIED.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S07_NETWORK_ERROR.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S08_SERVER_ERROR.png
+  - ui/mockups/admin/YL-M-061/YL-M-061-S09_CONTEXT_DEBUG_OPEN.png
+  visual_kind: PAGE
+  parent_page_id: null
+  visual_identity:
+    template: admin_list
+    title: AI运行
+    subtitle: 可观测性
+    required_elements:
+    - 记录聊天链路延迟和错误指标
+    screen_signature: 4d6b837373153996
+    identity_rule: This visual identity must remain unique for the Page ID; do not reuse another page body and only rename the folder.

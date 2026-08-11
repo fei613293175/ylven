@@ -1,0 +1,38 @@
+policy_id: GLOBAL-PRODUCTION-READY-001
+scope: all_current_and_future_phases
+enforcement: CI_AND_RELEASE_BLOCKING
+frontend:
+  consumer_app_must_be_real_product: true
+  forbid_demo_or_test_labels: true
+  forbid_raw_transport_or_provider_status: true
+  forbidden_examples:
+  - demo
+  - test
+  - mock
+  - stub
+  - placeholder
+  - TODO
+  - streaming
+  - connecting
+  - provider error
+  - request id
+  - SSE
+  - WebSocket
+  - Sub2API
+  allowed_only_in:
+  - admin_console
+  - developer_portal
+  - debug_build_not_delivered_to_owner
+  sample_data_rule: Effect-image sample content must never be hard-coded or treated as a feature.
+backend:
+  forbid_fake_success: true
+  forbid_in_memory_only_business_state: true
+  require_real_database_and_migrations: true
+  require_auth_permission_idempotency_audit: true
+  test_doubles_scope: automated tests only; never production runtime
+release:
+  require_ci_artifact: true
+  require_no_demo_copy_scan: true
+  require_no_stub_scan: true
+  require_real_endpoint_health: true
+  require_owner_test_checklist: true

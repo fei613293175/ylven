@@ -2,32 +2,37 @@
   "schema_version": "1.4.0",
   "generated_at": "SOURCE_DERIVED",
   "source_of_truth": "feature-map.yaml",
-  "feature_count": 362,
-  "api_inventory_row_count": 236,
-  "api_feature_mapping_count": 249,
-  "openapi_operation_count": 226,
-  "database_entity_count": 200,
-  "admin_menu_count": 195,
-  "test_count": 1086,
+  "feature_count": 382,
+  "api_inventory_row_count": 251,
+  "api_feature_mapping_count": 265,
+  "openapi_operation_count": 241,
+  "database_entity_count": 211,
+  "admin_menu_count": 202,
+  "test_count": 1146,
   "ui_page_count": 332,
-  "ui_state_count": 2671,
-  "ui_mockup_count": 2671,
-  "work_packet_count": 64,
+  "ui_state_count": 2673,
+  "ui_mockup_count": 2673,
+  "work_packet_count": 67,
   "files": [
     {
       "path": "admin-menu-map.yaml",
-      "size": 5735,
-      "sha256": "9d458786e5ee298754fa8a64fc5c8c41fcb82c1dd43487b42e58d3fa8391592b"
+      "size": 5947,
+      "sha256": "9e40e02b762a3f6312c02f3ab1efc27421b66c23fd8606a07d9491e53bccd035"
     },
     {
       "path": "android-phase-acceptance.yaml",
-      "size": 3485,
-      "sha256": "495d970dffcf7d70e8dde1bdcef838f01768118fc2b45d42e993838826cddeb3"
+      "size": 7251,
+      "sha256": "4c6c3f7f62b29eb30b631b0b703b7e3c179e45691e475298268dba8646542ff6"
     },
     {
       "path": "api-inventory.csv",
-      "size": 37139,
-      "sha256": "5a3625c159665dde82d82670cbb613415ad90ecfe55099f2458aa1c95e1ca057"
+      "size": 39769,
+      "sha256": "d92615a16eb9831a586b8fbecb3b6d1916418b76f44f67a972cd0df86d42977a"
+    },
+    {
+      "path": "consumer-copy-catalog.yaml",
+      "size": 831,
+      "sha256": "c2f3e3b45f9985d3c8dbfebaed9bcb11fd91066c0d16fe995ab590a311000d4a"
     },
     {
       "path": "contract-authority-map.yaml",
@@ -41,8 +46,13 @@
     },
     {
       "path": "database-entity-catalog.yaml",
-      "size": 31446,
-      "sha256": "66031e810df1f6ba48356c91e0d73e1c16f0caea983b079e00f79db6dadb4827"
+      "size": 33382,
+      "sha256": "b93176883fd212c41de96b3849704132606799dd6e8fd5665dd63c135425be36"
+    },
+    {
+      "path": "distributed-readiness-requirements.yaml",
+      "size": 869,
+      "sha256": "4a8ffb6604a32febfbcad945b9848c3f34c299b50b745c7960a33ace1c1bad61"
     },
     {
       "path": "domain-delivery-map.yaml",
@@ -61,18 +71,18 @@
     },
     {
       "path": "execution-environment.yaml",
-      "size": 1977,
-      "sha256": "17373c82f3fcad9b36bf40b50980e57e95a09e43fffe3f635d0cbf19596a9323"
+      "size": 2524,
+      "sha256": "a8b076f2302918b64820263f2a59e326263a37e2259d9c6b25d982d6b51a5598"
     },
     {
       "path": "execution-mode.yaml",
-      "size": 1095,
-      "sha256": "917854e4b6ee29b246101bf9e314a2231debb34bc4b383eaead4bdc23043a479"
+      "size": 1160,
+      "sha256": "77b4e681d8ccfc229604c7ea9b74afddb39d467cee3a6cee9550327cb2695030"
     },
     {
       "path": "feature-map.csv",
-      "size": 248112,
-      "sha256": "f1ce638bfd1a520fcfaa9fd24a8c18a4cb45392ad43f0bb83d7b29ba5b6245d5"
+      "size": 260343,
+      "sha256": "3dfd754816d1328aa9f1080ab3150bc757a9f96e972bc7866091cde8d8587aa5"
     },
     {
       "path": "feature-map.schema.json",
@@ -81,68 +91,83 @@
     },
     {
       "path": "feature-map.yaml",
-      "size": 353081,
-      "sha256": "d877bbf8d2b8e50436695eb765342ded186a45a74fadbff5918b34d076ee20ba"
+      "size": 378387,
+      "sha256": "a509ec1cd16711ca767518fb6e6ca984b7beec11625a1e6686aa42e6d014a361"
     },
     {
       "path": "feature-ui-map.yaml",
-      "size": 104783,
-      "sha256": "02248b66880e9637a168bd7c6d212fbbecd0606799f40151cf214f4c0fa5c2cd"
+      "size": 109090,
+      "sha256": "1d31f23deffdb4ccc55046d24ae4def2cb26e67473c827082254957550b8a7a8"
     },
     {
       "path": "FEATURE_MATRIX.md",
-      "size": 86685,
-      "sha256": "c32d83c21ea7a3120611f41c0b5a45e47ade4150cf4065270bf5e022c153465e"
+      "size": 91227,
+      "sha256": "90898efc05ea92428cc6767979ee21177f19ddfa467b5f0b73fcbcf49300f653"
     },
     {
       "path": "interaction-test-bindings.csv",
-      "size": 46704,
-      "sha256": "781c439cea4481ac6f437dca9535af65d50289a8afa062f4f69a8c498d7c2692"
+      "size": 47334,
+      "sha256": "d71777f71eddb61ccad9210efad157ecf247835b59dfb55ec6628631702dff1e"
     },
     {
       "path": "mockup-batches.yaml",
-      "size": 91751,
-      "sha256": "ad255e817432f6f3820196d5b3773e55595934fbe1a852940a8496407e32865d"
+      "size": 95100,
+      "sha256": "57ee2cd9526280126341ab22a53c303aafefff60faf73ee69e0f0568368a3213"
     },
     {
       "path": "mockup-manifest.csv",
-      "size": 1382707,
-      "sha256": "b479c9717fc8da3af269c59514266e21414236b3eb4f4ea40a472cf50a646e61"
+      "size": 1402843,
+      "sha256": "8b212f2363e25caa043aa334a523ede1f1223da7c987f2c99d5d31a64aa41e3e"
     },
     {
       "path": "openapi-skeleton.yaml",
-      "size": 222131,
-      "sha256": "48e94db9270c5141ee0c02c8b37a5d94a2cba4f291a38310f44d294c492817fe"
+      "size": 236850,
+      "sha256": "bec8dcbc9a6b6b5171f5be5d0f9d188fac7c8c0c5f29ee9831e3e062b39ca551"
     },
     {
       "path": "owner-delivery-contract.yaml",
-      "size": 2009,
-      "sha256": "09fb97c6d73a7da5b53e1ba882a5055d919f4852d0beb2ac4309dec730fa66c2"
+      "size": 3183,
+      "sha256": "b3717e51fa95161bbebf50969047199177660147b8a81675beb54ecd669d68fe"
+    },
+    {
+      "path": "p03-chat-ui-token-overrides.yaml",
+      "size": 1077,
+      "sha256": "b139484a49594722dd4aeb39ef4f91dafa99c0a3df9f2c560de2f5e56e619963"
+    },
+    {
+      "path": "production-readiness-policy.yaml",
+      "size": 1043,
+      "sha256": "050a2d864f508ae9f21df96d051aa515d6ffb74669e07a3a65edcb37d3e2e4a2"
     },
     {
       "path": "release-contract.yaml",
-      "size": 2017,
-      "sha256": "a805b94b3c441f4c31e2604abca9b003de579ff3fb535f0d31a44bbc89538421"
+      "size": 3288,
+      "sha256": "8d8f3b072e9169f3b8b8694efb5cb36613e5375297de6b7beb46c0b7ad62fba7"
     },
     {
       "path": "release-version-matrix.yaml",
-      "size": 8774,
-      "sha256": "61df860b3778cd6b674e215df4b62e3182caf94e92e5c563a88f834bf2599115"
+      "size": 9397,
+      "sha256": "60585cffde0417c20e56c4e67a19731516fcc9277fa635da16113d477d82d18b"
     },
     {
       "path": "repository-policy.yaml",
-      "size": 2199,
-      "sha256": "9e7aea07614faa821cbf156d68b79639ec6137b7c8a83ecd44492bfef89cf16c"
+      "size": 2292,
+      "sha256": "654db83f571346735b855f652c4303031f87c162fd14d804fc30c75f094ef470"
     },
     {
       "path": "state-transition-contract.yaml",
-      "size": 2291,
-      "sha256": "5847aaddfcc2ecf7bf2b7abfbe8be8197817525c25f363ada10bd09c95c8a2a7"
+      "size": 3173,
+      "sha256": "1b9d667b8efc0f76de34a3f268199b4160ab7471b097daa6339ff30c7283907e"
+    },
+    {
+      "path": "supersession-map.yaml",
+      "size": 2127,
+      "sha256": "d3413927db3a9caa20a723108aa3b9ce7d7ec807d98b7d659904c8b405ee0e06"
     },
     {
       "path": "test-catalog.csv",
-      "size": 131095,
-      "sha256": "d08b89febf65c8c8561b34c47c74973c65bc47a9020b13bade4c5106ee8f4224"
+      "size": 138335,
+      "sha256": "708c51010be9065ce272123e4b5dd8c48feeb16d23309a34f18b0a3a11154281"
     },
     {
       "path": "ui-component-catalog.yaml",
@@ -161,8 +186,8 @@
     },
     {
       "path": "ui-interaction-map.csv",
-      "size": 120558,
-      "sha256": "76239998a41730e134a0669eb83fee62e28bba51bc76486f13d4f2cf3a6af358"
+      "size": 121732,
+      "sha256": "89652904ba47b9590156625bac8cb8900788ffda30405de72685eb6045a1b250"
     },
     {
       "path": "ui-layout-profiles.yaml",
@@ -171,33 +196,33 @@
     },
     {
       "path": "ui-page-catalog.yaml",
-      "size": 571448,
-      "sha256": "c7f7fdb743f69f4821ff115dc09ecec0c78f365fa9a523caebc22b4405e026e7"
+      "size": 587687,
+      "sha256": "0f2c9cf75f8c986b6ae7828989981c6ed75dc9560ef29439dacf19c9d576612b"
     },
     {
       "path": "ui-page-resolved.csv",
-      "size": 75102,
-      "sha256": "97b08ff2365e525db0a198f8f6207e46719d9d0bd25024a30afd0877df19810f"
+      "size": 75165,
+      "sha256": "b50fd78b22a64b0f3667aff0f037fef4740de21dac9b5e1de8d30eb5b5728456"
     },
     {
       "path": "ui-phase-binding.yaml",
-      "size": 5798,
-      "sha256": "bed1a7a624df3d53389f6fdf2259aab78b681f327fe356b13f1a6e78566f7713"
+      "size": 6233,
+      "sha256": "9f08a2b7fd617e6506e75570751480e28e6283a3bf983b5374e606f3b0af696c"
     },
     {
       "path": "ui-state-catalog.csv",
-      "size": 783373,
-      "sha256": "e83bf6417e6b10ed32edb302f2f961b8f160ea4ca730564cf0a62f85c02ac065"
+      "size": 789484,
+      "sha256": "7822948045486e7fac406ab55263d3239bc8f1a1e3142a46c54c123407641389"
     },
     {
       "path": "ui-state-profiles.yaml",
-      "size": 14442,
-      "sha256": "314e0821ee991fbdf6a68cb743e65954ace49b0aa349032dec9451dfce194fa1"
+      "size": 15215,
+      "sha256": "ff6b96fc7b9a5436ea4a3a3d36861c21e11161f9e2808c11c68606370e482c81"
     },
     {
       "path": "work-packet-map.yaml",
-      "size": 224758,
-      "sha256": "941d46c99e59bcb8ac109636d380f7313c9d9f68b5f8227167c9256591e6359e"
+      "size": 233334,
+      "sha256": "3694ba042683f7a07797a1616dad8eda00d51e72c9bcfa59dd324be11ec3a5e2"
     }
   ]
 }

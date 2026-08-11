@@ -1,4 +1,4 @@
-schema_version: '1.4'
+schema_version: 1.7-correction
 page_id: YL-M-061
 name: 可观测性/AI运行
 surface: ADMIN
@@ -8,8 +8,11 @@ phases:
 - P03
 work_packets:
 - P03-W05
+- P03-W08
 feature_ids:
 - P03-034
+- P03-046
+- P03-055
 layout_profile: admin_list
 resolved_layout:
   surface: ADMIN
@@ -57,9 +60,7 @@ states:
   mockup_id: YL-M-061-S01_LOADING
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S01_LOADING.png
   mockup_status: APPROVED
-  mockup_sha256: a836de73ddf6cd3b40353375b344d168c1b332019535589c2afe1b397103a9bb
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 612bd91942a15d91ac051c2c76592436777676de3f53f67a8eb558880a4d9e30
 - state_id: YL-M-061-S02_POPULATED
   code: POPULATED
   name: 有数据
@@ -68,9 +69,7 @@ states:
   mockup_id: YL-M-061-S02_POPULATED
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S02_POPULATED.png
   mockup_status: APPROVED
-  mockup_sha256: 917e058f9eaac86baf3c29c366292678e83479f25ae4dbf54660ca428bdd5926
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 827d3624c4b01107009f97483cca91a27365e7f817c2290ccc00934eed9defb1
 - state_id: YL-M-061-S03_EMPTY
   code: EMPTY
   name: 空数据
@@ -79,9 +78,7 @@ states:
   mockup_id: YL-M-061-S03_EMPTY
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S03_EMPTY.png
   mockup_status: APPROVED
-  mockup_sha256: 921bacdb5efd18ffaef06eb2887e393129ed1cc52fe80316f9a845d61ce41b09
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 8757bd10d7ccd50a6af1f2f00b0b9c4c8b750a5da3ac80cca3044d4c73088455
 - state_id: YL-M-061-S04_FILTER_ACTIVE
   code: FILTER_ACTIVE
   name: 筛选生效
@@ -90,9 +87,7 @@ states:
   mockup_id: YL-M-061-S04_FILTER_ACTIVE
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S04_FILTER_ACTIVE.png
   mockup_status: APPROVED
-  mockup_sha256: 2947676493b9f4cb24a97c3df3fc662df238e9e1bdf97d1853d276e1d84a448f
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 144f0af38cd9f60e21ac0f45ee024abf165ebdb6d46ea06cfd15c66f8648aebb
 - state_id: YL-M-061-S05_BULK_SELECTED
   code: BULK_SELECTED
   name: 批量选择
@@ -101,9 +96,7 @@ states:
   mockup_id: YL-M-061-S05_BULK_SELECTED
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S05_BULK_SELECTED.png
   mockup_status: APPROVED
-  mockup_sha256: 0e09976956d5a5348968fef570eebfd4e931d015abfce08cfa622e980d90d519
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 4788a675148bfd4bf94554e58696abd9ff74c00612b1d9f2b22f987085e7d45a
 - state_id: YL-M-061-S06_PERMISSION_DENIED
   code: PERMISSION_DENIED
   name: 权限不足
@@ -112,9 +105,7 @@ states:
   mockup_id: YL-M-061-S06_PERMISSION_DENIED
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S06_PERMISSION_DENIED.png
   mockup_status: APPROVED
-  mockup_sha256: 066e5a139dee28ca37bcfaf8472eef1893cd5a30f6a1353ab28638d983511a7a
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: eef3117c11eb767c5fa4756dd4153803dfedc44694c89e9269de720cc2c05b33
 - state_id: YL-M-061-S07_NETWORK_ERROR
   code: NETWORK_ERROR
   name: 网络连接失败
@@ -123,9 +114,7 @@ states:
   mockup_id: YL-M-061-S07_NETWORK_ERROR
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S07_NETWORK_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 2e95819ae02f0629ddf57506996ce6ac65bd1bf33d474a30573df16372ea2ae6
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: b0bdde1147ab625fd14ad04cb748116bd7a395a0ede94337318aed713861b6d1
 - state_id: YL-M-061-S08_SERVER_ERROR
   code: SERVER_ERROR
   name: 服务异常
@@ -134,15 +123,24 @@ states:
   mockup_id: YL-M-061-S08_SERVER_ERROR
   mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S08_SERVER_ERROR.png
   mockup_status: APPROVED
-  mockup_sha256: 6cf526f59ff6e5e34e8f5c71562a71754d3d97e9ca6d1f06fb185bdcac17fe60
-  approved_by: P02_OWNER_APPROVED_2026-08-07
-  approved_at: '2026-08-07T01:22:18Z'
+  mockup_sha256: 6dbb56808978db1a5db4c1516fd922c4d5d8dce7b1b8d8c11e79c7237cc7186f
+- state_id: YL-M-061-S09_CONTEXT_DEBUG_OPEN
+  code: CONTEXT_DEBUG_OPEN
+  name: 上下文诊断抽屉
+  description: 管理员查看上下文构建组成、裁剪、摘要和回退；不得展示隐藏思维链。
+  recovery: close_drawer_or_retry
+  mockup_id: YL-M-061-S09_CONTEXT_DEBUG_OPEN
+  mockup_path: ui/mockups/admin/YL-M-061/YL-M-061-S09_CONTEXT_DEBUG_OPEN.png
+  mockup_status: APPROVED_FOR_CHANGE_ORDER_IMPLEMENTATION
+  mockup_sha256: 11fdf06438acdc7a937ae41083a51a51cfab8eef2e2efac5f0901e48bb7c118d
 binding_rules:
   visual_implementation_gate: Every listed state must have an APPROVED mockup with matching SHA-256 before Codex finalizes this page.
   visual_authority: Approved mockup + this resolved numeric contract.
   functional_authority: contracts/feature-map.yaml and the listed Feature IDs.
   no_invention: Text or controls shown only as sample content do not create a feature. No unlisted action may be implemented.
-  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference their
-    parent page explicitly.
-  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require an ADR
-    and updated mockup.
+  identity_rule: A Page ID must not reuse another Page ID body. Overlay and component contracts must render their own focal surface and reference
+    their parent page explicitly.
+  conflict_rule: Numeric token contract wins over estimated measurements; functional contract wins over mockup sample content; conflicts require
+    an ADR and updated mockup.
+  context_debug_rule: Only visible inputs, summaries, retrieved items, token accounting, exclusions and fallback decisions may be shown; hidden
+    chain-of-thought is forbidden.

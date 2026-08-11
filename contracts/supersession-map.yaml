@@ -1,0 +1,58 @@
+change_order_id: CO-P03-001
+base_package: YLVEN V1.6.0
+effective_phase: P03
+deprecated_pages:
+- page_id: YL-A-019
+  old_name: 首页/新对话
+  replacement: YL-A-023 draft mode
+  rule: Remove from navigation and route. Do not render the old model-input form.
+- page_id: YL-A-031
+  old_name: 新建对话
+  replacement: YL-A-023 draft mode
+  rule: Alias old deep links to the blank conversation draft; no separate page.
+replacement_pages:
+- page_id: YL-A-018
+  replacement_contract: replacements/ui/pages/android/YL-A-018.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-020
+  replacement_contract: replacements/ui/pages/android/YL-A-020.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-023
+  replacement_contract: replacements/ui/pages/android/YL-A-023.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-024
+  replacement_contract: replacements/ui/pages/android/YL-A-024.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-026
+  replacement_contract: replacements/ui/pages/android/YL-A-026.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-033
+  replacement_contract: replacements/ui/pages/android/YL-A-033.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-A-034
+  replacement_contract: replacements/ui/pages/android/YL-A-034.yaml
+  old_mockups: SUPERSEDED
+- page_id: YL-M-061
+  replacement_contract: replacements/ui/pages/android/YL-M-061.yaml
+  old_mockups: SUPERSEDED
+invalid_user_copy:
+- AI 首页
+- 统一多模型对话入口
+- 请输入智能推荐
+- 请输入 YLVEN 默认模型
+- 正在连接并接收回答
+- 生成状态：streaming
+- AI 正在流式生成
+valid_user_copy:
+- 今天想完成什么？
+- 多模型协同，完成更复杂的事。
+- 正在思考
+- 连接不稳定，正在恢复…
+- 暂时无法完成回答
+package_revision: 1.0.1
+visual_corrections:
+- page_id: YL-A-020
+  supersedes: CO-P03-001 V1.0.0 drawer mockups
+  reason: outside region was rendered as a fully opaque dark rail instead of a modal scrim over the parent page
+  replacement: CO-P03-001 V1.0.1 YL-A-020 nine-state mockup set
+  blocking_rule: 'parent content must remain visible under #000000 at 32% opacity; uniform opaque outside rail is forbidden'

@@ -1,0 +1,12 @@
+scope: P03 foundation and all future services
+deployment_now: single-server permitted
+architecture_now: must be horizontally scalable
+rules:
+- AI Runtime and public APIs are stateless; no conversation or run truth may live only in process memory.
+- PostgreSQL is the canonical durable store; Redis/NATS shared streams carry transient run events.
+- Every message/run/task has idempotency keys and monotonic sequence/cursor.
+- SSE reconnect may land on another instance and must resume by run_id + event_cursor.
+- Files and artifacts use shared object storage, never a single node local disk.
+- Workers use leases, visibility timeout, retry policy and dead-letter queue.
+- Configuration and secrets are centrally managed; no manual drift between nodes.
+- P12 performs real multi-server deployment, load test and failover drills; earlier phases preserve these boundaries.

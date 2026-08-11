@@ -1,0 +1,40 @@
+name: Production Readiness Contracts
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - "phase/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-contracts-and-copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install contract validation dependencies
+        run: python -m pip install --disable-pip-version-check PyYAML Pillow
+      - name: Validate all canonical contracts
+        run: python scripts/07_VALIDATE_CONTRACTS.py
+      - name: Reject technical or test wording in consumer UI
+        run: python scripts/36_AUDIT_CONSUMER_COPY.py --repo .
+      - name: Reject unresolved production stubs and placeholders
+        run: python scripts/37_AUDIT_PRODUCTION_STUBS.py --repo .
+      - name: Validate current UI contracts and generated mockups
+        if: ${{ hashFiles('CURRENT_CHANGE_ORDER.yaml') != '' }}
+        run: |
+          python scripts/19_VALIDATE_UI_CONTRACTS.py
+          python scripts/26_VALIDATE_GENERATED_MOCKUPS.py
+          python scripts/38_VALIDATE_DRAWER_OVERLAY_VISUALS.py

@@ -151,6 +151,40 @@ def validate_chain(path: Path) -> None:
         previous = row.get("record_hash")
 
 
+def active_release_entries(rows: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Return releases that have not been superseded by a later reopen event."""
+    active: dict[str, dict[str, Any]] = {}
+    for row in rows if rows is not None else read_jsonl(RELEASE_LEDGER):
+        event = row.get("event")
+        phase = str(row.get("phase_id") or "")
+        if event == "RELEASE_CLOSED":
+            if not phase:
+                raise SystemExit("A RELEASE_CLOSED ledger entry is missing phase_id")
+            if phase in active:
+                raise SystemExit(f"{phase}: duplicate active final release ledger entry")
+            active[phase] = row
+        elif event == "RELEASE_REOPENED":
+            closed = active.get(phase)
+            if closed is None:
+                raise SystemExit(f"{phase}: RELEASE_REOPENED has no active release to supersede")
+            if row.get("superseded_record_hash") != closed.get("record_hash"):
+                raise SystemExit(f"{phase}: RELEASE_REOPENED does not reference the active release record")
+            del active[phase]
+    return list(active.values())
+
+
+def pending_release_reopen(phase: str) -> dict[str, Any] | None:
+    pending: dict[str, Any] | None = None
+    for row in read_jsonl(RELEASE_LEDGER):
+        if str(row.get("phase_id") or "") != phase:
+            continue
+        if row.get("event") == "RELEASE_CLOSED":
+            pending = None
+        elif row.get("event") == "RELEASE_REOPENED":
+            pending = row
+    return pending
+
+
 def packet_id(row: dict[str, Any]) -> str:
     value = row.get("work_packet_id") or row.get("id")
     if not value:
@@ -415,7 +449,7 @@ def sha256_file(path: Path) -> str:
 
 
 def write_summary(phase_state: dict[str, Any], packet_state: dict[str, Any], next_action: str) -> None:
-    releases = [row for row in read_jsonl(RELEASE_LEDGER) if row.get("event") == "RELEASE_CLOSED"]
+    releases = active_release_entries()
     packets = [row for row in read_jsonl(PACKET_HISTORY) if row.get("event") in {"WORK_PACKET_CLOSED", "WORK_PACKET_DEFERRED"}]
     phase = phase_state.get("phase_id") or phase_state.get("current_phase")
     current = packet_state.get("work_packet_id")
@@ -539,26 +573,28 @@ def validate() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str
         if current != expected:
             raise SystemExit(f"Current Work Packet must be first unfinished packet {expected}, not {current}")
 
-    releases = [row for row in read_jsonl(RELEASE_LEDGER) if row.get("event") == "RELEASE_CLOSED"]
-    seen_phases: set[str] = set()
-    order = phase_order()
-    last_index = -1
-    for row in releases:
+    ledger_rows = read_jsonl(RELEASE_LEDGER)
+    for row in ledger_rows:
+        if row.get("event") != "RELEASE_CLOSED":
+            continue
         release_phase = str(row.get("phase_id"))
-        if release_phase in seen_phases:
-            raise SystemExit(f"{release_phase}: duplicate final release ledger entry")
-        seen_phases.add(release_phase)
-        if release_phase not in order:
+        if release_phase not in phase_order():
             raise SystemExit(f"{release_phase}: release ledger phase is not planned")
-        index = order.index(release_phase)
-        if index <= last_index:
-            raise SystemExit("Release ledger phases are not strictly ordered")
-        last_index = index
         matrix = release_entry(release_phase)
         if str(row.get("version_name")) != str(matrix.get("version_name")):
             raise SystemExit(f"{release_phase}: release ledger version differs from release matrix")
         if row.get("owner_result") != "APPROVED":
             raise SystemExit(f"{release_phase}: closed release lacks owner approval")
+
+    releases = active_release_entries(ledger_rows)
+    order = phase_order()
+    last_index = -1
+    for row in releases:
+        release_phase = str(row.get("phase_id"))
+        index = order.index(release_phase)
+        if index <= last_index:
+            raise SystemExit("Active release ledger phases are not strictly ordered")
+        last_index = index
 
     return phase_state, packet_state, runtime, definitions_by_id, runtime_by_id
 
@@ -678,6 +714,93 @@ def block_packet(reason: str) -> None:
         packet_state,
         f"`{current}` is blocked: {reason.strip()}. Continue unaffected work inside the same packet and create an Owner Action only for the external dependency.",
     )
+
+
+def reopen_release(requested_phase: str, change_order_id: str, reason: str, no_push: bool) -> None:
+    if not change_order_id.strip() or not reason.strip():
+        raise SystemExit("A change-order ID and concrete reopen reason are required")
+    phase_state, packet_state, runtime, _definitions_by_id, runtime_by_id = validate()
+    current_phase = str(phase_state.get("phase_id"))
+    order = phase_order()
+    if requested_phase not in order or order.index(requested_phase) + 1 >= len(order):
+        raise SystemExit(f"{requested_phase}: only a previously closed non-final phase can be reopened")
+    if order[order.index(requested_phase) + 1] != current_phase:
+        raise SystemExit(f"{requested_phase}: only the phase immediately before {current_phase} can be reopened")
+    current_packet = packet_state.get("work_packet_id")
+    if not current_packet:
+        raise SystemExit(f"{current_phase}: no untouched next-phase packet is selected")
+    current_row = runtime_by_id[str(current_packet)]
+    if current_row.get("status") not in {"PLANNED", "TODO"} or current_row.get("started_at") or current_row.get("started_commit"):
+        raise SystemExit(f"{current_phase}: work has already started; refusing to reopen {requested_phase}")
+
+    active = {str(row.get("phase_id")): row for row in active_release_entries()}
+    closed = active.get(requested_phase)
+    if closed is None:
+        raise SystemExit(f"{requested_phase}: there is no active closed release to reopen")
+    if list(active)[-1] != requested_phase:
+        raise SystemExit(f"{requested_phase}: only the most recently closed release can be reopened")
+
+    target_rows = packets_for_phase(list(runtime_by_id.values()), requested_phase)
+    unfinished = [row for row in target_rows if row.get("status") not in PACKET_FINAL]
+    if not unfinished:
+        raise SystemExit(f"{requested_phase}: install the approved change-order Work Packets before reopening")
+    next_row = unfinished[0]
+    if next_row.get("status") == "PLANNED":
+        next_row["status"] = "TODO"
+    if current_row.get("status") == "TODO":
+        current_row["status"] = "PLANNED"
+
+    append_chain(
+        RELEASE_LEDGER,
+        {
+            "event": "RELEASE_REOPENED",
+            "phase_id": requested_phase,
+            "status": "OPEN",
+            "change_order_id": change_order_id.strip(),
+            "reason": reason.strip(),
+            "superseded_record_hash": closed.get("record_hash"),
+            "superseded_commit": closed.get("commit"),
+            "superseded_tag": closed.get("git_tag"),
+            "reopened_at": now(),
+        },
+    )
+    remaining_active = active_release_entries()
+    previous = remaining_active[-1] if remaining_active else {}
+    phase_state.update(
+        {
+            "current_phase": requested_phase,
+            "phase_id": requested_phase,
+            "current_work_packet": packet_id(next_row),
+            "phase_title": release_entry(requested_phase).get("title"),
+            "status": "TODO",
+            "started_at": None,
+            "blocked_reason": None,
+            "last_closed_phase": previous.get("phase_id"),
+            "last_closed_version": previous.get("version_name"),
+            "last_owner_approved_phase": previous.get("phase_id"),
+        }
+    )
+    packet_state = {
+        "schema_version": "1.0",
+        "phase_id": requested_phase,
+        "work_packet_id": packet_id(next_row),
+        "status": next_row.get("status"),
+        "started_at": next_row.get("started_at"),
+        "started_commit": next_row.get("started_commit"),
+        "last_closed_work_packet": packet_state.get("last_closed_work_packet"),
+    }
+    save_state(phase_state, packet_state, runtime)
+    write_summary(
+        phase_state,
+        packet_state,
+        f"Release `{requested_phase}` was reopened by `{change_order_id.strip()}`. Continue exactly `{packet_id(next_row)}`.",
+    )
+    state_commit = git_commit_state(
+        f"chore(state): reopen {requested_phase} for {change_order_id.strip()}",
+        push=not no_push,
+    )
+    validate()
+    print(json.dumps({"reopened_phase": requested_phase, "change_order_id": change_order_id.strip(), "state_commit": state_commit, "next": packet_id(next_row)}, ensure_ascii=False, indent=2))
 
 
 def finalize_packet(requested: str | None, note: str, deferred_reason: str | None, no_push: bool) -> None:
@@ -805,7 +928,11 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, lega
     declared_apk_sha = first_value(build.get("apk_sha256"), provenance.get("apk_sha256"), provenance.get("artifact_sha256"))
     if actual_apk_sha and declared_apk_sha and actual_apk_sha != declared_apk_sha:
         raise SystemExit("The delivered APK SHA-256 differs from release provenance")
+    reopen = pending_release_reopen(phase)
     tag = f"{project_code()}-v{version_name}"
+    if reopen:
+        suffix = re.sub(r"[^a-z0-9]+", "-", str(reopen.get("change_order_id") or "reopened").lower()).strip("-")
+        tag = f"{tag}-{suffix or 'reopened'}"
     if not no_tag:
         existing = git("rev-list", "-n", "1", tag, check=False).stdout.strip()
         if existing and existing != release_commit:
@@ -924,6 +1051,11 @@ def main() -> int:
     defer.add_argument("--no-push", action="store_true")
     block = subparsers.add_parser("block")
     block.add_argument("--reason", required=True)
+    reopen = subparsers.add_parser("reopen-release")
+    reopen.add_argument("--phase", required=True)
+    reopen.add_argument("--change-order", required=True)
+    reopen.add_argument("--reason", required=True)
+    reopen.add_argument("--no-push", action="store_true")
     release = subparsers.add_parser("close-release")
     release.add_argument("--phase")
     release.add_argument("--no-tag", action="store_true")
@@ -946,6 +1078,8 @@ def main() -> int:
         finalize_packet(arguments.packet, arguments.note, arguments.reason, arguments.no_push)
     elif arguments.command == "block":
         block_packet(arguments.reason)
+    elif arguments.command == "reopen-release":
+        reopen_release(arguments.phase, arguments.change_order, arguments.reason, arguments.no_push)
     elif arguments.command == "close-release":
         close_release(arguments.phase, arguments.no_tag, arguments.no_push, arguments.legacy_exception)
     return 0

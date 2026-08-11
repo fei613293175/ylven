@@ -1,10 +1,11 @@
 ﻿param(
   [Parameter(Position=0)]
-  [ValidateSet('bootstrap','doctor','resume','state','start-packet','close-packet','defer-packet','block','release','close-release','inventory','py')]
+  [ValidateSet('bootstrap','doctor','resume','state','start-packet','close-packet','defer-packet','block','release','close-release','reopen-release','inventory','py')]
   [string]$Command='resume',
   [string]$Phase,
   [string]$Packet,
   [string]$Reason,
+  [string]$ChangeOrder,
   [string]$SshTarget,
   [string]$Serial,
   [string]$Script,
@@ -73,6 +74,14 @@ switch($Command){
     if($Phase){$args+=@('--phase',$Phase)}
     if($NoPush){$args+='--no-push'}
     if($LegacyException){$args+='--legacy-exception'}
+    Invoke-RepositoryPython -RepositoryScript 'scripts/37_PROJECT_STATE.py' -Arguments $args
+  }
+  'reopen-release' {
+    if(-not $Phase){throw '-Phase is required'}
+    if(-not $ChangeOrder){throw '-ChangeOrder is required'}
+    if(-not $Reason){throw '-Reason is required'}
+    $args=@('reopen-release','--phase',$Phase,'--change-order',$ChangeOrder,'--reason',$Reason)
+    if($NoPush){$args+='--no-push'}
     Invoke-RepositoryPython -RepositoryScript 'scripts/37_PROJECT_STATE.py' -Arguments $args
   }
   'inventory' {
