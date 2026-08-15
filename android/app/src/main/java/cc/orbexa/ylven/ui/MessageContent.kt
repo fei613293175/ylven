@@ -10,13 +10,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 
 /** Small dependency-free Markdown renderer for persisted assistant content.
  * It deliberately renders only safe structural Markdown (headings, bullets,
  * fenced code and pipe tables); links remain text and are never auto-opened.
  */
 @Composable
-fun MessageContent(body: String, modifier: Modifier = Modifier, onCopyCode: (String) -> Unit = {}) {
+fun MessageContent(
+    body: String,
+    modifier: Modifier = Modifier,
+    onCopyCode: (String) -> Unit = {},
+    fontSize: TextUnit = 14.sp,
+    lineHeight: TextUnit = 20.sp,
+) {
     val lines = body.replace("\r\n", "\n").split('\n')
     Column(modifier.testTag("YL-A-026-C-P03_018-01")) {
         var index = 0
@@ -49,7 +56,7 @@ fun MessageContent(body: String, modifier: Modifier = Modifier, onCopyCode: (Str
                 }
                 continue
             } else {
-                Text(line.removePrefix("# ").removePrefix("## "), fontSize = 14.sp, lineHeight = 20.sp)
+                Text(line.removePrefix("# ").removePrefix("## "), fontSize = fontSize, lineHeight = lineHeight)
             }
             index++
         }

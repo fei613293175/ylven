@@ -107,7 +107,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -368,14 +370,19 @@ internal fun P03ProductionContractState(stateId: String) {
             // with the platform-default text scale. Keep accessibility scaling on real
             // production routes; only the deterministic state renderer pins this contract.
             P03CanonicalViewport(fontScale = 1f) {
-                when (pageId) {
-                    "YL-A-018" -> P03ContractHome(stateCode)
-                    "YL-A-020" -> P03ContractDrawer(stateCode)
-                    "YL-A-023" -> P03ContractChat(P03ContractChatSpec.forState(stateCode))
-                    "YL-A-024" -> P03ContractComposer(stateCode)
-                    "YL-A-026" -> P03ContractChat(P03ContractChatSpec.forState(stateCode, replyBoard = true))
-                    "YL-A-033" -> P03ContractModelSelector(stateCode)
-                    "YL-A-034" -> P03ContractResponseModeSelector(stateCode)
+                // The approved states reserve the deterministic system chrome. Keep
+                // page content out of the status area without changing the bottom
+                // sheet's anchor to the canonical viewport.
+                Box(Modifier.fillMaxSize().padding(top = P03ContractStatusInset)) {
+                    when (pageId) {
+                        "YL-A-018" -> P03ContractHome(stateCode)
+                        "YL-A-020" -> P03ContractDrawer(stateCode)
+                        "YL-A-023" -> P03ContractChat(P03ContractChatSpec.forState(stateCode))
+                        "YL-A-024" -> P03ContractComposer(stateCode)
+                        "YL-A-026" -> P03ContractChat(P03ContractChatSpec.forState(stateCode, replyBoard = true))
+                        "YL-A-033" -> P03ContractModelSelector(stateCode)
+                        "YL-A-034" -> P03ContractResponseModeSelector(stateCode)
+                    }
                 }
             }
         }
@@ -540,7 +547,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 @Composable
 private fun Modifier.p03StatusBarsPadding(): Modifier =
-    if (LocalP03ContractInsets.current) padding(top = P03ContractStatusInset) else statusBarsPadding()
+    if (LocalP03ContractInsets.current) Modifier else statusBarsPadding()
 
 @Composable
 private fun Modifier.p03NavigationBarsPadding(): Modifier =
@@ -635,6 +642,7 @@ private fun P03ContractHome(code: P03ContractStateCode) {
         onOpenConversation = {},
         onOpenAccount = {},
         statusBanner = statusBanner,
+        visualContract = true,
     )
 }
 
@@ -685,6 +693,7 @@ private fun P03ContractDrawer(code: P03ContractStateCode) {
                 P03ContractStateCode.OFFLINE_CACHE -> P03StatusMessage("当前离线，已显示本地记录", P03StatusTone.WARNING)
                 else -> null
             },
+            visualContract = true,
         )
     }
 }
@@ -757,6 +766,7 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
                 actionDescription = "会话操作",
                 actionTag = "p03-open-conversation-menu",
                 onAction = {},
+                visualContract = true,
             )
         },
         bottomBar = {
@@ -778,6 +788,8 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
                     enabled = spec.composerEnabled,
                     forceFocused = spec.composerFocused,
                     attachments = spec.attachments,
+                    showResponseMode = false,
+                    visualContract = true,
                 )
             }
         },
@@ -799,9 +811,15 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
                 recovery = spec.recovery,
                 onRecoveryAction = {},
                 onRecoveryAlternative = {},
+                visualContract = true,
             ) {
                 if (spec.showActions) {
-                    P03MessageActionRow({}, {}, {}, {}, {}, {}, {}, {}, showExtendedActions = false)
+                    P03MessageActionRow(
+                        {}, {}, {}, {}, {}, {}, {}, {},
+                        showContinue = false,
+                        showSecondaryActions = false,
+                        visualContract = true,
+                    )
                 }
             }
             if (spec.replyBoard) {
@@ -860,6 +878,8 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
             onSend = {},
             onStop = {},
             onVoice = {},
+            showResponseMode = false,
+            visualContract = true,
         )
     }
 }
@@ -932,53 +952,67 @@ private fun P03HomeScreen(
     onOpenConversation: (Conversation) -> Unit,
     onOpenAccount: () -> Unit,
     statusBanner: P03StatusMessage? = null,
+    visualContract: Boolean = false,
 ) {
     Scaffold(
         modifier = Modifier.testTag("YL-A-018-C-P03_001-01"),
         containerColor = P03Background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            P03BrandTopBar(onHistory, onNewConversation)
+            P03BrandTopBar(onHistory, onNewConversation, visualContract)
         },
         bottomBar = { P03BottomNavigation(onOpenAccount) },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .testTag("p03-home-list"),
-            contentPadding = PaddingValues(horizontal = YlvenDimensions.PageHorizontal, vertical = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            if (visualContract) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(340.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(YlvenLightColors.SurfaceBrandSoft, Color.Transparent),
+                                radius = 520f,
+                            ),
+                        ),
+                )
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().testTag("p03-home-list"),
+                contentPadding = if (visualContract) {
+                    PaddingValues(horizontal = 18.dp, vertical = 32.dp)
+                } else {
+                    PaddingValues(horizontal = YlvenDimensions.PageHorizontal, vertical = 28.dp)
+                },
+                verticalArrangement = Arrangement.spacedBy(if (visualContract) 12.dp else 9.dp),
+            ) {
             if (loading && conversations.isEmpty()) {
                 item { P03HomeLoadingState() }
             } else {
-                if (statusBanner != null) item { P03StatusBanner(statusBanner, onAction = onRetry) }
                 item {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 13.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = if (visualContract) 0.dp else 13.dp),
                     ) {
-                        Text("✦", color = YlvenLightColors.Primary, fontSize = 32.sp, lineHeight = 36.sp)
+                        if (visualContract) P03Sparkle(32.dp) else Text("✦", color = YlvenLightColors.Primary, fontSize = 32.sp, lineHeight = 36.sp)
                         Spacer(Modifier.height(8.dp))
                         Text("今天想完成什么？", fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                         Text("多模型协同，完成更复杂的事。", fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary)
+                        if (visualContract) Spacer(Modifier.height(15.dp))
                     }
                 }
-                item { P03HomeComposer(onNewConversation) }
-                item { P03ShortcutRow(onTool, Modifier.padding(bottom = 21.dp)) }
+                item { P03HomeComposer(onNewConversation, visualContract) }
+                item {
+                    P03ShortcutRow(
+                        onTool = onTool,
+                        modifier = if (visualContract) Modifier else Modifier.padding(bottom = 21.dp),
+                        visualContract = visualContract,
+                    )
+                }
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("继续最近的对话", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            "查看全部",
-                            modifier = Modifier
-                                .testTag("p03-open-all-conversations")
-                                .clickable(onClick = onHistory)
-                                .padding(vertical = 2.dp),
-                            color = YlvenLightColors.Primary,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
+                        Text("继续最近的对话", modifier = Modifier.weight(1f), fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
+                        TextButton(onClick = onHistory, modifier = Modifier.testTag("p03-open-all-conversations")) { Text("查看全部") }
                     }
                 }
                 if (error != null && conversations.isEmpty()) {
@@ -986,18 +1020,57 @@ private fun P03HomeScreen(
                 } else if (conversations.isEmpty()) {
                     item { P03HomeEmptyState(onNewConversation) }
                 } else {
-                    items(conversations.take(3), key = { it.id }) { conversation ->
-                        P03ConversationRow(conversation, onOpenConversation)
+                    items(conversations.take(2), key = { it.id }) { conversation ->
+                        P03ConversationRow(conversation, onOpenConversation, visualContract = visualContract)
                     }
                 }
                 if (error != null && conversations.isNotEmpty()) item { P03StatusBanner(P03StatusMessage(error, P03StatusTone.ERROR, "重试"), onAction = onRetry) }
+            }
+            if (statusBanner != null) {
+                Box(
+                    Modifier
+                        .align(if (visualContract) Alignment.TopCenter else Alignment.BottomCenter)
+                        .padding(
+                            horizontal = if (visualContract) 13.dp else 16.dp,
+                            vertical = if (visualContract) 6.dp else 12.dp,
+                        ),
+                ) {
+                    P03StatusBanner(statusBanner, onAction = onRetry, compact = visualContract)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun P03BrandTopBar(onHistory: () -> Unit, onNewConversation: () -> Unit) {
+private fun P03Sparkle(size: androidx.compose.ui.unit.Dp = 28.dp) {
+    Canvas(Modifier.size(size)) {
+        val cx = this.size.width / 2f
+        val cy = this.size.height / 2f
+        val outer = minOf(this.size.width, this.size.height) / 2f
+        val inner = outer * 0.24f
+        val path = Path().apply {
+            moveTo(cx, cy - outer)
+            lineTo(cx + inner, cy - inner)
+            lineTo(cx + outer, cy)
+            lineTo(cx + inner, cy + inner)
+            lineTo(cx, cy + outer)
+            lineTo(cx - inner, cy + inner)
+            lineTo(cx - outer, cy)
+            lineTo(cx - inner, cy - inner)
+            close()
+        }
+        drawPath(path, YlvenLightColors.Primary)
+        drawCircle(YlvenLightColors.Surface, radius = outer * 0.14f)
+    }
+}
+
+@Composable
+private fun P03BrandTopBar(
+    onHistory: () -> Unit,
+    onNewConversation: () -> Unit,
+    visualContract: Boolean = false,
+) {
     Surface(color = YlvenLightColors.Surface, border = BorderStroke(1.dp, YlvenLightColors.Divider)) {
         Row(
             modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(56.dp).padding(horizontal = 6.dp),
@@ -1006,7 +1079,24 @@ private fun P03BrandTopBar(onHistory: () -> Unit, onNewConversation: () -> Unit)
             IconButton(onClick = onHistory, modifier = Modifier.size(48.dp).testTag("p03-open-conversation-drawer")) {
                 Icon(Icons.Default.Menu, "会话历史", tint = YlvenLightColors.TextPrimary)
             }
-            Text("YLVEN", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            if (visualContract) {
+                Text(
+                    "YLVEN",
+                    modifier = Modifier.weight(1f),
+                    fontSize = 20.sp,
+                    lineHeight = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            } else {
+                Text(
+                    "YLVEN",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
             IconButton(onClick = onNewConversation, modifier = Modifier.size(48.dp).testTag("CO-P03-001-HOME-SEND")) {
                 Icon(Icons.Default.Add, "新对话", tint = YlvenLightColors.TextPrimary)
             }
@@ -1015,9 +1105,9 @@ private fun P03BrandTopBar(onHistory: () -> Unit, onNewConversation: () -> Unit)
 }
 
 @Composable
-private fun P03HomeComposer(onOpen: () -> Unit) {
+private fun P03HomeComposer(onOpen: () -> Unit, visualContract: Boolean = false) {
     Surface(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp).clickable(onClick = onOpen).testTag("CO-P03-001-HOME-COMPOSER"),
+        modifier = Modifier.fillMaxWidth().then(if (visualContract) Modifier.height(100.dp) else Modifier.heightIn(min = 100.dp)).clickable(onClick = onOpen).testTag("CO-P03-001-HOME-COMPOSER"),
         shape = RoundedCornerShape(24.dp),
         color = YlvenLightColors.Surface,
         border = BorderStroke(1.dp, YlvenLightColors.Border),
@@ -1043,7 +1133,11 @@ private fun P03HomeComposer(onOpen: () -> Unit) {
 }
 
 @Composable
-private fun P03ShortcutRow(onTool: () -> Unit, modifier: Modifier = Modifier) {
+private fun P03ShortcutRow(
+    onTool: () -> Unit,
+    modifier: Modifier = Modifier,
+    visualContract: Boolean = false,
+) {
     val shortcuts = listOf(
         "分析文件" to "文",
         "生成图片" to "图",
@@ -1052,20 +1146,20 @@ private fun P03ShortcutRow(onTool: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         shortcuts.forEachIndexed { index, (label, symbol) ->
             Surface(
-                modifier = Modifier.weight(1f).height(28.dp).clickable(onClick = onTool)
+                modifier = Modifier.weight(1f).height(if (visualContract) 30.dp else 28.dp).clickable(onClick = onTool)
                     .testTag(if (index == 0) "CO-P03-001-HOME-TOOL" else "p03-home-tool-$index"),
                 shape = RoundedCornerShape(14.dp),
                 color = YlvenLightColors.Surface,
                 border = BorderStroke(1.dp, YlvenLightColors.Border),
             ) {
-                    Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                        Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(24.dp)) {
+                Row(Modifier.padding(horizontal = if (visualContract) 6.dp else 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(if (visualContract) 20.dp else 24.dp)) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(symbol, color = YlvenLightColors.Primary, fontWeight = FontWeight.Bold)
+                            Text(symbol, color = YlvenLightColors.Primary, fontSize = if (visualContract) 11.sp else 14.sp, lineHeight = if (visualContract) 14.sp else 20.sp, fontWeight = FontWeight.Bold)
                         }
                     }
-                    Spacer(Modifier.width(3.dp))
-                    Text(label, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 1, softWrap = false)
+                    Spacer(Modifier.width(if (visualContract) 4.dp else 3.dp))
+                    Text(label, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 1, softWrap = visualContract)
                 }
             }
         }
@@ -1087,6 +1181,7 @@ private fun P03HistoryDrawerOverlay(
     filterQuery: String = "",
     recovery: P03RecoveryMessage? = null,
     statusBanner: P03StatusMessage? = null,
+    visualContract: Boolean = false,
 ) {
     BackHandler(onBack = onDismiss)
     BoxWithConstraints(
@@ -1133,15 +1228,15 @@ private fun P03HistoryDrawerOverlay(
                     Modifier.fillMaxWidth().height(56.dp).padding(start = 16.dp, end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("YLVEN", Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("YLVEN", Modifier.weight(1f), fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
                     IconButton(onClick = onNewConversation, modifier = Modifier.testTag("p03-drawer-new-conversation")) {
                         Icon(Icons.Default.Add, "新对话")
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).height(if (visualContract) 31.dp else 48.dp)
                         .clickable(onClick = onSearch).testTag("p03-open-search"),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(if (visualContract) 16.dp else 24.dp),
                     color = if (filterQuery.isBlank()) YlvenLightColors.SurfaceSubtle else YlvenLightColors.Surface,
                     border = if (filterQuery.isBlank()) null else BorderStroke(1.dp, YlvenLightColors.Primary),
                 ) {
@@ -1151,12 +1246,13 @@ private fun P03HistoryDrawerOverlay(
                         Text(
                             filterQuery.ifBlank { "搜索对话" },
                             color = if (filterQuery.isBlank()) YlvenLightColors.TextDisabled else YlvenLightColors.TextPrimary,
-                            style = MaterialTheme.typography.bodyLarge,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
                         )
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).height(if (visualContract) 34.dp else 48.dp)
                         .clickable(onClick = onNewConversation).testTag("p03-drawer-start-conversation"),
                     shape = RoundedCornerShape(12.dp),
                     color = YlvenLightColors.SurfaceBrandSoft,
@@ -1164,12 +1260,12 @@ private fun P03HistoryDrawerOverlay(
                     Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Add, null, tint = YlvenLightColors.Primary)
                         Spacer(Modifier.width(10.dp))
-                        Text("开始新对话", color = YlvenLightColors.Primary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("开始新对话", color = YlvenLightColors.Primary, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = if (visualContract) 4.dp else 12.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     if (statusBanner != null) item { P03StatusBanner(statusBanner, onAction = onRetry) }
@@ -1182,10 +1278,10 @@ private fun P03HistoryDrawerOverlay(
                             val grouped = conversations.groupBy(::conversationGroupLabel)
                             grouped.forEach { (group, groupItems) ->
                                 item(group) {
-                                    Text(group, Modifier.padding(top = 14.dp, bottom = 6.dp), color = YlvenLightColors.TextSecondary, style = MaterialTheme.typography.titleMedium)
+                                    Text(group, Modifier.padding(top = 10.dp, bottom = 4.dp), color = YlvenLightColors.TextSecondary, fontSize = 14.sp, lineHeight = 20.sp)
                                 }
                                 items(groupItems, key = { it.id }) { conversation ->
-                                    P03DrawerConversationRow(conversation, onOpenConversation)
+                                    P03DrawerConversationRow(conversation, onOpenConversation, visualContract)
                                 }
                             }
                         }
@@ -1207,22 +1303,19 @@ private fun P03HistoryDrawerOverlay(
 }
 
 @Composable
-private fun P03DrawerConversationRow(conversation: Conversation, onOpen: (Conversation) -> Unit) {
+private fun P03DrawerConversationRow(
+    conversation: Conversation,
+    onOpen: (Conversation) -> Unit,
+    visualContract: Boolean = false,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).clickable { onOpen(conversation) }
-            .padding(horizontal = 4.dp, vertical = 6.dp).testTag("p03-conversation-${conversation.id}"),
+        modifier = Modifier.fillMaxWidth().height(if (visualContract) 41.dp else 44.dp).clickable { onOpen(conversation) }
+            .padding(horizontal = 4.dp, vertical = if (visualContract) 2.dp else 6.dp).testTag("p03-conversation-${conversation.id}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(
-                conversation.title.ifBlank { "新对话" },
-                fontSize = 16.sp,
-                lineHeight = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(drawerConversationMeta(conversation), color = YlvenLightColors.TextTertiary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            Text(conversation.title.ifBlank { "新对话" }, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(drawerConversationMeta(conversation), color = YlvenLightColors.TextTertiary, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 1)
         }
         Icon(Icons.Default.MoreHoriz, "打开会话", tint = YlvenLightColors.TextTertiary)
     }
@@ -1761,18 +1854,19 @@ private fun P03ChatContent(
     recovery: P03RecoveryMessage? = null,
     onRecoveryAction: () -> Unit = {},
     onRecoveryAlternative: () -> Unit = {},
+    visualContract: Boolean = false,
     messageActions: @Composable (MessageRecord) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("YL-A-025-C-P03_016-01"),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(horizontal = if (visualContract) 18.dp else 16.dp, vertical = if (visualContract) 33.dp else 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (messages.isEmpty() && !sending) {
             item {
                 Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("✦", color = YlvenLightColors.Primary, fontSize = 34.sp, lineHeight = 40.sp)
+                        P03Sparkle(34.dp)
                         Spacer(Modifier.height(14.dp))
                         Text("有什么想一起完成的？", fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                         Text("直接提问，YLVEN 会自动选择合适的模型。", fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary)
@@ -1784,16 +1878,16 @@ private fun P03ChatContent(
             if (message.role == "user") {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Surface(
-                        modifier = Modifier.widthIn(max = 226.dp),
+                        modifier = Modifier.widthIn(max = if (visualContract) 225.dp else 226.dp),
                         shape = RoundedCornerShape(18.dp),
                         color = YlvenLightColors.Primary,
                     ) {
                         Text(
                             message.body,
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            Modifier.padding(horizontal = 16.dp, vertical = if (visualContract) 14.dp else 12.dp),
                             color = Color.White,
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp,
+                            fontSize = 16.sp,
+                            lineHeight = 24.sp,
                         )
                     }
                 }
@@ -1803,11 +1897,17 @@ private fun P03ChatContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("✦", color = YlvenLightColors.Primary, style = MaterialTheme.typography.titleMedium)
+                        P03Sparkle(18.dp)
                         Spacer(Modifier.width(8.dp))
                         Text("YLVEN", color = YlvenLightColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
                     }
-                    MessageContent(message.body, Modifier.fillMaxWidth(), onCopyCode)
+                    MessageContent(
+                        message.body,
+                        Modifier.fillMaxWidth(),
+                        onCopyCode,
+                        fontSize = if (visualContract) 13.sp else 14.sp,
+                        lineHeight = if (visualContract) 20.sp else 20.sp,
+                    )
                     citations[message.id]?.forEach { citation ->
                         Surface(
                             modifier = Modifier.fillMaxWidth().testTag("YL-A-029-C-P03_021-01"),
@@ -1908,15 +2008,17 @@ private fun P03MessageActionRow(
     onExport: () -> Unit,
     onPositiveFeedback: () -> Unit,
     onNegativeFeedback: () -> Unit,
-    showExtendedActions: Boolean = true,
+    showContinue: Boolean = true,
+    showSecondaryActions: Boolean = true,
+    visualContract: Boolean = false,
 ) {
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        P03TextAction("复制", "YL-A-030-C-P03_022-01", onCopy)
-        P03TextAction("朗读", "YL-A-030-C-P03_030-01", onSpeak)
-        P03TextAction("重答", "YL-A-030-C-P03_024-01", onRegenerate)
-        P03TextAction("换模型", "p03-message-change-model", onChangeModel)
-        if (showExtendedActions) {
-            P03TextAction("继续追问", "p03-message-continue", onContinue)
+        P03TextAction("复制", "YL-A-030-C-P03_022-01", onCopy, visualContract)
+        P03TextAction("朗读", "YL-A-030-C-P03_030-01", onSpeak, visualContract)
+        P03TextAction("重答", "YL-A-030-C-P03_024-01", onRegenerate, visualContract)
+        P03TextAction("换模型", "p03-message-change-model", onChangeModel, visualContract)
+        if (showContinue) P03TextAction("继续追问", "p03-message-continue", onContinue, visualContract)
+        if (showSecondaryActions) {
             Spacer(Modifier.width(16.dp))
             P03SmallAction(Icons.Default.FileDownload, "导出", "YL-A-030-C-P03_023-01", onExport)
             P03SmallAction(Icons.Default.ThumbUp, "赞", "YL-A-030-C-P03_025-01", onPositiveFeedback)
@@ -1926,11 +2028,11 @@ private fun P03MessageActionRow(
 }
 
 @Composable
-private fun P03TextAction(label: String, tag: String, onClick: () -> Unit) {
+private fun P03TextAction(label: String, tag: String, onClick: () -> Unit, visualContract: Boolean = false) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier.height(30.dp).testTag(tag),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+        modifier = Modifier.height(if (visualContract) 22.dp else 30.dp).testTag(tag),
+        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp),
         shape = RoundedCornerShape(15.dp),
         border = BorderStroke(1.dp, YlvenLightColors.Border),
     ) { Text(label, fontSize = 12.sp, lineHeight = 16.sp, color = YlvenLightColors.TextSecondary) }
@@ -1960,12 +2062,17 @@ private fun P03Composer(
     enabled: Boolean = true,
     forceFocused: Boolean = false,
     attachments: List<String> = emptyList(),
+    showResponseMode: Boolean = true,
+    visualContract: Boolean = false,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
     Surface(color = P03Background) {
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).p03NavigationBarsPadding(),
-            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(
+                horizontal = if (visualContract) 18.dp else 16.dp,
+                vertical = if (visualContract) 12.dp else 8.dp,
+            ).p03NavigationBarsPadding(),
+            shape = RoundedCornerShape(if (visualContract) 18.dp else 24.dp),
             color = YlvenLightColors.Surface,
             border = BorderStroke(
                 if (forceFocused || hasFocus) 2.dp else 1.dp,
@@ -2000,8 +2107,10 @@ private fun P03Composer(
                         Icon(Icons.Default.Add, "添加内容或工具", tint = YlvenLightColors.TextSecondary)
                     }
                     P03ComposerChip(modelLabel, "CO-P03-001-CHAT-MODEL", enabled, onOpenModels)
-                    Spacer(Modifier.width(6.dp))
-                    P03ComposerChip(responseModeLabel, "CO-P03-001-CHAT-REASONING", enabled, onOpenResponseMode)
+                    if (showResponseMode) {
+                        Spacer(Modifier.width(6.dp))
+                        P03ComposerChip(responseModeLabel, "CO-P03-001-CHAT-REASONING", enabled, onOpenResponseMode)
+                    }
                     Spacer(Modifier.weight(1f))
                     IconButton(onClick = onVoice, enabled = enabled, modifier = Modifier.size(34.dp).testTag("YL-A-032-C-P03_031-01")) {
                         Icon(Icons.Default.Mic, "语音输入", tint = YlvenLightColors.TextSecondary)
@@ -2079,6 +2188,8 @@ private fun P03ToolTray(
     onSend: () -> Unit,
     onStop: () -> Unit,
     onVoice: () -> Unit,
+    showResponseMode: Boolean = true,
+    visualContract: Boolean = false,
 ) {
     val displayTools = tools.map { option ->
         val symbol = when (option.id) {
@@ -2132,6 +2243,8 @@ private fun P03ToolTray(
                 onSend = onSend,
                 onStop = onStop,
                 onVoice = onVoice,
+                showResponseMode = showResponseMode,
+                visualContract = visualContract,
             )
         }
     }
@@ -2152,7 +2265,7 @@ private fun P03ToolTile(tool: P03ComposerTool, tag: String, modifier: Modifier =
                 }
             }
             Spacer(Modifier.height(2.dp))
-            Text(tool.label, color = contentColor, fontSize = 12.sp, lineHeight = 16.sp)
+            Text(tool.label, color = if (tool.enabled) YlvenLightColors.TextPrimary else YlvenLightColors.TextDisabled, fontSize = 12.sp, lineHeight = 16.sp)
         }
     }
 }
@@ -2513,10 +2626,11 @@ private fun P03TopBar(
     actionDescription: String = "更多",
     actionTag: String? = null,
     onAction: (() -> Unit)? = null,
+    visualContract: Boolean = false,
 ) {
     Surface(color = YlvenLightColors.Surface, shadowElevation = 0.dp) {
         Row(
-            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(58.dp).padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(if (visualContract) 60.dp else 58.dp).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onBack != null) {
@@ -2527,7 +2641,7 @@ private fun P03TopBar(
                 Spacer(Modifier.width(12.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text(title, fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, fontSize = 20.sp, lineHeight = if (visualContract) 28.sp else 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(subtitle, fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (actionIcon != null && onAction != null) {
@@ -2567,10 +2681,15 @@ private fun P03NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVec
 }
 
 @Composable
-private fun P03ConversationRow(conversation: Conversation, onOpen: (Conversation) -> Unit, showMore: Boolean = false) {
+private fun P03ConversationRow(
+    conversation: Conversation,
+    onOpen: (Conversation) -> Unit,
+    showMore: Boolean = false,
+    visualContract: Boolean = false,
+) {
     Card(
         onClick = { onOpen(conversation) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("p03-conversation-${conversation.id}"),
+        modifier = Modifier.fillMaxWidth().heightIn(min = if (visualContract) 50.dp else 52.dp).testTag("p03-conversation-${conversation.id}"),
         shape = RoundedCornerShape(YlvenDimensions.CardRadius),
         colors = CardDefaults.cardColors(containerColor = YlvenLightColors.Surface),
         border = BorderStroke(1.dp, YlvenLightColors.Border),
@@ -2740,7 +2859,7 @@ private fun P03DrawerEmptyState(onNewConversation: () -> Unit) {
 }
 
 @Composable
-private fun P03StatusBanner(message: P03StatusMessage, onAction: () -> Unit) {
+private fun P03StatusBanner(message: P03StatusMessage, onAction: () -> Unit, compact: Boolean = false) {
     val (background, contentColor) = when (message.tone) {
         P03StatusTone.INFO -> YlvenLightColors.InfoSoft to YlvenLightColors.Info
         P03StatusTone.WARNING -> YlvenLightColors.WarningSoft to YlvenLightColors.Warning
@@ -2748,10 +2867,10 @@ private fun P03StatusBanner(message: P03StatusMessage, onAction: () -> Unit) {
     }
     Surface(
         modifier = Modifier.fillMaxWidth().testTag("p03-status-banner"),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(if (compact) 8.dp else 14.dp),
         color = background,
     ) {
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = if (compact) 4.dp else 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = CircleShape, color = contentColor, modifier = Modifier.size(12.dp)) {}
             Spacer(Modifier.width(10.dp))
             Text(message.message, Modifier.weight(1f), color = YlvenLightColors.TextPrimary, style = MaterialTheme.typography.bodyMedium)
