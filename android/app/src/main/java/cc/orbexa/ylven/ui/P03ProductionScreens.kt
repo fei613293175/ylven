@@ -609,7 +609,7 @@ private val P03ContractTools = listOf(
 )
 
 private val P03ContractUserMessage = MessageRecord(
-    "contract-user", "contract-conversation", "user", "如何让多模型对话具备上下文，并为多服务器部署做好准备？", "",
+    "contract-user", "contract-conversation", "user", "如何让多模型对话具备上下文\n，并为多服务器部署做好准备\n？", "",
 )
 
 private fun p03ContractAssistant(body: String) = MessageRecord(
@@ -622,7 +622,9 @@ private fun P03ContractHome(code: P03ContractStateCode) {
         P03ContractStateCode.LOADING,
         P03ContractStateCode.EMPTY,
         P03ContractStateCode.NETWORK_ERROR -> emptyList()
-        else -> P03ContractConversations.take(2)
+        else -> P03ContractConversations.take(2).map { conversation ->
+            if (conversation.title == "对话上下文与长期记忆方案") conversation.copy(updatedAt = "昨天") else conversation
+        }
     }
     val statusBanner = when (code) {
         P03ContractStateCode.REFRESHING -> P03StatusMessage("正在更新最近内容", P03StatusTone.INFO)
@@ -708,6 +710,7 @@ private data class P03ContractChatSpec(
     val recovery: P03RecoveryMessage? = null,
     val notice: String? = null,
     val draft: String = "",
+    val composerPlaceholder: String = "问问 YLVEN…",
     val composerEnabled: Boolean = true,
     val composerFocused: Boolean = false,
     val attachments: List<String> = emptyList(),
@@ -717,11 +720,12 @@ private data class P03ContractChatSpec(
     companion object {
         fun forState(code: P03ContractStateCode, replyBoard: Boolean = false): P03ContractChatSpec {
             val partial = p03ContractAssistant(
-                "可以。建议把当前系统设计为无状态 AI Runtime，并由 PostgreSQL 保存完整会话事实。",
+                "可以。建议把当前系统设计为无状态 AI Runti\nme，并由 PostgreSQL 保存完整会话事实。\n\n" +
+                    "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，\n再通过 Sub2API 调用目标模型。",
             )
             val completed = p03ContractAssistant(
-                "可以。建议把当前系统设计为无状态 AI Runtime，并由 PostgreSQL 保存完整会话事实。\n\n" +
-                    "每次发送消息时，后端根据会话重新组装最近对话、结构化摘要和当前附件。\n\n" +
+                "可以。建议把当前系统设计为无状态 AI Runti\nme，并由 PostgreSQL 保存完整会话事实。\n\n" +
+                    "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，\n再通过 Sub2API 调用目标模型。\n\n" +
                     "这样后续切换 GPT、Claude 或 Grok 时，仍然",
             )
             val base = listOf(P03ContractUserMessage)
@@ -735,16 +739,16 @@ private data class P03ContractChatSpec(
                     attachments = listOf("架构说明.pdf", "部署清单.md"),
                     replyBoard = replyBoard,
                 )
-                P03ContractStateCode.CONNECTING -> P03ContractChatSpec(base, sending = true, replyBoard = replyBoard)
-                P03ContractStateCode.STREAMING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, replyBoard = replyBoard)
-                P03ContractStateCode.TOOL_RUNNING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, toolProgress = "正在阅读文件", replyBoard = replyBoard)
-                P03ContractStateCode.COMPLETED -> P03ContractChatSpec(base + completed, showActions = true, replyBoard = replyBoard)
-                P03ContractStateCode.STOPPED -> P03ContractChatSpec(base + partial, notice = "已停止生成", replyBoard = replyBoard)
-                P03ContractStateCode.RECONNECTING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, reconnecting = true, replyBoard = replyBoard)
-                P03ContractStateCode.OFFLINE -> P03ContractChatSpec(base, recovery = P03RecoveryMessage("网络暂不可用", "请检查连接后重试", "重试"), composerEnabled = false, replyBoard = replyBoard)
-                P03ContractStateCode.RATE_LIMITED -> P03ContractChatSpec(base, recovery = P03RecoveryMessage("当前请求较多", "请稍后再试，或切换到其他可用模型", "重试", "更换模型"), replyBoard = replyBoard)
-                P03ContractStateCode.PROVIDER_ERROR -> P03ContractChatSpec(base, recovery = P03RecoveryMessage("暂时无法完成回答", "你可以重试，或切换到其他可用模型", "重试", "更换模型"), replyBoard = replyBoard)
-                P03ContractStateCode.CONTENT_BLOCKED -> P03ContractChatSpec(base, recovery = P03RecoveryMessage("这个请求暂时无法处理", "请调整问题后重试", "编辑问题"), replyBoard = replyBoard)
+                P03ContractStateCode.CONNECTING -> P03ContractChatSpec(base, sending = true, composerPlaceholder = "继续追问…", replyBoard = replyBoard)
+                P03ContractStateCode.STREAMING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, composerPlaceholder = "继续追问…", replyBoard = replyBoard)
+                P03ContractStateCode.TOOL_RUNNING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, toolProgress = "正在阅读文件", composerPlaceholder = "继续追问…", replyBoard = replyBoard)
+                P03ContractStateCode.COMPLETED -> P03ContractChatSpec(base + completed, composerPlaceholder = "继续追问…", showActions = true, replyBoard = replyBoard)
+                P03ContractStateCode.STOPPED -> P03ContractChatSpec(base + partial, composerPlaceholder = "继续追问…", notice = "已停止生成", replyBoard = replyBoard)
+                P03ContractStateCode.RECONNECTING -> P03ContractChatSpec(base + partial, sending = true, activeAssistantHasContent = true, composerPlaceholder = "继续追问…", reconnecting = true, replyBoard = replyBoard)
+                P03ContractStateCode.OFFLINE -> P03ContractChatSpec(base, composerPlaceholder = "继续追问…", recovery = P03RecoveryMessage("网络暂不可用", "请检查连接后重试", "重试"), composerEnabled = false, replyBoard = replyBoard)
+                P03ContractStateCode.RATE_LIMITED -> P03ContractChatSpec(base, composerPlaceholder = "继续追问…", recovery = P03RecoveryMessage("当前请求较多", "请稍后再试，或切换到其他可用模型", "重试", "更换模型"), replyBoard = replyBoard)
+                P03ContractStateCode.PROVIDER_ERROR -> P03ContractChatSpec(base, composerPlaceholder = "继续追问…", recovery = P03RecoveryMessage("暂时无法完成回答", "你可以重试，或切换到其他可用模型", "重试", "更换模型"), replyBoard = replyBoard)
+                P03ContractStateCode.CONTENT_BLOCKED -> P03ContractChatSpec(base, composerPlaceholder = "继续追问…", recovery = P03RecoveryMessage("这个请求暂时无法处理", "请调整问题后重试", "编辑问题"), replyBoard = replyBoard)
                 else -> error("Unsupported chat contract state: $code")
             }
         }
@@ -790,6 +794,7 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
                     forceFocused = spec.composerFocused,
                     attachments = spec.attachments,
                     showResponseMode = false,
+                    placeholder = spec.composerPlaceholder,
                     visualContract = true,
                 )
             }
@@ -916,6 +921,7 @@ private fun P03ContractModelSelector(code: P03ContractStateCode) {
         initialCategory = if (code == P03ContractStateCode.FILTER_ACTIVE) "推理" else "全部",
         statusMessage = if (code == P03ContractStateCode.SERVICE_DEGRADED) "部分模型暂不可用" else null,
         showAutoOption = code != P03ContractStateCode.EMPTY && code != P03ContractStateCode.SERVER_ERROR,
+        visualContract = true,
     )
 }
 
@@ -938,6 +944,7 @@ private fun P03ContractResponseModeSelector(code: P03ContractStateCode) {
         onRetry = {},
         displayUnavailableOptions = code == P03ContractStateCode.DISABLED || code == P03ContractStateCode.SERVICE_DEGRADED,
         showAutoOption = code != P03ContractStateCode.EMPTY && code != P03ContractStateCode.SERVER_ERROR,
+        visualContract = true,
     )
 }
 
@@ -1099,8 +1106,8 @@ private fun P03BrandTopBar(
                 Text(
                     "YLVEN",
                     modifier = Modifier.weight(1f),
-                    fontSize = 20.sp,
-                    lineHeight = 28.sp,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
@@ -1114,7 +1121,7 @@ private fun P03BrandTopBar(
                 )
             }
             IconButton(onClick = onNewConversation, modifier = Modifier.size(48.dp).testTag("CO-P03-001-HOME-SEND")) {
-                Icon(Icons.Default.Add, "新对话", tint = YlvenLightColors.TextPrimary)
+                Icon(Icons.Default.Add, "新对话", tint = YlvenLightColors.TextPrimary, modifier = Modifier.size(if (visualContract) 20.dp else 24.dp))
             }
         }
     }
@@ -1306,7 +1313,7 @@ private fun P03HistoryDrawerOverlay(
                                         group,
                                         Modifier.padding(top = if (visualContract) 10.dp else 14.dp, bottom = if (visualContract) 4.dp else 6.dp),
                                         color = YlvenLightColors.TextSecondary,
-                                        style = if (visualContract) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+                                        style = if (visualContract) MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp, lineHeight = 16.sp) else MaterialTheme.typography.titleMedium,
                                     )
                                 }
                                 items(groupItems, key = { it.id }) { conversation ->
@@ -1354,7 +1361,7 @@ private fun P03DrawerConversationRow(
             Text(
                 drawerConversationMeta(conversation),
                 color = YlvenLightColors.TextTertiary,
-                style = if (visualContract) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodySmall,
+                style = if (visualContract) MaterialTheme.typography.labelMedium.copy(fontSize = 10.sp, lineHeight = 14.sp) else MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
@@ -1900,7 +1907,7 @@ private fun P03ChatContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("YL-A-025-C-P03_016-01"),
-        contentPadding = PaddingValues(horizontal = if (visualContract) 18.dp else 16.dp, vertical = if (visualContract) 40.dp else 18.dp),
+        contentPadding = PaddingValues(horizontal = if (visualContract) 18.dp else 16.dp, vertical = if (visualContract) 32.dp else 18.dp),
         verticalArrangement = Arrangement.spacedBy(if (visualContract) 16.dp else 20.dp),
     ) {
         if (messages.isEmpty() && !sending) {
@@ -1925,10 +1932,10 @@ private fun P03ChatContent(
                     ) {
                         Text(
                             message.body,
-                            Modifier.padding(horizontal = if (visualContract) 16.dp else 14.dp, vertical = if (visualContract) 14.dp else 10.dp),
+                            Modifier.padding(horizontal = if (visualContract) 16.dp else 14.dp, vertical = if (visualContract) 12.dp else 10.dp),
                             color = Color.White,
-                            fontSize = if (visualContract) 16.sp else 14.sp,
-                            lineHeight = if (visualContract) 24.sp else 20.sp,
+                            fontSize = if (visualContract) 15.sp else 14.sp,
+                            lineHeight = if (visualContract) 22.sp else 20.sp,
                         )
                     }
                 }
@@ -1938,16 +1945,27 @@ private fun P03ChatContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (visualContract) P03Sparkle(18.dp) else Text("✦", color = YlvenLightColors.Primary, style = MaterialTheme.typography.titleMedium)
+                        if (visualContract) {
+                            Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(16.dp)) {
+                                Box(contentAlignment = Alignment.Center) { P03Sparkle(9.dp) }
+                            }
+                        } else {
+                            Text("✦", color = YlvenLightColors.Primary, style = MaterialTheme.typography.titleMedium)
+                        }
                         Spacer(Modifier.width(8.dp))
-                        Text("YLVEN", color = YlvenLightColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "YLVEN",
+                            color = YlvenLightColors.TextSecondary,
+                            fontSize = if (visualContract) 10.sp else MaterialTheme.typography.labelLarge.fontSize,
+                            lineHeight = if (visualContract) 14.sp else MaterialTheme.typography.labelLarge.lineHeight,
+                        )
                     }
                     MessageContent(
                         message.body,
                         Modifier.fillMaxWidth(),
                         onCopyCode,
-                        fontSize = if (visualContract) 13.sp else 14.sp,
-                        lineHeight = if (visualContract) 20.sp else 20.sp,
+                        fontSize = if (visualContract) 15.sp else 14.sp,
+                        lineHeight = if (visualContract) 22.sp else 20.sp,
                     )
                     citations[message.id]?.forEach { citation ->
                         Surface(
@@ -2076,7 +2094,7 @@ private fun P03TextAction(label: String, tag: String, onClick: () -> Unit, visua
         contentPadding = PaddingValues(horizontal = if (visualContract) 9.dp else 10.dp, vertical = 0.dp),
         shape = RoundedCornerShape(15.dp),
         border = BorderStroke(1.dp, YlvenLightColors.Border),
-    ) { Text(label, fontSize = 12.sp, lineHeight = 16.sp, color = YlvenLightColors.TextSecondary) }
+    ) { Text(label, fontSize = if (visualContract) 10.sp else 12.sp, lineHeight = if (visualContract) 14.sp else 16.sp, color = YlvenLightColors.TextSecondary) }
 }
 
 @Composable
@@ -2104,6 +2122,7 @@ private fun P03Composer(
     forceFocused: Boolean = false,
     attachments: List<String> = emptyList(),
     showResponseMode: Boolean = true,
+    placeholder: String = "问问 YLVEN…",
     visualContract: Boolean = false,
 ) {
     var hasFocus by remember { mutableStateOf(false) }
@@ -2130,7 +2149,7 @@ private fun P03Composer(
                     }
                 }
                 Box(Modifier.fillMaxWidth().heightIn(min = 20.dp, max = 104.dp).padding(horizontal = 8.dp)) {
-                    if (draft.isEmpty()) Text("问问 YLVEN…", color = YlvenLightColors.TextDisabled)
+                    if (draft.isEmpty()) Text(placeholder, color = YlvenLightColors.TextDisabled)
                     BasicTextField(
                         value = draft,
                         onValueChange = onDraftChange,
@@ -2254,14 +2273,15 @@ private fun P03ToolTray(
             Modifier.fillMaxWidth().height(371.dp).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("添加内容或使用工具", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
+            Text("添加内容或使用工具", fontSize = if (visualContract) 22.sp else 20.sp, lineHeight = if (visualContract) 28.sp else 26.sp, fontWeight = FontWeight.Bold)
             displayTools.chunked(3).forEachIndexed { rowIndex, rowTools ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     rowTools.forEachIndexed { columnIndex, tool ->
                         P03ToolTile(
                             tool,
-                            "p03-tool-${rowIndex * 3 + columnIndex}",
+                            "p03-tool-" + (rowIndex * 3 + columnIndex),
                             Modifier.weight(1f),
+                            visualContract,
                         ) {
                             val next = listOf(draft.trim(), tool.prompt.trim()).filter(String::isNotBlank).joinToString("\n")
                             onDraftChange(next)
@@ -2292,10 +2312,16 @@ private fun P03ToolTray(
 }
 
 @Composable
-private fun P03ToolTile(tool: P03ComposerTool, tag: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun P03ToolTile(
+    tool: P03ComposerTool,
+    tag: String,
+    modifier: Modifier = Modifier,
+    visualContract: Boolean = false,
+    onClick: () -> Unit,
+) {
     val contentColor = if (tool.enabled) YlvenLightColors.Primary else YlvenLightColors.TextDisabled
     Surface(
-        modifier = modifier.height(60.dp).clickable(enabled = tool.enabled, onClick = onClick).testTag(tag),
+        modifier = modifier.height(if (visualContract) 63.dp else 60.dp).clickable(enabled = tool.enabled, onClick = onClick).testTag(tag),
         shape = RoundedCornerShape(8.dp),
         color = YlvenLightColors.SurfaceSubtle,
     ) {
@@ -2324,6 +2350,7 @@ private fun P03ModelSelector(
     initialCategory: String = "全部",
     statusMessage: String? = null,
     showAutoOption: Boolean = true,
+    visualContract: Boolean = false,
 ) {
     var category by remember(initialCategory) { mutableStateOf(initialCategory) }
     val visibleModels = when (category) {
@@ -2361,6 +2388,7 @@ private fun P03ModelSelector(
                     avatarLabel = "Y",
                     trailingLabel = "推荐",
                     rowHeight = 64.dp,
+                    visualContract = visualContract,
                     onClick = { onSelect(null) },
                 )
             }
@@ -2393,6 +2421,7 @@ private fun P03ModelSelector(
                             else -> null
                         },
                         rowHeight = 64.dp,
+                        visualContract = visualContract,
                         onClick = { onSelect(model) },
                     )
                 }
@@ -2414,6 +2443,7 @@ private fun P03ResponseModeSelector(
     onRetry: () -> Unit = {},
     displayUnavailableOptions: Boolean = false,
     showAutoOption: Boolean = true,
+    visualContract: Boolean = false,
 ) {
     val supported = buildSet {
         addAll(supportedModes.map(::normalizeResponseMode))
@@ -2462,7 +2492,8 @@ private fun P03ResponseModeSelector(
                         enabled = id in supported,
                         tag = "p03-response-mode-$id",
                         trailingLabel = if (id !in supported) "不可用" else null,
-                        rowHeight = 56.dp,
+                        rowHeight = if (visualContract) 53.dp else 56.dp,
+                        visualContract = visualContract,
                         onClick = { onSelect(id) },
                     )
                 }
@@ -2482,6 +2513,7 @@ private fun P03SelectorRow(
     avatarLabel: String? = null,
     trailingLabel: String? = null,
     rowHeight: androidx.compose.ui.unit.Dp = 64.dp,
+    visualContract: Boolean = false,
     onClick: () -> Unit,
 ) {
     val border = if (selected) YlvenLightColors.Primary else YlvenLightColors.Border
@@ -2489,11 +2521,11 @@ private fun P03SelectorRow(
         modifier = Modifier.fillMaxWidth().height(rowHeight).clickable(enabled = enabled, onClick = onClick).testTag(tag),
         shape = RoundedCornerShape(16.dp),
         color = if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.Surface,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, border),
+        border = BorderStroke(if (selected && !visualContract) 2.dp else 1.dp, border),
     ) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (avatarLabel != null) {
-                Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(36.dp)) {
+                Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(if (visualContract) 32.dp else 36.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(avatarLabel, color = if (enabled) YlvenLightColors.Primary else YlvenLightColors.TextDisabled, fontWeight = FontWeight.Bold)
                     }
@@ -2522,7 +2554,7 @@ private fun P03SelectorRow(
                 Spacer(Modifier.width(6.dp))
             }
             if (selected) {
-                Surface(shape = CircleShape, color = YlvenLightColors.Primary, modifier = Modifier.size(20.dp)) {
+                Surface(shape = CircleShape, color = YlvenLightColors.Primary, modifier = Modifier.size(if (visualContract) 17.dp else 20.dp)) {
                     Icon(Icons.Default.Check, "已选择", Modifier.padding(3.dp), tint = Color.White)
                 }
             }
@@ -2671,7 +2703,7 @@ private fun P03TopBar(
 ) {
     Surface(color = YlvenLightColors.Surface, shadowElevation = 0.dp) {
         Row(
-            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(if (visualContract) 60.dp else 58.dp).padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(if (visualContract) 58.dp else 58.dp).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onBack != null) {
@@ -2682,14 +2714,14 @@ private fun P03TopBar(
                 Spacer(Modifier.width(12.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text(title, fontSize = 20.sp, lineHeight = if (visualContract) 28.sp else 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, fontSize = if (visualContract) 22.sp else 20.sp, lineHeight = if (visualContract) 28.sp else 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, fontSize = if (visualContract) 13.sp else 14.sp, lineHeight = if (visualContract) 18.sp else 20.sp, color = YlvenLightColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (actionIcon != null && onAction != null) {
                 IconButton(
                     onClick = onAction,
                     modifier = Modifier.size(48.dp).then(if (actionTag == null) Modifier else Modifier.testTag(actionTag)),
-                ) { Icon(actionIcon, actionDescription, tint = YlvenLightColors.TextSecondary) }
+                ) { Icon(actionIcon, actionDescription, tint = YlvenLightColors.TextSecondary, modifier = Modifier.size(if (visualContract) 20.dp else 24.dp)) }
             } else {
                 Spacer(Modifier.width(48.dp))
             }
