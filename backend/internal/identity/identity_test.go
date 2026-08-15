@@ -515,7 +515,7 @@ func TestP03W07MobileModelCatalogReturnsAuthenticatedStableIDs(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if len(body.Items) != 1 || body.Items[0].ID != "gpt-5.6-sol" || body.Items[0].Name != "GPT-5.6 Sol" {
+	if len(body.Items) != 2 || body.Items[0].ID != "gpt-5.6-sol" || body.Items[0].Name != "GPT-5.6 Sol" || body.Items[1].Enabled {
 		t.Fatalf("unexpected model catalog: %+v", body.Items)
 	}
 	if len(body.Items[0].ReasoningProfiles) != 1 || body.Items[0].ReasoningProfiles[0] != "auto" {
@@ -744,6 +744,134 @@ func TestP03CitationEndpointUsesPersistedAssistantContent(t *testing.T) {
 	citations := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/messages/"+message.ID+"/citations", nil, access, "")
 	if citations.Code != http.StatusOK || !strings.Contains(citations.Body.String(), "https://example.com/docs") {
 		t.Fatalf("citations=%d %s", citations.Code, citations.Body.String())
+	}
+}
+
+func TestP03ConversationMessagesAreOwnedAndOrdered(t *testing.T) {
+	s, _ := NewStore("")
+	createTestUser(t, s, "history@example.com")
+	access := createAuthenticatedTestSession(t, s, "history@example.com")
+	conversation, err := s.CreateConversation(access, "消息历史")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.AppendMessage(access, conversation.ID, "user", "第一条"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.AppendMessage(access, conversation.ID, "assistant", "第二条"); err != nil {
+		t.Fatal(err)
+	}
+	s.mu.Lock()
+	conversation = s.data.Conversations[conversation.ID]
+	previousBranchID := conversation.ActiveBranchID
+	activeBranchID := "active-history-branch"
+	now := time.Now().UTC()
+	s.data.ConversationBranches[activeBranchID] = ConversationBranch{
+		ID: activeBranchID, ConversationID: conversation.ID, ParentBranchID: previousBranchID,
+		Status: "active", CreatedAt: now, UpdatedAt: now,
+	}
+	conversation.ActiveBranchID = activeBranchID
+	s.data.Conversations[conversation.ID] = conversation
+	s.mu.Unlock()
+	if _, err := s.AppendMessage(access, conversation.ID, "user", "当前分支第一条"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.AppendMessage(access, conversation.ID, "assistant", "当前分支第二条"); err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(s)
+	response := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/conversations/"+conversation.ID+"/messages", nil, access, "")
+	body := response.Body.String()
+	if response.Code != http.StatusOK || !strings.Contains(body, "当前分支第一条") || !strings.Contains(body, "当前分支第二条") {
+		t.Fatalf("messages=%d %s", response.Code, response.Body.String())
+	}
+	if strings.Contains(body, "\"body\":\"第一条\"") || strings.Contains(body, "\"body\":\"第二条\"") {
+		t.Fatalf("inactive branch leaked into message history: %s", body)
+	}
+	if strings.Index(body, "当前分支第一条") > strings.Index(body, "当前分支第二条") {
+		t.Fatalf("messages are not ordered by sequence: %s", body)
+	}
+	createTestUser(t, s, "history-other@example.com")
+	other := createAuthenticatedTestSession(t, s, "history-other@example.com")
+	denied := requestJSON(t, api.Handler(), http.MethodGet, "/api/mobile/v1/conversations/"+conversation.ID+"/messages", nil, other, "")
+	if denied.Code != http.StatusNotFound {
+		t.Fatalf("cross-user messages=%d %s", denied.Code, denied.Body.String())
+	}
+}
+
+func TestP03HomeConfigComposerToolsDefaultAndValidation(t *testing.T) {
+	s, _ := NewStore("")
+	snapshot, err := s.HomeConfigSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaults := snapshot.ComposerTools
+	if len(defaults) != 6 {
+		t.Fatalf("default composer tools=%+v", defaults)
+	}
+	for _, tool := range defaults {
+		if tool.Enabled {
+			t.Fatalf("unsupported tool must default to disabled: %+v", tool)
+		}
+	}
+
+	saved, err := s.UpdateHomeConfig(HomeConfig{}, "admin-test")
+	if err != nil || len(saved.ComposerTools) != 6 {
+		t.Fatalf("legacy home config default failed: config=%+v err=%v", saved, err)
+	}
+
+	valid := HomeConfig{ComposerTools: []ComposerToolConfig{
+		{ID: "file", Label: "上传文件", Enabled: true, Prompt: "请分析我接下来上传的文件："},
+	}}
+	saved, err = s.UpdateHomeConfig(valid, "admin-test")
+	if err != nil || len(saved.ComposerTools) != 1 || !saved.ComposerTools[0].Enabled {
+		t.Fatalf("valid composer tool config failed: config=%+v err=%v", saved, err)
+	}
+
+	invalid := []HomeConfig{
+		{ComposerTools: []ComposerToolConfig{{ID: "unknown", Label: "未知"}}},
+		{ComposerTools: []ComposerToolConfig{{ID: "file", Label: "上传文件"}, {ID: "file", Label: "重复"}}},
+		{ComposerTools: []ComposerToolConfig{{ID: "file", Label: " "}}},
+	}
+	for _, candidate := range invalid {
+		if _, err := s.UpdateHomeConfig(candidate, "admin-test"); err == nil || err.Error() != "composer_tools_invalid" {
+			t.Fatalf("invalid composer config accepted: config=%+v err=%v", candidate, err)
+		}
+	}
+
+	copyCandidate := saved
+	copyCandidate.ConsumerCopy = defaultConsumerCopy()
+	copyCandidate.ConsumerCopy["thinking"] = "正在整理上下文"
+	saved, err = s.UpdateHomeConfig(copyCandidate, "admin-test")
+	if err != nil || saved.ConsumerCopy["thinking"] != "正在整理上下文" {
+		t.Fatalf("consumer copy config failed: config=%+v err=%v", saved, err)
+	}
+	forbiddenCopy := saved
+	forbiddenCopy.ConsumerCopy = defaultConsumerCopy()
+	forbiddenCopy.ConsumerCopy["thinking"] = "provider error"
+	if _, err := s.UpdateHomeConfig(forbiddenCopy, "admin-test"); err == nil || err.Error() != "consumer_copy_invalid" {
+		t.Fatalf("forbidden consumer copy accepted: err=%v", err)
+	}
+}
+
+func TestMobileAuthErrorDoesNotHideStorageFailuresAsMissingConversation(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	if !mobileAuthError(recorder, errors.New("database unavailable")) {
+		t.Fatal("storage error was not handled")
+	}
+	if recorder.Code != http.StatusInternalServerError || !strings.Contains(recorder.Body.String(), "service_unavailable") {
+		t.Fatalf("storage error=%d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestHomeConfigSnapshotUsesExplicitErrorContract(t *testing.T) {
+	s, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := s.HomeConfigSnapshot()
+	if err != nil || config.Version != 1 {
+		t.Fatalf("home config snapshot=%+v err=%v", config, err)
 	}
 }
 

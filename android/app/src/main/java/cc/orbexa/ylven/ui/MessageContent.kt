@@ -9,6 +9,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.sp
 
 /** Small dependency-free Markdown renderer for persisted assistant content.
  * It deliberately renders only safe structural Markdown (headings, bullets,
@@ -48,7 +49,7 @@ fun MessageContent(body: String, modifier: Modifier = Modifier, onCopyCode: (Str
                 }
                 continue
             } else {
-                Text(line.removePrefix("# " ).removePrefix("## "))
+                Text(line.removePrefix("# ").removePrefix("## "), fontSize = 14.sp, lineHeight = 20.sp)
             }
             index++
         }

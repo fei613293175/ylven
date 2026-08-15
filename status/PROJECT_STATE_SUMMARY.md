@@ -1,6 +1,6 @@
 # Project State Summary
 
-- Generated: `2026-08-11T19:06:48+08:00`
+- Generated: `2026-08-15T06:04:51+08:00`
 - Current phase: `P03`
 - Phase status: `DOING`
 - Current Work Packet: `P03-W07`
@@ -11,11 +11,11 @@
 - Closed/deferred Work Packets recorded: `21`
 - Closed releases recorded: `3`
 - Git branch: `phase/p03-conversations-streaming-chat-and-messages`
-- Git HEAD: `88ffc4f48ab05037e25943a8b9be88541d49aff8`
+- Git HEAD: `4661fd905e68668ef8fa457bfd9bf6109ee0aee0`
 
 ## Exact next action
 
-Implement `P03-W07` (首页、会话页、输入区与正式运营文案重构). Commit code, tests and Feature evidence before running close-packet.
+Continue exactly `P03-W07` using `work-packets/P03-W07.md` and the current phase specification. Do not reselect work from chat history.
 
 ## New-conversation rule
 

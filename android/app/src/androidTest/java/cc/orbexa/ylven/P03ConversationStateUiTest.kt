@@ -1,14 +1,13 @@
 package cc.orbexa.ylven
 
-import android.graphics.Bitmap
+import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.platform.app.InstrumentationRegistry
+import cc.orbexa.ylven.ui.P03ProductionContractState
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import org.junit.Rule
@@ -33,26 +32,45 @@ class P03ConversationStateUiTest {
         composeRule.runOnUiThread {
             activity.setContent {
                 YlvenTheme(darkTheme = false) {
-                    key(activeState.value) { YlvenAcceptanceState(activeState.value) }
+                    key(activeState.value) {
+                        if (activeState.value in P03_W07_STATE_IDS) {
+                            P03ProductionContractState(activeState.value)
+                        } else {
+                            YlvenAcceptanceState(activeState.value)
+                        }
+                    }
                 }
             }
         }
+        check(P03_W07_STATE_IDS.size == 54) { "P03-W07 state catalog changed; update the production state renderer." }
         P03_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
-            composeRule.onNodeWithTag("acceptance-state-$stateId").assertExists()
-            capture(stateId)
+            val rootTag = if (stateId in P03_W07_STATE_IDS) {
+                "production-state-$stateId"
+            } else {
+                "acceptance-state-$stateId"
+            }
+            composeRule.onNodeWithTag(rootTag).assertExists()
+            capture(stateId, rootTag)
         }
     }
 
-    private fun capture(name: String) {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private fun capture(name: String, rootTag: String) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
         composeRule.waitForIdle()
-        val bitmap = composeRule.onNodeWithTag("acceptance-state-$name")
-            .captureToImage()
-            .asAndroidBitmap()
+        instrumentation.waitForIdleSync()
+        // Bottom sheets and system bars are separate window layers. Capture the settled
+        // physical display after asserting the state root instead of only the Compose node.
+        SystemClock.sleep(350)
+        instrumentation.waitForIdleSync()
+        composeRule.onNodeWithTag(rootTag).assertExists()
+        val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
+            "Could not capture the physical device display for $name"
+        }
         check(bitmap.width > 0 && bitmap.height > 0) {
-            "P03 runtime screenshot is empty for $name"
+            "P03 physical-device screenshot is empty for $name"
         }
         try {
             P03ScreenshotStorage.writePng(
@@ -68,6 +86,16 @@ class P03ConversationStateUiTest {
         }
     }
 }
+
+private val P03_W07_STATE_IDS = setOf(
+    "YL-A-018-S01_LOADING", "YL-A-018-S02_POPULATED", "YL-A-018-S03_EMPTY", "YL-A-018-S04_REFRESHING", "YL-A-018-S05_OFFLINE_CACHE", "YL-A-018-S06_NETWORK_ERROR", "YL-A-018-S07_SERVICE_DEGRADED",
+    "YL-A-020-S01_LOADING", "YL-A-020-S02_POPULATED", "YL-A-020-S03_EMPTY", "YL-A-020-S04_REFRESHING", "YL-A-020-S05_FILTER_ACTIVE", "YL-A-020-S06_OFFLINE_CACHE", "YL-A-020-S07_NETWORK_ERROR", "YL-A-020-S08_SERVER_ERROR", "YL-A-020-S09_PERMISSION_DENIED",
+    "YL-A-023-S01_DEFAULT", "YL-A-023-S02_INPUT_FOCUSED", "YL-A-023-S03_UPLOADING", "YL-A-023-S04_CONNECTING", "YL-A-023-S05_STREAMING", "YL-A-023-S06_TOOL_RUNNING", "YL-A-023-S07_COMPLETED", "YL-A-023-S08_STOPPED", "YL-A-023-S09_RECONNECTING", "YL-A-023-S10_OFFLINE", "YL-A-023-S11_RATE_LIMITED", "YL-A-023-S12_PROVIDER_ERROR", "YL-A-023-S13_CONTENT_BLOCKED",
+    "YL-A-024-S01_DEFAULT", "YL-A-024-S02_INPUT_FOCUSED", "YL-A-024-S03_UPLOADING", "YL-A-024-S04_DISABLED", "YL-A-024-S05_OFFLINE", "YL-A-024-S06_TOOL_TRAY_OPEN",
+    "YL-A-026-S01_CONNECTING", "YL-A-026-S02_STREAMING", "YL-A-026-S03_TOOL_RUNNING", "YL-A-026-S04_COMPLETED", "YL-A-026-S05_STOPPED", "YL-A-026-S06_PROVIDER_ERROR", "YL-A-026-S07_CONTENT_BLOCKED",
+    "YL-A-033-S01_POPULATED", "YL-A-033-S02_FILTER_ACTIVE", "YL-A-033-S03_EMPTY", "YL-A-033-S04_DISABLED", "YL-A-033-S05_SERVICE_DEGRADED", "YL-A-033-S06_SERVER_ERROR",
+    "YL-A-034-S01_POPULATED", "YL-A-034-S02_FILTER_ACTIVE", "YL-A-034-S03_EMPTY", "YL-A-034-S04_DISABLED", "YL-A-034-S05_SERVICE_DEGRADED", "YL-A-034-S06_SERVER_ERROR",
+)
 
 private val P03_STATE_IDS = listOf(
     "YL-A-018-S01_LOADING", "YL-A-018-S02_POPULATED", "YL-A-018-S03_EMPTY", "YL-A-018-S04_REFRESHING", "YL-A-018-S05_OFFLINE_CACHE", "YL-A-018-S06_NETWORK_ERROR", "YL-A-018-S07_SERVICE_DEGRADED",

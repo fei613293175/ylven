@@ -818,10 +818,13 @@ func mobileAuthError(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
-	if err.Error() == "session_invalid" {
+	switch err.Error() {
+	case "session_invalid":
 		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
-	} else {
+	case "conversation_not_found":
 		writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+	default:
+		writeError(w, http.StatusInternalServerError, "service_unavailable", "Service temporarily unavailable")
 	}
 	return true
 }
@@ -911,6 +914,22 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := parts[0]
+	if len(parts) > 1 && parts[1] == "messages" {
+		if !requireMethod(w, r, http.MethodGet) {
+			return
+		}
+		messages, err := a.Store.ConversationMessages(bearer(r), id)
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+			} else {
+				writeError(w, http.StatusNotFound, "conversation_not_found", "Conversation not found")
+			}
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"items": messages})
+		return
+	}
 	if len(parts) > 1 && parts[1] == "runs" {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
@@ -1653,7 +1672,17 @@ func (a *API) adminHomeConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, http.StatusOK, map[string]any{"config": a.Store.HomeConfigSnapshot(), "audit": a.Store.AuditSnapshot()})
+		config, err := a.Store.HomeConfigSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "home_config_unavailable", "Home configuration is unavailable")
+			return
+		}
+		audit, err := a.Store.HomeConfigAuditSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "home_config_audit_unavailable", "Home configuration audit is unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"config": config, "audit": audit})
 	case http.MethodPut:
 		if !a.requireStepUp(w, r) {
 			return

@@ -23,6 +23,9 @@ object YlvenLightColors {
     val Warning = Color(0xFFF79009)
     val Error = Color(0xFFD92D20)
     val Info = Color(0xFF2F80ED)
+    val InfoSoft = Color(0xFFEFF4FF)
+    val WarningSoft = Color(0xFFFFF6ED)
+    val ErrorSoft = Color(0xFFFFF1F0)
 }
 
 object YlvenDarkColors {
@@ -46,4 +49,7 @@ object YlvenDarkColors {
     val Warning = Color(0xFFFDB022)
     val Error = Color(0xFFF97066)
     val Info = Color(0xFF53B1FD)
+    val InfoSoft = Color(0xFF17305A)
+    val WarningSoft = Color(0xFF3D2A12)
+    val ErrorSoft = Color(0xFF4A1D1B)
 }

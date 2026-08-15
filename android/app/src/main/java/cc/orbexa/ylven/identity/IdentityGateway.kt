@@ -60,11 +60,43 @@ data class Conversation(
     val initialDraft: String = "",
     val temporary: Boolean = false,
     val initialToolTrayOpen: Boolean = false,
+    val initialComposerTools: List<ComposerToolOption> = emptyList(),
+    val initialConsumerCopy: Map<String, String> = emptyMap(),
 )
 
 data class HomeSnapshot(
     val conversations: List<Conversation>,
     val modelCatalog: List<ModelOption>,
+    val composerTools: List<ComposerToolOption> = defaultComposerToolOptions(),
+    val consumerCopy: Map<String, String> = defaultConsumerCopy(),
+)
+
+data class ComposerToolOption(
+    val id: String,
+    val label: String,
+    val enabled: Boolean,
+    val prompt: String,
+)
+
+fun defaultComposerToolOptions() = listOf(
+    ComposerToolOption("camera", "拍照", false, "请分析我接下来拍摄的内容："),
+    ComposerToolOption("image", "选择图片", false, "请分析我接下来选择的图片："),
+    ComposerToolOption("file", "上传文件", false, "请分析我接下来上传的文件："),
+    ComposerToolOption("image-generation", "生成图片", false, "请帮我生成图片："),
+    ComposerToolOption("presentation", "制作演示", false, "请帮我制作演示文稿："),
+    ComposerToolOption("deep-research", "深度研究", false, "请帮我深入研究："),
+)
+
+fun defaultConsumerCopy() = mapOf(
+    "thinking" to "正在思考",
+    "tool_file_parse" to "正在阅读文件",
+    "tool_image" to "正在生成图片",
+    "tool_presentation" to "正在制作演示文稿",
+    "reconnecting" to "连接不稳定，正在恢复…",
+    "rate_limited" to "当前请求较多，请稍后再试",
+    "provider_error" to "暂时无法完成回答，请重试",
+    "offline" to "当前网络不可用",
+    "content_blocked" to "这个请求暂时无法处理，请调整后重试",
 )
 
 data class ModelOption(
@@ -117,6 +149,7 @@ interface IdentityGateway {
     suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = error("会话功能尚未配置")
     suspend fun archiveConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
     suspend fun deleteConversation(bearer: String, id: String): Conversation = error("会话功能尚未配置")
+    suspend fun conversationMessages(bearer: String, conversationId: String): List<MessageRecord> = emptyList()
     suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String = ""): MessageRun = error("消息功能尚未配置")
     suspend fun sendMessageIdempotent(bearer: String, conversationId: String, body: String, model: String = "", idempotencyKey: String): MessageRun =
         sendMessage(bearer, conversationId, body, model)
@@ -314,7 +347,13 @@ class HttpIdentityGateway(
     override suspend fun home(bearer: String): HomeSnapshot {
         val body = request("GET", "/api/mobile/v1/home", bearer = bearer)
         val items = body.optJSONArray("conversations") ?: org.json.JSONArray()
-        return HomeSnapshot(parseConversations(items), parseModelCatalog(body.optJSONArray("model_catalog")))
+        val config = body.optJSONObject("config")
+        return HomeSnapshot(
+            parseConversations(items),
+            parseModelCatalog(body.optJSONArray("model_catalog")),
+            parseComposerTools(config?.optJSONArray("composer_tools")),
+            parseConsumerCopy(config?.optJSONObject("consumer_copy")),
+        )
     }
 
     override suspend fun models(bearer: String): List<ModelOption> {
@@ -338,6 +377,10 @@ class HttpIdentityGateway(
     override suspend fun renameConversation(bearer: String, id: String, title: String): Conversation = request("PATCH", "/api/mobile/v1/conversations/$id", JSONObject().put("title", title), bearer).toConversation()
     override suspend fun archiveConversation(bearer: String, id: String): Conversation = request("POST", "/api/mobile/v1/conversations/$id/archive", bearer = bearer).toConversation()
     override suspend fun deleteConversation(bearer: String, id: String): Conversation = request("DELETE", "/api/mobile/v1/conversations/$id", bearer = bearer).getJSONObject("conversation").toConversation()
+    override suspend fun conversationMessages(bearer: String, conversationId: String): List<MessageRecord> {
+        val body = request("GET", "/api/mobile/v1/conversations/$conversationId/messages", bearer = bearer)
+        return parseMessages(body.optJSONArray("items") ?: org.json.JSONArray())
+    }
 
     override suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String): MessageRun {
         return sendMessageIdempotent(bearer, conversationId, body, model, java.util.UUID.randomUUID().toString())
@@ -440,6 +483,27 @@ class HttpIdentityGateway(
                 ),
             )
         }
+    }
+
+    private fun parseComposerTools(items: org.json.JSONArray?): List<ComposerToolOption> {
+        if (items == null) return defaultComposerToolOptions()
+        val parsed = buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                val id = item.optString("id").trim()
+                val label = item.optString("label").trim()
+                if (id.isBlank() || label.isBlank()) continue
+                add(ComposerToolOption(id, label, item.optBoolean("enabled"), item.optString("prompt")))
+            }
+        }
+        return parsed.ifEmpty(::defaultComposerToolOptions)
+    }
+
+    private fun parseConsumerCopy(items: JSONObject?): Map<String, String> {
+        val defaults = defaultConsumerCopy()
+        if (items == null) return defaults
+        val parsed = defaults.mapValues { (key, fallback) -> items.optString(key).trim().ifEmpty { fallback } }
+        return if (parsed.values.any { it.length > 80 }) defaults else parsed
     }
 
     private suspend fun request(

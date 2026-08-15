@@ -91,6 +91,25 @@ func TestP03W06PostgresFirstMessageTransactionAndIdempotency(t *testing.T) {
 	if titleJobStatus != "completed" {
 		t.Fatalf("title job status=%s", titleJobStatus)
 	}
+	config := defaultHomeConfig()
+	config.ConsumerCopy["thinking"] = "正在整理上下文"
+	config.ComposerTools[2].Enabled = true
+	savedConfig, err := store.UpdateHomeConfig(config, "")
+	if err != nil || savedConfig.Version < 2 {
+		t.Fatalf("postgres home config update=%+v err=%v", savedConfig, err)
+	}
+	home, err := store.Home(access)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persistedConfig, ok := home["config"].(HomeConfig)
+	if !ok || persistedConfig.ConsumerCopy["thinking"] != "正在整理上下文" || !persistedConfig.ComposerTools[2].Enabled {
+		t.Fatalf("postgres home config readback=%+v", home["config"])
+	}
+	audit, err := store.HomeConfigAuditSnapshot()
+	if err != nil || len(audit) != 1 || audit[0].Type != "home_config_updated" {
+		t.Fatalf("postgres home config audit=%+v err=%v", audit, err)
+	}
 	_, events, err := store.Events(access, first.Run.ID, 0)
 	if err != nil || len(events) < 2 || events[len(events)-1].Type != "completed" {
 		t.Fatalf("events=%+v err=%v", events, err)
@@ -128,7 +147,10 @@ func TestP03W06PostgresFirstMessageTransactionAndIdempotency(t *testing.T) {
 	if err != nil || snapshot.Summary == nil || len(snapshot.Messages) != 3 {
 		t.Fatalf("postgres compacted snapshot=%+v err=%v", snapshot, err)
 	}
-	for table, expectedMinimum := range map[string]int{"jobs": 1, "context_compactions": 1, "conversation_summaries": 1, "model_capabilities": 5} {
+	for table, expectedMinimum := range map[string]int{
+		"jobs": 1, "context_compactions": 1, "conversation_summaries": 1, "model_capabilities": 5,
+		"system_configs": 1, "models": 1, "reasoning_profiles": 1,
+	} {
 		var count int
 		if err := store.conversationSQL.db.QueryRowContext(context.Background(), `SELECT COUNT(*) FROM `+table).Scan(&count); err != nil {
 			t.Fatal(err)
@@ -136,5 +158,11 @@ func TestP03W06PostgresFirstMessageTransactionAndIdempotency(t *testing.T) {
 		if count < expectedMinimum {
 			t.Fatalf("table %s count=%d expected >=%d", table, count, expectedMinimum)
 		}
+	}
+	if err := store.conversationSQL.db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.HomeConfigSnapshot(); err == nil {
+		t.Fatal("postgres home config read failure was hidden by the in-memory snapshot")
 	}
 }

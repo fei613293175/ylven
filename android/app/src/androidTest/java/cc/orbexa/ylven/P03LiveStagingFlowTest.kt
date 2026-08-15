@@ -99,12 +99,14 @@ class P03LiveStagingFlowTest {
         composeRule.onNodeWithTag("CO-P03-001-HOME-SEND").performClick()
         waitForTag("p03-local-draft-conversation", 20_000)
         composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
-        waitForTag("YL-A-031-C-P03_028-01", 20_000)
-        composeRule.onNodeWithTag("YL-A-031-C-P03_028-01").performClick()
+        waitForTag("CO-P03-001-CHAT-TEMPORARY", 20_000)
+        composeRule.onNodeWithTag("CO-P03-001-CHAT-TEMPORARY").performClick()
         waitForTag("p03-local-draft-conversation", 20_000)
         assertTemporaryConversationScope()
-        Espresso.closeSoftKeyboard()
-        Espresso.pressBack()
+        // The temporary-mode sheet already removes IME focus on physical Xiaomi devices.
+        // Use the visible app back control instead of waiting for Espresso to close an
+        // already-dismissed keyboard.
+        composeRule.onNodeWithTag("p03-page-back").performClick()
         waitForTag("YL-A-018-C-P03_001-01", 20_000)
         assertNoInlineError()
         reportStage("temporary_draft_closed")

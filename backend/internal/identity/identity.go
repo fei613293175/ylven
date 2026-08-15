@@ -216,10 +216,51 @@ type ModelCatalogEntry struct {
 }
 
 type HomeConfig struct {
-	Announcement       string    `json:"announcement"`
-	FeaturedProjectIDs []string  `json:"featured_project_ids"`
-	Version            int64     `json:"version"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	Announcement       string               `json:"announcement"`
+	FeaturedProjectIDs []string             `json:"featured_project_ids"`
+	ComposerTools      []ComposerToolConfig `json:"composer_tools"`
+	ConsumerCopy       map[string]string    `json:"consumer_copy"`
+	Version            int64                `json:"version"`
+	UpdatedAt          time.Time            `json:"updated_at"`
+}
+
+type ComposerToolConfig struct {
+	ID      string `json:"id"`
+	Label   string `json:"label"`
+	Enabled bool   `json:"enabled"`
+	Prompt  string `json:"prompt"`
+}
+
+func defaultComposerTools() []ComposerToolConfig {
+	return []ComposerToolConfig{
+		{ID: "camera", Label: "拍照", Enabled: false, Prompt: "请分析我接下来拍摄的内容："},
+		{ID: "image", Label: "选择图片", Enabled: false, Prompt: "请分析我接下来选择的图片："},
+		{ID: "file", Label: "上传文件", Enabled: false, Prompt: "请分析我接下来上传的文件："},
+		{ID: "image-generation", Label: "生成图片", Enabled: false, Prompt: "请帮我生成图片："},
+		{ID: "presentation", Label: "制作演示", Enabled: false, Prompt: "请帮我制作演示文稿："},
+		{ID: "deep-research", Label: "深度研究", Enabled: false, Prompt: "请帮我深入研究："},
+	}
+}
+
+func defaultConsumerCopy() map[string]string {
+	return map[string]string{
+		"thinking":          "正在思考",
+		"tool_file_parse":   "正在阅读文件",
+		"tool_image":        "正在生成图片",
+		"tool_presentation": "正在制作演示文稿",
+		"reconnecting":      "连接不稳定，正在恢复…",
+		"rate_limited":      "当前请求较多，请稍后再试",
+		"provider_error":    "暂时无法完成回答，请重试",
+		"offline":           "当前网络不可用",
+		"content_blocked":   "这个请求暂时无法处理，请调整后重试",
+	}
+}
+
+func defaultHomeConfig() HomeConfig {
+	return HomeConfig{
+		ComposerTools: defaultComposerTools(), ConsumerCopy: defaultConsumerCopy(),
+		Version: 1, UpdatedAt: time.Now().UTC(),
+	}
 }
 
 type MessageRun struct {
@@ -368,7 +409,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, ConversationBranches: map[string]ConversationBranch{}, Messages: map[string]Message{}, MessageParts: map[string]MessagePart{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ContextBuilds: map[string]ContextBuild{}, ConversationSummaries: map[string]ConversationSummary{}, ContextCompactions: map[string]ContextCompaction{}, ProviderStates: map[string]ProviderConversationState{}, Idempotency: map[string]idempotencyRecord{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}}}
+	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, ConversationBranches: map[string]ConversationBranch{}, Messages: map[string]Message{}, MessageParts: map[string]MessagePart{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ContextBuilds: map[string]ContextBuild{}, ConversationSummaries: map[string]ConversationSummary{}, ContextCompactions: map[string]ContextCompaction{}, ProviderStates: map[string]ProviderConversationState{}, Idempotency: map[string]idempotencyRecord{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: defaultHomeConfig()}}
 	if path == "" {
 		return s, nil
 	}
@@ -437,7 +478,14 @@ func NewStore(path string) (*Store, error) {
 		s.data.ModelCatalog = []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}
 	}
 	if s.data.HomeConfig.UpdatedAt.IsZero() {
-		s.data.HomeConfig = HomeConfig{Version: 1, UpdatedAt: time.Now().UTC()}
+		s.data.HomeConfig = defaultHomeConfig()
+	} else {
+		if len(s.data.HomeConfig.ComposerTools) == 0 {
+			s.data.HomeConfig.ComposerTools = defaultComposerTools()
+		}
+		if len(s.data.HomeConfig.ConsumerCopy) == 0 {
+			s.data.HomeConfig.ConsumerCopy = defaultConsumerCopy()
+		}
 	}
 	if s.data.ContextBuilds == nil {
 		s.data.ContextBuilds = map[string]ContextBuild{}
@@ -2237,10 +2285,14 @@ func (s *Store) Home(access string) (map[string]any, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.mu.Lock()
-		catalog := append([]ModelCatalogEntry(nil), s.data.ModelCatalog...)
-		config := s.data.HomeConfig
-		s.mu.Unlock()
+		catalog, err := s.conversationSQL.modelCatalog()
+		if err != nil {
+			return nil, err
+		}
+		config, err := s.conversationSQL.homeConfig()
+		if err != nil {
+			return nil, err
+		}
 		return map[string]any{"conversations": items, "projects": []any{}, "model_catalog": catalog, "config": config}, nil
 	}
 	s.mu.Lock()
@@ -2263,16 +2315,16 @@ func (s *Store) Home(access string) (map[string]any, error) {
 }
 
 func (s *Store) MobileModelCatalog(access string) ([]ModelCatalogEntry, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if _, _, err := s.authenticatedUserLocked(access); err != nil {
+	if _, err := s.authenticatedUser(access); err != nil {
 		return nil, err
 	}
+	if s.conversationSQL != nil {
+		return s.conversationSQL.modelCatalog()
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	items := make([]ModelCatalogEntry, 0, len(s.data.ModelCatalog))
 	for _, item := range s.data.ModelCatalog {
-		if !item.Enabled {
-			continue
-		}
 		copyItem := item
 		copyItem.ReasoningProfiles = append([]string(nil), item.ReasoningProfiles...)
 		if len(copyItem.ReasoningProfiles) == 0 {
@@ -2325,6 +2377,34 @@ func (s *Store) ConversationDetail(id string) (Conversation, []Message, []Messag
 	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	sort.Slice(runs, func(i, j int) bool { return runs[i].CreatedAt.Before(runs[j].CreatedAt) })
 	return c, messages, runs, true
+}
+
+func (s *Store) ConversationMessages(access, id string) ([]Message, error) {
+	if s.conversationSQL != nil {
+		user, err := s.authenticatedUser(access)
+		if err != nil {
+			return nil, err
+		}
+		return s.conversationSQL.conversationMessages(user.ID, id)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	user, _, err := s.authenticatedUserLocked(access)
+	if err != nil {
+		return nil, err
+	}
+	conversation, ok := s.data.Conversations[id]
+	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
+		return nil, errors.New("conversation_not_found")
+	}
+	messages := make([]Message, 0)
+	for _, message := range s.data.Messages {
+		if message.ConversationID == id && message.BranchID == conversation.ActiveBranchID {
+			messages = append(messages, message)
+		}
+	}
+	sort.Slice(messages, func(i, j int) bool { return messages[i].Sequence < messages[j].Sequence })
+	return messages, nil
 }
 func (s *Store) MessageOwned(access, messageID string) (Message, error) {
 	if s.conversationSQL != nil {
@@ -2431,21 +2511,92 @@ func (s *Store) SaveMessageFeedback(access, messageID, value string) error {
 }
 
 func (s *Store) UpdateHomeConfig(value HomeConfig, actorID string) (HomeConfig, error) {
+	var err error
+	value, err = normalizeHomeConfig(value)
+	if err != nil {
+		return HomeConfig{}, err
+	}
+	if s.conversationSQL != nil {
+		value, err = s.conversationSQL.updateHomeConfig(value, actorID)
+		if err != nil {
+			return HomeConfig{}, err
+		}
+		s.mu.Lock()
+		s.data.HomeConfig = value
+		s.mu.Unlock()
+		return value, nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if len(value.Announcement) > 500 {
-		return HomeConfig{}, errors.New("announcement_too_long")
-	}
 	value.Version = s.data.HomeConfig.Version + 1
 	value.UpdatedAt = time.Now().UTC()
 	s.data.HomeConfig = value
 	s.appendAuditLocked("home_config_updated", "", actorID)
 	return value, s.persistLocked()
 }
-func (s *Store) HomeConfigSnapshot() HomeConfig {
+
+func normalizeHomeConfig(value HomeConfig) (HomeConfig, error) {
+	if len(value.Announcement) > 500 {
+		return HomeConfig{}, errors.New("announcement_too_long")
+	}
+	if len(value.ComposerTools) == 0 {
+		value.ComposerTools = defaultComposerTools()
+	}
+	allowedTools := map[string]bool{"camera": true, "image": true, "file": true, "image-generation": true, "presentation": true, "deep-research": true}
+	seenTools := map[string]bool{}
+	for _, tool := range value.ComposerTools {
+		if !allowedTools[tool.ID] || seenTools[tool.ID] || strings.TrimSpace(tool.Label) == "" || len(tool.Prompt) > 200 {
+			return HomeConfig{}, errors.New("composer_tools_invalid")
+		}
+		seenTools[tool.ID] = true
+	}
+	defaults := defaultConsumerCopy()
+	if len(value.ConsumerCopy) == 0 {
+		value.ConsumerCopy = defaults
+	}
+	if len(value.ConsumerCopy) != len(defaults) {
+		return HomeConfig{}, errors.New("consumer_copy_invalid")
+	}
+	for key := range value.ConsumerCopy {
+		if _, ok := defaults[key]; !ok {
+			return HomeConfig{}, errors.New("consumer_copy_invalid")
+		}
+	}
+	text := strings.ToLower(strings.Join(mapValues(value.ConsumerCopy), " "))
+	for _, forbidden := range []string{"streaming", "connecting", "provider error", "request id", "sub2api", "sse", "websocket", "debug", "demo", "mock"} {
+		if strings.Contains(text, forbidden) {
+			return HomeConfig{}, errors.New("consumer_copy_invalid")
+		}
+	}
+	for _, copy := range value.ConsumerCopy {
+		if strings.TrimSpace(copy) == "" || len(copy) > 80 {
+			return HomeConfig{}, errors.New("consumer_copy_invalid")
+		}
+	}
+	return value, nil
+}
+
+func mapValues(values map[string]string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value)
+	}
+	return result
+}
+func (s *Store) HomeConfigSnapshot() (HomeConfig, error) {
+	if s.conversationSQL != nil {
+		return s.conversationSQL.homeConfig()
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.data.HomeConfig
+	return s.data.HomeConfig, nil
+}
+
+func (s *Store) HomeConfigAuditSnapshot() ([]AuditEvent, error) {
+	if s.conversationSQL != nil {
+		return s.conversationSQL.homeConfigAudit()
+	}
+	return s.AuditSnapshot(), nil
 }
 func (s *Store) RevokeSession(access, targetID string) error {
 	s.mu.Lock()

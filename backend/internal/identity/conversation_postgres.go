@@ -54,6 +54,28 @@ func (s *Store) EnablePostgres(ctx context.Context, dsn string) error {
 		_ = db.Close()
 		return fmt.Errorf("import legacy conversations: %w", err)
 	}
+	s.mu.Lock()
+	legacyConfig := s.data.HomeConfig
+	legacyModels := append([]ModelCatalogEntry(nil), s.data.ModelCatalog...)
+	s.mu.Unlock()
+	if err := persistence.syncProductConfiguration(ctx, legacyConfig, legacyModels); err != nil {
+		_ = db.Close()
+		return fmt.Errorf("sync product configuration: %w", err)
+	}
+	config, err := persistence.homeConfig()
+	if err != nil {
+		_ = db.Close()
+		return fmt.Errorf("load product configuration: %w", err)
+	}
+	models, err := persistence.modelCatalog()
+	if err != nil {
+		_ = db.Close()
+		return fmt.Errorf("load model catalog: %w", err)
+	}
+	s.mu.Lock()
+	s.data.HomeConfig = config
+	s.data.ModelCatalog = models
+	s.mu.Unlock()
 	s.conversationSQL = persistence
 	return nil
 }
@@ -171,6 +193,155 @@ func newDatabaseUUID() (string, error) {
 		return "", err
 	}
 	return raw[0:8] + "-" + raw[8:12] + "-" + raw[12:16] + "-" + raw[16:20] + "-" + raw[20:32], nil
+}
+
+func (p *postgresConversationStore) syncProductConfiguration(ctx context.Context, config HomeConfig, models []ModelCatalogEntry) error {
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for _, model := range models {
+		if strings.TrimSpace(model.ID) == "" || strings.TrimSpace(model.Name) == "" {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO models (id,name,enabled,description)
+      VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, model.ID, model.Name, model.Enabled, model.Description); err != nil {
+			return err
+		}
+		profiles := model.ReasoningProfiles
+		if len(profiles) == 0 {
+			profiles = []string{"auto"}
+		}
+		for ordinal, profile := range profiles {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO reasoning_profiles (model_id,profile_id,ordinal)
+        VALUES ($1,$2,$3) ON CONFLICT (model_id,profile_id) DO NOTHING`, model.ID, profile, ordinal); err != nil {
+				return err
+			}
+		}
+	}
+	if config.Version > 1 {
+		value, err := json.Marshal(config)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE system_configs SET value=$1::jsonb,version=$2,updated_at=$3
+      WHERE config_key='home_config' AND version < $2`, string(value), config.Version, config.UpdatedAt); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func (p *postgresConversationStore) homeConfig() (HomeConfig, error) {
+	ctx, cancel := databaseContext()
+	defer cancel()
+	var raw []byte
+	var version int64
+	var updatedAt time.Time
+	if err := p.db.QueryRowContext(ctx, `SELECT value,version,updated_at FROM system_configs WHERE config_key='home_config'`).Scan(&raw, &version, &updatedAt); err != nil {
+		return HomeConfig{}, err
+	}
+	var config HomeConfig
+	if err := json.Unmarshal(raw, &config); err != nil {
+		return HomeConfig{}, err
+	}
+	config.Version = version
+	config.UpdatedAt = updatedAt
+	return normalizeHomeConfig(config)
+}
+
+func (p *postgresConversationStore) updateHomeConfig(config HomeConfig, actorID string) (HomeConfig, error) {
+	ctx, cancel := databaseContext()
+	defer cancel()
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return HomeConfig{}, err
+	}
+	defer tx.Rollback()
+	var version int64
+	if err := tx.QueryRowContext(ctx, `SELECT version FROM system_configs WHERE config_key='home_config' FOR UPDATE`).Scan(&version); err != nil {
+		return HomeConfig{}, err
+	}
+	config.Version = version + 1
+	config.UpdatedAt = time.Now().UTC()
+	raw, err := json.Marshal(config)
+	if err != nil {
+		return HomeConfig{}, err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE system_configs SET value=$1::jsonb,version=$2,updated_at=$3 WHERE config_key='home_config'`, string(raw), config.Version, config.UpdatedAt); err != nil {
+		return HomeConfig{}, err
+	}
+	auditID, err := newDatabaseUUID()
+	if err != nil {
+		return HomeConfig{}, err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO identity_audit_events (id,event_type,actor_id,details,created_at)
+    VALUES ($1,'home_config_updated',CASE WHEN $2 ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN $2::uuid ELSE NULL END,
+      jsonb_build_object('config_key','home_config','version',$3::bigint,'actor_reference',NULLIF($2,'')),$4)`, auditID, actorID, config.Version, config.UpdatedAt); err != nil {
+		return HomeConfig{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return HomeConfig{}, err
+	}
+	return config, nil
+}
+
+func (p *postgresConversationStore) homeConfigAudit() ([]AuditEvent, error) {
+	ctx, cancel := databaseContext()
+	defer cancel()
+	rows, err := p.db.QueryContext(ctx, `SELECT id::text,event_type,COALESCE(details->>'actor_reference',''),created_at
+    FROM identity_audit_events WHERE event_type='home_config_updated' ORDER BY created_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	events := []AuditEvent{}
+	for rows.Next() {
+		var event AuditEvent
+		if err := rows.Scan(&event.ID, &event.Type, &event.SessionID, &event.CreatedAt); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	return events, rows.Err()
+}
+
+func (p *postgresConversationStore) modelCatalog() ([]ModelCatalogEntry, error) {
+	ctx, cancel := databaseContext()
+	defer cancel()
+	rows, err := p.db.QueryContext(ctx, `SELECT m.id,m.name,m.enabled,m.description,COALESCE(r.profile_id,''),COALESCE(r.ordinal,0)
+    FROM models m LEFT JOIN reasoning_profiles r ON r.model_id=m.id
+    ORDER BY m.id,r.ordinal`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ModelCatalogEntry{}
+	indexes := map[string]int{}
+	for rows.Next() {
+		var id, name, description, profile string
+		var enabled bool
+		var ordinal int
+		if err := rows.Scan(&id, &name, &enabled, &description, &profile, &ordinal); err != nil {
+			return nil, err
+		}
+		index, exists := indexes[id]
+		if !exists {
+			index = len(items)
+			indexes[id] = index
+			items = append(items, ModelCatalogEntry{ID: id, Name: name, Enabled: enabled, Description: description})
+		}
+		if profile != "" {
+			items[index].ReasoningProfiles = append(items[index].ReasoningProfiles, profile)
+		}
+	}
+	for index := range items {
+		if len(items[index].ReasoningProfiles) == 0 {
+			items[index].ReasoningProfiles = []string{"auto"}
+		}
+	}
+	return items, rows.Err()
 }
 
 func (s *Store) importLegacyConversations(ctx context.Context, persistence *postgresConversationStore) error {
@@ -1670,6 +1841,33 @@ func (p *postgresConversationStore) conversationDetail(id string) (Conversation,
 		runs = append(runs, item)
 	}
 	return conversation, messages, runs, runRows.Err() == nil
+}
+
+func (p *postgresConversationStore) conversationMessages(userID, id string) ([]Message, error) {
+	ctx, cancel := databaseContext()
+	defer cancel()
+	var activeBranchID string
+	err := p.db.QueryRowContext(ctx, `SELECT active_branch_id::text FROM conversations WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`, id, userID).Scan(&activeBranchID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.New("conversation_not_found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	rows, err := p.db.QueryContext(ctx, `SELECT `+messageColumns+` FROM messages WHERE conversation_id=$1 AND branch_id=$2 ORDER BY sequence`, id, activeBranchID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	messages := []Message{}
+	for rows.Next() {
+		message, scanErr := scanMessage(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		messages = append(messages, message)
+	}
+	return messages, rows.Err()
 }
 
 func (p *postgresConversationStore) saveFeedback(userID, messageID, value string) error {
