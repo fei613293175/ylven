@@ -474,6 +474,7 @@ private fun p03HideSystemBars(window: android.view.Window, view: View) {
 private fun P03SheetContainer(
     tag: String,
     contractHeight: androidx.compose.ui.unit.Dp,
+    contentTopPadding: androidx.compose.ui.unit.Dp = 24.dp,
     onDismiss: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -503,6 +504,7 @@ private fun P03SheetContainer(
                         shape = CircleShape,
                         color = YlvenLightColors.BorderStrong,
                     ) {}
+                    Spacer(Modifier.height(contentTopPadding))
                     content()
                 }
             }
@@ -524,6 +526,7 @@ private fun P03SheetContainer(
                 ) {}
             },
         ) {
+            Spacer(Modifier.height(contentTopPadding))
             content()
         }
     }
@@ -944,15 +947,18 @@ private fun P03HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .testTag("p03-home-list"),
-            contentPadding = PaddingValues(horizontal = YlvenDimensions.PageHorizontal, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = YlvenDimensions.PageHorizontal, vertical = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
             if (loading && conversations.isEmpty()) {
                 item { P03HomeLoadingState() }
             } else {
                 if (statusBanner != null) item { P03StatusBanner(statusBanner, onAction = onRetry) }
                 item {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 13.dp),
+                    ) {
                         Text("✦", color = YlvenLightColors.Primary, fontSize = 32.sp, lineHeight = 36.sp)
                         Spacer(Modifier.height(8.dp))
                         Text("今天想完成什么？", fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
@@ -960,13 +966,19 @@ private fun P03HomeScreen(
                     }
                 }
                 item { P03HomeComposer(onNewConversation) }
-                item { P03ShortcutRow(onTool) }
+                item { P03ShortcutRow(onTool, Modifier.padding(bottom = 21.dp)) }
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("继续最近的对话", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                        TextButton(onClick = onHistory, modifier = Modifier.testTag("p03-open-all-conversations")) {
-                            Text("查看全部")
-                        }
+                        Text(
+                            "查看全部",
+                            modifier = Modifier
+                                .testTag("p03-open-all-conversations")
+                                .clickable(onClick = onHistory)
+                                .padding(vertical = 2.dp),
+                            color = YlvenLightColors.Primary,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
                     }
                 }
                 if (error != null && conversations.isEmpty()) {
@@ -1031,18 +1043,18 @@ private fun P03HomeComposer(onOpen: () -> Unit) {
 }
 
 @Composable
-private fun P03ShortcutRow(onTool: () -> Unit) {
+private fun P03ShortcutRow(onTool: () -> Unit, modifier: Modifier = Modifier) {
     val shortcuts = listOf(
         "分析文件" to "文",
         "生成图片" to "图",
         "制作演示" to "P",
     )
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         shortcuts.forEachIndexed { index, (label, symbol) ->
             Surface(
-                modifier = Modifier.weight(1f).height(42.dp).clickable(onClick = onTool)
+                modifier = Modifier.weight(1f).height(28.dp).clickable(onClick = onTool)
                     .testTag(if (index == 0) "CO-P03-001-HOME-TOOL" else "p03-home-tool-$index"),
-                shape = RoundedCornerShape(21.dp),
+                shape = RoundedCornerShape(14.dp),
                 color = YlvenLightColors.Surface,
                 border = BorderStroke(1.dp, YlvenLightColors.Border),
             ) {
@@ -1052,8 +1064,8 @@ private fun P03ShortcutRow(onTool: () -> Unit) {
                             Text(symbol, color = YlvenLightColors.Primary, fontWeight = FontWeight.Bold)
                         }
                     }
-                    Spacer(Modifier.width(4.dp))
-                    Text(label, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 1, softWrap = false)
+                    Spacer(Modifier.width(3.dp))
+                    Text(label, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 1, softWrap = false)
                 }
             }
         }
@@ -2081,12 +2093,13 @@ private fun P03ToolTray(
     }
     P03SheetContainer(
         tag = "YL-A-024-S06-tool-tray",
-        contractHeight = 410.dp,
+        contractHeight = 407.dp,
+        contentTopPadding = 12.dp,
         onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(396.dp).padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().height(381.dp).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("添加内容或使用工具", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2165,13 +2178,13 @@ private fun P03ModelSelector(
     }
     P03SheetContainer(
         tag = "YL-A-033-root",
-        contractHeight = 536.dp,
+        contractHeight = 527.dp,
         onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(522.dp).padding(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            Modifier.fillMaxWidth().height(489.dp).padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("选择模型", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2255,13 +2268,13 @@ private fun P03ResponseModeSelector(
     val hasAdjustableModes = supported.any { it != "auto" }
     P03SheetContainer(
         tag = "YL-A-034-root",
-        contractHeight = 456.dp,
+        contractHeight = 453.dp,
         onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(442.dp).padding(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            Modifier.fillMaxWidth().height(415.dp).padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("回答方式", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
