@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory=$true)][string]$AdbPath,
     [Parameter(Mandatory=$true)][string]$Serial,
-    [Parameter(Mandatory=$true)][int]$MonitorPid,
+    [Parameter(Mandatory=$true)][string]$MonitorPidPath,
     [Parameter(Mandatory=$true)][string]$EvidenceDir,
     [ValidateRange(1,600)][int]$TimeoutSeconds = 180
 )
@@ -39,8 +39,20 @@ $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 $lastSignature = $null
 $clickCount = 0
 $riskAcknowledgementClicked = $false
+$monitorPid = $null
 
-while ((Get-Process -Id $MonitorPid -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+while ($null -eq $monitorPid -and (Get-Date) -lt $deadline) {
+    if (Test-Path -LiteralPath $MonitorPidPath) {
+        $monitorPidText = (Get-Content -Raw -LiteralPath $MonitorPidPath).Trim()
+        if ($monitorPidText -notmatch '^\d+$') { throw "Invalid ADB install process identifier in $MonitorPidPath." }
+        $monitorPid = [int]$monitorPidText
+    } else {
+        Start-Sleep -Milliseconds 50
+    }
+}
+if ($null -eq $monitorPid) { throw 'Install watcher timed out waiting for the ADB install process identifier.' }
+
+while ((Get-Process -Id $monitorPid -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
     $stateResult = Invoke-AdbLenient get-state
     if ($stateResult.ExitCode -ne 0 -or (($stateResult.Text -join '').Trim()) -ne 'device') {
         throw "Device $Serial stopped being available in exact state device."
@@ -119,9 +131,9 @@ while ((Get-Process -Id $MonitorPid -ErrorAction SilentlyContinue) -and (Get-Dat
     Start-Sleep -Milliseconds 250
 }
 
-if (Get-Process -Id $MonitorPid -ErrorAction SilentlyContinue) {
-    throw "Install watcher timed out while process $MonitorPid was still running."
+if (Get-Process -Id $monitorPid -ErrorAction SilentlyContinue) {
+    throw "Install watcher timed out while ADB install process $monitorPid was still running."
 }
 
-"$(Get-Date -Format o) WATCHER_EXITED reason=monitored_process_exited pid=$MonitorPid clicks=$clickCount" |
+"$(Get-Date -Format o) WATCHER_EXITED reason=adb_install_process_exited pid=$monitorPid clicks=$clickCount" |
     Add-Content -LiteralPath $transcript -Encoding UTF8

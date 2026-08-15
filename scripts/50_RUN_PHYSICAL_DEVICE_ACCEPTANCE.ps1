@@ -79,12 +79,14 @@ function Invoke-AdbInstall {
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $startInfo
     $watcherJob = $null
+    $watcherTimedOut = $false
     try {
         $watcherPath = Join-Path $PSScriptRoot '51_WATCH_VENDOR_INSTALL_CONFIRMATION.ps1'
         # Warm the vendor-dialog watcher before install starts so short Xiaomi
         # confirmation countdowns cannot expire during PowerShell job startup.
+        $monitorPidPath = Join-Path $EvidenceDir 'adb-install-process.pid'
         $watcherJob = Start-Job -FilePath $watcherPath -ArgumentList @(
-            $script:AdbPath, $script:Serial, $PID, $EvidenceDir, 180
+            $script:AdbPath, $script:Serial, $monitorPidPath, $EvidenceDir, 180
         )
         $watcherReady = Join-Path $EvidenceDir 'watcher-ready.txt'
         $watcherReadyDeadline = (Get-Date).AddSeconds(15)
@@ -96,6 +98,9 @@ function Invoke-AdbInstall {
             throw 'Vendor install confirmation watcher did not become ready before the bounded startup deadline.'
         }
         if (-not $process.Start()) { throw "Could not start adb install for $Apk." }
+        # The watcher is armed before install for Xiaomi's short confirmation timer, but
+        # follows only this ADB child. It must not survive into instrumentation.
+        $process.Id | Set-Content -LiteralPath $monitorPidPath -Encoding ASCII
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
         if (-not $process.WaitForExit(180000)) {
@@ -112,15 +117,22 @@ function Invoke-AdbInstall {
         }
     } finally {
         if ($watcherJob) {
-            if ($watcherJob.State -eq 'Running') { $watcherJob | Stop-Job }
             $watcherJob | Wait-Job -Timeout 15 | Out-Null
+            $watcherTimedOut = $watcherJob.State -eq 'Running'
+            if ($watcherTimedOut) {
+                $watcherJob | Stop-Job
+                $watcherJob | Wait-Job -Timeout 5 | Out-Null
+            }
             $watcherOutput = @($watcherJob | Receive-Job -ErrorAction SilentlyContinue)
             if ($watcherOutput.Count -gt 0) {
                 $watcherOutput | Set-Content -LiteralPath (Join-Path $EvidenceDir 'watcher-output.txt') -Encoding UTF8
             }
             $watcherState = $watcherJob.State
             $watcherJob | Remove-Job -Force
-            if ($watcherState -eq 'Failed' -and $process.HasExited -and $process.ExitCode -ne 0) {
+            if ($watcherTimedOut) {
+                throw "Vendor install confirmation watcher did not exit after adb install completed for $(Split-Path -Leaf $Apk)."
+            }
+            if ($watcherState -eq 'Failed') {
                 throw "Vendor install confirmation watcher failed for $(Split-Path -Leaf $Apk)."
             }
         }
@@ -608,7 +620,19 @@ try {
     $exitText = Get-Content -Raw -LiteralPath $exitInfoPath
     $dropboxText = Get-Content -Raw -LiteralPath $dropboxPath
     $runtimeErrors = @()
-    foreach ($pattern in @('FATAL EXCEPTION', 'ANR in cc\.orbexa\.ylven', 'am_crash.*cc\.orbexa\.ylven', 'am_anr.*cc\.orbexa\.ylven', 'Fatal signal.*cc\.orbexa\.ylven')) {
+    # A device-wide logcat contains unrelated system/app_process failures. Inspect
+    # each AndroidRuntime block independently so a later Process line cannot turn
+    # an unrelated FATAL EXCEPTION into a false YLVEN failure.
+    $logLines = @($logText -split '\r?\n')
+    for ($lineIndex = 0; $lineIndex -lt $logLines.Count; $lineIndex++) {
+        if ($logLines[$lineIndex] -notmatch 'FATAL EXCEPTION:') { continue }
+        $blockEnd = [Math]::Min($lineIndex + 12, $logLines.Count - 1)
+        $fatalBlock = $logLines[$lineIndex..$blockEnd] -join "`n"
+        if ($fatalBlock -match '(?im)Process:\s*cc\.orbexa\.ylven(?:\.test)?\b') {
+            $runtimeErrors += 'FATAL EXCEPTION in cc.orbexa.ylven'
+        }
+    }
+    foreach ($pattern in @('ANR in cc\.orbexa\.ylven(?:\.test)?\b', 'am_crash.*cc\.orbexa\.ylven(?:\.test)?\b', 'am_anr.*cc\.orbexa\.ylven(?:\.test)?\b', 'Fatal signal.*cc\.orbexa\.ylven(?:\.test)?\b')) {
         if ($logText -match $pattern) { $runtimeErrors += $pattern }
     }
     if ($exitText -match '(?is)(REASON_CRASH|REASON_ANR|reason=crash|reason=anr)') { $runtimeErrors += 'ApplicationExitInfo crash/ANR' }
@@ -624,7 +648,7 @@ try {
 - logcat：test-results/logcat.txt
 - ApplicationExitInfo：test-results/application-exit-info.txt（厂商支持状态：$exitInfoSupport）
 - dumpsys dropbox：test-results/application-dropbox-crash-anr.txt
-- FATAL EXCEPTION：未发现
+- 归属于 YLVEN 的 FATAL EXCEPTION：未发现
 - ANR：未发现
 - native crash：未发现
 - 无法解释的应用异常：未发现
@@ -735,7 +759,9 @@ try {
                 if ([string]::IsNullOrWhiteSpace($homeComponent)) { throw 'Unable to resolve the device HOME activity.' }
                 $homePackage = ($homeComponent -split '/', 2)[0]
                 $activityLines = @(Invoke-Adb shell dumpsys activity activities)
-                $resumedActivity = $activityLines | Where-Object { $_ -match 'mResumedActivity|topResumedActivity' } | Select-Object -First 1
+                # Android 9 exposes the foreground record as `ResumedActivity:` rather
+                # than the mResumedActivity/topResumedActivity fields used by newer builds.
+                $resumedActivity = $activityLines | Where-Object { $_ -match 'mResumedActivity|topResumedActivity|^\s*ResumedActivity:' } | Select-Object -First 1
                 if (
                     [string]::IsNullOrWhiteSpace($resumedActivity) -or
                     $resumedActivity.IndexOf($homePackage, [System.StringComparison]::OrdinalIgnoreCase) -lt 0
