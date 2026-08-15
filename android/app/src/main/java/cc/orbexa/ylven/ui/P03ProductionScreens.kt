@@ -463,6 +463,71 @@ private fun p03HideSystemBars(window: android.view.Window, view: View) {
     }
 }
 
+/**
+ * The production sheets are Material bottom sheets. Their popup window is allowed
+ * to adapt to IME and device insets. Contract capture has a fixed 360 x 800dp
+ * viewport, so keep the same sheet content in an in-window fixed container. This
+ * removes popup measurement differences without creating a second screen body.
+ */
+@Composable
+private fun P03SheetContainer(
+    tag: String,
+    contractHeight: androidx.compose.ui.unit.Dp,
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    if (LocalP03ContractInsets.current) {
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color(0x59101828))
+                    .clickable(onClick = onDismiss),
+            )
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(contractHeight)
+                    .testTag(tag),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                color = YlvenLightColors.Surface,
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp)
+                            .size(width = 36.dp, height = 4.dp),
+                        shape = CircleShape,
+                        color = YlvenLightColors.BorderStrong,
+                    ) {}
+                    content()
+                }
+            }
+        }
+    } else {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            modifier = Modifier.fillMaxWidth().testTag(tag),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = YlvenLightColors.Surface,
+            dragHandle = {
+                Surface(
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .size(width = 36.dp, height = 4.dp),
+                    shape = CircleShape,
+                    color = YlvenLightColors.BorderStrong,
+                ) {}
+            },
+        ) {
+            content()
+        }
+    }
+}
+
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -2013,16 +2078,14 @@ private fun P03ToolTray(
         }
         P03ComposerTool(option.id, option.label, icon, option.enabled, option.prompt)
     }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = Modifier.fillMaxWidth().testTag("YL-A-024-S06-tool-tray"),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = YlvenLightColors.Surface,
+    P03SheetContainer(
+        tag = "YL-A-024-S06-tool-tray",
+        contractHeight = 410.dp,
+        onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(386.dp).padding(horizontal = 18.dp),
+            Modifier.fillMaxWidth().height(396.dp).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("添加内容或使用工具", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2099,17 +2162,15 @@ private fun P03ModelSelector(
         "快速" -> models.filter { it.reasoningProfiles.any { profile -> normalizeResponseMode(profile) == "quick" } || it.description.contains("快速") }
         else -> models
     }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = Modifier.fillMaxWidth().testTag("YL-A-033-root"),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = YlvenLightColors.Surface,
+    P03SheetContainer(
+        tag = "YL-A-033-root",
+        contractHeight = 536.dp,
+        onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(511.dp).padding(horizontal = 18.dp).p03NavigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            Modifier.fillMaxWidth().height(522.dp).padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("选择模型", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2191,17 +2252,15 @@ private fun P03ResponseModeSelector(
         Triple("deep", "深度", "适合复杂分析和代码任务"),
     )
     val hasAdjustableModes = supported.any { it != "auto" }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = Modifier.fillMaxWidth().testTag("YL-A-034-root"),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = YlvenLightColors.Surface,
+    P03SheetContainer(
+        tag = "YL-A-034-root",
+        contractHeight = 456.dp,
+        onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(433.dp).padding(horizontal = 18.dp).p03NavigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            Modifier.fillMaxWidth().height(442.dp).padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("回答方式", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2249,24 +2308,24 @@ private fun P03SelectorRow(
 ) {
     val border = if (selected) YlvenLightColors.Primary else YlvenLightColors.Border
     Surface(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).clickable(enabled = enabled, onClick = onClick).testTag(tag),
-        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth().height(64.dp).clickable(enabled = enabled, onClick = onClick).testTag(tag),
+        shape = RoundedCornerShape(16.dp),
         color = if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.Surface,
         border = BorderStroke(if (selected) 2.dp else 1.dp, border),
     ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (avatarLabel != null) {
-                Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(28.dp)) {
+                Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(36.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(avatarLabel, color = if (enabled) YlvenLightColors.Primary else YlvenLightColors.TextDisabled, fontWeight = FontWeight.Bold)
                     }
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(title, color = if (enabled) YlvenLightColors.TextPrimary else YlvenLightColors.TextDisabled, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
+                Text(title, color = if (enabled) YlvenLightColors.TextPrimary else YlvenLightColors.TextDisabled, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)
                 if (description.isNotBlank()) {
-                    Text(description, color = if (enabled) YlvenLightColors.TextSecondary else YlvenLightColors.TextDisabled, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2)
+                    Text(description, color = if (enabled) YlvenLightColors.TextSecondary else YlvenLightColors.TextDisabled, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2)
                 }
             }
             if (trailingLabel != null) {
