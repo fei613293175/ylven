@@ -1040,6 +1040,7 @@ private fun P03HomeScreen(
                 }
                 if (error != null && conversations.isNotEmpty()) item { P03StatusBanner(P03StatusMessage(error, P03StatusTone.ERROR, "重试"), onAction = onRetry) }
             }
+            }
             if (visualContract && statusBanner != null) {
                 Box(
                     Modifier
