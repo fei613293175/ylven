@@ -2058,7 +2058,7 @@ private fun P03AttachmentPreview(label: String) {
 private data class P03ComposerTool(
     val id: String,
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val symbol: String,
     val enabled: Boolean,
     val prompt: String,
 )
@@ -2081,25 +2081,25 @@ private fun P03ToolTray(
     onVoice: () -> Unit,
 ) {
     val displayTools = tools.map { option ->
-        val icon = when (option.id) {
-            "camera" -> Icons.Default.CameraAlt
-            "image" -> Icons.Default.InsertPhoto
-            "file" -> Icons.Default.Description
-            "image-generation" -> Icons.Default.Palette
-            "presentation" -> Icons.Default.Slideshow
-            else -> Icons.Default.TravelExplore
+        val symbol = when (option.id) {
+            "camera" -> "相"
+            "image" -> "图"
+            "file" -> "文"
+            "image-generation" -> "画"
+            "presentation" -> "P"
+            else -> "研"
         }
-        P03ComposerTool(option.id, option.label, icon, option.enabled, option.prompt)
+        P03ComposerTool(option.id, option.label, symbol, option.enabled, option.prompt)
     }
     P03SheetContainer(
         tag = "YL-A-024-S06-tool-tray",
         contractHeight = 407.dp,
-        contentTopPadding = 12.dp,
+        contentTopPadding = 22.dp,
         onDismiss = onDismiss,
     ) {
         P03ContractSheetSystemBars()
         Column(
-            Modifier.fillMaxWidth().height(381.dp).padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().height(371.dp).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("添加内容或使用工具", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -2147,7 +2147,9 @@ private fun P03ToolTile(tool: P03ComposerTool, tag: String, modifier: Modifier =
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(30.dp)) {
-                Icon(tool.icon, tool.label, tint = contentColor, modifier = Modifier.padding(6.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Text(tool.symbol, color = contentColor, fontSize = 18.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)
+                }
             }
             Spacer(Modifier.height(2.dp))
             Text(tool.label, color = contentColor, fontSize = 12.sp, lineHeight = 16.sp)
@@ -2194,6 +2196,7 @@ private fun P03ModelSelector(
                     P03SelectorChip(label, label == category) { category = label }
                 }
             }
+            Spacer(Modifier.height(4.dp))
             if (showAutoOption) {
                 P03SelectorRow(
                     title = "自动选择",
@@ -2203,6 +2206,7 @@ private fun P03ModelSelector(
                     tag = "p03-model-auto",
                     avatarLabel = "Y",
                     trailingLabel = "推荐",
+                    rowHeight = 64.dp,
                     onClick = { onSelect(null) },
                 )
             }
@@ -2218,7 +2222,8 @@ private fun P03ModelSelector(
                 visibleModels.isEmpty() -> Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     P03StatePanel(P03RecoveryMessage("没有符合条件的模型", "清除筛选后查看全部可用模型。"))
                 }
-                else -> visibleModels.forEach { model ->
+                else -> visibleModels.forEachIndexed { index, model ->
+                    if (showAutoOption || index > 0) Spacer(Modifier.height(6.dp))
                     P03SelectorRow(
                         title = model.name,
                         description = model.description,
@@ -2233,6 +2238,7 @@ private fun P03ModelSelector(
                             model.description.contains("复杂") -> "推理"
                             else -> null
                         },
+                        rowHeight = 64.dp,
                         onClick = { onSelect(model) },
                     )
                 }
@@ -2279,6 +2285,7 @@ private fun P03ResponseModeSelector(
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("回答方式", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
             Text("无需每次设置，默认由模型自动判断。", color = YlvenLightColors.TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
+            Spacer(Modifier.height(8.dp))
             if (error != null) {
                 Box(Modifier.fillMaxWidth().testTag("p03-response-mode-error")) {
                     P03SelectorRecoveryCard(
@@ -2292,7 +2299,8 @@ private fun P03ResponseModeSelector(
                     P03SelectorEmptyText("当前模型没有可调整选项", "继续使用自动模式即可。")
                 }
             } else {
-                modes.filter { (id) -> showAutoOption || id != "auto" }.forEach { (id, title, description) ->
+                modes.filter { (id) -> showAutoOption || id != "auto" }.forEachIndexed { index, (id, title, description) ->
+                    if (index > 0) Spacer(Modifier.height(6.dp))
                     P03SelectorRow(
                         title = title,
                         description = description,
@@ -2300,6 +2308,7 @@ private fun P03ResponseModeSelector(
                         enabled = id in supported,
                         tag = "p03-response-mode-$id",
                         trailingLabel = if (id !in supported) "不可用" else null,
+                        rowHeight = 56.dp,
                         onClick = { onSelect(id) },
                     )
                 }
@@ -2318,11 +2327,12 @@ private fun P03SelectorRow(
     tag: String,
     avatarLabel: String? = null,
     trailingLabel: String? = null,
+    rowHeight: androidx.compose.ui.unit.Dp = 64.dp,
     onClick: () -> Unit,
 ) {
     val border = if (selected) YlvenLightColors.Primary else YlvenLightColors.Border
     Surface(
-        modifier = Modifier.fillMaxWidth().height(64.dp).clickable(enabled = enabled, onClick = onClick).testTag(tag),
+        modifier = Modifier.fillMaxWidth().height(rowHeight).clickable(enabled = enabled, onClick = onClick).testTag(tag),
         shape = RoundedCornerShape(16.dp),
         color = if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.Surface,
         border = BorderStroke(if (selected) 2.dp else 1.dp, border),
