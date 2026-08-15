@@ -470,6 +470,7 @@ private fun p03HideSystemBars(window: android.view.Window, view: View) {
  * removes popup measurement differences without creating a second screen body.
  */
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun P03SheetContainer(
     tag: String,
     contractHeight: androidx.compose.ui.unit.Dp,
