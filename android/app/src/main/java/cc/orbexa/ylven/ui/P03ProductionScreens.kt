@@ -674,6 +674,7 @@ private fun P03ContractDrawer(code: P03ContractStateCode) {
             onTool = {},
             onOpenConversation = {},
             onOpenAccount = {},
+            visualContract = true,
         )
         P03HistoryDrawerOverlay(
             conversations = conversations,
@@ -996,10 +997,10 @@ private fun P03HomeScreen(
                         modifier = Modifier.fillMaxWidth().padding(bottom = if (visualContract) 0.dp else 13.dp),
                     ) {
                         if (visualContract) P03Sparkle(32.dp) else Text("✦", color = YlvenLightColors.Primary, fontSize = 32.sp, lineHeight = 36.sp)
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(if (visualContract) 15.dp else 8.dp))
                         Text("今天想完成什么？", fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                         Text("多模型协同，完成更复杂的事。", fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary)
-                        if (visualContract) Spacer(Modifier.height(15.dp))
+                        if (visualContract) Spacer(Modifier.height(10.dp))
                     }
                 }
                 item { P03HomeComposer(onNewConversation, visualContract) }
@@ -1235,7 +1236,7 @@ private fun P03HistoryDrawerOverlay(
                 }
                 .testTag("p03-conversation-drawer"),
             shape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp),
-            color = YlvenLightColors.Surface,
+            color = if (visualContract) Color(0xFFFCFCFE) else YlvenLightColors.Surface,
             shadowElevation = 12.dp,
         ) {
             Column(Modifier.fillMaxSize()) {
@@ -1899,7 +1900,7 @@ private fun P03ChatContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("YL-A-025-C-P03_016-01"),
-        contentPadding = PaddingValues(horizontal = if (visualContract) 18.dp else 16.dp, vertical = if (visualContract) 33.dp else 18.dp),
+        contentPadding = PaddingValues(horizontal = if (visualContract) 18.dp else 16.dp, vertical = if (visualContract) 40.dp else 18.dp),
         verticalArrangement = Arrangement.spacedBy(if (visualContract) 16.dp else 20.dp),
     ) {
         if (messages.isEmpty() && !sending) {
@@ -2110,7 +2111,7 @@ private fun P03Composer(
         Surface(
             modifier = Modifier.fillMaxWidth().padding(
                 horizontal = if (visualContract) 18.dp else 16.dp,
-                vertical = if (visualContract) 12.dp else 8.dp,
+                vertical = if (visualContract) 10.dp else 8.dp,
             ).p03NavigationBarsPadding(),
             shape = RoundedCornerShape(if (visualContract) 18.dp else 24.dp),
             color = YlvenLightColors.Surface,
