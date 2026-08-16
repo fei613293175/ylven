@@ -774,20 +774,32 @@ class HttpIdentityGateway(
         bearer: String?,
         headers: Map<String, String>,
     ): JSONObject {
+        val bodyBytes = body?.toString()?.toByteArray(Charsets.UTF_8)
         val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 10_000
             readTimeout = 15_000
+            useCaches = false
+            doInput = true
+            // Some Android vendor stacks can stall when a keep-alive connection
+            // is reused for the next POST. Close each short API exchange.
+            setRequestProperty("Connection", "close")
             setRequestProperty("Accept", "application/json")
             if (!bearer.isNullOrBlank()) setRequestProperty("Authorization", "Bearer $bearer")
             headers.forEach { (name, value) -> setRequestProperty(name, value) }
-            if (body != null) {
+            if (bodyBytes != null) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
+                setFixedLengthStreamingMode(bodyBytes.size)
             }
         }
         return try {
+            bodyBytes?.let { bytes ->
+                connection.outputStream.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                }
+            }
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
