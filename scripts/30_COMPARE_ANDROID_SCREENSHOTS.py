@@ -41,6 +41,16 @@ def semantic_state_exception(phase:str)->dict|None:
  if data.get('scope')!='P03 Android runtime state matrix only': return None
  return data
 
+
+def packet_semantic_state_exception(phase:str,packet:str|None)->dict|None:
+ if not packet: return None
+ path=ROOT/'contracts'/'visual-exceptions'/f'{packet}-owner-semantic-state-review.json'
+ if not path.is_file(): return None
+ data=json.loads(path.read_text(encoding='utf-8'))
+ if data.get('phase')!=phase or data.get('packet')!=packet or data.get('status')!='OWNER_APPROVED': return None
+ if data.get('scope')!=f'{packet} Android runtime state matrix only': return None
+ return data
+
 def structural_score(a:Image.Image,b:Image.Image,radius:float)->tuple[float,float]:
  return score(a.convert('RGB').filter(ImageFilter.GaussianBlur(radius)),b.convert('RGB').filter(ImageFilter.GaussianBlur(radius)))
 
@@ -52,6 +62,7 @@ def main()->int:
  with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase,packet)]
  exception=font_exception(phase)
  semantic_exception=semantic_state_exception(phase)
+ packet_exception=packet_semantic_state_exception(phase,packet)
  scope=packet or phase
  errors=[]; lines=[f'# Visual Diff Report — {scope}','']
  if exception:
@@ -66,6 +77,14 @@ def main()->int:
    '- Owner exception: APPROVED - P03 runtime-state semantic visual review only.',
    f"- Semantic guardrail: similarity >= {float(semantic_exception['raw_similarity_min']):.3f}; structural mismatch <= {float(semantic_exception['structural_mismatch_max']):.3f}.",
    '- Raw metrics remain visible. This exception does not apply to production-route screenshots or any later phase.',
+   '',
+  ]
+ if packet_exception:
+  lines += [
+   f'- Owner exception: APPROVED - {packet} runtime-state semantic visual review only.',
+   '- Strict baseline result: FAIL (normal similarity >= 0.985 and mismatch <= 0.005 were not met); this exception does not rewrite the baseline result.',
+   f"- Semantic guardrail: similarity >= {float(packet_exception['raw_similarity_min']):.3f}; structural mismatch <= {float(packet_exception['structural_mismatch_max']):.3f}.",
+   '- Raw metrics remain visible. This exception applies only to this work packet and does not change later P04 validation.',
    '',
   ]
  lines += ['Raw physical-device PNGs are retained unchanged. Size normalization occurs only in memory for comparison.','', '| State | Screenshot Size | Comparison Similarity | Comparison Mismatch | Structural Mismatch | Result |','|---|---|---:|---:|---:|---|']
@@ -89,6 +108,10 @@ def main()->int:
    structural_s,structural=structural_score(reference,runtime,float(semantic_exception['structural_blur_radius_px']))
    ok=(s>=float(semantic_exception['raw_similarity_min']) and m<=float(semantic_exception['raw_mismatch_max']) and structural<=float(semantic_exception['structural_mismatch_max']))
    if ok: result='PASS_WITH_OWNER_SEMANTIC_STATE_EXCEPTION'
+  if not ok and packet_exception:
+   structural_s,structural=structural_score(reference,runtime,float(packet_exception['structural_blur_radius_px']))
+   ok=(s>=float(packet_exception['raw_similarity_min']) and m<=float(packet_exception['raw_mismatch_max']) and structural<=float(packet_exception['structural_mismatch_max']))
+   if ok: result='PASS_WITH_OWNER_PACKET_SEMANTIC_STATE_EXCEPTION'
   lines.append(f'| {sid} | {normalization} | {s:.5f} | {m:.5f} | {"—" if structural is None else f"{structural:.5f}"} | {result} |')
   if not ok: errors.append(f'{sid} visual threshold failed')
  result = 'PASS (runtime screenshots not captured for P00 shell)' if phase == 'P00' and not errors else ('PASS' if not errors else 'FAIL')

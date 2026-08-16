@@ -49,6 +49,14 @@ class VisualComparePacketScopeTest(unittest.TestCase):
         }
         self.assertFalse(self.compare.applies_to_phase(row, "P04", "P04-W01"))
 
+    def test_owner_packet_exception_is_limited_to_p04_w01(self):
+        exception = self.compare.packet_semantic_state_exception("P04", "P04-W01")
+
+        self.assertIsNotNone(exception)
+        self.assertEqual("P04-W01", exception["packet"])
+        self.assertIsNone(self.compare.packet_semantic_state_exception("P04", "P04-W02"))
+        self.assertIsNone(self.compare.packet_semantic_state_exception("P03", "P03-W07"))
+
 
 if __name__ == "__main__":
     unittest.main()

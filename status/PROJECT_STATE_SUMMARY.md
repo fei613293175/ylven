@@ -1,6 +1,6 @@
 # Project State Summary
 
-- Generated: `2026-08-17T02:30:23+08:00`
+- Generated: `2026-08-17T07:22:52+08:00`
 - Current phase: `P04`
 - Phase status: `DOING`
 - Current Work Packet: `P04-W01`
@@ -11,11 +11,11 @@
 - Closed/deferred Work Packets recorded: `23`
 - Closed releases recorded: `4`
 - Git branch: `phase/p04-multi-model-routing-and-comparison`
-- Git HEAD: `e6e9c3be42b2b175bbf078e60588effb379e84c7`
+- Git HEAD: `a963aae20658d884b8ac7306b40ef716b9a1d4f7`
 
 ## Exact next action
 
-Implement `P04-W01` (供应商、模型目录与模型选择器). Commit code, tests and Feature evidence before running close-packet.
+Continue exactly `P04-W01` using `work-packets/P04-W01.md` and the current phase specification. Do not reselect work from chat history.
 
 ## New-conversation rule
 

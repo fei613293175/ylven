@@ -15,38 +15,43 @@ release_final_statuses:
 - BLOCKED_EXTERNAL
 features:
 - feature_id: P04-001
-  status: IN_PROGRESS
-  reason: '目录代码、接口和 Android 选择器已实现；ce19b06 的服务器 Android 构建通过，但当前精确候选尚无完整有效的真机、视觉及后台实操证据，P04-W01 保持 DOING。'
+  status: IMPLEMENTED
+  reason: '模型目录的后端接口与 Android 选择器已由 a963aae 的服务器构建、真实 staging 路径和真机状态矩阵验证。视觉严格像素门槛未通过，原始数据保留并仅按项目所有者的 P04-W01 例外收口。'
   evidence:
   - backend/internal/identity/model_catalog.go::model catalog domain and capability filtering
   - backend/internal/identity/http.go::GET /api/mobile/v1/models
   - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ModelSelector
-  - .ylven-local/server-builds/p04-1.4.0-ce19b067ae77-20260816T211252Z/download/服务器构建来源证明.json
+  - .ylven-local/server-builds/p04-1.4.0-a963aae20658-20260816T230118Z/download/服务器构建来源证明.json
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260816T203717Z/真机验收证据.json
+  - contracts/visual-exceptions/P04-W01-owner-semantic-state-review.json
 - feature_id: P04-002
-  status: IN_PROGRESS
-  reason: '按供应商分组的目录数据和 Android 选择器已实现；当前候选的有效真机和后台实操证据仍缺失。'
+  status: IMPLEMENTED
+  reason: '按供应商分组的目录数据与 Android 选择器已由 a963aae 的服务器构建、真实 staging 路径和真机状态矩阵验证；后台目录实操仍作为 P04-W01 的外部延期事项留痕。'
   evidence:
   - backend/internal/identity/model_catalog.go::Provider and ModelCatalog types
   - web/admin/src/catalog.js::provider grouping projection
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260816T203717Z/真机验收证据.json
 - feature_id: P04-003
-  status: IN_PROGRESS
-  reason: '结构化用途、速度和能力标签已接入目录与选择器；当前候选仍待真实运行和视觉验收。'
+  status: IMPLEMENTED
+  reason: '结构化用途、速度和能力标签已接入目录与选择器，并由 a963aae 的真实 staging 路径和物理设备选择器状态覆盖。'
   evidence:
   - backend/internal/identity/model_catalog.go::purpose speed capability metadata
   - web/admin/src/catalog.js::catalog labels
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260816T203717Z/真机验收证据.json
 - feature_id: P04-004
-  status: IN_PROGRESS
-  reason: '能力结果持久化和过滤逻辑已实现；管理端单元测试通过，但尚无真实后台登录、探测、保存、回读和审计证据。'
+  status: BLOCKED_EXTERNAL
+  reason: '能力结果持久化与过滤逻辑及管理端单元测试已完成；当前只提供后台登录页，未提供可授权的真实管理会话，因而无法完成真实探测、保存、API 回读和审计记录验收。'
   evidence:
   - backend/internal/identity/model_catalog_postgres.go::capability persistence
   - backend/internal/identity/model_catalog_test.go::capability detection and filtering tests
   - web/admin/src/catalog.test.js
 - feature_id: P04-005
-  status: IN_PROGRESS
-  reason: '回答方式由目录能力推导，自动档位降级状态已针对 staging 实际配置修正；完整真机与视觉验收仍待完成。'
+  status: IMPLEMENTED
+  reason: '回答方式由目录能力推导，auto-only staging 的降级状态已在真实设备和完整的 6 状态回答方式选择器矩阵中验证。'
   evidence:
   - backend/internal/identity/model_catalog.go::reasoning mode catalog
   - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ResponseModeSelector
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260816T203717Z/真机验收证据.json
 - feature_id: P04-006
   status: BLOCKED_EXTERNAL
   reason: '代码中的映射与持久化已实现，但 staging 只有 auto 档位，且未配置 p04-reasoner 通道、路由策略或能力探测；缺少有授权依据的上游非自动档位配置和真实探测，不能声称真实上游映射已验证。'
