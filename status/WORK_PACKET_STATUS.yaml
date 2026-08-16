@@ -275,20 +275,22 @@ work_packets:
 - work_packet_id: P03-W07
   phase: P03
   sequence: 7
-  status: DOING
+  status: CLOSED
   started_at: '2026-08-11T19:06:48+08:00'
-  closed_at: null
+  closed_at: '2026-08-16T15:29:47+08:00'
   started_commit: 88ffc4f48ab05037e25943a8b9be88541d49aff8
-  closed_commit: null
-  result: null
-  reason: 'v11 真机视觉门禁失败：原始像素 5/8、结构 0/8；不得关闭或交付。'
+  closed_commit: 4f13e471a26bd3835dced62e82ba214e93f5e2d5
+  result: CLOSED
+  reason: ''
   evidence:
   - visual:C:\Users\小白\Desktop\YLVEN\YLVEN_AI_Development_Package_V1.6.0_20260805\.ylven-local\w07-device\final-targeted-v11-20260812T072617Z\server-visual\scores.md
   - adb:CMZDEENVAESS89UC released to MIUI Launcher with state device
+  - git:4f13e471a26bd3835dced62e82ba214e93f5e2d5
+  - history:d579be446314a1af11c84af9f22d2734d406d0d0a21c375791d0b17d2a67fa50
 - work_packet_id: P03-W08
   phase: P03
   sequence: 8
-  status: PLANNED
+  status: TODO
   started_at: null
   closed_at: null
   started_commit: null
@@ -790,4 +792,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-11T19:06:48+08:00'
+updated_at: '2026-08-16T15:29:47+08:00'
