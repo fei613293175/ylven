@@ -1539,24 +1539,6 @@ internal fun P03ChatPage(
     val tts = remember(context) { TextToSpeech(context, null) }
     DisposableEffect(tts) { onDispose { tts.shutdown() } }
 
-    fun loadModels() {
-        scope.launch {
-            modelsLoading = true
-            modelsError = null
-            try {
-                val loaded = gateway.models(session.bearer)
-                models = loaded
-                selectedModelName = loaded.firstOrNull { it.id == selectedModelId }?.name
-                    ?: if (selectedModelId.isBlank()) "自动选择" else "已选模型"
-                if (selectedModelId.isNotBlank()) loadReasoningProfiles(selectedModelId)
-            } catch (reason: Exception) {
-                modelsError = consumerErrorMessage(reason, "暂时无法加载模型，请重试")
-            } finally {
-                modelsLoading = false
-            }
-        }
-    }
-
     fun loadReasoningProfiles(modelId: String) {
         if (modelId.isBlank()) {
             reasoningProfiles = listOf("auto")
@@ -1577,6 +1559,24 @@ internal fun P03ChatPage(
                 reasoningProfilesError = consumerErrorMessage(reason, "暂时无法加载回答方式，请重试")
             } finally {
                 reasoningProfilesLoading = false
+            }
+        }
+    }
+
+    fun loadModels() {
+        scope.launch {
+            modelsLoading = true
+            modelsError = null
+            try {
+                val loaded = gateway.models(session.bearer)
+                models = loaded
+                selectedModelName = loaded.firstOrNull { it.id == selectedModelId }?.name
+                    ?: if (selectedModelId.isBlank()) "自动选择" else "已选模型"
+                if (selectedModelId.isNotBlank()) loadReasoningProfiles(selectedModelId)
+            } catch (reason: Exception) {
+                modelsError = consumerErrorMessage(reason, "暂时无法加载模型，请重试")
+            } finally {
+                modelsLoading = false
             }
         }
     }
@@ -2036,8 +2036,8 @@ private fun P03ChatContent(
     reconnecting: Boolean,
     consumerCopy: Map<String, String>,
     citations: Map<String, List<MessageCitation>>,
-    answerRuns: Map<String, MessageRun>,
-    modelNames: Map<String, String>,
+    answerRuns: Map<String, MessageRun> = emptyMap(),
+    modelNames: Map<String, String> = emptyMap(),
     onCopyCode: (String) -> Unit,
     recovery: P03RecoveryMessage? = null,
     onRecoveryAction: () -> Unit = {},
@@ -2482,7 +2482,6 @@ private fun P03ToolTile(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun P04ModelFallbackDialog(
     models: List<ModelOption>,
     onDismiss: () -> Unit,
@@ -2534,6 +2533,7 @@ private fun P04AnswerSourceLabel(messageId: String, run: MessageRun?, modelNames
     )
 }
 
+@Composable
 private fun P03ModelSelector(
     models: List<ModelOption>,
     loading: Boolean,
