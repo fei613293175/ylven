@@ -101,12 +101,27 @@ while ((Get-Process -Id $monitorPid -ErrorAction SilentlyContinue) -and (Get-Dat
                         continue
                     }
 
-                    $positive = $nodes | Where-Object {
+                    $positiveLabel = $nodes | Where-Object {
                         $label = (($_.text + ' ' + $_.GetAttribute('content-desc')).Trim())
-                        $_.enabled -eq 'true' -and $_.clickable -eq 'true' -and
                         $label -notmatch '取消|拒绝|禁止|不允许|退出' -and
                         $label -match '^(继续安装|允许本次安装|仍然安装|安装|允许|继续|确认|确定|仅打开一次)(\s*[（(]?\d+\s*[）)]?)?$'
                     } | Select-Object -First 1
+
+                    # vivo renders the affirmative label in a non-clickable child while
+                    # android:id/button1 is the clickable parent. Require the approved
+                    # label before using that parent so unrelated installer dialogs remain untouched.
+                    $positive = $null
+                    if ($positiveLabel) {
+                        $positive = $nodes | Where-Object {
+                            $_.'resource-id' -eq 'android:id/button1' -and
+                            $_.enabled -eq 'true' -and $_.clickable -eq 'true'
+                        } | Select-Object -First 1
+                    }
+                    if (-not $positive) {
+                        $positive = $positiveLabel | Where-Object {
+                            $_.enabled -eq 'true' -and $_.clickable -eq 'true'
+                        } | Select-Object -First 1
+                    }
 
                     if ($positive -and $positive.bounds -match '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') {
                         $x = [int](([int]$Matches[1] + [int]$Matches[3]) / 2)
