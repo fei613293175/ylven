@@ -808,6 +808,13 @@ private class FlowGateway(private val enableAllTools: Boolean = false) : Identit
         return run("run-regenerated")
     }
 
+    override suspend fun rerunMessage(
+        bearer: String,
+        messageId: String,
+        modelId: String,
+        reasoningProfile: String,
+    ): MessageRun = regenerate(bearer, messageId)
+
     override suspend fun speak(bearer: String, messageId: String): Boolean {
         calls += "speak"
         return true
