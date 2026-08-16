@@ -5,6 +5,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import cc.orbexa.ylven.BuildConfig
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.KeyStore
@@ -784,6 +786,7 @@ class HttpIdentityGateway(
             // Some Android vendor stacks can stall when a keep-alive connection
             // is reused for the next POST. Close each short API exchange.
             setRequestProperty("Connection", "close")
+            setRequestProperty("Accept-Encoding", "identity")
             setRequestProperty("Accept", "application/json")
             if (!bearer.isNullOrBlank()) setRequestProperty("Authorization", "Bearer $bearer")
             headers.forEach { (name, value) -> setRequestProperty(name, value) }
@@ -802,7 +805,7 @@ class HttpIdentityGateway(
             }
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            val raw = stream?.let { readResponseBody(it, connection.contentLengthLong) }.orEmpty()
             val json = if (raw.isBlank()) JSONObject() else JSONObject(raw)
             if (status !in 200..299) {
                 val error = json.optJSONObject("error")
@@ -815,6 +818,29 @@ class HttpIdentityGateway(
             json
         } finally {
             connection.disconnect()
+        }
+    }
+
+    /**
+     * Read bounded JSON responses without waiting for an EOF that some vendor
+     * HttpURLConnection implementations do not surface on keep-alive sockets.
+     */
+    private fun readResponseBody(stream: InputStream, contentLength: Long): String {
+        stream.use { input ->
+            val output = ByteArrayOutputStream(contentLength.coerceIn(0L, 1_048_576L).toInt())
+            if (contentLength >= 0L) {
+                val buffer = ByteArray(8 * 1024)
+                var remaining = contentLength
+                while (remaining > 0L) {
+                    val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
+                    if (count < 0) break
+                    output.write(buffer, 0, count)
+                    remaining -= count
+                }
+            } else {
+                input.copyTo(output)
+            }
+            return output.toString(Charsets.UTF_8.name())
         }
     }
 
