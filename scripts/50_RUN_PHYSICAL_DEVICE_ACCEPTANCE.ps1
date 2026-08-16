@@ -7,7 +7,9 @@
     [string]$AdbPath,
     [string]$PreviousApk,
     [Parameter(Mandatory=$true)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$PreviousVersion,
-    [switch]$SameVersionRegression
+    [switch]$SameVersionRegression,
+    [string]$OutputDirectory,
+    [switch]$ReuseOutputDirectory
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -421,8 +423,36 @@ try {
         $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
     }
 
-    $acceptanceId = ('{0}-{1}-{2}' -f $Phase.ToLowerInvariant(), $Version, (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
-    $output = Join-Path $Root ".ylven-local\physical-device-acceptance\$acceptanceId"
+    $acceptanceRoot = (Resolve-Path -LiteralPath (Join-Path $Root '.ylven-local\physical-device-acceptance')).Path
+    if ($OutputDirectory) {
+        if (-not $ReuseOutputDirectory) { throw '-OutputDirectory requires -ReuseOutputDirectory.' }
+        $output = [System.IO.Path]::GetFullPath($OutputDirectory)
+        $outputPrefix = $acceptanceRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+        if (-not $output.StartsWith($outputPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Reusable evidence output must be inside .ylven-local/physical-device-acceptance.'
+        }
+        $expectedPrefix = "$($Phase.ToLowerInvariant())-$Version-"
+        if (-not ([System.IO.Path]::GetFileName($output)).StartsWith($expectedPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Reusable evidence output must have the current phase/version prefix $expectedPrefix."
+        }
+        if (-not (Test-Path -LiteralPath $output -PathType Container)) { throw 'Reusable evidence output directory does not exist.' }
+        foreach ($relative in @(
+            '截图', '真实页面截图', 'test-results', '服务器构建来源证明.json', '本机下载校验证明.json',
+            "YLVEN-$Version-$Phase.apk", '截图索引.csv', '真实页面截图索引.csv', '视觉差异报告.md',
+            '真机日志审查.md', '自动化测试报告.md', '覆盖安装证据.md', '真机验收证据.json'
+        )) {
+            $resetTarget = [System.IO.Path]::GetFullPath((Join-Path $output $relative))
+            if (-not $resetTarget.StartsWith($outputPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Refusing to reset an unexpected evidence path $resetTarget."
+            }
+            if (Test-Path -LiteralPath $resetTarget) { Remove-Item -LiteralPath $resetTarget -Recurse -Force }
+        }
+        @{ reused_at=(Get-Date).ToUniversalTime().ToString('o'); phase=$Phase; version=$Version; reason='obsolete downgrade-only evidence directory reset for current exact-candidate regression' } |
+            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'evidence-reuse.json') -Encoding UTF8
+    } else {
+        $acceptanceId = ('{0}-{1}-{2}' -f $Phase.ToLowerInvariant(), $Version, (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
+        $output = Join-Path $acceptanceRoot $acceptanceId
+    }
     $screenshots = Join-Path $output '截图'
     $productionScreenshots = Join-Path $output '真实页面截图'
     $testResults = Join-Path $output 'test-results'

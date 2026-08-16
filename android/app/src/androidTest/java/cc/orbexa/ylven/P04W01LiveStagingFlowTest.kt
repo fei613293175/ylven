@@ -1,6 +1,5 @@
 package cc.orbexa.ylven
 
-import android.os.SystemClock
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -67,7 +66,9 @@ class P04W01LiveStagingFlowTest {
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01")
             .performTextInput("请说明模型目录和推理档位应如何协同工作。")
-        closeKeyboardWithDeviceBack()
+        // Keep IME focus while sending. The production control remains available above the IME,
+        // and physical P03 flows exercise this same interaction without a system-animation wait.
+        waitForTag("YL-A-023-C-P03_009-01", 10_000)
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         waitForTagGone("YL-A-023-C-P03_009-01", 10_000)
         waitForTag("YL-A-023-C-P03_009-01", 110_000)
@@ -127,14 +128,6 @@ class P04W01LiveStagingFlowTest {
                     .any { it.text.startsWith("回答来源：") && it.text.contains(" · ") }
             }
         }
-    }
-
-    private fun closeKeyboardWithDeviceBack() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        // Espresso waits for every system animation to settle. On physical Xiaomi devices
-        // that can time out even after the IME closes, so send the same Back action to the device.
-        instrumentation.uiAutomation.executeShellCommand("input keyevent KEYCODE_BACK").close()
-        SystemClock.sleep(300)
     }
 
     private fun capture(name: String) {

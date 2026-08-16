@@ -2,7 +2,7 @@ schema_version: 1.2.0
 phase: P04
 phase_title: 多模型目录、推理强度、路由与对比回答
 overall_status: DOING
-updated_at: '2026-08-16T00:08:00+08:00'
+updated_at: '2026-08-17T05:20:00+08:00'
 allowed_feature_statuses_during_development:
 - PLANNED
 - IN_PROGRESS
@@ -15,51 +15,45 @@ release_final_statuses:
 - BLOCKED_EXTERNAL
 features:
 - feature_id: P04-001
-  status: IMPLEMENTED
-  reason: 'P04-W01 已完成代码、服务器构建和 vivo X21 真机回归；P04 控制器仍由 P03 阻塞，未关闭工作包。'
+  status: IN_PROGRESS
+  reason: '目录代码、接口和 Android 选择器已实现；ce19b06 的服务器 Android 构建通过，但当前精确候选尚无完整有效的真机、视觉及后台实操证据，P04-W01 保持 DOING。'
   evidence:
   - backend/internal/identity/model_catalog.go::model catalog domain and capability filtering
   - backend/internal/identity/http.go::GET /api/mobile/v1/models
   - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ModelSelector
-  - .ylven-local/p04-w01-evidence/instrumentation-p03-full.txt
-  - .ylven-local/p04-w01-evidence/production-screenshots/YL-A-033-PRODUCTION.png
+  - .ylven-local/server-builds/p04-1.4.0-ce19b067ae77-20260816T211252Z/download/服务器构建来源证明.json
 - feature_id: P04-002
-  status: IMPLEMENTED
-  reason: '按供应商分组的目录数据和模型选择器已接入；P04-W01 控制器保持未关闭。'
+  status: IN_PROGRESS
+  reason: '按供应商分组的目录数据和 Android 选择器已实现；当前候选的有效真机和后台实操证据仍缺失。'
   evidence:
   - backend/internal/identity/model_catalog.go::Provider and ModelCatalog types
   - web/admin/src/catalog.js::provider grouping projection
-  - .ylven-local/p04-w01-evidence/production-screenshots/YL-A-033-PRODUCTION.png
 - feature_id: P04-003
-  status: IMPLEMENTED
-  reason: '用途、速度和能力标签由结构化目录字段驱动，并通过管理端和 Android 选择器展示。'
+  status: IN_PROGRESS
+  reason: '结构化用途、速度和能力标签已接入目录与选择器；当前候选仍待真实运行和视觉验收。'
   evidence:
   - backend/internal/identity/model_catalog.go::purpose speed capability metadata
   - web/admin/src/catalog.js::catalog labels
-  - .ylven-local/p04-w01-evidence/production-screenshots/YL-A-033-PRODUCTION.png
 - feature_id: P04-004
-  status: IMPLEMENTED
-  reason: '能力探测结果持久化并用于过滤不可用能力；后端测试、管理端测试和真机回归均通过。'
+  status: IN_PROGRESS
+  reason: '能力结果持久化和过滤逻辑已实现；管理端单元测试通过，但尚无真实后台登录、探测、保存、回读和审计证据。'
   evidence:
   - backend/internal/identity/model_catalog_postgres.go::capability persistence
   - backend/internal/identity/model_catalog_test.go::capability detection and filtering tests
   - web/admin/src/catalog.test.js
-  - .ylven-local/p04-w01-evidence/instrumentation-p03-state-ui.txt
 - feature_id: P04-005
-  status: IMPLEMENTED
-  reason: '模型支持的回答方式从目录能力推导；未选择具体模型的新会话保留默认自动档位。'
+  status: IN_PROGRESS
+  reason: '回答方式由目录能力推导，自动档位降级状态已针对 staging 实际配置修正；完整真机与视觉验收仍待完成。'
   evidence:
   - backend/internal/identity/model_catalog.go::reasoning mode catalog
   - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ResponseModeSelector
-  - .ylven-local/p04-w01-evidence/production-screenshots/YL-A-034-PRODUCTION.png
 - feature_id: P04-006
-  status: IMPLEMENTED
-  reason: '用户回答方式已映射为上游参数并持久化；完整真机控制流程通过。'
+  status: BLOCKED_EXTERNAL
+  reason: '代码中的映射与持久化已实现，但 staging 只有 auto 档位，且未配置 p04-reasoner 通道、路由策略或能力探测；缺少有授权依据的上游非自动档位配置和真实探测，不能声称真实上游映射已验证。'
   evidence:
   - backend/internal/identity/model_catalog.go::reasoning parameter mapping
   - backend/internal/identity/conversation_context.go::model and reasoning persistence
   - android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::model and reasoning API contract
-  - .ylven-local/p04-w01-evidence/instrumentation-p03-full.txt
 - feature_id: P04-007
   status: PLANNED
   reason: ''
