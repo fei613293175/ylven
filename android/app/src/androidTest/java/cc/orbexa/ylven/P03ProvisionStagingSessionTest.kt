@@ -1,6 +1,6 @@
 package cc.orbexa.ylven
 
-import android.os.Bundle
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.identity.HttpIdentityGateway
 import cc.orbexa.ylven.identity.SessionStore
@@ -47,9 +47,8 @@ class P03ProvisionStagingSessionTest {
     }
 
     private fun reportStage(stage: String) {
-        InstrumentationRegistry.getInstrumentation().sendStatus(
-            2,
-            Bundle().apply { putString("ylven_stage", stage) },
-        )
+        // Vivo Android 14 can block the instrumentation Binder status channel
+        // after a network response. Keep stage evidence in logcat instead.
+        Log.i("YLVEN_P03_STAGE", stage)
     }
 }

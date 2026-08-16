@@ -1,7 +1,7 @@
 package cc.orbexa.ylven
 
-import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -194,10 +194,7 @@ class P03LiveStagingFlowTest {
     }
 
     private fun reportStage(stage: String) {
-        InstrumentationRegistry.getInstrumentation().sendStatus(
-            2,
-            Bundle().apply { putString("ylven_stage", stage) },
-        )
+        Log.i("YLVEN_P03_STAGE", stage)
     }
 
     private companion object {
