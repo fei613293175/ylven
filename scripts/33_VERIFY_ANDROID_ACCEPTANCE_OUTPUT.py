@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageStat
+from PIL import Image, ImageChops, ImageStat
 
 ROOT = Path(__file__).resolve().parents[1]
 P03_DEPRECATED_PAGES = {"YL-A-019", "YL-A-031"}
@@ -39,6 +39,43 @@ def production_duplicate_is_allowed(phase: str, first: str, second: str) -> bool
         P03_COMPONENT_BOARD_PARENT.get(first_page) == second_page
         or P03_COMPONENT_BOARD_PARENT.get(second_page) == first_page
     )
+
+
+def approved_state_duplicate_is_allowed(phase: str, first: str, second: str) -> bool:
+    """Allow an exact runtime duplicate only when the approved contract does too."""
+    if phase != "P03":
+        return False
+    with (ROOT / "contracts" / "ui-state-catalog.csv").open(
+        encoding="utf-8-sig", newline=""
+    ) as source:
+        rows = {row["state_id"]: row for row in csv.DictReader(source)}
+    first_row = rows.get(first.removesuffix(".png"))
+    second_row = rows.get(second.removesuffix(".png"))
+    if not first_row or not second_row:
+        return False
+
+    def is_parent_and_component(parent: dict[str, str], child: dict[str, str]) -> bool:
+        return (
+            child.get("visual_kind") == "COMPONENT_BOARD"
+            and child.get("parent_page_id") == parent.get("page_id")
+        )
+
+    if not (
+        is_parent_and_component(first_row, second_row)
+        or is_parent_and_component(second_row, first_row)
+    ):
+        return False
+    first_reference = ROOT / first_row["mockup_path"]
+    second_reference = ROOT / second_row["mockup_path"]
+    if not first_reference.is_file() or not second_reference.is_file():
+        return False
+    with Image.open(first_reference) as first_image, Image.open(second_reference) as second_image:
+        first_rgb = first_image.convert("RGB")
+        second_rgb = second_image.convert("RGB")
+        return (
+            first_rgb.size == second_rgb.size
+            and ImageChops.difference(first_rgb, second_rgb).getbbox() is None
+        )
 
 
 def phase_android_screenshots(phase: str) -> list[str]:
@@ -223,7 +260,9 @@ def main() -> int:
             continue
         digest = sha256(path)
         if digest in digests:
-            errors.append(f"physical-device screenshots are byte-identical: {digests[digest]}, {name}")
+            previous = digests[digest]
+            if not approved_state_duplicate_is_allowed(phase, previous, name):
+                errors.append(f"physical-device screenshots are byte-identical: {previous}, {name}")
         else:
             digests[digest] = name
 
