@@ -694,6 +694,7 @@ private class AndroidContractRenderer(
         }
         when (code) {
             "REFRESHING" -> statusBanner("SERVICE_DEGRADED", 270f, .84f, "正在刷新内容…")
+            "OFFLINE_CACHE" -> statusBanner("OFFLINE_CACHE", 1900f, .84f, "仍可查看已保存的搜索记录。")
             "FILTER_ACTIVE" -> pill(72f, 282f, 340f, 354f, "筛选已生效", Pc.brandSoft, Pc.brand, 28f, Pc.brand)
         }
     }
