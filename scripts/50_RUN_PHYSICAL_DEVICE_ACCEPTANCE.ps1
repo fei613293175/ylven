@@ -6,7 +6,8 @@
     [string]$Serial,
     [string]$AdbPath,
     [string]$PreviousApk,
-    [Parameter(Mandatory=$true)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$PreviousVersion
+    [Parameter(Mandatory=$true)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$PreviousVersion,
+    [switch]$SameVersionRegression
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -398,13 +399,27 @@ try {
     if ($signingMigration -and $Phase -ne 'P03') { throw 'Signing migration is only allowed for P03.' }
 
     $upgradeFrom = $PreviousVersion.Trim()
-    if (-not $PreviousApk) {
-        $previousIndex = [int]$Phase.Substring(1) - 1
-        if ($previousIndex -lt 0) { throw 'P00 requires -PreviousApk for same-package reinstall testing.' }
-        $previousPhase = 'P{0:D2}' -f $previousIndex
-        $PreviousApk = Join-Path $Root "dist\releases\$previousPhase\YLVEN-$upgradeFrom-$previousPhase.apk"
+    if ($SameVersionRegression) {
+        if ($signingMigration) { throw 'Same-version regression is not valid for the one-time P03 signing migration.' }
+        if ($upgradeFrom -ne $Version) {
+            throw "Same-version regression requires -PreviousVersion $Version, got $upgradeFrom."
+        }
+        if ($PreviousApk) {
+            $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
+            $previousHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $PreviousApk).Hash.ToLowerInvariant()
+            if ($previousHash -ne $provenance.apk_sha256) {
+                throw 'Same-version regression may only use the exact candidate APK from server provenance.'
+            }
+        }
+    } else {
+        if (-not $PreviousApk) {
+            $previousIndex = [int]$Phase.Substring(1) - 1
+            if ($previousIndex -lt 0) { throw 'P00 requires -PreviousApk for same-package reinstall testing.' }
+            $previousPhase = 'P{0:D2}' -f $previousIndex
+            $PreviousApk = Join-Path $Root "dist\releases\$previousPhase\YLVEN-$upgradeFrom-$previousPhase.apk"
+        }
+        $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
     }
-    $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
 
     $acceptanceId = ('{0}-{1}-{2}' -f $Phase.ToLowerInvariant(), $Version, (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
     $output = Join-Path $Root ".ylven-local\physical-device-acceptance\$acceptanceId"
@@ -458,19 +473,29 @@ try {
         $resetRows | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-baseline-reset.txt') -Encoding UTF8
     }
 
-    Invoke-AdbInstall `
-        -Apk $PreviousApk `
-        -Replace `
-        -ResultPath (Join-Path $testResults 'previous-install.txt') `
-        -EvidenceDir (Join-Path $testResults 'install-confirmations\previous-owner')
+    if (-not $SameVersionRegression) {
+        Invoke-AdbInstall `
+            -Apk $PreviousApk `
+            -Replace `
+            -ResultPath (Join-Path $testResults 'previous-install.txt') `
+            -EvidenceDir (Join-Path $testResults 'install-confirmations\previous-owner')
+    }
     $installedBefore = (Get-PackagePath -Package $PackageId) -join "`n"
-    if ($installedBefore -notmatch '^package:') { throw 'Previous owner APK was not installed.' }
+    if ($installedBefore -notmatch '^package:') {
+        $description = if ($SameVersionRegression) { 'Current candidate APK was not installed before same-version regression.' } else { 'Previous owner APK was not installed.' }
+        throw $description
+    }
     $previousPackageDump = (Invoke-Adb shell dumpsys package $PackageId) -join "`n"
-    if ($previousPackageDump -notmatch "versionName=$([regex]::Escape($upgradeFrom))") { throw 'The required previous owner version was not installed before migration testing.' }
+    if ($previousPackageDump -notmatch "versionName=$([regex]::Escape($upgradeFrom))") {
+        $description = if ($SameVersionRegression) { 'The selected device does not contain the required current candidate version before same-version regression.' } else { 'The required previous owner version was not installed before migration testing.' }
+        throw $description
+    }
     $loginBefore = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
-    # Quote -p so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.
-    Invoke-Adb shell run-as $PackageId mkdir '-p' files | Out-Null
-    Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
+    if (-not $SameVersionRegression) {
+        # Quote -p so Windows PowerShell 5 does not bind it as the PipelineVariable common parameter.
+        Invoke-Adb shell run-as $PackageId mkdir '-p' files | Out-Null
+        Invoke-Adb shell run-as $PackageId touch files/physical-upgrade-marker | Out-Null
+    }
 
     if ($signingMigration) {
         $preMigration = [ordered]@{
@@ -503,10 +528,10 @@ try {
         Invoke-AdbInstall `
             -Apk $CurrentApk `
             -Replace `
-            -ResultPath (Join-Path $testResults 'current-upgrade-install.txt') `
+            -ResultPath (Join-Path $testResults $(if ($SameVersionRegression) { 'current-same-version-install.txt' } else { 'current-upgrade-install.txt' })) `
             -EvidenceDir (Join-Path $testResults 'install-confirmations\current-owner')
-        $marker = if (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
-        if ($marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
+        $marker = if ($SameVersionRegression) { 'not_applicable' } elseif (Test-AppPath -Package $PackageId -Path 'files/physical-upgrade-marker') { 'present' } else { 'absent' }
+        if (-not $SameVersionRegression -and $marker -ne 'present') { throw 'Upgrade data marker did not survive adb install -r.' }
         $loginAfter = if (Test-AppSessionBlob) { 'present' } else { 'absent' }
         if ($loginBefore -eq 'present' -and $loginAfter -ne 'present') { throw 'Existing login-state preferences did not survive the upgrade.' }
     }
@@ -748,6 +773,20 @@ try {
 - P03 之后升级基线：新签名证书，恢复 adb install --no-streaming -r
 - 结果：PASS
 "@
+    } elseif ($SameVersionRegression) {
+        $upgradeEvidence = @"
+# 同版本定向回归安装证据
+
+- 阶段：$Phase
+- 当前版本：$Version
+- applicationId：$PackageId
+- 回归性质：同版本 $Version 的精确服务器候选 APK 定向回归，不是新版本升级证据
+- 安装命令：adb install --no-streaming -r
+- 清除数据或卸载：未执行
+- APK SHA-256：$($provenance.apk_sha256)
+- 登录态文件：安装前 $loginBefore；安装后 $loginAfter
+- 结果：PASS（仅限同版本定向回归）
+"@
     } else {
         $upgradeEvidence = @"
 # 覆盖安装证据
@@ -772,10 +811,11 @@ try {
         selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
         queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
         paths=@(
-            $(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),
+            $(if ($signingMigration) { 'one-time signing migration' } elseif ($SameVersionRegression) { 'adb install -r same-version targeted regression' } else { 'adb install -r upgrade' }),
             'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry'
         ) + $(if ($Phase -eq 'P04') { @('model and reasoning selection','answer provenance','rerun with another model','branch switching','comparison tabs','adopt','synthesis','manual fallback') } else { @() })
-        install_transition=[ordered]@{ mode=if ($signingMigration) { 'one_time_uninstall_then_install' } else { 'adb_install_r' }; data_preserved=(-not $signingMigration); old_login_state=$loginBefore; login_state_immediately_after_install=$loginAfter; staging_session_provisioned=$sessionProvisioned; final_login_state=$loginAfterProvision }
+        install_transition=[ordered]@{ mode=if ($signingMigration) { 'one_time_uninstall_then_install' } elseif ($SameVersionRegression) { 'adb_install_r_same_version_targeted_regression' } else { 'adb_install_r_upgrade' }; data_preserved=(-not $signingMigration); old_login_state=$loginBefore; login_state_immediately_after_install=$loginAfter; staging_session_provisioned=$sessionProvisioned; final_login_state=$loginAfterProvision }
+        same_version_targeted_regression=[bool]$SameVersionRegression
         signing_migration=[ordered]@{ applied=$signingMigration; previous_certificate_sha256=$provenance.previous_signing_certificate_sha256; new_certificate_sha256=$provenance.signing_certificate_sha256; approved_contract=if ($signingMigration) { 'contracts/signing-migrations/P03.properties' } else { $null } }
         state_screenshot_count=@($stateRows).Count
         screenshot_storage=if ($usesScopedDownloadMedia) { 'scoped_download_media' } else { 'app_specific_external_storage' }
