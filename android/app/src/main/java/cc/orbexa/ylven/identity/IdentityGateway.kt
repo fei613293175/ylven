@@ -62,6 +62,11 @@ data class Conversation(
     val initialToolTrayOpen: Boolean = false,
     val initialComposerTools: List<ComposerToolOption> = emptyList(),
     val initialConsumerCopy: Map<String, String> = emptyMap(),
+    val activeBranchId: String = "",
+    val defaultModelId: String = "",
+    val defaultReasoningProfile: String = "auto",
+    val aiSettingsVersion: Long = 0,
+    val aiSettingsOverridden: Boolean = false,
 )
 
 data class HomeSnapshot(
@@ -105,10 +110,29 @@ data class ModelOption(
     val enabled: Boolean = true,
     val description: String = "",
     val reasoningProfiles: List<String> = listOf("auto"),
+    val providerId: String = "",
+    val providerName: String = "",
+    val purpose: String = "",
+    val speedTier: String = "balanced",
+    val capabilities: List<ModelCapabilityOption> = emptyList(),
+)
+
+data class ModelCapabilityOption(
+    val id: String,
+    val label: String,
+    val probedAt: String = "",
 )
 
 data class MessageRecord(val id: String, val conversationId: String, val role: String, val body: String, val createdAt: String)
-data class MessageRun(val id: String, val conversationId: String, val status: String, val cursor: Long, val assistantMessageId: String? = null)
+data class MessageRun(
+    val id: String,
+    val conversationId: String,
+    val status: String,
+    val cursor: Long,
+    val assistantMessageId: String? = null,
+    val modelId: String = "",
+    val reasoningProfile: String = "auto",
+)
 
 val MessageRun.isGenerating: Boolean
     get() = status.lowercase() in setOf("queued", "running", "streaming")
@@ -127,6 +151,61 @@ data class FirstMessageResult(val conversation: Conversation, val run: MessageRu
 data class RunEvent(val id: Long, val type: String, val delta: String)
 data class MessageCitation(val url: String, val title: String)
 
+data class AIPreference(
+    val modelId: String = "",
+    val reasoningProfile: String = "auto",
+    val version: Long = 0,
+    val updatedAt: String = "",
+)
+
+data class ConversationBranch(
+    val id: String,
+    val conversationId: String,
+    val parentBranchId: String = "",
+    val forkedFromMessageId: String = "",
+    val status: String = "active",
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+data class ComparisonCandidate(
+    val runId: String,
+    val modelId: String,
+    val reasoningProfile: String,
+    val status: String,
+    val messageId: String = "",
+    val body: String = "",
+    val errorCode: String = "",
+)
+
+data class ComparisonGroup(
+    val id: String,
+    val conversationId: String,
+    val prompt: String,
+    val status: String,
+    val candidates: List<ComparisonCandidate> = emptyList(),
+    val adoptedRunId: String = "",
+    val synthesisRunId: String = "",
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+data class ModelHealthStatus(
+    val modelId: String,
+    val providerId: String = "",
+    val status: String,
+    val latencyMs: Long = 0,
+    val lastProbeAt: String = "",
+    val capabilities: List<String> = emptyList(),
+    val errorCode: String = "",
+)
+
+data class ModelAvailability(
+    val modelId: String,
+    val status: String,
+    val fallbackModels: List<ModelOption> = emptyList(),
+)
+
 interface IdentityGateway {
     suspend fun startRegistration(email: String): OtpChallenge
     suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String)
@@ -142,6 +221,8 @@ interface IdentityGateway {
     suspend fun logout(bearer: String, allDevices: Boolean)
     suspend fun home(bearer: String): HomeSnapshot = HomeSnapshot(emptyList(), emptyList())
     suspend fun models(bearer: String): List<ModelOption> = home(bearer).modelCatalog
+    suspend fun reasoningProfiles(bearer: String, modelId: String): List<String> =
+        models(bearer).firstOrNull { it.id == modelId }?.reasoningProfiles.orEmpty()
     suspend fun listConversations(bearer: String, cursor: String? = null, includeArchived: Boolean = false): Pair<List<Conversation>, String?> = Pair(emptyList(), null)
     suspend fun searchConversations(bearer: String, query: String): List<Conversation> = emptyList()
     suspend fun createConversation(bearer: String, title: String = ""): Conversation = error("会话功能尚未配置")
@@ -153,6 +234,14 @@ interface IdentityGateway {
     suspend fun sendMessage(bearer: String, conversationId: String, body: String, model: String = ""): MessageRun = error("消息功能尚未配置")
     suspend fun sendMessageIdempotent(bearer: String, conversationId: String, body: String, model: String = "", idempotencyKey: String): MessageRun =
         sendMessage(bearer, conversationId, body, model)
+    suspend fun sendMessageIdempotentWithProfile(
+        bearer: String,
+        conversationId: String,
+        body: String,
+        model: String = "",
+        reasoningProfile: String = "auto",
+        idempotencyKey: String,
+    ): MessageRun = sendMessageIdempotent(bearer, conversationId, body, model, idempotencyKey)
     suspend fun startConversationFromFirstMessage(
         bearer: String,
         draftSessionId: String,
@@ -161,6 +250,15 @@ interface IdentityGateway {
         idempotencyKey: String,
         temporary: Boolean = false,
     ): FirstMessageResult = error("会话功能尚未配置")
+    suspend fun startConversationFromFirstMessageWithProfile(
+        bearer: String,
+        draftSessionId: String,
+        body: String,
+        model: String = "",
+        reasoningProfile: String = "auto",
+        idempotencyKey: String,
+        temporary: Boolean = false,
+    ): FirstMessageResult = startConversationFromFirstMessage(bearer, draftSessionId, body, model, idempotencyKey, temporary)
     suspend fun runStatus(bearer: String, runId: String): Pair<MessageRun, List<MessageRecord>> = error("运行状态尚未配置")
     suspend fun runEvents(bearer: String, runId: String, after: Long = 0): Pair<MessageRun, List<RunEvent>> = error("流式事件尚未配置")
     suspend fun cancelRun(bearer: String, runId: String): MessageRun = error("取消功能尚未配置")
@@ -172,6 +270,21 @@ interface IdentityGateway {
     suspend fun regenerate(bearer: String, messageId: String): MessageRun = error("重答功能尚未配置")
     suspend fun speak(bearer: String, messageId: String): Boolean = false
     suspend fun messageCitations(bearer: String, messageId: String): List<MessageCitation> = emptyList()
+    suspend fun messageRunMetadata(bearer: String, messageId: String): MessageRun? = null
+    suspend fun aiPreference(bearer: String): AIPreference = AIPreference()
+    suspend fun updateAIPreference(bearer: String, modelId: String, reasoningProfile: String, version: Long): AIPreference = AIPreference(modelId, reasoningProfile, version)
+    suspend fun updateConversationAISettings(bearer: String, conversationId: String, modelId: String, reasoningProfile: String, version: Long): Conversation = error("会话设置尚未配置")
+    suspend fun conversationBranches(bearer: String, conversationId: String): List<ConversationBranch> = emptyList()
+    suspend fun createConversationBranch(bearer: String, conversationId: String, forkedFromMessageId: String = ""): ConversationBranch = error("分支功能尚未配置")
+    suspend fun activateConversationBranch(bearer: String, conversationId: String, branchId: String): Conversation = error("分支功能尚未配置")
+    suspend fun rerunMessage(bearer: String, messageId: String, modelId: String = "", reasoningProfile: String = "auto"): MessageRun = error("重答功能尚未配置")
+    suspend fun createComparison(bearer: String, conversationId: String, prompt: String, modelIds: List<String>, reasoningProfile: String = "auto"): ComparisonGroup = error("多模型比较尚未配置")
+    suspend fun comparison(bearer: String, comparisonId: String): ComparisonGroup = error("多模型比较尚未配置")
+    suspend fun adoptComparison(bearer: String, comparisonId: String, runId: String): ComparisonGroup = error("多模型比较尚未配置")
+    suspend fun synthesizeComparison(bearer: String, comparisonId: String, runIds: List<String> = emptyList()): ComparisonGroup = error("多模型比较尚未配置")
+    suspend fun serviceStatus(bearer: String): List<ModelHealthStatus> = emptyList()
+    suspend fun modelAvailability(bearer: String, modelId: String): ModelAvailability =
+        ModelAvailability(modelId = modelId, status = "available")
 
     suspend fun restore(session: AuthSession): AuthSession = session
 
@@ -357,8 +470,19 @@ class HttpIdentityGateway(
     }
 
     override suspend fun models(bearer: String): List<ModelOption> {
-        val body = request("GET", "/api/mobile/v1/models", bearer = bearer)
+        val body = request("GET", "/api/mobile/v1/models?group=provider", bearer = bearer)
         return parseModelCatalog(body.optJSONArray("items"))
+    }
+
+    override suspend fun reasoningProfiles(bearer: String, modelId: String): List<String> {
+        val encodedModelId = java.net.URLEncoder.encode(modelId, "UTF-8")
+        val items = request("GET", "/api/mobile/v1/models/$encodedModelId/reasoning-profiles", bearer = bearer)
+            .optJSONArray("items") ?: org.json.JSONArray()
+        return buildList {
+            for (index in 0 until items.length()) {
+                items.optJSONObject(index)?.optString("profile_id")?.trim()?.takeIf(String::isNotBlank)?.let(::add)
+            }
+        }
     }
 
     override suspend fun listConversations(bearer: String, cursor: String?, includeArchived: Boolean): Pair<List<Conversation>, String?> {
@@ -396,6 +520,27 @@ class HttpIdentityGateway(
         ).toMessageRun()
     }
 
+    override suspend fun sendMessageIdempotentWithProfile(
+        bearer: String,
+        conversationId: String,
+        body: String,
+        model: String,
+        reasoningProfile: String,
+        idempotencyKey: String,
+    ): MessageRun {
+        return request(
+            "POST",
+            "/api/mobile/v1/conversations/$conversationId/runs",
+            JSONObject()
+                .put("body", body)
+                .put("model", model)
+                .put("reasoning_profile", reasoningProfile)
+                .put("idempotency_key", idempotencyKey),
+            bearer,
+            mapOf("Idempotency-Key" to idempotencyKey),
+        ).toMessageRun()
+    }
+
     override suspend fun startConversationFromFirstMessage(
         bearer: String,
         draftSessionId: String,
@@ -411,6 +556,31 @@ class HttpIdentityGateway(
                 .put("draft_session_id", draftSessionId)
                 .put("body", body)
                 .put("model", model)
+                .put("idempotency_key", idempotencyKey)
+                .put("temporary", temporary),
+            bearer,
+            mapOf("Idempotency-Key" to idempotencyKey),
+        )
+        return FirstMessageResult(response.getJSONObject("conversation").toConversation(), response.getJSONObject("run").toMessageRun())
+    }
+
+    override suspend fun startConversationFromFirstMessageWithProfile(
+        bearer: String,
+        draftSessionId: String,
+        body: String,
+        model: String,
+        reasoningProfile: String,
+        idempotencyKey: String,
+        temporary: Boolean,
+    ): FirstMessageResult {
+        val response = request(
+            "POST",
+            "/api/mobile/v1/conversations/from-first-message",
+            JSONObject()
+                .put("draft_session_id", draftSessionId)
+                .put("body", body)
+                .put("model", model)
+                .put("reasoning_profile", reasoningProfile)
                 .put("idempotency_key", idempotencyKey)
                 .put("temporary", temporary),
             bearer,
@@ -438,6 +608,49 @@ class HttpIdentityGateway(
         buildList { for (index in 0 until values.length()) { val item = values.getJSONObject(index); add(MessageCitation(item.optString("url"), item.optString("title"))) } }
     }
 
+    override suspend fun aiPreference(bearer: String): AIPreference = request("GET", "/api/mobile/v1/preferences/ai", bearer = bearer).toAIPreference()
+
+    override suspend fun updateAIPreference(bearer: String, modelId: String, reasoningProfile: String, version: Long): AIPreference =
+        request("PUT", "/api/mobile/v1/preferences/ai", JSONObject().put("model_id", modelId).put("reasoning_profile", reasoningProfile).put("version", version), bearer).toAIPreference()
+
+    override suspend fun updateConversationAISettings(bearer: String, conversationId: String, modelId: String, reasoningProfile: String, version: Long): Conversation =
+        request("PATCH", "/api/mobile/v1/conversations/$conversationId/settings", JSONObject().put("model_id", modelId).put("reasoning_profile", reasoningProfile).put("version", version), bearer).toConversation()
+
+    override suspend fun conversationBranches(bearer: String, conversationId: String): List<ConversationBranch> =
+        parseBranches(request("GET", "/api/mobile/v1/conversations/$conversationId/branches", bearer = bearer).optJSONArray("items"))
+
+    override suspend fun createConversationBranch(bearer: String, conversationId: String, forkedFromMessageId: String): ConversationBranch =
+        request("POST", "/api/mobile/v1/conversations/$conversationId/branches", JSONObject().put("forked_from_message_id", forkedFromMessageId), bearer).toConversationBranch()
+
+    override suspend fun activateConversationBranch(bearer: String, conversationId: String, branchId: String): Conversation =
+        request("PATCH", "/api/mobile/v1/conversations/$conversationId/branches/$branchId", bearer = bearer).toConversation()
+
+    override suspend fun rerunMessage(bearer: String, messageId: String, modelId: String, reasoningProfile: String): MessageRun =
+        request("POST", "/api/mobile/v1/messages/$messageId/rerun", JSONObject().put("model_id", modelId).put("reasoning_profile", reasoningProfile), bearer).toMessageRun()
+
+    override suspend fun messageRunMetadata(bearer: String, messageId: String): MessageRun =
+        request("GET", "/api/mobile/v1/messages/$messageId/run-metadata", bearer = bearer).toMessageRun()
+
+    override suspend fun createComparison(bearer: String, conversationId: String, prompt: String, modelIds: List<String>, reasoningProfile: String): ComparisonGroup =
+        request("POST", "/api/mobile/v1/comparisons", JSONObject().put("conversation_id", conversationId).put("prompt", prompt).put("model_ids", org.json.JSONArray(modelIds)).put("reasoning_profile", reasoningProfile), bearer).toComparisonGroup()
+
+    override suspend fun comparison(bearer: String, comparisonId: String): ComparisonGroup =
+        request("GET", "/api/mobile/v1/comparisons/$comparisonId", bearer = bearer).toComparisonGroup()
+
+    override suspend fun adoptComparison(bearer: String, comparisonId: String, runId: String): ComparisonGroup =
+        request("POST", "/api/mobile/v1/comparisons/$comparisonId/adopt", JSONObject().put("run_id", runId), bearer).toComparisonGroup()
+
+    override suspend fun synthesizeComparison(bearer: String, comparisonId: String, runIds: List<String>): ComparisonGroup =
+        request("POST", "/api/mobile/v1/comparisons/$comparisonId/synthesize", JSONObject().put("run_ids", org.json.JSONArray(runIds)), bearer).toComparisonGroup()
+
+    override suspend fun serviceStatus(bearer: String): List<ModelHealthStatus> =
+        parseHealth(request("GET", "/api/mobile/v1/service-status/models", bearer = bearer).optJSONArray("items"))
+
+    override suspend fun modelAvailability(bearer: String, modelId: String): ModelAvailability {
+        val encodedModelId = java.net.URLEncoder.encode(modelId, "UTF-8")
+        return request("GET", "/api/mobile/v1/models/$encodedModelId/availability", bearer = bearer).toModelAvailability()
+    }
+
 
     override suspend fun cancelRun(bearer: String, runId: String): MessageRun =
         request("POST", "/api/mobile/v1/runs/$runId/cancel", bearer = bearer).toMessageRun()
@@ -458,6 +671,14 @@ class HttpIdentityGateway(
     override suspend fun speak(bearer: String, messageId: String): Boolean { request("POST", "/api/mobile/v1/messages/$messageId/speech", bearer = bearer); return true }
 
     private fun parseConversations(items: org.json.JSONArray): List<Conversation> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toConversation()) }
+    private fun parseBranches(items: org.json.JSONArray?): List<ConversationBranch> = buildList { if (items == null) return@buildList; for (index in 0 until items.length()) items.optJSONObject(index)?.toConversationBranch()?.let(::add) }
+    private fun parseHealth(items: org.json.JSONArray?): List<ModelHealthStatus> = buildList { if (items == null) return@buildList; for (index in 0 until items.length()) items.optJSONObject(index)?.toHealth()?.let(::add) }
+    private fun JSONObject.toModelAvailability() = ModelAvailability(
+        modelId = optString("model_id"),
+        status = optString("status", "available"),
+        fallbackModels = parseModelCatalog(optJSONArray("fallback_models")),
+    )
+    private fun parseCandidates(items: org.json.JSONArray?): List<ComparisonCandidate> = buildList { if (items == null) return@buildList; for (index in 0 until items.length()) items.optJSONObject(index)?.let { add(ComparisonCandidate(it.optString("run_id"), it.optString("model_id"), it.optString("reasoning_profile", "auto"), it.optString("status"), it.optString("message_id"), it.optString("body"), it.optString("error_code"))) } }
     private fun parseMessages(items: org.json.JSONArray): List<MessageRecord> = buildList { for (index in 0 until items.length()) add(items.getJSONObject(index).toMessageRecord()) }
     private fun parseModelCatalog(items: org.json.JSONArray?): List<ModelOption> = buildList {
         if (items == null) return@buildList
@@ -473,6 +694,22 @@ class HttpIdentityGateway(
                     }
                 }
             }.orEmpty().ifEmpty { listOf("auto") }
+            val capabilities = item.optJSONArray("capabilities")?.let { values ->
+                buildList {
+                    for (capabilityIndex in 0 until values.length()) {
+                        val capability = values.optJSONObject(capabilityIndex) ?: continue
+                        val capabilityId = capability.optString("id").trim()
+                        if (capabilityId.isBlank()) continue
+                        add(
+                            ModelCapabilityOption(
+                                id = capabilityId,
+                                label = capability.optString("label").trim().ifBlank { capabilityId },
+                                probedAt = capability.optString("probed_at"),
+                            ),
+                        )
+                    }
+                }
+            }.orEmpty()
             add(
                 ModelOption(
                     id = id,
@@ -480,6 +717,11 @@ class HttpIdentityGateway(
                     enabled = item.optBoolean("enabled", true),
                     description = item.optString("description"),
                     reasoningProfiles = profiles,
+                    providerId = item.optString("provider_id"),
+                    providerName = item.optString("provider_name"),
+                    purpose = item.optString("purpose"),
+                    speedTier = item.optString("speed_tier", "balanced"),
+                    capabilities = capabilities,
                 ),
             )
         }
@@ -581,8 +823,26 @@ class HttpIdentityGateway(
         titleSource = optString("title_source"),
         titleLocked = optBoolean("title_locked"),
         temporary = optBoolean("temporary"),
+        activeBranchId = optString("active_branch_id"),
+        defaultModelId = optString("default_model_id"),
+        defaultReasoningProfile = optString("default_reasoning_profile", "auto"),
+        aiSettingsVersion = optLong("ai_settings_version"),
+        aiSettingsOverridden = optBoolean("ai_settings_overridden"),
     )
-    private fun JSONObject.toMessageRun() = MessageRun(getString("id"), optString("conversation_id"), optString("status"), optLong("cursor"), optString("assistant_message_id").ifBlank { null })
+    private fun JSONObject.toAIPreference() = AIPreference(optString("model_id"), optString("reasoning_profile", "auto"), optLong("version"), optString("updated_at"))
+    private fun JSONObject.toConversationBranch() = ConversationBranch(getString("id"), optString("conversation_id"), optString("parent_branch_id"), optString("forked_from_message_id"), optString("status", "active"), optString("created_at"), optString("updated_at"))
+    private fun JSONObject.toHealth() = ModelHealthStatus(getString("model_id"), optString("provider_id"), optString("status", "available"), optLong("latency_ms"), optString("last_probe_at"), optStringList("capabilities"), optString("error_code"))
+    private fun JSONObject.toComparisonGroup() = ComparisonGroup(getString("id"), optString("conversation_id"), optString("prompt"), optString("status"), parseCandidates(optJSONArray("candidates")), optString("adopted_run_id"), optString("synthesis_run_id"), optString("created_at"), optString("updated_at"))
+    private fun JSONObject.optStringList(name: String): List<String> = buildList { optJSONArray(name)?.let { values -> for (index in 0 until values.length()) values.optString(index).takeIf(String::isNotBlank)?.let(::add) } }
+    private fun JSONObject.toMessageRun() = MessageRun(
+        id = getString("id"),
+        conversationId = optString("conversation_id"),
+        status = optString("status"),
+        cursor = optLong("cursor"),
+        assistantMessageId = optString("assistant_message_id").ifBlank { null },
+        modelId = optString("model"),
+        reasoningProfile = optString("reasoning_profile", "auto"),
+    )
     private fun JSONObject.toMessageRecord() = MessageRecord(getString("id"), optString("conversation_id"), optString("role"), optString("body"), optString("created_at"))
 
     private suspend fun requestSse(path: String, bearer: String): List<JSONObject> = withContext(Dispatchers.IO) {

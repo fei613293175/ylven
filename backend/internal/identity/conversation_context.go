@@ -19,9 +19,10 @@ type ProviderMessage struct {
 }
 
 type ChatRequest struct {
-	Model          string            `json:"model"`
-	Messages       []ProviderMessage `json:"messages"`
-	ContinuationID string            `json:"continuation_id,omitempty"`
+	Model               string            `json:"model"`
+	Messages            []ProviderMessage `json:"messages"`
+	ContinuationID      string            `json:"continuation_id,omitempty"`
+	ReasoningParameters map[string]any    `json:"-"`
 }
 
 type ChatResponse struct {

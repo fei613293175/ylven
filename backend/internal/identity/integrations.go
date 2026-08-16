@@ -100,6 +100,13 @@ type ChatResponder interface {
 	Respond(context.Context, ChatRequest) (ChatResponse, error)
 }
 
+// ModelCapabilityProber is optional because not every upstream adapter can
+// execute every capability safely. A generic chat request proves text only;
+// adapters must opt in before a non-text capability can be recorded as passed.
+type ModelCapabilityProber interface {
+	ProbeCapability(context.Context, string, string, map[string]any) error
+}
+
 // ChatContinuationResponder is optional. A provider continuation is only an
 // optimization; callers must fall back to a locally compiled ChatRequest when
 // it fails or is unsupported.
@@ -134,6 +141,12 @@ func (r OpenAICompatibleResponder) Respond(ctx context.Context, request ChatRequ
 		return ChatResponse{}, errors.New("chat_context_empty")
 	}
 	payload := map[string]any{"model": providerModel, "messages": request.Messages, "stream": false}
+	if err := validateUpstreamReasoningParameters(request.ReasoningParameters); err != nil {
+		return ChatResponse{}, err
+	}
+	for key, value := range request.ReasoningParameters {
+		payload[key] = value
+	}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return ChatResponse{}, err

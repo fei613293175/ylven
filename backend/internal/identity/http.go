@@ -30,8 +30,81 @@ type API struct {
 	configurationErrs []string
 	ChatRuntimeMode   string
 	ChatResponder     ChatResponder
+	ChannelResponderFactory func(ProviderChannel) (ChatResponder, error)
 	runMu             sync.Mutex
 	runCancels        map[string]context.CancelFunc
+	providerMu        sync.Mutex
+	providerRuns      map[string]int
+	providerFailures  map[string]int
+	providerOpenUntil map[string]time.Time
+}
+
+func (a *API) responderForChannel(channel ProviderChannel) (ChatResponder, error) {
+	if a.ChannelResponderFactory != nil {
+		return a.ChannelResponderFactory(channel)
+	}
+	credential, err := envOrFile(channel.CredentialRef)
+	if err != nil || strings.TrimSpace(credential) == "" {
+		return nil, errors.New("provider_channel_unavailable")
+	}
+	return OpenAICompatibleResponder{Endpoint: channel.Endpoint, APIKey: credential}, nil
+}
+
+func (a *API) respondWithRoutingPlan(ctx context.Context, plan RoutingPlan, request ChatRequest) (ChatResponse, string, error) {
+	if !plan.Configured {
+		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+			return ChatResponse{}, "", errors.New("chat_runtime_unavailable")
+		}
+		response, err := a.ChatResponder.Respond(ctx, request)
+		return response, "upstream", err
+	}
+	if len(plan.Targets) == 0 {
+		return ChatResponse{}, "", errors.New("model_route_unavailable")
+	}
+	for _, channel := range plan.Targets {
+		responder, err := a.responderForChannel(channel)
+		if err != nil {
+			continue
+		}
+		response, err := responder.Respond(ctx, request)
+		if err == nil {
+			return response, channel.ProviderID, nil
+		}
+	}
+	return ChatResponse{}, "", errors.New("model_route_unavailable")
+}
+
+// respondForModel keeps direct probes and title generation on the same
+// route-selection path as asynchronous message runs.
+func (a *API) respondForModel(ctx context.Context, modelID string, request ChatRequest) (ChatResponse, string, error) {
+	plan, err := a.Store.RoutingPlanForModel(modelID)
+	if err != nil {
+		return ChatResponse{}, "", err
+	}
+	return a.respondWithRoutingPlan(ctx, plan, request)
+}
+
+func (a *API) chatRuntimeAvailableForModel(modelID string) bool {
+	if a.ChatRuntimeMode == "upstream" && a.ChatResponder != nil {
+		return true
+	}
+	plan, err := a.Store.RoutingPlanForModel(modelID)
+	return err == nil && plan.Configured && len(plan.Targets) > 0
+}
+
+func (a *API) chatRuntimeAvailableForAnyModel(modelIDs []string) bool {
+	if a.ChatRuntimeMode == "upstream" && a.ChatResponder != nil {
+		return true
+	}
+	if len(modelIDs) == 0 {
+		return a.chatRuntimeAvailableForModel("ylven-default")
+	}
+	for _, modelID := range modelIDs {
+		if a.chatRuntimeAvailableForModel(modelID) {
+			return true
+		}
+	}
+	return false
 }
 
 // Keep the run deadline above the provider HTTP deadline. This admits the
@@ -39,7 +112,7 @@ type API struct {
 const chatRunTimeout = 95 * time.Second
 
 func NewAPI(store *Store) *API {
-	api := &API{Store: store, runCancels: map[string]context.CancelFunc{}}
+	api := &API{Store: store, runCancels: map[string]context.CancelFunc{}, providerRuns: map[string]int{}, providerFailures: map[string]int{}, providerOpenUntil: map[string]time.Time{}}
 	api.ChatRuntimeMode = strings.ToLower(strings.TrimSpace(os.Getenv("CHAT_RUNTIME_MODE")))
 	if api.ChatRuntimeMode == "" {
 		api.ChatRuntimeMode = "unconfigured"
@@ -174,6 +247,12 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/account/devices/", a.deviceSession)
 	mux.HandleFunc("/api/mobile/v1/home", a.mobileHome)
 	mux.HandleFunc("/api/mobile/v1/models", a.mobileModels)
+	mux.HandleFunc("/api/mobile/v1/models/", a.mobileModelByID)
+	mux.HandleFunc("/api/mobile/v1/preferences/ai", a.mobileAIPreference)
+	mux.HandleFunc("/api/mobile/v1/comparisons", a.mobileComparisons)
+	mux.HandleFunc("/api/mobile/v1/comparisons/", a.mobileComparisonByID)
+	mux.HandleFunc("/api/mobile/v1/service-status/models", a.mobileModelServiceStatus)
+	mux.HandleFunc("/public/v1/service-status/models", a.publicModelServiceStatus)
 	mux.HandleFunc("/api/mobile/v1/conversations/search", a.mobileConversationSearch)
 	mux.HandleFunc("/api/mobile/v1/conversations/from-first-message", a.mobileConversationFromFirstMessage)
 	mux.HandleFunc("/api/mobile/v1/conversations/", a.mobileConversationByID)
@@ -184,6 +263,8 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/internal/v1/context/build", a.internalContextBuild)
 	mux.HandleFunc("/internal/v1/context/recompile", a.internalContextBuild)
 	mux.HandleFunc("/internal/v1/provider-state/fallback", a.internalProviderFallback)
+	mux.HandleFunc("/internal/v1/health/ai-runtime", a.internalAIRuntimeHealth)
+	mux.HandleFunc("/internal/v1/ci/p03-distributed-chat", a.internalDistributedTestRun)
 	mux.HandleFunc("/internal/metrics/chat", a.chatMetrics)
 	mux.HandleFunc("/admin/v1/settings/email", a.adminSetting("email"))
 	mux.HandleFunc("/admin/v1/settings/turnstile", a.adminSetting("turnstile"))
@@ -197,6 +278,21 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/admin/v1/security/step-up", a.adminStepUp)
 	mux.HandleFunc("/admin/v1/notifications/email-templates", a.adminEmailTemplates)
 	mux.HandleFunc("/admin/v1/content/home", a.adminHomeConfig)
+	mux.HandleFunc("/admin/v1/model-catalog/providers", a.adminModelProviders)
+	mux.HandleFunc("/admin/v1/model-catalog/models", a.adminModelCatalog)
+	mux.HandleFunc("/admin/v1/model-catalog/capability-probes", a.adminCapabilityProbes)
+	mux.HandleFunc("/admin/v1/model-catalog/reasoning-profiles", a.adminReasoningProfiles)
+	mux.HandleFunc("/admin/v1/provider-channels", a.adminProviderChannels)
+	mux.HandleFunc("/admin/v1/models/", a.adminModelByID)
+	mux.HandleFunc("/admin/v1/model-health", a.adminModelHealth)
+	mux.HandleFunc("/admin/v1/routing-policies", a.adminRoutingPolicies)
+	mux.HandleFunc("/admin/v1/routing-policies/", a.adminRoutingPolicyByID)
+	mux.HandleFunc("/admin/v1/provider-runtime-policies", a.adminProviderRuntimePolicies)
+	mux.HandleFunc("/admin/v1/provider-runtime-policies/", a.adminProviderRuntimePolicyByID)
+	mux.HandleFunc("/admin/v1/usage-events", a.adminUsageEvents)
+	mux.HandleFunc("/admin/v1/price-snapshots", a.adminPriceSnapshots)
+	mux.HandleFunc("/admin/v1/comparisons", a.adminComparisons)
+	mux.HandleFunc("/admin/v1/ai-runs/", a.adminAIRunDetail)
 	mux.HandleFunc("/admin/v1/conversations", a.adminConversations)
 	mux.HandleFunc("/admin/v1/conversations/", a.adminConversationDetail)
 	return requestGuard(mux)
@@ -206,26 +302,33 @@ func (a *API) mobileConversationFromFirstMessage(w http.ResponseWriter, r *http.
 	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
-	if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
-		writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI runtime is unavailable")
-		return
-	}
 	var in struct {
-		DraftSessionID string `json:"draft_session_id"`
-		Body           string `json:"body"`
-		Model          string `json:"model"`
-		IdempotencyKey string `json:"idempotency_key"`
-		Temporary      bool   `json:"temporary"`
+		DraftSessionID   string `json:"draft_session_id"`
+		Body             string `json:"body"`
+		Model            string `json:"model"`
+		ReasoningProfile string `json:"reasoning_profile"`
+		IdempotencyKey   string `json:"idempotency_key"`
+		Temporary        bool   `json:"temporary"`
 	}
 	if !decode(r, &in) {
 		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	if !a.chatRuntimeAvailableForModel(in.Model) {
+		writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI runtime is unavailable")
 		return
 	}
 	key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
 	if key == "" {
 		key = strings.TrimSpace(in.IdempotencyKey)
 	}
-	result, err := a.Store.StartConversationFromFirstMessage(bearer(r), in.DraftSessionID, in.Body, in.Model, key, in.Temporary)
+	var result FirstMessageResult
+	var err error
+	if strings.TrimSpace(in.ReasoningProfile) == "" {
+		result, err = a.Store.StartConversationFromFirstMessage(bearer(r), in.DraftSessionID, in.Body, in.Model, key, in.Temporary)
+	} else {
+		result, err = a.Store.StartConversationFromFirstMessageWithProfile(bearer(r), in.DraftSessionID, in.Body, in.Model, in.ReasoningProfile, key, in.Temporary)
+	}
 	if err != nil {
 		a.writeConversationRunError(w, err)
 		return
@@ -848,7 +951,59 @@ func (a *API) mobileModels(w http.ResponseWriter, r *http.Request) {
 	if mobileAuthError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	response := map[string]any{"items": items}
+	if r.URL.Query().Get("group") == "provider" {
+		response["groups"] = groupModelsByProvider(items, nil)
+	}
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (a *API) mobileModelByID(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/mobile/v1/models/"), "/")
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 || strings.TrimSpace(parts[0]) == "" {
+		writeError(w, http.StatusBadRequest, "model_id_required", "Model ID required")
+		return
+	}
+	if len(parts) == 2 && parts[1] == "reasoning-profiles" {
+		profiles, err := a.Store.MobileReasoningProfiles(bearer(r), parts[0])
+		if err != nil {
+			if err.Error() == "session_invalid" {
+				writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+				return
+			}
+			writeError(w, http.StatusNotFound, "model_not_found", "Model not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"model_id": parts[0], "items": profiles})
+		return
+	}
+	if len(parts) == 2 && parts[1] == "availability" {
+		availability, err := a.Store.ModelAvailability(bearer(r), parts[0])
+		if err != nil {
+			writeP04MobileError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, availability)
+		return
+	}
+	if len(parts) != 1 {
+		writeError(w, http.StatusNotFound, "not_found", "Endpoint not found")
+		return
+	}
+	item, err := a.Store.MobileModelDetail(bearer(r), parts[0])
+	if err != nil {
+		if err.Error() == "session_invalid" {
+			writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+			return
+		}
+		writeError(w, http.StatusNotFound, "model_not_found", "Model not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"model": item})
 }
 
 func (a *API) mobileConversations(w http.ResponseWriter, r *http.Request) {
@@ -914,6 +1069,63 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := parts[0]
+	if len(parts) > 1 && parts[1] == "settings" {
+		if !requireMethod(w, r, http.MethodPatch) {
+			return
+		}
+		var input struct {
+			ModelID          string `json:"model_id"`
+			ReasoningProfile string `json:"reasoning_profile"`
+			Version          int64  `json:"version"`
+		}
+		if !decode(r, &input) {
+			writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+			return
+		}
+		conversation, err := a.Store.PutConversationAISettings(bearer(r), id, input.ModelID, input.ReasoningProfile, input.Version)
+		if err != nil {
+			writeP04MobileError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, conversation)
+		return
+	}
+	if len(parts) > 1 && parts[1] == "branches" {
+		if len(parts) == 2 && r.Method == http.MethodGet {
+			items, err := a.Store.ListConversationBranches(bearer(r), id)
+			if err != nil {
+				writeP04MobileError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"items": items})
+			return
+		}
+		if len(parts) == 2 && r.Method == http.MethodPost {
+			var input struct { ForkedFromMessageID string `json:"forked_from_message_id"` }
+			if !decode(r, &input) {
+				writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+				return
+			}
+			branch, err := a.Store.CreateConversationBranch(bearer(r), id, input.ForkedFromMessageID)
+			if err != nil {
+				writeP04MobileError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusCreated, branch)
+			return
+		}
+		if len(parts) == 3 && r.Method == http.MethodPatch {
+			conversation, err := a.Store.SetActiveConversationBranch(bearer(r), id, parts[2])
+			if err != nil {
+				writeP04MobileError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, conversation)
+			return
+		}
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET, POST, or PATCH required")
+		return
+	}
 	if len(parts) > 1 && parts[1] == "messages" {
 		if !requireMethod(w, r, http.MethodGet) {
 			return
@@ -934,17 +1146,18 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
 		}
-		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
-			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
-			return
-		}
 		var in struct {
-			Body           string `json:"body"`
-			Model          string `json:"model"`
-			IdempotencyKey string `json:"idempotency_key"`
+			Body             string `json:"body"`
+			Model            string `json:"model"`
+			ReasoningProfile string `json:"reasoning_profile"`
+			IdempotencyKey   string `json:"idempotency_key"`
 		}
 		if !decode(r, &in) {
 			writeError(w, 400, "invalid_json", "Invalid JSON")
+			return
+		}
+		if !a.chatRuntimeAvailableForModel(in.Model) {
+			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
 			return
 		}
 		access := bearer(r)
@@ -955,7 +1168,14 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		if key == "" {
 			key, _ = randomToken(16)
 		}
-		run, created, err := a.Store.StartRunIdempotentResult(access, id, in.Body, in.Model, key)
+		var run MessageRun
+		var created bool
+		var err error
+		if strings.TrimSpace(in.ReasoningProfile) == "" {
+			run, created, err = a.Store.StartRunIdempotentResult(access, id, in.Body, in.Model, key)
+		} else {
+			run, created, err = a.Store.StartRunIdempotentResultWithProfile(access, id, in.Body, in.Model, in.ReasoningProfile, key)
+		}
 		if err != nil {
 			a.writeConversationRunError(w, err)
 			return
@@ -1063,27 +1283,44 @@ func (a *API) writeConversationRunError(w http.ResponseWriter, err error) {
 
 func (a *API) dispatchRun(run MessageRun, accessToken string, optimizeTitle bool) {
 	go func() {
+		policy, releaseProvider, policyErr := a.reserveProviderRun(run)
+		if policyErr != nil {
+			_, _ = a.Store.FailRun(accessToken, run.ID, policyErr.Error())
+			_, _ = a.Store.RecordModelHealth(accessToken, run.Model, "degraded", policyErr.Error(), 0, nil)
+			return
+		}
 		started := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), chatRunTimeout)
+		timeout := chatRunTimeout
+		if configured := time.Duration(policy.TimeoutSeconds) * time.Second; configured > 0 && configured < timeout {
+			timeout = configured
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		a.runMu.Lock()
 		a.runCancels[run.ID] = cancel
 		a.runMu.Unlock()
+		providerSucceeded := false
 		defer func() {
 			cancel()
 			a.runMu.Lock()
 			delete(a.runCancels, run.ID)
 			a.runMu.Unlock()
+			releaseProvider(providerSucceeded)
 		}()
 
+		routePlan, routeErr := a.Store.RoutingPlanForModel(run.Model)
 		continuationMode := "local_rebuild"
 		var response ChatResponse
-		var providerErr error
-		if state, ok, stateErr := a.Store.ProviderState(accessToken, run.ConversationID, run.BranchID, "upstream", run.Model); stateErr == nil && ok {
+		var providerErr error = routeErr
+		selectedProvider := ""
+		usageInputTokens := 0
+		if providerErr == nil && !routePlan.Configured {
+			if state, ok, stateErr := a.Store.ProviderState(accessToken, run.ConversationID, run.BranchID, "upstream", run.Model); stateErr == nil && ok {
 			if continuationResponder, supported := a.ChatResponder.(ChatContinuationResponder); supported {
 				continuationMode = "provider_continuation"
 				build, buildErr := a.Store.CompileRunContext(accessToken, run.ID, continuationMode)
 				if buildErr == nil {
-					response, providerErr = continuationResponder.Continue(ctx, ChatRequest{Model: run.Model, Messages: build.Messages, ContinuationID: state.ContinuationID})
+					usageInputTokens = build.EstimatedInputTokens
+					response, providerErr = continuationResponder.Continue(ctx, ChatRequest{Model: run.ProviderModel, Messages: build.Messages, ContinuationID: state.ContinuationID, ReasoningParameters: copyJSONMap(run.ReasoningParameters)})
 				} else {
 					providerErr = buildErr
 				}
@@ -1092,23 +1329,50 @@ func (a *API) dispatchRun(run MessageRun, accessToken string, optimizeTitle bool
 					continuationMode = "local_rebuild_after_continuation_failure"
 				}
 			}
+			}
+		}
+		if continuationMode == "local_rebuild_after_continuation_failure" {
+			// The continuation error is already recorded as fallback evidence;
+			// local context compilation must get a chance to complete the run.
+			providerErr = nil
 		}
 		if continuationMode != "provider_continuation" || providerErr != nil {
-			build, buildErr := a.Store.CompileRunContext(accessToken, run.ID, continuationMode)
-			if buildErr != nil {
-				providerErr = buildErr
-			} else {
-				response, providerErr = a.ChatResponder.Respond(ctx, ChatRequest{Model: run.Model, Messages: build.Messages})
+			if providerErr == nil {
+				build, buildErr := a.Store.CompileRunContext(accessToken, run.ID, continuationMode)
+				if buildErr != nil {
+					providerErr = buildErr
+				} else {
+					usageInputTokens = build.EstimatedInputTokens
+					response, selectedProvider, providerErr = a.respondWithRoutingPlan(ctx, routePlan, ChatRequest{Model: run.ProviderModel, Messages: build.Messages, ReasoningParameters: copyJSONMap(run.ReasoningParameters)})
+				}
 			}
+		} else if providerErr == nil {
+			selectedProvider = "upstream"
 		}
 		if providerErr != nil {
 			_, _ = a.Store.FailRun(accessToken, run.ID, providerErr.Error())
+			_, _ = a.Store.RecordModelHealth(accessToken, run.Model, "degraded", "chat_provider_error", time.Since(started).Milliseconds(), nil)
 		} else {
+			if selectedProvider != "" {
+				if setErr := a.Store.SetRunProvider(accessToken, run.ID, selectedProvider); setErr != nil {
+					providerErr = setErr
+				}
+			}
+			if providerErr != nil {
+				_, _ = a.Store.FailRun(accessToken, run.ID, providerErr.Error())
+				_, _ = a.Store.RecordModelHealth(accessToken, run.Model, "degraded", "chat_provider_error", time.Since(started).Milliseconds(), nil)
+				return
+			}
 			if response.ContinuationID != "" {
 				expiresAt := time.Now().UTC().Add(24 * time.Hour)
 				_ = a.Store.SaveProviderState(accessToken, ProviderConversationState{ConversationID: run.ConversationID, BranchID: run.BranchID, Provider: "upstream", Model: run.Model, ContinuationID: response.ContinuationID, Status: "active", ExpiresAt: &expiresAt})
 			}
 			_, providerErr = a.Store.CompleteRun(accessToken, run.ID, response.Content)
+			if providerErr == nil {
+				providerSucceeded = true
+				_, _ = a.Store.RecordModelHealth(accessToken, run.Model, "available", "", time.Since(started).Milliseconds(), []string{"text"})
+				_, _ = a.Store.RecordUsage(accessToken, UsageEvent{RunID: run.ID, ModelID: run.Model, InputTokens: usageInputTokens, OutputTokens: EstimateTokens(response.Content), ReasoningTokens: 0})
+			}
 			if providerErr == nil && optimizeTitle {
 				a.optimizeConversationTitle(accessToken, run)
 			}
@@ -1147,7 +1411,7 @@ func (a *API) optimizeConversationTitle(accessToken string, run MessageRun) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	response, err := a.ChatResponder.Respond(ctx, ChatRequest{Model: run.Model, Messages: []ProviderMessage{{Role: "system", Content: "Return a title only; do not expose hidden reasoning."}, {Role: "user", Content: prompt}}})
+	response, _, err := a.respondForModel(ctx, run.Model, ChatRequest{Model: run.ProviderModel, Messages: []ProviderMessage{{Role: "system", Content: "Return a title only; do not expose hidden reasoning."}, {Role: "user", Content: prompt}}})
 	if err != nil {
 		return
 	}
@@ -1188,11 +1452,7 @@ func (a *API) internalConversationTitle(w http.ResponseWriter, r *http.Request, 
 	}
 	title := strings.TrimSpace(in.Title)
 	if title == "" {
-		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
-			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
-			return
-		}
-		generated, generateErr := a.ChatResponder.Respond(r.Context(), ChatRequest{Model: "ylven-default", Messages: []ProviderMessage{{Role: "system", Content: "Return only a concise Chinese title of 6 to 18 characters."}, {Role: "user", Content: "为会话生成标题：" + id}}})
+		generated, _, generateErr := a.respondForModel(r.Context(), "ylven-default", ChatRequest{Model: "ylven-default", Messages: []ProviderMessage{{Role: "system", Content: "Return only a concise Chinese title of 6 to 18 characters."}, {Role: "user", Content: "为会话生成标题：" + id}}})
 		if generateErr != nil {
 			writeError(w, http.StatusBadGateway, "chat_provider_unavailable", "Unable to generate title")
 			return
@@ -1370,6 +1630,58 @@ func (a *API) internalProviderFallback(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, build)
 }
 
+func (a *API) internalAIRuntimeHealth(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	access := bearer(r)
+	if _, _, err := a.Store.CurrentAccount(access); err != nil {
+		writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		return
+	}
+	health, err := a.Store.AIHealth(access, a.ChatRuntimeMode)
+	if err != nil {
+		if err.Error() == "session_invalid" {
+			writeError(w, http.StatusUnauthorized, "session_invalid", "Session is invalid")
+		} else {
+			writeError(w, http.StatusServiceUnavailable, "ai_runtime_health_unavailable", "AI runtime health is unavailable")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, health)
+}
+
+func (a *API) internalDistributedTestRun(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	if _, ok := a.requireAdmin(w, r, "ci"); !ok {
+		return
+	}
+	var in DistributedTestRun
+	if !decode(r, &in) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	if strings.TrimSpace(in.ID) == "" {
+		in.ID = strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	}
+	item, created, err := a.Store.RecordDistributedTestRun(in)
+	if err != nil {
+		status := http.StatusBadRequest
+		if err.Error() == "idempotency_conflict" {
+			status = http.StatusConflict
+		}
+		writeError(w, status, err.Error(), "Distributed test run could not be recorded")
+		return
+	}
+	status := http.StatusOK
+	if created {
+		status = http.StatusCreated
+	}
+	writeJSON(w, status, map[string]any{"test_run": item, "created": created})
+}
+
 func (a *API) mobileRunByID(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/mobile/v1/runs/"), "/")
 	parts := strings.Split(path, "/")
@@ -1460,6 +1772,36 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusOK, run)
+	case "rerun":
+		if !requireMethod(w, r, http.MethodPost) {
+			return
+		}
+		var input struct {
+			ModelID          string `json:"model_id"`
+			ReasoningProfile string `json:"reasoning_profile"`
+		}
+		if !decode(r, &input) {
+			writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+			return
+		}
+		access := bearer(r)
+		modelID := strings.TrimSpace(input.ModelID)
+		if modelID == "" {
+			if sourceRun, _, runErr := a.Store.RunForMessage(access, m.ID); runErr == nil {
+				modelID = sourceRun.Model
+			}
+		}
+		if !a.chatRuntimeAvailableForModel(modelID) {
+			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
+			return
+		}
+		run, err := a.Store.RerunMessage(access, m.ID, input.ModelID, input.ReasoningProfile)
+		if err != nil {
+			writeP04MobileError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		a.dispatchRun(run, access, false)
 	case "exports":
 		if !requireMethod(w, r, http.MethodPost) {
 			return
@@ -1500,7 +1842,7 @@ func (a *API) mobileMessageByID(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodPost) {
 			return
 		}
-		if a.ChatRuntimeMode != "upstream" || a.ChatResponder == nil {
+		if !a.chatRuntimeAvailableForModel("ylven-default") {
 			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
 			return
 		}
@@ -1703,6 +2045,154 @@ func (a *API) adminHomeConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (a *API) adminModelProviders(w http.ResponseWriter, r *http.Request) {
+	admin, ok := a.requireAdmin(w, r, map[bool]string{true: "models:manage", false: "models:read"}[r.Method == http.MethodPut])
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodGet {
+		snapshot, err := a.Store.ModelCatalogSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "model_catalog_unavailable", "Model catalog is unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"providers": snapshot.Providers, "audit": snapshot.Audit})
+		return
+	}
+	if r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET or PUT required")
+		return
+	}
+	if !a.requireStepUp(w, r) {
+		return
+	}
+	var input ModelProvider
+	if !decode(r, &input) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	saved, err := a.Store.UpsertModelProvider(input, admin.ID)
+	if err != nil {
+		writeModelCatalogError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"provider": saved})
+}
+
+func (a *API) adminModelCatalog(w http.ResponseWriter, r *http.Request) {
+	admin, ok := a.requireAdmin(w, r, map[bool]string{true: "models:manage", false: "models:read"}[r.Method == http.MethodPut])
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodGet {
+		snapshot, err := a.Store.ModelCatalogSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "model_catalog_unavailable", "Model catalog is unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"models": adminModelCatalogEntries(snapshot.Models), "providers": snapshot.Providers, "audit": snapshot.Audit})
+		return
+	}
+	if r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET or PUT required")
+		return
+	}
+	if !a.requireStepUp(w, r) {
+		return
+	}
+	var input ModelCatalogEntry
+	if !decode(r, &input) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	saved, err := a.Store.UpsertModelCatalogEntry(input, admin.ID)
+	if err != nil {
+		writeModelCatalogError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"model": saved})
+}
+
+func (a *API) adminCapabilityProbes(w http.ResponseWriter, r *http.Request) {
+	admin, ok := a.requireAdmin(w, r, map[bool]string{true: "models:manage", false: "models:read"}[r.Method == http.MethodPost])
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodGet {
+		snapshot, err := a.Store.ModelCatalogSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "capability_probes_unavailable", "Capability probe results are unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"items": snapshot.CapabilityProbes, "models": snapshot.Models, "audit": snapshot.Audit})
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET or POST required")
+		return
+	}
+	if !a.requireStepUp(w, r) {
+		return
+	}
+	var input CapabilityProbeResult
+	if !decode(r, &input) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	saved, err := a.Store.RecordCapabilityProbe(input, admin.ID)
+	if err != nil {
+		writeModelCatalogError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"probe": saved})
+}
+
+func (a *API) adminReasoningProfiles(w http.ResponseWriter, r *http.Request) {
+	admin, ok := a.requireAdmin(w, r, map[bool]string{true: "models:manage", false: "models:read"}[r.Method == http.MethodPut])
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodGet {
+		snapshot, err := a.Store.ModelCatalogSnapshot()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "reasoning_profiles_unavailable", "Reasoning profiles are unavailable")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"items": snapshot.ReasoningMappings, "models": snapshot.Models, "audit": snapshot.Audit})
+		return
+	}
+	if r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET or PUT required")
+		return
+	}
+	if !a.requireStepUp(w, r) {
+		return
+	}
+	var input ReasoningProfileMapping
+	if !decode(r, &input) {
+		writeError(w, http.StatusBadRequest, "invalid_json", "Invalid JSON")
+		return
+	}
+	saved, err := a.Store.UpsertReasoningProfile(input, admin.ID)
+	if err != nil {
+		writeModelCatalogError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"reasoning_profile": saved})
+}
+
+func writeModelCatalogError(w http.ResponseWriter, err error) {
+	if strings.Contains(err.Error(), "version_conflict") {
+		writeError(w, http.StatusConflict, "version_conflict", "The catalog changed; reload before saving")
+		return
+	}
+	if strings.Contains(err.Error(), "not_found") {
+		writeError(w, http.StatusNotFound, err.Error(), "Catalog resource not found")
+		return
+	}
+	writeError(w, http.StatusUnprocessableEntity, err.Error(), "Model catalog data is invalid")
+}
+
 func (a *API) adminConversations(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodGet) {
 		return
@@ -1716,6 +2206,31 @@ func (a *API) adminConversations(w http.ResponseWriter, r *http.Request) {
 		"conversations": a.Store.ListAllConversations(),
 		"audit":         a.Store.AuditSnapshot(),
 	})
+}
+
+func (a *API) adminAIRunDetail(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	if _, ok := a.requireAdmin(w, r, "admin.ai_runs.read"); !ok {
+		return
+	}
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/admin/v1/ai-runs/"), "/")
+	parts := strings.Split(path, "/")
+	if len(parts) != 2 || parts[0] == "" || parts[1] != "context-debug" {
+		writeError(w, http.StatusNotFound, "context_debug_not_found", "Context diagnostic not found")
+		return
+	}
+	view, err := a.Store.ContextDebugAdmin(parts[0])
+	if err != nil {
+		if err.Error() == "context_debug_not_found" {
+			writeError(w, http.StatusNotFound, "context_debug_not_found", "Context diagnostic not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "context_debug_unavailable", "Context diagnostic is unavailable")
+		return
+	}
+	writeJSON(w, http.StatusOK, view)
 }
 
 func (a *API) adminConversationDetail(w http.ResponseWriter, r *http.Request) {

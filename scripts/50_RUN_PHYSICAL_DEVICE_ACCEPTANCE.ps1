@@ -421,7 +421,11 @@ try {
     if ($apiLevel -notmatch '^\d+$') { throw "Could not determine the Android API level: $apiLevel" }
     $usesScopedDownloadMedia = [int]$apiLevel -ge 29
     $remoteStateScreenshotDirectory = if ($usesScopedDownloadMedia) { "/sdcard/Download/ylven-$($Phase.ToLowerInvariant())" } else { "/sdcard/Android/data/$PackageId/files/screenshots" }
-    $remoteProductionScreenshotDirectory = if ($usesScopedDownloadMedia) { "/sdcard/Download/ylven-p03-production" } else { "/sdcard/Android/data/$PackageId/files/production-screenshots" }
+    $remoteProductionScreenshotDirectory = if ($usesScopedDownloadMedia) {
+        if ($Phase -eq 'P04') { "/sdcard/Download/ylven-p04-live-staging" } else { "/sdcard/Download/ylven-p03-production" }
+    } else {
+        "/sdcard/Android/data/$PackageId/files/production-screenshots"
+    }
     $physicalSize = ((Invoke-Adb shell wm size) -join ' ').Trim()
     if ($physicalSize -notmatch '(?i)Physical size:\s*\d+x\d+') { throw "Could not determine the physical display size: $physicalSize" }
     if ($physicalSize -match '(?i)Override size:') { throw "The selected phone has an existing display-size override; testing stops without changing it: $physicalSize" }
@@ -516,6 +520,14 @@ try {
         -Replace `
         -ResultPath (Join-Path $testResults 'instrumentation-install.txt') `
         -EvidenceDir (Join-Path $testResults 'install-confirmations\instrumentation')
+    $remoteScreenshotDirectories = @(
+        $remoteStateScreenshotDirectory,
+        $remoteProductionScreenshotDirectory
+    )
+    foreach ($remoteScreenshotDirectory in $remoteScreenshotDirectories) {
+        Invoke-Adb shell rm '-rf' $remoteScreenshotDirectory | Out-Null
+    }
+    $remoteScreenshotDirectories | Set-Content -LiteralPath (Join-Path $testResults 'remote-screenshot-cleanup.txt') -Encoding UTF8
     $sessionProvisioned = $false
     if ($loginAfter -ne 'present') {
         $provisionFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ProvisionStagingSessionTest" -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P03ProvisionStagingSessionTest.txt')) -join "`n"
@@ -530,25 +542,35 @@ try {
     } else {
         $loginAfterProvision = $loginAfter
     }
-    $liveFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03LiveStagingFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt')) -join "`n"
-    if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
+    if ($Phase -eq 'P04') {
+        $liveFlowClass = "$PackageId.P04LiveStagingFlowTest"
+        $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P04LiveStagingFlowTest.txt')) -join "`n"
+        if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P04 real staging flow failed on the physical device.' }
 
-    if ($Phase -eq 'P03') {
-        $remoteScreenshotDirectories = @(
-            $remoteStateScreenshotDirectory,
-            $remoteProductionScreenshotDirectory
-        )
-        foreach ($remoteScreenshotDirectory in $remoteScreenshotDirectories) {
-            Invoke-Adb shell rm '-rf' $remoteScreenshotDirectory | Out-Null
-        }
-        $remoteScreenshotDirectories | Set-Content -LiteralPath (Join-Path $testResults 'remote-screenshot-cleanup.txt') -Encoding UTF8
+        $fallbackFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04FallbackUiTest" -TimeoutSeconds 180 -ResultPath (Join-Path $testResults 'P04FallbackUiTest.txt')) -join "`n"
+        if ($fallbackFlow -notmatch '(?m)^OK \(' -or $fallbackFlow -match '(?m)^FAILURES!!!') { throw 'P04 fallback interaction flow failed on the physical device.' }
+
+        $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04StateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P04StateUiTest.txt')) -join "`n"
+        if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P04 physical-device state capture failed.' }
+        $uiFlowName = 'P04FallbackUiTest'
+        $stateFlowName = 'P04StateUiTest'
+        $stateFlowDescription = '物理设备 77 个有效状态截图'
+        $stagingFlowName = 'P04LiveStagingFlowTest'
+    } else {
+        $liveFlowClass = "$PackageId.P03LiveStagingFlowTest"
+        $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt')) -join "`n"
+        if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P03 real staging flow failed on the physical device.' }
+
+        $flow = (Invoke-Instrumentation -ClassName "$PackageId.P03RealDeviceFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt')) -join "`n"
+        if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }
+
+        $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ConversationStateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P03ConversationStateUiTest.txt')) -join "`n"
+        if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
+        $uiFlowName = 'P03RealDeviceFlowTest'
+        $stateFlowName = 'P03ConversationStateUiTest'
+        $stateFlowDescription = '物理设备 89 个有效状态截图'
+        $stagingFlowName = 'P03LiveStagingFlowTest'
     }
-
-    $flow = (Invoke-Instrumentation -ClassName "$PackageId.P03RealDeviceFlowTest" -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03RealDeviceFlowTest.txt')) -join "`n"
-    if ($flow -notmatch '(?m)^OK \(' -or $flow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device interaction flow failed.' }
-
-    $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P03ConversationStateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P03ConversationStateUiTest.txt')) -join "`n"
-    if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P03 physical-device state capture failed.' }
 
     $deprecatedP03Pages = @('YL-A-019', 'YL-A-031')
     $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object {
@@ -561,6 +583,7 @@ try {
         )
     }
     if ($Phase -eq 'P03' -and @($stateRows).Count -ne 89) { throw "Expected 89 effective P03 Android states, got $(@($stateRows).Count)." }
+    if ($Phase -eq 'P04' -and @($stateRows).Count -ne 77) { throw "Expected 77 effective P04 Android states, got $(@($stateRows).Count)." }
     $indexRows = @()
     foreach ($row in $stateRows) {
         $remote = "$remoteStateScreenshotDirectory/$($row.state_id).png"
@@ -575,28 +598,46 @@ try {
     }
     $indexRows | Export-Csv -LiteralPath (Join-Path $output '截图索引.csv') -NoTypeInformation -Encoding UTF8
 
-    $productionPages = [ordered]@{
-        'YL-A-018'='YL-A-018-S02_POPULATED'
-        'YL-A-020'='YL-A-020-S02_POPULATED'
-        'YL-A-023'='YL-A-023-S07_COMPLETED'
-        'YL-A-024'='YL-A-024-S06_TOOL_TRAY_OPEN'
-        'YL-A-026'='YL-A-026-S04_COMPLETED'
-        'YL-A-033'='YL-A-033-S01_POPULATED'
-        'YL-A-034'='YL-A-034-S01_POPULATED'
+    $productionPages = if ($Phase -eq 'P04') {
+        [ordered]@{
+            'YL-A-030'=@{ state='YL-A-030-S01_DEFAULT'; file='P04-RERUN-PRESERVES-ANSWER.png' }
+            'YL-A-033'=@{ state='YL-A-033-S01_POPULATED'; file='P04-MODEL-SELECTOR.png' }
+            'YL-A-034'=@{ state='YL-A-034-S01_POPULATED'; file='P04-REASONING-PROFILE.png' }
+            'YL-A-035'=@{ state='YL-A-035-S02_POPULATED'; file='P04-AI-PREFERENCES.png' }
+            'YL-A-036'=@{ state='YL-A-036-S02_POPULATED'; file='P04-CONVERSATION-SETTINGS.png' }
+            'YL-A-037'=@{ state='YL-A-037-S01_DEFAULT'; file='P04-ANSWER-PROVENANCE.png' }
+            'YL-A-038'=@{ state='YL-A-038-S01_DEFAULT'; file='P04-ANSWER-PROVENANCE.png' }
+            'YL-A-039'=@{ state='YL-A-039-S02_POPULATED'; file='P04-BRANCHES.png' }
+            'YL-A-040'=@{ state='YL-A-040-S06_SUCCESS'; file='P04-COMPARISON-RESULTS.png' }
+            'YL-A-041'=@{ state='YL-A-041-S02_POPULATED'; file='P04-COMPARISON-RESULTS.png' }
+            'YL-A-042'=@{ state='YL-A-042-S01_DEFAULT'; file='P04-MODEL-FALLBACK.png' }
+            'YL-A-043'=@{ state='YL-A-043-S02_POPULATED'; file='P04-SERVICE-STATUS.png' }
+        }
+    } else {
+        [ordered]@{
+            'YL-A-018'=@{ state='YL-A-018-S02_POPULATED'; file='YL-A-018-PRODUCTION.png' }
+            'YL-A-020'=@{ state='YL-A-020-S02_POPULATED'; file='YL-A-020-PRODUCTION.png' }
+            'YL-A-023'=@{ state='YL-A-023-S07_COMPLETED'; file='YL-A-023-PRODUCTION.png' }
+            'YL-A-024'=@{ state='YL-A-024-S06_TOOL_TRAY_OPEN'; file='YL-A-024-PRODUCTION.png' }
+            'YL-A-026'=@{ state='YL-A-026-S04_COMPLETED'; file='YL-A-026-PRODUCTION.png' }
+            'YL-A-033'=@{ state='YL-A-033-S01_POPULATED'; file='YL-A-033-PRODUCTION.png' }
+            'YL-A-034'=@{ state='YL-A-034-S01_POPULATED'; file='YL-A-034-PRODUCTION.png' }
+        }
     }
     $productionIndex = @()
     foreach ($entry in $productionPages.GetEnumerator()) {
-        $name = "$($entry.Key)-PRODUCTION.png"
+        $name = $entry.Value.file
+        $representativeState = $entry.Value.state
         $remote = "$remoteProductionScreenshotDirectory/$name"
         $local = Join-Path $productionScreenshots $name
         Invoke-Adb shell test '-s' $remote | Out-Null
         Invoke-Adb pull $remote $local | Out-Null
         $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $local).Hash.ToLowerInvariant()
-        $catalogRow = $stateRows | Where-Object { $_.state_id -eq $entry.Value } | Select-Object -First 1
-        if (-not $catalogRow) { throw "Missing representative mockup state $($entry.Value)." }
+        $catalogRow = $stateRows | Where-Object { $_.state_id -eq $representativeState } | Select-Object -First 1
+        if (-not $catalogRow) { throw "Missing representative mockup state $representativeState." }
         $productionIndex += [pscustomobject]@{
             page_id=$entry.Key
-            representative_state_id=$entry.Value
+            representative_state_id=$representativeState
             production_screenshot="真实页面截图/$name"
             production_sha256=$digest
             mockup_path=$catalogRow.mockup_path
@@ -605,7 +646,7 @@ try {
     }
     $productionIndex | Export-Csv -LiteralPath (Join-Path $output '真实页面截图索引.csv') -NoTypeInformation -Encoding UTF8
 
-    @('# Visual Diff Report — P03','', 'Result: **PENDING_SERVER_POST_PROCESSING**','', 'Raw screenshots were captured on the physical device; visual comparison and interaction coverage run only on the connected online build server.') | Set-Content -LiteralPath (Join-Path $output '视觉差异报告.md') -Encoding UTF8
+    @("# Visual Diff Report - $Phase",'', 'Result: **PENDING_SERVER_POST_PROCESSING**','', 'Raw screenshots were captured on the physical device; visual comparison and interaction coverage run only on the connected online build server.') | Set-Content -LiteralPath (Join-Path $output '视觉差异报告.md') -Encoding UTF8
     'PENDING_SERVER_POST_PROCESSING' | Set-Content -LiteralPath (Join-Path $testResults 'server-post-processing.status') -Encoding UTF8
     $serverPostProcessing = 'PENDING_SERVER_POST_PROCESSING'
 
@@ -656,7 +697,7 @@ try {
 "@
     $logReview | Set-Content -LiteralPath (Join-Path $output '真机日志审查.md') -Encoding UTF8
 
-    $stagingSessionNote = if ($sessionProvisioned) { 'P03ProvisionStagingSessionTest + P03LiveStagingFlowTest: PASS（真实 staging 注册、Android Keystore 会话与 MainActivity 真实 API）' } else { 'P03LiveStagingFlowTest: PASS（MainActivity、已有加密登录态和真实 staging API）' }
+    $stagingSessionNote = if ($sessionProvisioned) { "P03ProvisionStagingSessionTest + $stagingFlowName: PASS（真实 staging 注册、Android Keystore 会话与 MainActivity 真实 API）" } else { "$stagingFlowName: PASS（MainActivity、已有加密登录态和真实 staging API）" }
     $automationReport = @"
 # 自动化测试报告
 
@@ -664,8 +705,8 @@ try {
 - Version: $Version
 - Device: $manufacturer $model ($Serial)
 - $stagingSessionNote
-- P03RealDeviceFlowTest: PASS（物理设备 UI 交互；确定性 Fake 网关，不替代 staging）
-- P03ConversationStateUiTest: PASS（物理设备 89 个有效状态截图）
+- $uiFlowName: PASS（物理设备 UI 交互；确定性网关仅验证可恢复状态，不替代 staging）
+- $stateFlowName: PASS（$stateFlowDescription）
 - Interaction coverage: PASS
 - Crash/ANR/log review: PASS
 - Result: PENDING_CODEX_PRODUCTION_VISUAL_REVIEW
@@ -714,7 +755,10 @@ try {
         device=[ordered]@{ serial=$Serial; adb_state='device'; physical_device=$true; ro_kernel_qemu=$qemu; manufacturer=$manufacturer; model=$model; android_version=$androidVersion; api_level=[int]$apiLevel; physical_size=$physicalSize; density=$density; display_size_override=$false; density_override=$false }
         selection=[ordered]@{ mode=$selectionMode; eligible_connected_devices=$connectedCandidateCount; queue_load_at_selection=$queueLoadAtSelection; idle_device_preferred=$true; shortest_fifo_when_all_busy=$true }
         queue=[ordered]@{ type='shared_fifo'; root_class='%USERPROFILE%/.codex/android-device-queue/<serial>'; lock_held_for_entire_run=$true }
-        paths=@($(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry')
+        paths=@(
+            $(if ($signingMigration) { 'one-time signing migration' } else { 'adb install -r upgrade' }),
+            'launch','click','input','back','scroll','send','SSE cursor recovery','cancel','retry','draft restore','rename','archive','delete','export','feedback','regenerate','speech entry'
+        ) + $(if ($Phase -eq 'P04') { @('model and reasoning selection','answer provenance','rerun with another model','branch switching','comparison tabs','adopt','synthesis','manual fallback') } else { @() })
         install_transition=[ordered]@{ mode=if ($signingMigration) { 'one_time_uninstall_then_install' } else { 'adb_install_r' }; data_preserved=(-not $signingMigration); old_login_state=$loginBefore; login_state_immediately_after_install=$loginAfter; staging_session_provisioned=$sessionProvisioned; final_login_state=$loginAfterProvision }
         signing_migration=[ordered]@{ applied=$signingMigration; previous_certificate_sha256=$provenance.previous_signing_certificate_sha256; new_certificate_sha256=$provenance.signing_certificate_sha256; approved_contract=if ($signingMigration) { 'contracts/signing-migrations/P03.properties' } else { $null } }
         state_screenshot_count=@($stateRows).Count

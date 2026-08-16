@@ -18,7 +18,8 @@ import (
 const conversationSQLTimeout = 15 * time.Second
 
 type postgresConversationStore struct {
-	db *sql.DB
+	db    *sql.DB
+	store *Store
 }
 
 func (s *Store) EnablePostgresFromEnvironment(ctx context.Context) error {
@@ -49,7 +50,7 @@ func (s *Store) EnablePostgres(ctx context.Context, dsn string) error {
 		_ = db.Close()
 		return err
 	}
-	persistence := &postgresConversationStore{db: db}
+	persistence := &postgresConversationStore{db: db, store: s}
 	if err := s.importLegacyConversations(ctx, persistence); err != nil {
 		_ = db.Close()
 		return fmt.Errorf("import legacy conversations: %w", err)
@@ -93,14 +94,16 @@ type sqlScanner interface {
 
 const conversationColumns = `id::text, user_id::text, title, title_source, title_locked,
   COALESCE(active_branch_id::text, ''), COALESCE(summary_through_message_id::text, ''),
-  status, created_at, updated_at, archived_at, deleted_at, temporary`
+	status, created_at, updated_at, archived_at, deleted_at, temporary,
+	COALESCE(default_model_id, 'ylven-default'), COALESCE(default_reasoning_profile, 'auto'),
+	COALESCE(ai_settings_version, 1), COALESCE(ai_settings_overridden, FALSE)`
 
 func scanConversation(scanner sqlScanner) (Conversation, error) {
 	var item Conversation
 	var archivedAt, deletedAt sql.NullTime
 	err := scanner.Scan(&item.ID, &item.UserID, &item.Title, &item.TitleSource, &item.TitleLocked,
 		&item.ActiveBranchID, &item.SummaryThroughMessageID, &item.Status, &item.CreatedAt, &item.UpdatedAt,
-		&archivedAt, &deletedAt, &item.Temporary)
+		&archivedAt, &deletedAt, &item.Temporary, &item.DefaultModelID, &item.DefaultReasoningProfile, &item.AISettingsVersion, &item.AISettingsOverridden)
 	if archivedAt.Valid {
 		item.ArchivedAt = &archivedAt.Time
 	}
@@ -127,7 +130,9 @@ func scanMessage(scanner sqlScanner) (Message, error) {
 }
 
 const runColumns = `id::text, conversation_id::text, user_id::text, COALESCE(user_message_id::text, ''),
-  COALESCE(assistant_message_id::text, ''), model, branch_id::text, COALESCE(idempotency_key, ''),
+  COALESCE(assistant_message_id::text, ''), model, COALESCE(NULLIF(provider_model,''),model),
+  COALESCE(NULLIF(reasoning_profile,''),'auto'), COALESCE(reasoning_parameters,'{}'::jsonb),
+  branch_id::text, COALESCE(idempotency_key, ''),
   COALESCE(context_build_id::text, ''), status, COALESCE(error_code, ''), provider,
   provider_continuation_used, provider_continuation_fallback, started_at, completed_at, latency_ms,
   cursor, created_at, updated_at`
@@ -135,13 +140,21 @@ const runColumns = `id::text, conversation_id::text, user_id::text, COALESCE(use
 func scanRun(scanner sqlScanner) (MessageRun, error) {
 	var item MessageRun
 	var completedAt sql.NullTime
+	var reasoningParameters []byte
 	err := scanner.Scan(&item.ID, &item.ConversationID, &item.UserID, &item.UserMessageID,
-		&item.AssistantMessageID, &item.Model, &item.BranchID, &item.IdempotencyKey,
+		&item.AssistantMessageID, &item.Model, &item.ProviderModel, &item.ReasoningProfile, &reasoningParameters,
+		&item.BranchID, &item.IdempotencyKey,
 		&item.ContextBuildID, &item.Status, &item.ErrorCode, &item.Provider,
 		&item.ContinuationUsed, &item.ContinuationFallback, &item.StartedAt, &completedAt,
 		&item.LatencyMs, &item.Cursor, &item.CreatedAt, &item.UpdatedAt)
 	if completedAt.Valid {
 		item.CompletedAt = &completedAt.Time
+	}
+	if len(reasoningParameters) > 0 && err == nil {
+		err = json.Unmarshal(reasoningParameters, &item.ReasoningParameters)
+	}
+	if item.ReasoningParameters == nil {
+		item.ReasoningParameters = map[string]any{}
 	}
 	return item, err
 }
@@ -202,11 +215,13 @@ func (p *postgresConversationStore) syncProductConfiguration(ctx context.Context
 	}
 	defer tx.Rollback()
 	for _, model := range models {
+		model = normalizeCatalogEntry(model)
 		if strings.TrimSpace(model.ID) == "" || strings.TrimSpace(model.Name) == "" {
 			continue
 		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO models (id,name,enabled,description)
-      VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, model.ID, model.Name, model.Enabled, model.Description); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO models (id,name,enabled,description,provider_id,upstream_model,purpose,speed_tier,sort_order,version,updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`, model.ID, model.Name, model.Enabled,
+			model.Description, model.ProviderID, model.UpstreamModel, model.Purpose, model.SpeedTier, model.SortOrder, model.Version, model.UpdatedAt); err != nil {
 			return err
 		}
 		profiles := model.ReasoningProfiles
@@ -214,8 +229,9 @@ func (p *postgresConversationStore) syncProductConfiguration(ctx context.Context
 			profiles = []string{"auto"}
 		}
 		for ordinal, profile := range profiles {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO reasoning_profiles (model_id,profile_id,ordinal)
-        VALUES ($1,$2,$3) ON CONFLICT (model_id,profile_id) DO NOTHING`, model.ID, profile, ordinal); err != nil {
+			label := map[string]string{"auto": "自动", "quick": "快速", "standard": "标准", "deep": "深度"}[profile]
+			if _, err := tx.ExecContext(ctx, `INSERT INTO reasoning_profiles (model_id,profile_id,label,ordinal,enabled,upstream_parameters,version,updated_at)
+        VALUES ($1,$2,$3,$4,TRUE,'{}'::jsonb,1,$5) ON CONFLICT (model_id,profile_id) DO NOTHING`, model.ID, profile, label, ordinal, model.UpdatedAt); err != nil {
 				return err
 			}
 		}
@@ -308,40 +324,7 @@ func (p *postgresConversationStore) homeConfigAudit() ([]AuditEvent, error) {
 }
 
 func (p *postgresConversationStore) modelCatalog() ([]ModelCatalogEntry, error) {
-	ctx, cancel := databaseContext()
-	defer cancel()
-	rows, err := p.db.QueryContext(ctx, `SELECT m.id,m.name,m.enabled,m.description,COALESCE(r.profile_id,''),COALESCE(r.ordinal,0)
-    FROM models m LEFT JOIN reasoning_profiles r ON r.model_id=m.id
-    ORDER BY m.id,r.ordinal`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ModelCatalogEntry{}
-	indexes := map[string]int{}
-	for rows.Next() {
-		var id, name, description, profile string
-		var enabled bool
-		var ordinal int
-		if err := rows.Scan(&id, &name, &enabled, &description, &profile, &ordinal); err != nil {
-			return nil, err
-		}
-		index, exists := indexes[id]
-		if !exists {
-			index = len(items)
-			indexes[id] = index
-			items = append(items, ModelCatalogEntry{ID: id, Name: name, Enabled: enabled, Description: description})
-		}
-		if profile != "" {
-			items[index].ReasoningProfiles = append(items[index].ReasoningProfiles, profile)
-		}
-	}
-	for index := range items {
-		if len(items[index].ReasoningProfiles) == 0 {
-			items[index].ReasoningProfiles = []string{"auto"}
-		}
-	}
-	return items, rows.Err()
+	return p.loadModelCatalog()
 }
 
 func (s *Store) importLegacyConversations(ctx context.Context, persistence *postgresConversationStore) error {
@@ -443,13 +426,15 @@ func (s *Store) importLegacyConversations(ctx context.Context, persistence *post
 		}
 		_, err = tx.ExecContext(ctx, `INSERT INTO message_runs
       (id,conversation_id,user_id,user_message_id,assistant_message_id,model,status,cursor,error_code,created_at,updated_at,
-       branch_id,idempotency_key,context_build_id,provider,started_at,completed_at,latency_ms,provider_continuation_used,provider_continuation_fallback)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+       branch_id,idempotency_key,context_build_id,provider,started_at,completed_at,latency_ms,provider_continuation_used,provider_continuation_fallback,
+       reasoning_profile,reasoning_parameters,provider_model)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22::jsonb,$23)
       ON CONFLICT (id) DO NOTHING`, run.ID, run.ConversationID, run.UserID, nullIfEmpty(run.UserMessageID),
 			nullIfEmpty(run.AssistantMessageID), valueOr(run.Model, "ylven-default"), valueOr(run.Status, "completed"),
 			run.Cursor, nullIfEmpty(run.ErrorCode), run.CreatedAt, run.UpdatedAt, valueOr(run.BranchID, run.ConversationID),
 			nullIfEmpty(run.IdempotencyKey), nullIfEmpty(run.ContextBuildID), valueOr(run.Provider, "upstream"),
-			startedAt, run.CompletedAt, run.LatencyMs, run.ContinuationUsed, run.ContinuationFallback)
+			startedAt, run.CompletedAt, run.LatencyMs, run.ContinuationUsed, run.ContinuationFallback,
+			valueOr(run.ReasoningProfile, "auto"), func() string { raw, _ := json.Marshal(copyJSONMap(run.ReasoningParameters)); return string(raw) }(), valueOr(run.ProviderModel, valueOr(run.Model, "ylven-default")))
 		if err != nil {
 			return err
 		}
@@ -513,7 +498,7 @@ func (p *postgresConversationStore) createConversation(user User, title string, 
 	if err := tx.Commit(); err != nil {
 		return Conversation{}, err
 	}
-	return Conversation{ID: id, UserID: user.ID, Title: title, TitleSource: titleSource, TitleLocked: locked, ActiveBranchID: id, Status: status, CreatedAt: now, UpdatedAt: now, Temporary: temporary}, nil
+	return Conversation{ID: id, UserID: user.ID, Title: title, TitleSource: titleSource, TitleLocked: locked, ActiveBranchID: id, Status: status, DefaultModelID: "ylven-default", DefaultReasoningProfile: "auto", AISettingsVersion: 1, CreatedAt: now, UpdatedAt: now, Temporary: temporary}, nil
 }
 
 func (p *postgresConversationStore) listConversations(userID, cursor string, limit int, includeArchived bool) ([]Conversation, string, error) {
@@ -587,7 +572,7 @@ func (p *postgresConversationStore) searchConversations(userID, queryText string
 	return items, rows.Err()
 }
 
-func (p *postgresConversationStore) startRun(user User, conversationID, body, model, idempotencyKey, operation string) (MessageRun, bool, error) {
+func (p *postgresConversationStore) startRun(user User, conversationID, body string, selection ModelSelection, idempotencyKey, operation string) (MessageRun, bool, error) {
 	ctx, cancel := databaseContext()
 	defer cancel()
 	tx, err := p.db.BeginTx(ctx, nil)
@@ -598,7 +583,7 @@ func (p *postgresConversationStore) startRun(user User, conversationID, body, mo
 	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, conversationID); err != nil {
 		return MessageRun{}, false, err
 	}
-	requestHash := conversationRequestHash(body, model)
+	requestHash := conversationSelectionRequestHash(body, selection)
 	namespace := user.ID + ":" + operation
 	if existing, found, err := p.idempotentRun(ctx, tx, namespace, idempotencyKey, requestHash); err != nil {
 		return MessageRun{}, false, err
@@ -620,7 +605,7 @@ func (p *postgresConversationStore) startRun(user User, conversationID, body, mo
 	if !errors.Is(err, sql.ErrNoRows) {
 		return MessageRun{}, false, err
 	}
-	run, err := p.insertRun(ctx, tx, user, conversation, body, model, idempotencyKey)
+	run, err := p.insertRun(ctx, tx, user, conversation, body, selection, idempotencyKey)
 	if err != nil {
 		return MessageRun{}, false, err
 	}
@@ -653,7 +638,7 @@ func (p *postgresConversationStore) idempotentRun(ctx context.Context, tx *sql.T
 	return run, err == nil, err
 }
 
-func (p *postgresConversationStore) insertRun(ctx context.Context, tx *sql.Tx, user User, conversation Conversation, body, model, idempotencyKey string) (MessageRun, error) {
+func (p *postgresConversationStore) insertRun(ctx context.Context, tx *sql.Tx, user User, conversation Conversation, body string, selection ModelSelection, idempotencyKey string) (MessageRun, error) {
 	messageID, err := newDatabaseUUID()
 	if err != nil {
 		return MessageRun{}, err
@@ -674,10 +659,17 @@ func (p *postgresConversationStore) insertRun(ctx context.Context, tx *sql.Tx, u
 		_, err = tx.ExecContext(ctx, `INSERT INTO message_parts (id,message_id,ordinal,kind,text_content,created_at)
       VALUES ($1,$1,0,'TEXT',$2,$3)`, messageID, body, now)
 	}
+	parameters, marshalErr := json.Marshal(copyJSONMap(selection.ReasoningParameters))
+	if marshalErr != nil {
+		return MessageRun{}, marshalErr
+	}
 	if err == nil {
 		_, err = tx.ExecContext(ctx, `INSERT INTO message_runs
-      (id,conversation_id,user_id,user_message_id,model,status,cursor,created_at,updated_at,branch_id,idempotency_key,request_hash,provider,started_at)
-      VALUES ($1,$2,$3,$4,$5,'streaming',0,$6,$6,$7,$8,$9,'upstream',$6)`, runID, conversation.ID, user.ID, messageID, model, now, conversation.ActiveBranchID, idempotencyKey, conversationRequestHash(body, model))
+      (id,conversation_id,user_id,user_message_id,model,status,cursor,created_at,updated_at,branch_id,idempotency_key,request_hash,provider,started_at,
+       reasoning_profile,reasoning_parameters,provider_model)
+      VALUES ($1,$2,$3,$4,$5,'streaming',0,$6,$6,$7,$8,$9,'upstream',$6,$10,$11::jsonb,$12)`, runID, conversation.ID, user.ID,
+			messageID, selection.CatalogModelID, now, conversation.ActiveBranchID, idempotencyKey, conversationSelectionRequestHash(body, selection),
+			selection.ReasoningProfile, string(parameters), selection.ProviderModel)
 	}
 	if err == nil {
 		_, err = tx.ExecContext(ctx, `UPDATE conversations SET updated_at=$2 WHERE id=$1`, conversation.ID, now)
@@ -691,10 +683,13 @@ func (p *postgresConversationStore) insertRun(ctx context.Context, tx *sql.Tx, u
 	if err != nil {
 		return MessageRun{}, err
 	}
-	return MessageRun{ID: runID, ConversationID: conversation.ID, UserID: user.ID, UserMessageID: messageID, Model: model, BranchID: conversation.ActiveBranchID, IdempotencyKey: idempotencyKey, Status: "streaming", Provider: "upstream", StartedAt: now, CreatedAt: now, UpdatedAt: now}, nil
+	return MessageRun{ID: runID, ConversationID: conversation.ID, UserID: user.ID, UserMessageID: messageID,
+		Model: selection.CatalogModelID, ProviderModel: selection.ProviderModel, ReasoningProfile: selection.ReasoningProfile,
+		ReasoningParameters: copyJSONMap(selection.ReasoningParameters), BranchID: conversation.ActiveBranchID,
+		IdempotencyKey: idempotencyKey, Status: "streaming", Provider: "upstream", StartedAt: now, CreatedAt: now, UpdatedAt: now}, nil
 }
 
-func (p *postgresConversationStore) firstMessage(user User, draftSessionID, body, model, idempotencyKey string, temporary bool) (FirstMessageResult, error) {
+func (p *postgresConversationStore) firstMessage(user User, draftSessionID, body string, selection ModelSelection, idempotencyKey string, temporary bool) (FirstMessageResult, error) {
 	ctx, cancel := databaseContext()
 	defer cancel()
 	tx, err := p.db.BeginTx(ctx, nil)
@@ -703,7 +698,7 @@ func (p *postgresConversationStore) firstMessage(user User, draftSessionID, body
 	}
 	defer tx.Rollback()
 	namespace := user.ID + ":first_message"
-	requestHash := conversationRequestHash(body, model)
+	requestHash := conversationSelectionRequestHash(body, selection)
 	if existing, found, err := p.idempotentRun(ctx, tx, namespace, idempotencyKey, requestHash); err != nil {
 		return FirstMessageResult{}, err
 	} else if found {
@@ -725,7 +720,7 @@ func (p *postgresConversationStore) firstMessage(user User, draftSessionID, body
 	if temporary {
 		status = "temporary"
 	}
-	conversation := Conversation{ID: conversationID, UserID: user.ID, Title: TemporaryConversationTitle(body), TitleSource: "AUTO_TEMP", ActiveBranchID: conversationID, Status: status, CreatedAt: now, UpdatedAt: now, Temporary: temporary}
+	conversation := Conversation{ID: conversationID, UserID: user.ID, Title: TemporaryConversationTitle(body), TitleSource: "AUTO_TEMP", ActiveBranchID: conversationID, Status: status, DefaultModelID: "ylven-default", DefaultReasoningProfile: "auto", AISettingsVersion: 1, CreatedAt: now, UpdatedAt: now, Temporary: temporary}
 	_, err = tx.ExecContext(ctx, `INSERT INTO conversations
     (id,user_id,title,title_source,title_locked,active_branch_id,status,created_at,updated_at,temporary)
     VALUES ($1,$2,$3,'AUTO_TEMP',FALSE,$1,$4,$5,$5,$6)`, conversationID, user.ID, conversation.Title, status, now, temporary)
@@ -736,7 +731,7 @@ func (p *postgresConversationStore) firstMessage(user User, draftSessionID, body
 	if err != nil {
 		return FirstMessageResult{}, err
 	}
-	run, err := p.insertRun(ctx, tx, user, conversation, body, model, idempotencyKey)
+	run, err := p.insertRun(ctx, tx, user, conversation, body, selection, idempotencyKey)
 	if err != nil {
 		return FirstMessageResult{}, err
 	}
@@ -799,8 +794,8 @@ func (p *postgresConversationStore) completeRun(userID, runID, assistantBody str
 	}
 	now := time.Now().UTC()
 	_, err = tx.ExecContext(ctx, `INSERT INTO messages
-    (id,conversation_id,user_id,branch_id,sequence,parent_message_id,role,body,status,created_at,completed_at)
-    VALUES ($1,$2,$3,$4,$5,$6,'assistant',$7,'completed',$8,$8)`, assistantID, run.ConversationID, userID, run.BranchID, sequence, run.UserMessageID, assistantBody, now)
+    (id,conversation_id,user_id,branch_id,sequence,parent_message_id,comparison_group_id,role,body,status,created_at,completed_at)
+    VALUES ($1,$2,$3,$4,$5,$6,(SELECT comparison_group_id FROM messages WHERE id=$6),'assistant',$7,'completed',$8,$8)`, assistantID, run.ConversationID, userID, run.BranchID, sequence, run.UserMessageID, assistantBody, now)
 	if err == nil {
 		_, err = tx.ExecContext(ctx, `INSERT INTO message_parts (id,message_id,ordinal,kind,text_content,created_at)
       VALUES ($1,$1,0,'TEXT',$2,$3)`, assistantID, assistantBody, now)
@@ -826,6 +821,9 @@ func (p *postgresConversationStore) completeRun(userID, runID, assistantBody str
     completed_at=$4,latency_ms=$5,updated_at=$4 WHERE id=$1`, run.ID, assistantID, cursor, now, latency)
 	if err == nil {
 		_, err = tx.ExecContext(ctx, `UPDATE conversation_locks SET holder_run_id=NULL,lease_owner=NULL,lease_expires_at=NULL,updated_at=NOW() WHERE conversation_id=$1 AND holder_run_id=$2`, run.ConversationID, run.ID)
+	}
+	if err == nil {
+		err = p.updateComparisonStatusForRunTx(ctx, tx, run.ID, now)
 	}
 	if err != nil {
 		return MessageRun{}, err
@@ -890,6 +888,9 @@ func (p *postgresConversationStore) finishRunWithError(userID, runID, status str
 	}
 	if err == nil {
 		_, err = tx.ExecContext(ctx, `UPDATE conversation_locks SET holder_run_id=NULL,lease_owner=NULL,lease_expires_at=NULL,updated_at=NOW() WHERE conversation_id=$1 AND holder_run_id=$2`, run.ConversationID, run.ID)
+	}
+	if err == nil {
+		err = p.updateComparisonStatusForRunTx(ctx, tx, run.ID, now)
 	}
 	if err != nil {
 		return MessageRun{}, err

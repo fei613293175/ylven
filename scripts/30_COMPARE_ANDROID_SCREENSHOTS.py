@@ -6,9 +6,10 @@ from PIL import Image, ImageChops, ImageFilter, ImageStat
 ROOT=Path(__file__).resolve().parents[1]
 P03_DEPRECATED_PAGES={"YL-A-019","YL-A-031"}
 
-def applies_to_phase(row:dict[str,str],phase:str)->bool:
+def applies_to_phase(row:dict[str,str],phase:str,packet:str|None=None)->bool:
  if row.get('surface')!='ANDROID': return False
  phases=row.get('phases','').split('|')
+ if packet and packet not in row.get('work_packets','').split('|'): return False
  if phase!='P03': return phase in phases
  work_packets=row.get('work_packets','').split('|')
  return row.get('page_id') not in P03_DEPRECATED_PAGES and ('P03' in phases or 'P03-W07' in work_packets)
@@ -36,11 +37,14 @@ def structural_score(a:Image.Image,b:Image.Image,radius:float)->tuple[float,floa
  return score(a.convert('RGB').filter(ImageFilter.GaussianBlur(radius)),b.convert('RGB').filter(ImageFilter.GaussianBlur(radius)))
 
 def main()->int:
- p=argparse.ArgumentParser(); p.add_argument('--phase',required=True); p.add_argument('--screenshots',required=True); p.add_argument('--report',required=True); a=p.parse_args()
- phase=a.phase.upper(); shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
- with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase)]
+ p=argparse.ArgumentParser(); p.add_argument('--phase',required=True); p.add_argument('--packet'); p.add_argument('--screenshots',required=True); p.add_argument('--report',required=True); a=p.parse_args()
+ phase=a.phase.upper(); packet=a.packet.upper() if a.packet else None
+ if packet and not packet.startswith(f'{phase}-W'): p.error(f'--packet {packet} does not belong to --phase {phase}')
+ shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
+ with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase,packet)]
  exception=font_exception(phase)
- errors=[]; lines=[f'# Visual Diff Report — {phase}','']
+ scope=packet or phase
+ errors=[]; lines=[f'# Visual Diff Report — {scope}','']
  if exception:
   lines += [
    '- Owner exception: APPROVED — Android system-font rasterization differences only.',

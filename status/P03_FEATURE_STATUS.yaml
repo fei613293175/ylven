@@ -311,42 +311,78 @@ features:
   - backend/internal/identity/conversation_postgres.go::postgresConversationStore.updateTitle
   - backend/internal/identity/conversation_context_test.go::TestP03W06FirstMessageIsAtomicIdempotentAndTitleLocked
 - feature_id: P03-046
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: 'W08 代码已落地；服务器 CI/API 验证尚未在本机执行，W07 视觉门禁仍阻断发布。'
+  evidence:
+  - backend/internal/identity/runtime_observability.go::Store.ContextDebugAdmin + bounded diagnostic projection
+  - backend/internal/identity/runtime_observability_postgres.go::postgresConversationStore.contextDebugAdmin
+  - backend/internal/identity/http.go::GET /admin/v1/ai-runs/{runId}/context-debug with admin.ai_runs.read
+  - backend/internal/identity/runtime_observability_test.go::TestP03W08ContextDebugHealthAndDistributedRunAreDurableInStore
 - feature_id: P03-047
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '普通用户状态文案已由服务端 consumer-copy 配置驱动，Android 仅展示映射后的运营文案。'
+  evidence:
+  - backend/internal/identity/identity.go::defaultConsumerCopy
+  - backend/internal/identity/http.go::GET /api/mobile/v1/home
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::consumer status labels
+  - scripts/20_CHECK_UI_VISUAL_GATE.py::P03-W07 visual contract validation
 - feature_id: P03-048
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '首页以对话输入为首屏入口，旧的新对话配置导航已移除。'
+  evidence:
+  - backend/internal/identity/http.go::GET /api/mobile/v1/home
+  - android/app/src/main/java/cc/orbexa/ylven/ui/YlvenApp.kt::HomePage conversation-first layout
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03HomePage
 - feature_id: P03-049
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '文件、图片和演示入口已收敛到会话输入区工具面板，并由 HomeConfig 驱动。'
+  evidence:
+  - backend/internal/identity/identity.go::HomeConfig.ComposerTools
+  - backend/internal/identity/http.go::GET /api/mobile/v1/home
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ComposerToolTray
 - feature_id: P03-050
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '模型和回答方式作为会话输入区可选高级入口，默认保持自动档位。'
+  evidence:
+  - backend/internal/identity/http.go::GET /api/mobile/v1/models
+  - backend/internal/identity/model_catalog.go::ResolveModelSelection
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ModelSelector and P03ResponseModeSelector
 - feature_id: P03-051
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '普通用户界面状态文案已映射为中文运营文案，技术调试词扫描作为发布门禁。'
+  evidence:
+  - backend/internal/identity/identity.go::defaultConsumerCopy
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::consumer-facing status copy
+  - scripts/20_CHECK_UI_VISUAL_GATE.py::consumer copy scan
 - feature_id: P03-052
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '生产代码路径不依赖 Demo/Stub/固定假数据；状态、目录和运行记录均有持久化或真实服务边界。'
+  evidence:
+  - backend/internal/identity/identity.go::persistent Store boundary
+  - backend/internal/identity/conversation_postgres.go::PostgreSQL conversation persistence
+  - .github/workflows/production-readiness.yml::production-readiness gates
+  - tests/visual_gate_change_order_test.py::production visual gate regression
 - feature_id: P03-053
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: 'PostgreSQL run_events 已提供共享持久化序列和 after 游标恢复；Redis/真实多实例恢复验证仍待服务器执行。'
+  evidence:
+  - backend/internal/identity/conversation_postgres.go::postgresConversationStore.events sequence > after query
+  - backend/internal/identity/http.go::GET /api/mobile/v1/runs/{runId}/events
+  - backend/internal/identity/conversation_postgres_test.go::TestP03W06PostgresFirstMessageTransactionAndIdempotency
+  - backend/internal/identity/runtime_observability_test.go::TestP03W08ContextDebugHealthAndDistributedRunAreDurableInStore
 - feature_id: P03-054
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '健康心跳和实例租约已持久化；正式 upstream 健康与 degraded/error 组合需由服务器环境验证。'
+  evidence:
+  - backend/db/migrations/0007_p03_w08_runtime_observability.sql::service_instances + health_checks
+  - backend/internal/identity/runtime_observability.go::Store.AIHealth
+  - backend/internal/identity/runtime_observability_postgres.go::postgresConversationStore.aiHealth
+  - backend/internal/identity/http.go::GET /internal/v1/health/ai-runtime
 - feature_id: P03-055
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: 'CI 结果接收和按 test_run_id 幂等持久化已实现；多实例实际执行仍需连接服务器。'
+  evidence:
+  - backend/db/migrations/0007_p03_w08_runtime_observability.sql::test_runs
+  - backend/internal/identity/runtime_observability.go::Store.RecordDistributedTestRun
+  - backend/internal/identity/http.go::POST /internal/v1/ci/p03-distributed-chat with ci permission
+  - backend/internal/identity/runtime_observability_test.go::TestP03W08ContextDebugHealthAndDistributedRunAreDurableInStore

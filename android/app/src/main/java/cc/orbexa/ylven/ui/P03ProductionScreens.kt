@@ -7,6 +7,7 @@ import android.content.ContextWrapper
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.view.View
+import cc.orbexa.ylven.identity.ModelCapabilityOption
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,6 +78,7 @@ import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -490,7 +492,9 @@ private fun P03SheetContainer(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color(0x59101828))
+                    // The fixed contract renderer is composited in-window. Keep its
+                    // scrim opacity aligned with the approved overlay baseline.
+                    .background(Color(0x5C101828))
                     .clickable(onClick = onDismiss),
             )
             Surface(
@@ -594,9 +598,33 @@ private val P03ContractConversations = listOf(
 )
 
 private val P03ContractModels = listOf(
-    ModelOption("gpt-5-6-sol", "GPT-5.6 Sol", true, "复杂分析、编码与长任务", listOf("quick", "standard", "deep")),
-    ModelOption("claude-opus", "Claude Opus", true, "长文理解、写作与审查", listOf("standard", "deep")),
-    ModelOption("grok", "Grok", true, "实时信息与多模态理解", listOf("quick", "standard")),
+    ModelOption(
+        id = "gpt-5-6-sol",
+        name = "GPT-5.6 Sol",
+        description = "复杂分析、编码与长任务",
+        reasoningProfiles = listOf("quick", "standard", "deep"),
+        providerId = "ylven",
+        providerName = "YLVEN",
+        capabilities = listOf(ModelCapabilityOption("reasoning", "推理")),
+    ),
+    ModelOption(
+        id = "claude-opus",
+        name = "Claude Opus",
+        description = "长文理解、写作与审查",
+        reasoningProfiles = listOf("standard", "deep"),
+        providerId = "ylven",
+        providerName = "YLVEN",
+        capabilities = listOf(ModelCapabilityOption("long-context", "长文")),
+    ),
+    ModelOption(
+        id = "grok",
+        name = "Grok",
+        description = "实时信息与多模态理解",
+        reasoningProfiles = listOf("quick", "standard"),
+        providerId = "ylven",
+        providerName = "YLVEN",
+        capabilities = listOf(ModelCapabilityOption("multimodal", "多模态")),
+    ),
 )
 
 private val P03ContractTools = listOf(
@@ -1444,6 +1472,9 @@ internal fun P03ChatPage(
     conversation: Conversation,
     onBack: () -> Unit,
     onOpenConversation: (Conversation) -> Unit,
+    onOpenConversationSettings: (Conversation) -> Unit = {},
+    onOpenBranches: (Conversation) -> Unit = {},
+    onOpenComparison: (Conversation) -> Unit = {},
 ) {
     var conversationId by rememberSaveable(conversation.id) { mutableStateOf(conversation.id) }
     var draftSessionId by rememberSaveable(conversation.id) { mutableStateOf(conversation.draftSessionId.orEmpty()) }
@@ -1458,6 +1489,7 @@ internal fun P03ChatPage(
     var sending by remember(conversation.id) { mutableStateOf(false) }
     var reconnecting by remember(conversation.id) { mutableStateOf(false) }
     var citations by remember(conversation.id) { mutableStateOf<Map<String, List<MessageCitation>>>(emptyMap()) }
+    var answerRuns by remember(conversation.id) { mutableStateOf<Map<String, MessageRun>>(emptyMap()) }
     var retryBody by remember(conversation.id) { mutableStateOf<String?>(null) }
     var menuOpen by rememberSaveable(conversation.id) { mutableStateOf(false) }
     var renameMode by rememberSaveable(conversation.id) { mutableStateOf(false) }
@@ -1470,9 +1502,18 @@ internal fun P03ChatPage(
     var models by remember(conversation.id) { mutableStateOf<List<ModelOption>>(emptyList()) }
     var modelsLoading by remember(conversation.id) { mutableStateOf(true) }
     var modelsError by remember(conversation.id) { mutableStateOf<String?>(null) }
-    var selectedModelId by rememberSaveable(conversation.id) { mutableStateOf("") }
-    var selectedModelName by rememberSaveable(conversation.id) { mutableStateOf("自动选择") }
-    var selectedResponseMode by rememberSaveable(conversation.id) { mutableStateOf("auto") }
+    var selectedModelId by rememberSaveable(conversation.id) { mutableStateOf(conversation.defaultModelId) }
+    var selectedModelName by rememberSaveable(conversation.id) {
+        mutableStateOf(if (conversation.defaultModelId.isBlank()) "自动选择" else "已选模型")
+    }
+    var selectedResponseMode by rememberSaveable(conversation.id) {
+        mutableStateOf(conversation.defaultReasoningProfile.ifBlank { "auto" })
+    }
+    var reasoningProfiles by remember(conversation.id) { mutableStateOf(listOf("auto")) }
+    var reasoningProfilesLoading by remember(conversation.id) { mutableStateOf(false) }
+    var reasoningProfilesError by remember(conversation.id) { mutableStateOf<String?>(null) }
+    var fallbackModels by remember(conversation.id) { mutableStateOf<List<ModelOption>>(emptyList()) }
+    var modelFallbackDialogOpen by rememberSaveable(conversation.id) { mutableStateOf(false) }
     var toolTrayOpen by rememberSaveable(conversation.id) { mutableStateOf(conversation.initialToolTrayOpen) }
     var composerTools by remember(conversation.id) {
         mutableStateOf(conversation.initialComposerTools.ifEmpty(::defaultComposerToolOptions))
@@ -1503,12 +1544,58 @@ internal fun P03ChatPage(
             modelsLoading = true
             modelsError = null
             try {
-                models = gateway.models(session.bearer)
+                val loaded = gateway.models(session.bearer)
+                models = loaded
+                selectedModelName = loaded.firstOrNull { it.id == selectedModelId }?.name
+                    ?: if (selectedModelId.isBlank()) "自动选择" else "已选模型"
+                if (selectedModelId.isNotBlank()) loadReasoningProfiles(selectedModelId)
             } catch (reason: Exception) {
                 modelsError = consumerErrorMessage(reason, "暂时无法加载模型，请重试")
             } finally {
                 modelsLoading = false
             }
+        }
+    }
+
+    fun loadReasoningProfiles(modelId: String) {
+        if (modelId.isBlank()) {
+            reasoningProfiles = listOf("auto")
+            reasoningProfilesLoading = false
+            reasoningProfilesError = null
+            selectedResponseMode = "auto"
+            return
+        }
+        scope.launch {
+            reasoningProfilesLoading = true
+            reasoningProfilesError = null
+            try {
+                reasoningProfiles = gateway.reasoningProfiles(session.bearer, modelId).ifEmpty { listOf("auto") }
+                if (selectedResponseMode !in reasoningProfiles) selectedResponseMode = "auto"
+            } catch (reason: Exception) {
+                reasoningProfiles = listOf("auto")
+                selectedResponseMode = "auto"
+                reasoningProfilesError = consumerErrorMessage(reason, "暂时无法加载回答方式，请重试")
+            } finally {
+                reasoningProfilesLoading = false
+            }
+        }
+    }
+
+    fun suggestModelFallback() {
+        val requestedModelId = selectedModelId
+        if (requestedModelId.isBlank()) {
+            modelFallbackDialogOpen = false
+            modelSelectorOpen = true
+            return
+        }
+        scope.launch {
+            runCatching { gateway.modelAvailability(session.bearer, requestedModelId) }
+                .onSuccess { availability ->
+                    fallbackModels = availability.fallbackModels.filter { it.enabled && it.id != requestedModelId }
+                    modelFallbackDialogOpen = availability.status.lowercase() != "available"
+                    if (!modelFallbackDialogOpen) modelSelectorOpen = true
+                }
+                .onFailure { modelSelectorOpen = true }
         }
     }
 
@@ -1554,6 +1641,11 @@ internal fun P03ChatPage(
                 .getOrNull()
                 ?.let { loaded -> citations = citations + (message.id to loaded) }
         }
+        messages.filter { it.role == "assistant" && !answerRuns.containsKey(it.id) }.forEach { message ->
+            runCatching { gateway.messageRunMetadata(session.bearer, message.id) }
+                .getOrNull()
+                ?.let { metadata -> answerRuns = answerRuns + (message.id to metadata) }
+        }
     }
 
     suspend fun observeRun(runId: String) {
@@ -1581,6 +1673,7 @@ internal fun P03ChatPage(
                             ?.let { title = it.title }
                     } else if (snapshot.first.status.equals("failed", ignoreCase = true)) {
                         error = consumerCopy.getValue("provider_error")
+                        suggestModelFallback()
                     } else if (snapshot.first.status.equals("content_blocked", ignoreCase = true)) {
                         error = consumerCopy.getValue("content_blocked")
                     }
@@ -1631,19 +1724,21 @@ internal fun P03ChatPage(
             }
             try {
                 val created = if (formalConversation) {
-                    gateway.sendMessageIdempotent(
+                    gateway.sendMessageIdempotentWithProfile(
                         session.bearer,
                         conversationId,
                         body,
                         model = selectedModelId,
+                        reasoningProfile = selectedResponseMode,
                         idempotencyKey = idempotencyKey,
                     )
                 } else {
-                    val first = gateway.startConversationFromFirstMessage(
+                    val first = gateway.startConversationFromFirstMessageWithProfile(
                         bearer = session.bearer,
                         draftSessionId = draftSessionId,
                         body = body,
                         model = selectedModelId,
+                        reasoningProfile = selectedResponseMode,
                         idempotencyKey = idempotencyKey,
                         temporary = conversation.temporary,
                     )
@@ -1661,6 +1756,7 @@ internal fun P03ChatPage(
             } catch (reason: Exception) {
                 error = consumerErrorMessage(reason, consumerCopy.getValue("provider_error"), consumerCopy)
                 retryBody = body
+                suggestModelFallback()
             } finally {
                 if (formalConversation) runCatching { gateway.saveDraft(session.bearer, conversationId, draft) }
                 sending = false
@@ -1745,6 +1841,8 @@ internal fun P03ChatPage(
                     reconnecting = reconnecting,
                     consumerCopy = consumerCopy,
                     citations = citations,
+                    answerRuns = answerRuns,
+                    modelNames = models.associate { it.id to it.name },
                     onCopyCode = { clipboard.setText(AnnotatedString(it)) },
                     recovery = recovery,
                     onRecoveryAction = {
@@ -1754,7 +1852,7 @@ internal fun P03ChatPage(
                             send()
                         }
                     },
-                    onRecoveryAlternative = { modelSelectorOpen = true },
+                    onRecoveryAlternative = ::suggestModelFallback,
                 ) { message ->
                     P03MessageActions(
                         message = message,
@@ -1762,6 +1860,8 @@ internal fun P03ChatPage(
                         session = session,
                         clipboardCopy = { clipboard.setText(AnnotatedString(it)) },
                         tts = tts,
+                        modelId = selectedModelId,
+                        reasoningProfile = selectedResponseMode,
                         onRun = { nextRun ->
                             run = nextRun
                             scope.launch {
@@ -1775,6 +1875,26 @@ internal fun P03ChatPage(
                 }
             }
         }
+    }
+
+    if (modelFallbackDialogOpen) {
+        P04ModelFallbackDialog(
+            models = fallbackModels,
+            onDismiss = { modelFallbackDialogOpen = false },
+            onSelect = { model ->
+                val failedPrompt = retryBody
+                selectedModelId = model.id
+                selectedModelName = model.name
+                selectedResponseMode = "auto"
+                loadReasoningProfiles(model.id)
+                error = null
+                modelFallbackDialogOpen = false
+                if (!failedPrompt.isNullOrBlank()) {
+                    draft = failedPrompt
+                    send()
+                }
+            },
+        )
     }
 
     if (menuOpen) {
@@ -1831,6 +1951,18 @@ internal fun P03ChatPage(
                 menuOpen = false
                 onOpenConversation(newP03DraftConversation(temporary = true))
             },
+            onOpenConversationSettings = {
+                menuOpen = false
+                onOpenConversationSettings(conversation.copy(id = conversationId, title = title))
+            },
+            onOpenBranches = {
+                menuOpen = false
+                onOpenBranches(conversation.copy(id = conversationId, title = title))
+            },
+            onOpenComparison = {
+                menuOpen = false
+                onOpenComparison(conversation.copy(id = conversationId, title = title))
+            },
         )
     }
 
@@ -1848,7 +1980,11 @@ internal fun P03ChatPage(
             focusRequester = inputFocusRequester,
             onDismiss = { toolTrayOpen = false },
             onOpenModels = { toolTrayOpen = false; modelSelectorOpen = true },
-            onOpenResponseMode = { toolTrayOpen = false; responseModeSelectorOpen = true },
+            onOpenResponseMode = {
+                toolTrayOpen = false
+                responseModeSelectorOpen = true
+                if (selectedModelId.isNotBlank()) loadReasoningProfiles(selectedModelId)
+            },
             onSend = { toolTrayOpen = false; send() },
             onStop = {
                 toolTrayOpen = false
@@ -1868,8 +2004,10 @@ internal fun P03ChatPage(
             onSelect = { option ->
                 selectedModelId = option?.id.orEmpty()
                 selectedModelName = option?.name ?: "自动选择"
-                val supported = option?.reasoningProfiles.orEmpty()
-                if (selectedResponseMode !in supported && selectedResponseMode != "auto") selectedResponseMode = "auto"
+                reasoningProfiles = listOf("auto")
+                reasoningProfilesError = null
+                selectedResponseMode = "auto"
+                loadReasoningProfiles(option?.id.orEmpty())
                 modelSelectorOpen = false
             },
         )
@@ -1877,12 +2015,12 @@ internal fun P03ChatPage(
     if (responseModeSelectorOpen) {
         P03ResponseModeSelector(
             selectedMode = selectedResponseMode,
-            supportedModes = if (selectedModelId.isBlank()) {
-                models.flatMap { it.reasoningProfiles }.distinct().ifEmpty { listOf("auto") }
-            } else {
-                models.firstOrNull { it.id == selectedModelId }?.reasoningProfiles.orEmpty().ifEmpty { listOf("auto") }
-            },
+            supportedModes = reasoningProfiles,
+            loading = reasoningProfilesLoading,
+            error = reasoningProfilesError,
+            onRetry = { loadReasoningProfiles(selectedModelId) },
             onDismiss = { responseModeSelectorOpen = false },
+            displayUnavailableOptions = selectedModelId.isBlank(),
             onSelect = { mode -> selectedResponseMode = mode; responseModeSelectorOpen = false },
         )
     }
@@ -1898,6 +2036,8 @@ private fun P03ChatContent(
     reconnecting: Boolean,
     consumerCopy: Map<String, String>,
     citations: Map<String, List<MessageCitation>>,
+    answerRuns: Map<String, MessageRun>,
+    modelNames: Map<String, String>,
     onCopyCode: (String) -> Unit,
     recovery: P03RecoveryMessage? = null,
     onRecoveryAction: () -> Unit = {},
@@ -1960,6 +2100,7 @@ private fun P03ChatContent(
                             lineHeight = if (visualContract) 14.sp else MaterialTheme.typography.labelLarge.lineHeight,
                         )
                     }
+                    P04AnswerSourceLabel(message.id, answerRuns[message.id], modelNames)
                     MessageContent(
                         message.body,
                         Modifier.fillMaxWidth(),
@@ -2013,6 +2154,8 @@ private fun P03MessageActions(
     session: AuthSession,
     clipboardCopy: (String) -> Unit,
     tts: TextToSpeech,
+    modelId: String,
+    reasoningProfile: String,
     onRun: (MessageRun) -> Unit,
     onError: (String) -> Unit,
     onChangeModel: () -> Unit,
@@ -2034,7 +2177,7 @@ private fun P03MessageActions(
         },
         onRegenerate = {
             scope.launch {
-                runCatching { gateway.regenerate(session.bearer, message.id) }
+                runCatching { gateway.rerunMessage(session.bearer, message.id, modelId, reasoningProfile) }
                     .onSuccess(onRun)
                     .onFailure { onError(consumerErrorMessage(it, "暂时无法重新回答，请重试")) }
             }
@@ -2339,6 +2482,58 @@ private fun P03ToolTile(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun P04ModelFallbackDialog(
+    models: List<ModelOption>,
+    onDismiss: () -> Unit,
+    onSelect: (ModelOption) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("p04-model-fallback-dialog"),
+        title = { Text("当前模型暂不可用") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("请从可用模型中选择一个继续本次对话。")
+                if (models.isEmpty()) {
+                    Text("暂时没有可用的替代模型，请稍后再试。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    models.forEach { model ->
+                        OutlinedButton(
+                            onClick = { onSelect(model) },
+                            modifier = Modifier.fillMaxWidth().testTag("p04-fallback-model-${model.id}"),
+                        ) {
+                            Text(model.name)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("稍后再试") }
+        },
+    )
+}
+
+@Composable
+private fun P04AnswerSourceLabel(messageId: String, run: MessageRun?, modelNames: Map<String, String>) {
+    val source = when {
+        run == null -> "回答来源正在确认"
+        run.modelId.isBlank() -> "回答来源暂未提供"
+        else -> {
+            val modelName = modelNames[run.modelId].orEmpty().ifBlank { "当前模型" }
+            "回答来源：$modelName · ${responseModeLabel(run.reasoningProfile)}"
+        }
+    }
+    Text(
+        text = source,
+        color = YlvenLightColors.TextTertiary,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        modifier = Modifier.testTag("p04-answer-source-$messageId"),
+    )
+}
+
 private fun P03ModelSelector(
     models: List<ModelOption>,
     loading: Boolean,
@@ -2354,11 +2549,17 @@ private fun P03ModelSelector(
 ) {
     var category by remember(initialCategory) { mutableStateOf(initialCategory) }
     val visibleModels = when (category) {
-        "推理" -> models.filter { it.reasoningProfiles.any { profile -> normalizeResponseMode(profile) == "deep" } || it.description.contains("复杂") }
-        "视觉" -> models.filter { it.description.contains("视觉") || it.description.contains("多模态") }
-        "快速" -> models.filter { it.reasoningProfiles.any { profile -> normalizeResponseMode(profile) == "quick" } || it.description.contains("快速") }
+        "推理" -> models.filter { model ->
+            model.purpose.contains("reason", ignoreCase = true) ||
+                model.capabilities.any { it.id in setOf("reasoning", "chain-of-thought") } ||
+                model.reasoningProfiles.any { profile -> normalizeResponseMode(profile) == "deep" }
+        }
+        "视觉" -> models.filter { model -> model.capabilities.any { it.id in setOf("vision", "image", "multimodal") } }
+        "快速" -> models.filter { it.speedTier == "fast" }
         else -> models
     }
+    val providerGroups = visibleModels.groupBy { model -> model.providerName.ifBlank { model.providerId.ifBlank { "其他供应商" } } }
+    val showProviderHeadings = providerGroups.size > 1
     P03SheetContainer(
         tag = "YL-A-033-root",
         contractHeight = 527.dp,
@@ -2374,10 +2575,10 @@ private fun P03ModelSelector(
             Text("默认由 YLVEN 自动匹配适合的模型。", color = YlvenLightColors.TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf("全部", "推理", "视觉", "快速").forEach { label ->
-                    P03SelectorChip(label, label == category) { category = label }
+                    P03SelectorChip(label, label == category, visualContract) { category = label }
                 }
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(if (visualContract) 11.dp else 4.dp))
             if (showAutoOption) {
                 P03SelectorRow(
                     title = "自动选择",
@@ -2404,26 +2605,43 @@ private fun P03ModelSelector(
                 visibleModels.isEmpty() -> Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     P03StatePanel(P03RecoveryMessage("没有符合条件的模型", "清除筛选后查看全部可用模型。"))
                 }
-                else -> visibleModels.forEachIndexed { index, model ->
-                    if (showAutoOption || index > 0) Spacer(Modifier.height(6.dp))
-                    P03SelectorRow(
-                        title = model.name,
-                        description = model.description,
-                        selected = model.id == selectedModelId,
-                        enabled = model.enabled,
-                        tag = "p03-model-${model.id}",
-                        avatarLabel = model.name.firstOrNull()?.uppercase() ?: "Y",
-                        trailingLabel = when {
-                            !model.enabled -> "暂不可用"
-                            model.description.contains("多模态") -> "多模态"
-                            model.description.contains("长文") -> "长文"
-                            model.description.contains("复杂") -> "推理"
-                            else -> null
-                        },
-                        rowHeight = 64.dp,
-                        visualContract = visualContract,
-                        onClick = { onSelect(model) },
-                    )
+                else -> {
+                    // Contract boards reserve a visual break after the automatic option.
+                    if (visualContract) Spacer(Modifier.height(2.dp))
+                    LazyColumn(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        providerGroups.forEach { (providerName, providerModels) ->
+                            if (showProviderHeadings) {
+                                item(key = "provider-$providerName") {
+                                    Text(
+                                        providerName,
+                                        color = YlvenLightColors.TextSecondary,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                            items(providerModels, key = { it.id }) { model ->
+                                P03SelectorRow(
+                                    title = model.name,
+                                    description = modelSelectorDescription(model),
+                                    selected = model.id == selectedModelId,
+                                    enabled = model.enabled,
+                                    tag = "p03-model-${model.id}",
+                                    avatarLabel = model.name.firstOrNull()?.uppercase() ?: "Y",
+                                    trailingLabel = when {
+                                        !model.enabled -> "暂不可用"
+                                        model.speedTier == "fast" -> "快速"
+                                        model.speedTier == "deliberate" -> "深度"
+                                        else -> model.capabilities.firstOrNull()?.label
+                                    },
+                                    rowHeight = 64.dp,
+                                    visualContract = visualContract,
+                                    onClick = { onSelect(model) },
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -2439,6 +2657,7 @@ private fun P03ResponseModeSelector(
     onDismiss: () -> Unit,
     onSelect: (String) -> Unit,
     statusMessage: String? = null,
+    loading: Boolean = false,
     error: String? = null,
     onRetry: () -> Unit = {},
     displayUnavailableOptions: Boolean = false,
@@ -2469,8 +2688,12 @@ private fun P03ResponseModeSelector(
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
             Text("回答方式", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
             Text("无需每次设置，默认由模型自动判断。", color = YlvenLightColors.TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
-            Spacer(Modifier.height(8.dp))
-            if (error != null) {
+            Spacer(Modifier.height(if (visualContract) 11.dp else 8.dp))
+            if (loading) {
+                Box(Modifier.fillMaxWidth().weight(1f).testTag("p03-response-mode-loading"), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(Modifier.size(28.dp))
+                }
+            } else if (error != null) {
                 Box(Modifier.fillMaxWidth().testTag("p03-response-mode-error")) {
                     P03SelectorRecoveryCard(
                         recovery = P03RecoveryMessage("暂时无法加载设置", "请稍后重试，当前会继续使用自动模式。", "重试", "更换模型"),
@@ -2517,15 +2740,28 @@ private fun P03SelectorRow(
     onClick: () -> Unit,
 ) {
     val border = if (selected) YlvenLightColors.Primary else YlvenLightColors.Border
+    val contractAutoSelection = visualContract && selected && avatarLabel != null && trailingLabel == "推荐"
     Surface(
         modifier = Modifier.fillMaxWidth().height(rowHeight).clickable(enabled = enabled, onClick = onClick).testTag(tag),
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.Surface,
+        color = if (selected && visualContract) Color(0xFFEEF0FF) else if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.Surface,
         border = BorderStroke(if (selected && !visualContract) 2.dp else 1.dp, border),
     ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(
+                start = if (visualContract && avatarLabel != null) 10.dp else 12.dp,
+                end = 12.dp,
+                top = if (visualContract) 15.dp else 8.dp,
+                bottom = if (visualContract) 1.dp else 8.dp,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (avatarLabel != null) {
-                Surface(shape = CircleShape, color = YlvenLightColors.SurfaceBrandSoft, modifier = Modifier.size(if (visualContract) 32.dp else 36.dp)) {
+                Surface(
+                    shape = CircleShape,
+                    color = if (visualContract) Color(0xFFE7E9FF) else YlvenLightColors.SurfaceBrandSoft,
+                    modifier = Modifier.size(if (visualContract) 32.dp else 36.dp),
+                ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(avatarLabel, color = if (enabled) YlvenLightColors.Primary else YlvenLightColors.TextDisabled, fontWeight = FontWeight.Bold)
                     }
@@ -2541,6 +2777,7 @@ private fun P03SelectorRow(
             if (trailingLabel != null) {
                 val unavailable = trailingLabel == "不可用" || trailingLabel == "暂不可用"
                 Surface(
+                    modifier = Modifier.then(if (contractAutoSelection) Modifier.offset(x = 26.dp, y = (-7).dp) else Modifier),
                     shape = RoundedCornerShape(12.dp),
                     color = if (unavailable) YlvenLightColors.WarningSoft else YlvenLightColors.SurfaceSubtle,
                 ) {
@@ -2554,7 +2791,13 @@ private fun P03SelectorRow(
                 Spacer(Modifier.width(6.dp))
             }
             if (selected) {
-                Surface(shape = CircleShape, color = YlvenLightColors.Primary, modifier = Modifier.size(if (visualContract) 17.dp else 20.dp)) {
+                Surface(
+                    shape = CircleShape,
+                    color = YlvenLightColors.Primary,
+                    modifier = Modifier
+                        .offset(y = if (contractAutoSelection) (-23).dp else 0.dp)
+                        .size(if (visualContract) 17.dp else 20.dp),
+                ) {
                     Icon(Icons.Default.Check, "已选择", Modifier.padding(3.dp), tint = Color.White)
                 }
             }
@@ -2563,14 +2806,30 @@ private fun P03SelectorRow(
 }
 
 @Composable
-private fun P03SelectorChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun P03SelectorChip(
+    label: String,
+    selected: Boolean,
+    visualContract: Boolean = false,
+    onClick: () -> Unit,
+) {
     Surface(
-        modifier = Modifier.height(30.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(15.dp),
-        color = if (selected) YlvenLightColors.SurfaceBrandSoft else YlvenLightColors.SurfaceSubtle,
+        modifier = Modifier.height(if (visualContract) 24.dp else 30.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(if (visualContract) 12.dp else 15.dp),
+        color = when {
+            selected && visualContract -> Color(0xFFEEF0FF)
+            selected -> YlvenLightColors.SurfaceBrandSoft
+            visualContract -> Color(0xFFF2F4F7)
+            else -> YlvenLightColors.SurfaceSubtle
+        },
     ) {
-        Box(Modifier.padding(horizontal = 11.dp), contentAlignment = Alignment.Center) {
-            Text(label, color = if (selected) YlvenLightColors.Primary else YlvenLightColors.TextSecondary, style = MaterialTheme.typography.labelMedium)
+        Box(Modifier.padding(horizontal = if (visualContract) 9.dp else 11.dp), contentAlignment = Alignment.Center) {
+            Text(
+                label,
+                color = if (selected) YlvenLightColors.Primary else YlvenLightColors.TextSecondary,
+                fontSize = if (visualContract) 10.sp else MaterialTheme.typography.labelMedium.fontSize,
+                lineHeight = if (visualContract) 14.sp else MaterialTheme.typography.labelMedium.lineHeight,
+                fontWeight = if (visualContract) FontWeight.Bold else MaterialTheme.typography.labelMedium.fontWeight,
+            )
         }
     }
 }
@@ -2580,6 +2839,10 @@ private fun normalizeResponseMode(value: String): String = when (value.trim().lo
     "balanced" -> "standard"
     "reasoning" -> "deep"
     else -> value.trim().lowercase()
+}
+
+private fun modelSelectorDescription(model: ModelOption): String {
+    return model.description.ifBlank { model.purpose }
 }
 
 private fun responseModeLabel(value: String): String = when (normalizeResponseMode(value)) {
@@ -2608,6 +2871,9 @@ private fun P03ConversationMenu(
     onRequestDelete: () -> Unit,
     onDelete: () -> Unit,
     onTemporaryConversation: () -> Unit,
+    onOpenConversationSettings: () -> Unit,
+    onOpenBranches: () -> Unit,
+    onOpenComparison: () -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2649,6 +2915,12 @@ private fun P03ConversationMenu(
                 ) { Text(if (busy) "正在删除" else "确认删除") }
             } else {
                 if (formalConversation) {
+                    P03MenuRow(Icons.Default.MoreHoriz, "会话 AI 设置", "p04-open-conversation-settings", !busy, onOpenConversationSettings)
+                    HorizontalDivider(color = YlvenLightColors.Divider)
+                    P03MenuRow(Icons.Default.MoreHoriz, "会话分支", "p04-open-branches", !busy, onOpenBranches)
+                    HorizontalDivider(color = YlvenLightColors.Divider)
+                    P03MenuRow(Icons.Default.MoreHoriz, "多模型比较", "p04-open-comparison", !busy, onOpenComparison)
+                    HorizontalDivider(color = YlvenLightColors.Divider)
                     P03MenuRow(Icons.Default.Edit, "重命名", "p03-open-rename-current", !busy, onStartRename)
                     HorizontalDivider(color = YlvenLightColors.Divider)
                     P03MenuRow(Icons.Default.Folder, "移入项目", null, enabled = false, onClick = {})
@@ -2736,15 +3008,15 @@ private fun P03BottomNavigation(onOpenAccount: () -> Unit) {
             P03NavigationItem(Icons.Default.Home, "首页", selected = true) {}
             P03NavigationItem(Icons.Default.Work, "工作", selected = false) {}
             P03NavigationItem(Icons.Default.Explore, "发现", selected = false) {}
-            P03NavigationItem(Icons.Default.Person, "我的", selected = false, onClick = onOpenAccount)
+            P03NavigationItem(Icons.Default.Person, "我的", selected = false, onClick = onOpenAccount, testTag = "p03-open-account")
         }
     }
 }
 
 @Composable
-private fun P03NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+private fun P03NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, selected: Boolean, testTag: String? = null, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.width(72.dp).height(64.dp).clickable(onClick = onClick),
+        modifier = Modifier.width(72.dp).height(64.dp).clickable(onClick = onClick).then(if (testTag == null) Modifier else Modifier.testTag(testTag)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

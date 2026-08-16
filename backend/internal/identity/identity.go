@@ -190,6 +190,10 @@ type Conversation struct {
 	ArchivedAt              *time.Time `json:"archived_at,omitempty"`
 	DeletedAt               *time.Time `json:"deleted_at,omitempty"`
 	Temporary               bool       `json:"temporary,omitempty"`
+	DefaultModelID          string     `json:"default_model_id,omitempty"`
+	DefaultReasoningProfile string     `json:"default_reasoning_profile,omitempty"`
+	AISettingsVersion       int64      `json:"ai_settings_version,omitempty"`
+	AISettingsOverridden    bool       `json:"ai_settings_overridden"`
 }
 
 type Message struct {
@@ -205,14 +209,6 @@ type Message struct {
 	Status            string     `json:"status"`
 	CreatedAt         time.Time  `json:"created_at"`
 	CompletedAt       *time.Time `json:"completed_at,omitempty"`
-}
-
-type ModelCatalogEntry struct {
-	ID                string   `json:"id"`
-	Name              string   `json:"name"`
-	Enabled           bool     `json:"enabled"`
-	Description       string   `json:"description,omitempty"`
-	ReasoningProfiles []string `json:"reasoning_profiles"`
 }
 
 type HomeConfig struct {
@@ -264,26 +260,29 @@ func defaultHomeConfig() HomeConfig {
 }
 
 type MessageRun struct {
-	ID                   string     `json:"id"`
-	ConversationID       string     `json:"conversation_id"`
-	UserID               string     `json:"user_id"`
-	UserMessageID        string     `json:"user_message_id"`
-	AssistantMessageID   string     `json:"assistant_message_id"`
-	Model                string     `json:"model"`
-	BranchID             string     `json:"branch_id"`
-	IdempotencyKey       string     `json:"idempotency_key,omitempty"`
-	ContextBuildID       string     `json:"context_build_id,omitempty"`
-	Status               string     `json:"status"`
-	ErrorCode            string     `json:"error_code,omitempty"`
-	Provider             string     `json:"provider,omitempty"`
-	ContinuationUsed     bool       `json:"continuation_used"`
-	ContinuationFallback bool       `json:"continuation_fallback"`
-	StartedAt            time.Time  `json:"started_at"`
-	CompletedAt          *time.Time `json:"completed_at,omitempty"`
-	LatencyMs            int64      `json:"latency_ms,omitempty"`
-	Cursor               int64      `json:"cursor"`
-	CreatedAt            time.Time  `json:"created_at"`
-	UpdatedAt            time.Time  `json:"updated_at"`
+	ID                   string         `json:"id"`
+	ConversationID       string         `json:"conversation_id"`
+	UserID               string         `json:"user_id"`
+	UserMessageID        string         `json:"user_message_id"`
+	AssistantMessageID   string         `json:"assistant_message_id"`
+	Model                string         `json:"model"`
+	ProviderModel        string         `json:"provider_model,omitempty"`
+	ReasoningProfile     string         `json:"reasoning_profile"`
+	ReasoningParameters  map[string]any `json:"-"`
+	BranchID             string         `json:"branch_id"`
+	IdempotencyKey       string         `json:"idempotency_key,omitempty"`
+	ContextBuildID       string         `json:"context_build_id,omitempty"`
+	Status               string         `json:"status"`
+	ErrorCode            string         `json:"error_code,omitempty"`
+	Provider             string         `json:"provider,omitempty"`
+	ContinuationUsed     bool           `json:"continuation_used"`
+	ContinuationFallback bool           `json:"continuation_fallback"`
+	StartedAt            time.Time      `json:"started_at"`
+	CompletedAt          *time.Time     `json:"completed_at,omitempty"`
+	LatencyMs            int64          `json:"latency_ms,omitempty"`
+	Cursor               int64          `json:"cursor"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
 }
 
 type RunEvent struct {
@@ -366,6 +365,195 @@ type idempotencyRecord struct {
 	ExpiresAt   time.Time `json:"expires_at"`
 }
 
+// Runtime observability records are intentionally small and contain no access
+// tokens, prompts beyond a bounded diagnostic preview, or provider secrets.
+type ServiceInstance struct {
+	InstanceID  string    `json:"instance_id"`
+	ServiceName string    `json:"service_name"`
+	Version     string    `json:"version,omitempty"`
+	Status      string    `json:"status"`
+	StartedAt   time.Time `json:"started_at"`
+	LastSeenAt  time.Time `json:"last_seen_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
+}
+
+type HealthCheck struct {
+	ID         string    `json:"id"`
+	InstanceID string    `json:"instance_id"`
+	CheckName  string    `json:"check_name"`
+	Status     string    `json:"status"`
+	Detail     string    `json:"detail,omitempty"`
+	CheckedAt  time.Time `json:"checked_at"`
+}
+
+type AIRuntimeHealth struct {
+	Service    string            `json:"service"`
+	Status     string            `json:"status"`
+	InstanceID string            `json:"instance_id"`
+	CheckedAt  time.Time         `json:"checked_at"`
+	Instances  []ServiceInstance `json:"instances"`
+	Checks     []HealthCheck     `json:"checks"`
+}
+
+type ContextDebugItem struct {
+	Ordinal         int    `json:"ordinal"`
+	ItemType        string `json:"item_type"`
+	SourceID        string `json:"source_id,omitempty"`
+	Role            string `json:"role,omitempty"`
+	EstimatedTokens int    `json:"estimated_tokens"`
+	Included        bool   `json:"included"`
+	ExclusionReason string `json:"exclusion_reason,omitempty"`
+	ContentLength   int    `json:"content_length"`
+	ContentPreview  string `json:"content_preview,omitempty"`
+}
+
+type ContextDebugView struct {
+	RunID                  string             `json:"run_id"`
+	ConversationID         string             `json:"conversation_id"`
+	BranchID               string             `json:"branch_id"`
+	Status                 string             `json:"status"`
+	Model                  string             `json:"model"`
+	Provider               string             `json:"provider"`
+	Cursor                 int64              `json:"cursor"`
+	ContinuationUsed       bool               `json:"continuation_used"`
+	ContinuationFallback   bool               `json:"continuation_fallback"`
+	ContextBuildID         string             `json:"context_build_id"`
+	ContextLimitTokens     int                `json:"context_limit_tokens"`
+	InputBudgetTokens      int                `json:"input_budget_tokens"`
+	EstimatedInputTokens   int                `json:"estimated_input_tokens"`
+	OutputReserveTokens    int                `json:"output_reserve_tokens"`
+	ReasoningReserveTokens int                `json:"reasoning_reserve_tokens"`
+	ToolReserveTokens      int                `json:"tool_reserve_tokens"`
+	SafetyMarginTokens     int                `json:"safety_margin_tokens"`
+	CompactionMode         string             `json:"compaction_mode"`
+	ContinuationMode       string             `json:"continuation_mode"`
+	ContextHash            string             `json:"context_hash"`
+	CompilerVersion        string             `json:"compiler_version"`
+	Items                  []ContextDebugItem `json:"items"`
+}
+
+type DistributedTestRun struct {
+	ID           string         `json:"id"`
+	TestKey      string         `json:"test_key"`
+	Status       string         `json:"status"`
+	InstanceA    string         `json:"instance_a,omitempty"`
+	InstanceB    string         `json:"instance_b,omitempty"`
+	CursorBefore int64          `json:"cursor_before"`
+	CursorAfter  int64          `json:"cursor_after"`
+	ErrorCode    string         `json:"error_code,omitempty"`
+	Details      map[string]any `json:"details,omitempty"`
+	StartedAt    time.Time      `json:"started_at"`
+	CompletedAt  *time.Time     `json:"completed_at,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
+// P04 records keep model choice, comparison and operational policy explicit.
+type AIPreference struct {
+	UserID           string    `json:"user_id"`
+	ModelID          string    `json:"model_id"`
+	ReasoningProfile string    `json:"reasoning_profile"`
+	Version          int64     `json:"version"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ComparisonCandidate struct {
+	RunID            string `json:"run_id"`
+	ModelID          string `json:"model_id"`
+	ReasoningProfile string `json:"reasoning_profile"`
+	Status           string `json:"status"`
+	MessageID        string `json:"message_id,omitempty"`
+	Body             string `json:"body,omitempty"`
+	ErrorCode        string `json:"error_code,omitempty"`
+}
+
+type ComparisonGroup struct {
+	ID             string                `json:"id"`
+	ConversationID string                `json:"conversation_id"`
+	UserID         string                `json:"user_id"`
+	Prompt         string                `json:"prompt"`
+	Status         string                `json:"status"`
+	Candidates     []ComparisonCandidate `json:"candidates"`
+	AdoptedRunID   string                `json:"adopted_run_id,omitempty"`
+	SynthesisRunID string                `json:"synthesis_run_id,omitempty"`
+	CreatedAt      time.Time             `json:"created_at"`
+	UpdatedAt      time.Time             `json:"updated_at"`
+}
+
+type ProviderChannel struct {
+	ID            string    `json:"id"`
+	ProviderID    string    `json:"provider_id"`
+	Name          string    `json:"name"`
+	CredentialRef string    `json:"credential_reference"`
+	Endpoint      string    `json:"endpoint"`
+	Enabled       bool      `json:"enabled"`
+	Priority      int       `json:"priority"`
+	Version       int64     `json:"version"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type RoutingPolicy struct {
+	ID          string   `json:"id"`
+	ModelID     string   `json:"model_id"`
+	Primary     string   `json:"primary_channel_id"`
+	Fallbacks   []string `json:"fallback_channel_ids"`
+	MaxAttempts int      `json:"max_attempts"`
+	Enabled     bool     `json:"enabled"`
+	Version     int64    `json:"version"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type ProviderRuntimePolicy struct {
+	ProviderID       string `json:"provider_id"`
+	MaxConcurrency   int    `json:"max_concurrency"`
+	TimeoutSeconds   int    `json:"timeout_seconds"`
+	CircuitThreshold int    `json:"circuit_threshold"`
+	CooldownSeconds  int    `json:"cooldown_seconds"`
+	Enabled          bool   `json:"enabled"`
+	Version          int64  `json:"version"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ModelHealthStatus struct {
+	ModelID      string    `json:"model_id"`
+	ProviderID   string    `json:"provider_id"`
+	Status       string    `json:"status"`
+	LatencyMs    int64     `json:"latency_ms"`
+	LastProbeAt  time.Time `json:"last_probe_at"`
+	Capabilities []string  `json:"capabilities"`
+	ErrorCode    string    `json:"error_code,omitempty"`
+}
+
+type UsageEvent struct {
+	ID              string    `json:"id"`
+	UserID          string    `json:"user_id"`
+	RunID           string    `json:"run_id"`
+	ModelID         string    `json:"model_id"`
+	InputTokens     int       `json:"input_tokens"`
+	OutputTokens    int       `json:"output_tokens"`
+	ReasoningTokens int       `json:"reasoning_tokens"`
+	PriceVersionID  string    `json:"price_version_id"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type PriceSnapshot struct {
+	ID                  string    `json:"id"`
+	ModelID             string    `json:"model_id"`
+	InputPerMillion     float64   `json:"input_per_million"`
+	OutputPerMillion    float64   `json:"output_per_million"`
+	ReasoningPerMillion float64   `json:"reasoning_per_million"`
+	EffectiveAt         time.Time `json:"effective_at"`
+	Version             int64     `json:"version"`
+}
+
+// ModelCapabilityConfig is the operator-owned context budget for one catalog
+// model. It is separate from ModelCapability, which is the compiler input.
+type ModelCapabilityConfig struct {
+	ModelID string `json:"model_id"`
+	ModelCapability
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type state struct {
 	Challenges             map[string]Challenge                 `json:"challenges"`
 	OTPs                   map[string]OTP                       `json:"otps"`
@@ -385,7 +573,10 @@ type state struct {
 	ConversationBranches   map[string]ConversationBranch        `json:"conversation_branches"`
 	Messages               map[string]Message                   `json:"messages"`
 	MessageParts           map[string]MessagePart               `json:"message_parts"`
+	ModelProviders         []ModelProvider                      `json:"model_providers"`
 	ModelCatalog           []ModelCatalogEntry                  `json:"model_catalog"`
+	CapabilityProbes       []CapabilityProbeResult              `json:"capability_probes"`
+	ModelCatalogAudit      []ModelCatalogAuditEvent             `json:"model_catalog_audit"`
 	HomeConfig             HomeConfig                           `json:"home_config"`
 	Runs                   map[string]MessageRun                `json:"runs"`
 	RunEvents              map[string][]RunEvent                `json:"run_events"`
@@ -399,6 +590,18 @@ type state struct {
 	ContextCompactions     map[string]ContextCompaction         `json:"context_compactions"`
 	ProviderStates         map[string]ProviderConversationState `json:"provider_conversation_states"`
 	Idempotency            map[string]idempotencyRecord         `json:"idempotency_records"`
+	ServiceInstances       map[string]ServiceInstance           `json:"service_instances"`
+	HealthChecks           []HealthCheck                        `json:"health_checks"`
+	TestRuns               map[string]DistributedTestRun        `json:"test_runs"`
+	AIPreferences          map[string]AIPreference               `json:"ai_preferences"`
+	ComparisonGroups       map[string]ComparisonGroup            `json:"comparison_groups"`
+	ProviderChannels       map[string]ProviderChannel            `json:"provider_channels"`
+	RoutingPolicies        map[string]RoutingPolicy              `json:"routing_policies"`
+	ProviderRuntimePolicies map[string]ProviderRuntimePolicy     `json:"provider_runtime_policies"`
+	ModelHealth            map[string]ModelHealthStatus          `json:"model_health"`
+	UsageEvents            map[string]UsageEvent                 `json:"usage_events"`
+	PriceSnapshots         map[string]PriceSnapshot               `json:"price_snapshots"`
+	ModelCapabilities      map[string]ModelCapabilityConfig       `json:"model_capabilities"`
 }
 
 type Store struct {
@@ -406,10 +609,15 @@ type Store struct {
 	path            string
 	data            state
 	conversationSQL *postgresConversationStore
+	instanceID      string
 }
 
 func NewStore(path string) (*Store, error) {
-	s := &Store{path: path, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, ConversationBranches: map[string]ConversationBranch{}, Messages: map[string]Message{}, MessageParts: map[string]MessagePart{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ContextBuilds: map[string]ContextBuild{}, ConversationSummaries: map[string]ConversationSummary{}, ContextCompactions: map[string]ContextCompaction{}, ProviderStates: map[string]ProviderConversationState{}, Idempotency: map[string]idempotencyRecord{}, ModelCatalog: []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}, HomeConfig: defaultHomeConfig()}}
+	instanceSuffix, _ := randomToken(8)
+	if instanceSuffix == "" {
+		instanceSuffix = "local"
+	}
+	s := &Store{path: path, instanceID: "ai-runtime-" + instanceSuffix, data: state{Challenges: map[string]Challenge{}, OTPs: map[string]OTP{}, Users: map[string]User{}, Sessions: map[string]Session{}, RateLimits: map[string][]time.Time{}, Settings: defaultSettings(), Roles: defaultRoles(), AdminUsers: map[string]AdminUser{}, AdminSessions: map[string]AdminSession{}, StepUpChallenges: map[string]StepUpChallenge{}, EmailTemplates: defaultEmailTemplates(), NotificationDeliveries: []NotificationDelivery{}, Workspaces: map[string]Workspace{}, Conversations: map[string]Conversation{}, ConversationBranches: map[string]ConversationBranch{}, Messages: map[string]Message{}, MessageParts: map[string]MessagePart{}, Runs: map[string]MessageRun{}, RunEvents: map[string][]RunEvent{}, Exports: map[string]ExportJob{}, Drafts: map[string]Draft{}, Metrics: []map[string]any{}, Feedback: map[string]MessageFeedback{}, SpeechJobs: map[string]SpeechJob{}, ContextBuilds: map[string]ContextBuild{}, ConversationSummaries: map[string]ConversationSummary{}, ContextCompactions: map[string]ContextCompaction{}, ProviderStates: map[string]ProviderConversationState{}, Idempotency: map[string]idempotencyRecord{}, ServiceInstances: map[string]ServiceInstance{}, HealthChecks: []HealthCheck{}, TestRuns: map[string]DistributedTestRun{}, AIPreferences: map[string]AIPreference{}, ComparisonGroups: map[string]ComparisonGroup{}, ProviderChannels: map[string]ProviderChannel{}, RoutingPolicies: map[string]RoutingPolicy{}, ProviderRuntimePolicies: map[string]ProviderRuntimePolicy{}, ModelHealth: map[string]ModelHealthStatus{}, UsageEvents: map[string]UsageEvent{}, PriceSnapshots: map[string]PriceSnapshot{}, ModelCapabilities: map[string]ModelCapabilityConfig{}, ModelProviders: defaultModelProviders(), ModelCatalog: defaultModelCatalog(), CapabilityProbes: []CapabilityProbeResult{}, ModelCatalogAudit: []ModelCatalogAuditEvent{}, HomeConfig: defaultHomeConfig()}}
 	if path == "" {
 		return s, nil
 	}
@@ -474,8 +682,21 @@ func NewStore(path string) (*Store, error) {
 	if s.data.MessageParts == nil {
 		s.data.MessageParts = map[string]MessagePart{}
 	}
+	if len(s.data.ModelProviders) == 0 {
+		s.data.ModelProviders = defaultModelProviders()
+	}
 	if s.data.ModelCatalog == nil {
-		s.data.ModelCatalog = []ModelCatalogEntry{{ID: "ylven-default", Name: "YLVEN 默认模型", Enabled: true}}
+		s.data.ModelCatalog = defaultModelCatalog()
+	} else {
+		for index := range s.data.ModelCatalog {
+			s.data.ModelCatalog[index] = normalizeCatalogEntry(s.data.ModelCatalog[index])
+		}
+	}
+	if s.data.CapabilityProbes == nil {
+		s.data.CapabilityProbes = []CapabilityProbeResult{}
+	}
+	if s.data.ModelCatalogAudit == nil {
+		s.data.ModelCatalogAudit = []ModelCatalogAuditEvent{}
 	}
 	if s.data.HomeConfig.UpdatedAt.IsZero() {
 		s.data.HomeConfig = defaultHomeConfig()
@@ -502,6 +723,24 @@ func NewStore(path string) (*Store, error) {
 	if s.data.Idempotency == nil {
 		s.data.Idempotency = map[string]idempotencyRecord{}
 	}
+	if s.data.ServiceInstances == nil {
+		s.data.ServiceInstances = map[string]ServiceInstance{}
+	}
+	if s.data.HealthChecks == nil {
+		s.data.HealthChecks = []HealthCheck{}
+	}
+	if s.data.TestRuns == nil {
+		s.data.TestRuns = map[string]DistributedTestRun{}
+	}
+	if s.data.AIPreferences == nil { s.data.AIPreferences = map[string]AIPreference{} }
+	if s.data.ComparisonGroups == nil { s.data.ComparisonGroups = map[string]ComparisonGroup{} }
+	if s.data.ProviderChannels == nil { s.data.ProviderChannels = map[string]ProviderChannel{} }
+	if s.data.RoutingPolicies == nil { s.data.RoutingPolicies = map[string]RoutingPolicy{} }
+	if s.data.ProviderRuntimePolicies == nil { s.data.ProviderRuntimePolicies = map[string]ProviderRuntimePolicy{} }
+	if s.data.ModelHealth == nil { s.data.ModelHealth = map[string]ModelHealthStatus{} }
+	if s.data.UsageEvents == nil { s.data.UsageEvents = map[string]UsageEvent{} }
+	if s.data.PriceSnapshots == nil { s.data.PriceSnapshots = map[string]PriceSnapshot{} }
+	if s.data.ModelCapabilities == nil { s.data.ModelCapabilities = map[string]ModelCapabilityConfig{} }
 	return s, nil
 }
 
@@ -1042,7 +1281,7 @@ func (s *Store) CreateConversation(access, title string) (Conversation, error) {
 		title = "新对话"
 		titleSource = "AUTO_TEMP"
 	}
-	item := Conversation{ID: id, UserID: user.ID, Title: title, TitleSource: titleSource, TitleLocked: titleSource == "USER", ActiveBranchID: id, Status: "active", CreatedAt: now, UpdatedAt: now}
+	item := Conversation{ID: id, UserID: user.ID, Title: title, TitleSource: titleSource, TitleLocked: titleSource == "USER", ActiveBranchID: id, Status: "active", DefaultModelID: "ylven-default", DefaultReasoningProfile: "auto", AISettingsVersion: 1, CreatedAt: now, UpdatedAt: now}
 	s.data.Conversations[id] = item
 	s.data.ConversationBranches[id] = ConversationBranch{ID: id, ConversationID: id, Status: "active", CreatedAt: now, UpdatedAt: now}
 	s.appendAuditLocked("conversation_created", user.Email, id)
@@ -1304,16 +1543,28 @@ func (s *Store) StartRunIdempotent(access, conversationID, body, model, idempote
 }
 
 func (s *Store) StartRunIdempotentResult(access, conversationID, body, model, idempotencyKey string) (MessageRun, bool, error) {
+	selection, err := s.effectiveSelection(access, conversationID, model, "")
+	if err != nil {
+		return MessageRun{}, false, err
+	}
+	return s.startRunIdempotentResult(access, conversationID, body, idempotencyKey, selection)
+}
+
+func (s *Store) StartRunIdempotentResultWithProfile(access, conversationID, body, model, reasoningProfile, idempotencyKey string) (MessageRun, bool, error) {
+	selection, err := s.effectiveSelection(access, conversationID, model, reasoningProfile)
+	if err != nil {
+		return MessageRun{}, false, err
+	}
+	return s.startRunIdempotentResult(access, conversationID, body, idempotencyKey, selection)
+}
+
+func (s *Store) startRunIdempotentResult(access, conversationID, body, idempotencyKey string, selection ModelSelection) (MessageRun, bool, error) {
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return MessageRun{}, false, errors.New("message_body_required")
 	}
 	if len([]rune(body)) > 200000 {
 		return MessageRun{}, false, errors.New("message_body_too_long")
-	}
-	model = strings.TrimSpace(model)
-	if model == "" {
-		model = "ylven-default"
 	}
 	idempotencyKey = strings.TrimSpace(idempotencyKey)
 	if idempotencyKey == "" || len(idempotencyKey) > 160 {
@@ -1324,7 +1575,7 @@ func (s *Store) StartRunIdempotentResult(access, conversationID, body, model, id
 		if err != nil {
 			return MessageRun{}, false, err
 		}
-		return s.conversationSQL.startRun(user, conversationID, body, model, idempotencyKey, "conversation_run")
+		return s.conversationSQL.startRun(user, conversationID, body, selection, idempotencyKey, "conversation_run")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1336,10 +1587,26 @@ func (s *Store) StartRunIdempotentResult(access, conversationID, body, model, id
 	if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil {
 		return MessageRun{}, false, errors.New("conversation_not_found")
 	}
-	return s.startRunLocked(user, conversation, body, model, idempotencyKey, "conversation_run")
+	return s.startRunLocked(user, conversation, body, selection, idempotencyKey, "conversation_run")
 }
 
 func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, model, idempotencyKey string, temporary bool) (FirstMessageResult, error) {
+	selection, err := s.defaultSelection(access, model, "")
+	if err != nil {
+		return FirstMessageResult{}, err
+	}
+	return s.startConversationFromFirstMessage(access, draftSessionID, body, idempotencyKey, temporary, selection)
+}
+
+func (s *Store) StartConversationFromFirstMessageWithProfile(access, draftSessionID, body, model, reasoningProfile, idempotencyKey string, temporary bool) (FirstMessageResult, error) {
+	selection, err := s.defaultSelection(access, model, reasoningProfile)
+	if err != nil {
+		return FirstMessageResult{}, err
+	}
+	return s.startConversationFromFirstMessage(access, draftSessionID, body, idempotencyKey, temporary, selection)
+}
+
+func (s *Store) startConversationFromFirstMessage(access, draftSessionID, body, idempotencyKey string, temporary bool, selection ModelSelection) (FirstMessageResult, error) {
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return FirstMessageResult{}, errors.New("message_body_required")
@@ -1351,16 +1618,12 @@ func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, 
 	if strings.TrimSpace(idempotencyKey) == "" {
 		idempotencyKey = draftSessionID
 	}
-	model = strings.TrimSpace(model)
-	if model == "" {
-		model = "ylven-default"
-	}
 	if s.conversationSQL != nil {
 		user, err := s.authenticatedUser(access)
 		if err != nil {
 			return FirstMessageResult{}, err
 		}
-		return s.conversationSQL.firstMessage(user, draftSessionID, body, model, idempotencyKey, temporary)
+		return s.conversationSQL.firstMessage(user, draftSessionID, body, selection, idempotencyKey, temporary)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1368,7 +1631,7 @@ func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, 
 	if err != nil {
 		return FirstMessageResult{}, err
 	}
-	requestHash := conversationRequestHash(body, model)
+	requestHash := conversationSelectionRequestHash(body, selection)
 	recordKey := user.ID + "|first_message|" + idempotencyKey
 	if record, exists := s.data.Idempotency[recordKey]; exists {
 		if record.RequestHash != requestHash {
@@ -1390,10 +1653,10 @@ func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, 
 	if temporary {
 		status = "temporary"
 	}
-	conversation := Conversation{ID: conversationID, UserID: user.ID, Title: TemporaryConversationTitle(body), TitleSource: "AUTO_TEMP", ActiveBranchID: conversationID, Status: status, CreatedAt: now, UpdatedAt: now, Temporary: temporary}
+	conversation := Conversation{ID: conversationID, UserID: user.ID, Title: TemporaryConversationTitle(body), TitleSource: "AUTO_TEMP", ActiveBranchID: conversationID, Status: status, DefaultModelID: "ylven-default", DefaultReasoningProfile: "auto", AISettingsVersion: 1, CreatedAt: now, UpdatedAt: now, Temporary: temporary}
 	s.data.Conversations[conversationID] = conversation
 	s.data.ConversationBranches[conversationID] = ConversationBranch{ID: conversationID, ConversationID: conversationID, Status: "active", CreatedAt: now, UpdatedAt: now}
-	run, _, err := s.startRunLocked(user, conversation, body, model, idempotencyKey, "first_message")
+	run, _, err := s.startRunLocked(user, conversation, body, selection, idempotencyKey, "first_message")
 	if err != nil {
 		delete(s.data.Conversations, conversationID)
 		delete(s.data.ConversationBranches, conversationID)
@@ -1407,8 +1670,8 @@ func (s *Store) StartConversationFromFirstMessage(access, draftSessionID, body, 
 	return FirstMessageResult{Conversation: conversation, Run: run, Created: true}, nil
 }
 
-func (s *Store) startRunLocked(user User, conversation Conversation, body, model, idempotencyKey, operation string) (MessageRun, bool, error) {
-	requestHash := conversationRequestHash(body, model)
+func (s *Store) startRunLocked(user User, conversation Conversation, body string, selection ModelSelection, idempotencyKey, operation string) (MessageRun, bool, error) {
+	requestHash := conversationSelectionRequestHash(body, selection)
 	recordKey := user.ID + "|" + operation + "|" + idempotencyKey
 	if record, exists := s.data.Idempotency[recordKey]; exists {
 		if record.RequestHash != requestHash {
@@ -1437,7 +1700,10 @@ func (s *Store) startRunLocked(user User, conversation Conversation, body, model
 	userMessage := Message{ID: userMessageID, ConversationID: conversation.ID, UserID: user.ID, BranchID: conversation.ActiveBranchID, Sequence: sequence, Role: "user", Body: body, Status: "completed", CreatedAt: now, CompletedAt: &now}
 	s.data.Messages[userMessageID] = userMessage
 	s.data.MessageParts[userMessageID] = MessagePart{ID: userMessageID, MessageID: userMessageID, Ordinal: 0, Kind: "TEXT", TextContent: body, Metadata: map[string]any{}, CreatedAt: now}
-	run := MessageRun{ID: runID, ConversationID: conversation.ID, UserID: user.ID, UserMessageID: userMessageID, Model: model, BranchID: conversation.ActiveBranchID, IdempotencyKey: idempotencyKey, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
+	run := MessageRun{ID: runID, ConversationID: conversation.ID, UserID: user.ID, UserMessageID: userMessageID,
+		Model: selection.CatalogModelID, ProviderModel: selection.ProviderModel, ReasoningProfile: selection.ReasoningProfile,
+		ReasoningParameters: copyJSONMap(selection.ReasoningParameters), BranchID: conversation.ActiveBranchID,
+		IdempotencyKey: idempotencyKey, Provider: "upstream", Status: "streaming", StartedAt: now, CreatedAt: now, UpdatedAt: now}
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = []RunEvent{}
 	conversation.UpdatedAt = now
@@ -1496,7 +1762,8 @@ func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, er
 		return MessageRun{}, err
 	}
 	sequence := s.nextMessageSequenceLocked(run.ConversationID, run.BranchID)
-	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, BranchID: run.BranchID, Sequence: sequence, ParentMessageID: run.UserMessageID, Role: "assistant", Body: assistantBody, Status: "completed", CreatedAt: now, CompletedAt: &now}
+	userMessage := s.data.Messages[run.UserMessageID]
+	assistant := Message{ID: assistantID, ConversationID: run.ConversationID, UserID: user.ID, BranchID: run.BranchID, Sequence: sequence, ParentMessageID: run.UserMessageID, ComparisonGroupID: userMessage.ComparisonGroupID, Role: "assistant", Body: assistantBody, Status: "completed", CreatedAt: now, CompletedAt: &now}
 	s.data.Messages[assistantID] = assistant
 	s.data.MessageParts[assistantID] = MessagePart{ID: assistantID, MessageID: assistantID, Ordinal: 0, Kind: "TEXT", TextContent: assistantBody, Metadata: map[string]any{}, CreatedAt: now}
 	run.AssistantMessageID = assistantID
@@ -1514,6 +1781,7 @@ func (s *Store) CompleteRun(access, runID, assistantBody string) (MessageRun, er
 	run.LatencyMs = completedAt.Sub(run.StartedAt).Milliseconds()
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = events
+	s.refreshMemoryComparisonForRunLocked(run)
 	s.appendAuditLocked("message_run_completed", user.Email, runID)
 	return run, s.persistLocked()
 }
@@ -1547,6 +1815,7 @@ func (s *Store) FailRun(access, runID, code string) (MessageRun, error) {
 	run.Cursor++
 	s.data.Runs[runID] = run
 	s.data.RunEvents[runID] = append(s.data.RunEvents[runID], RunEvent{ID: run.Cursor, RunID: runID, Type: "failed", CreatedAt: run.UpdatedAt})
+	s.refreshMemoryComparisonForRunLocked(run)
 	s.appendAuditLocked("message_run_failed", user.Email, runID)
 	return run, s.persistLocked()
 }
@@ -2323,16 +2592,56 @@ func (s *Store) MobileModelCatalog(access string) ([]ModelCatalogEntry, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	items := make([]ModelCatalogEntry, 0, len(s.data.ModelCatalog))
-	for _, item := range s.data.ModelCatalog {
-		copyItem := item
-		copyItem.ReasoningProfiles = append([]string(nil), item.ReasoningProfiles...)
-		if len(copyItem.ReasoningProfiles) == 0 {
-			copyItem.ReasoningProfiles = []string{"auto"}
+	providers := map[string]ModelProvider{}
+	for _, provider := range s.data.ModelProviders {
+		providers[provider.ID] = provider
+	}
+	latestProbe := map[string]CapabilityProbeResult{}
+	now := time.Now().UTC()
+	for _, probe := range s.data.CapabilityProbes {
+		key := probe.ModelID + "\x00" + probe.CapabilityID
+		current, exists := latestProbe[key]
+		if !exists || probe.ProbedAt.After(current.ProbedAt) || (probe.ProbedAt.Equal(current.ProbedAt) && probe.CreatedAt.After(current.CreatedAt)) {
+			latestProbe[key] = probe
 		}
+	}
+	items := make([]ModelCatalogEntry, 0, len(s.data.ModelCatalog))
+	for _, raw := range s.data.ModelCatalog {
+		copyItem := normalizeCatalogEntry(raw)
+		provider, providerExists := providers[copyItem.ProviderID]
+		copyItem.Enabled = copyItem.Enabled && providerExists && provider.Enabled
+		copyItem.ProviderName = provider.Name
+		copyItem.ReasoningProfiles = append([]string(nil), copyItem.ReasoningProfiles...)
+		copyItem.ReasoningMappings = nil
+		copyItem.Capabilities = []ModelCapabilityTag{}
+		for key, probe := range latestProbe {
+			if !strings.HasPrefix(key, copyItem.ID+"\x00") || probe.Status != "passed" || (probe.ExpiresAt != nil && !probe.ExpiresAt.After(now)) {
+				continue
+			}
+			copyItem.Capabilities = append(copyItem.Capabilities, ModelCapabilityTag{ID: probe.CapabilityID, Label: valueOr(probe.CapabilityLabel, probe.CapabilityID), ProbedAt: probe.ProbedAt})
+		}
+		sort.Slice(copyItem.Capabilities, func(i, j int) bool { return copyItem.Capabilities[i].ID < copyItem.Capabilities[j].ID })
 		items = append(items, copyItem)
 	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].ProviderID == items[j].ProviderID && items[i].SortOrder == items[j].SortOrder {
+			return false
+		}
+		if items[i].ProviderID == items[j].ProviderID {
+			return items[i].SortOrder < items[j].SortOrder
+		}
+		return providers[items[i].ProviderID].SortOrder < providers[items[j].ProviderID].SortOrder
+	})
 	return items, nil
+}
+
+func conversationSelectionRequestHash(body string, selection ModelSelection) string {
+	if valueOr(selection.ReasoningProfile, "auto") == "auto" && len(selection.ReasoningParameters) == 0 &&
+		(selection.ProviderModel == "" || selection.ProviderModel == selection.CatalogModelID) {
+		return conversationRequestHash(body, selection.CatalogModelID)
+	}
+	parameters, _ := json.Marshal(selection.ReasoningParameters)
+	return conversationRequestHash(body, selection.CatalogModelID+"\x00"+selection.ProviderModel+"\x00"+selection.ReasoningProfile+"\x00"+string(parameters))
 }
 
 func (s *Store) ListAllConversations() []Conversation {

@@ -104,6 +104,12 @@ private enum class IdentityScreen {
     REGISTER_OTP,
     REGISTERED,
     ACCOUNT,
+    P04_HUB,
+    P04_AI_SETTINGS,
+    P04_CONVERSATION_SETTINGS,
+    P04_BRANCHES,
+    P04_COMPARISON,
+    P04_SERVICE_STATUS,
     HOME,
     CHAT,
 }
@@ -258,6 +264,47 @@ fun YlvenApp(
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
                 onBack = { screen = IdentityScreen.HOME },
+                onOpenP04 = { screen = IdentityScreen.P04_HUB },
+            )
+            IdentityScreen.P04_HUB -> P04HubPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                onBack = { screen = IdentityScreen.ACCOUNT },
+                onAISettings = { screen = IdentityScreen.P04_AI_SETTINGS },
+                onServiceStatus = { screen = IdentityScreen.P04_SERVICE_STATUS },
+                onConversationSettings = { activeConversation = it; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
+                onBranches = { activeConversation = it; screen = IdentityScreen.P04_BRANCHES },
+                onComparison = { activeConversation = it; screen = IdentityScreen.P04_COMPARISON },
+            )
+            IdentityScreen.P04_AI_SETTINGS -> P04AISettingsPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                onBack = { screen = IdentityScreen.P04_HUB },
+            )
+            IdentityScreen.P04_CONVERSATION_SETTINGS -> P04ConversationSettingsPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                conversation = requireNotNull(activeConversation),
+                onBack = { screen = IdentityScreen.P04_HUB },
+                onUpdated = { activeConversation = it; screen = IdentityScreen.P04_HUB },
+            )
+            IdentityScreen.P04_BRANCHES -> P04BranchesPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                conversation = requireNotNull(activeConversation),
+                onBack = { screen = IdentityScreen.P04_HUB },
+                onUpdated = { activeConversation = it },
+            )
+            IdentityScreen.P04_COMPARISON -> P04ComparisonPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                conversation = requireNotNull(activeConversation),
+                onBack = { screen = IdentityScreen.P04_HUB },
+            )
+            IdentityScreen.P04_SERVICE_STATUS -> P04ServiceStatusPage(
+                gateway = gateway,
+                session = requireNotNull(session),
+                onBack = { screen = IdentityScreen.P04_HUB },
             )
             IdentityScreen.HOME -> P03HomePage(
                 gateway = gateway,
@@ -277,6 +324,9 @@ fun YlvenApp(
                     activeConversation = conversation
                     screen = IdentityScreen.CHAT
                 },
+                onOpenConversationSettings = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
+                onOpenBranches = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_BRANCHES },
+                onOpenComparison = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_COMPARISON },
             )
         }
 
@@ -579,6 +629,7 @@ private fun AccountPage(
     onSessionUpdated: (AuthSession) -> Unit,
     onLoggedOut: () -> Unit,
     onBack: () -> Unit,
+    onOpenP04: () -> Unit = {},
 ) {
     var devices by remember { mutableStateOf<List<DeviceSession>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -643,6 +694,12 @@ private fun AccountPage(
                         }
                     }
                 }
+            }
+            item {
+                OutlinedButton(
+                    onClick = onOpenP04,
+                    modifier = Modifier.fillMaxWidth().height(52.dp).testTag("p04-open-workbench"),
+                ) { Text("AI 工作台（P04）") }
             }
             item {
                 OutlinedButton(

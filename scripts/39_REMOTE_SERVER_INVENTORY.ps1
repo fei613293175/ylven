@@ -25,7 +25,13 @@ for c in git java go node pnpm python3 adb; do printf '%s: ' "$c"; command -v "$
 section ANDROID_SDK; printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}"; (ls -1 "${ANDROID_SDK_ROOT:-/nonexistent}/platforms" 2>/dev/null || true)
 section REVERSE_PROXY; (nginx -v 2>&1 || true); (caddy version 2>/dev/null || true); (traefik version 2>/dev/null || true)
 '@
-$result=& ssh $SshTarget $script 2>&1
+# PowerShell text pipelines append CRLF when invoking native processes. Bash
+# treats that carriage return as part of shell tokens, so transmit the script
+# as base64 and decode it on the remote host. Base64 also keeps the script
+# independent of the remote shell's argument parsing.
+$script = $script -replace "`r", ""
+$encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($script))
+$result = & ssh $SshTarget "echo $encoded | base64 -d | bash" 2>&1
 $result | Set-Content -Path $out -Encoding UTF8
 if ($LASTEXITCODE -ne 0) { throw "Remote read-only inventory failed; partial output: $out" }
 Write-Host "Read-only server inventory saved locally: $out"
