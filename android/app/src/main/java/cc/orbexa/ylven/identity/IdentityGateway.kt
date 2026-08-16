@@ -5,17 +5,21 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import cc.orbexa.ylven.BuildConfig
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.KeyStore
+import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 data class OtpChallenge(
@@ -331,6 +335,15 @@ class HttpIdentityGateway(
     private val baseUrl: String = BuildConfig.API_BASE_URL.trimEnd('/'),
     private val deviceId: String = "android-test-device",
 ) : IdentityGateway {
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .callTimeout(30, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(false)
+        .protocols(listOf(Protocol.HTTP_1_1))
+        .build()
+
     override suspend fun startRegistration(email: String): OtpChallenge {
         val security = createRegistrationChallenge(email)
         verifyAnswer(security, answerFor(security.question))
@@ -776,36 +789,20 @@ class HttpIdentityGateway(
         bearer: String?,
         headers: Map<String, String>,
     ): JSONObject {
-        val bodyBytes = body?.toString()?.toByteArray(Charsets.UTF_8)
-        val connection = (URL(baseUrl + path).openConnection() as HttpURLConnection).apply {
-            requestMethod = method
-            connectTimeout = 10_000
-            readTimeout = 15_000
-            useCaches = false
-            doInput = true
-            // Some Android vendor stacks can stall when a keep-alive connection
-            // is reused for the next POST. Close each short API exchange.
-            setRequestProperty("Connection", "close")
-            setRequestProperty("Accept-Encoding", "identity")
-            setRequestProperty("Accept", "application/json")
-            if (!bearer.isNullOrBlank()) setRequestProperty("Authorization", "Bearer $bearer")
-            headers.forEach { (name, value) -> setRequestProperty(name, value) }
-            if (bodyBytes != null) {
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                setFixedLengthStreamingMode(bodyBytes.size)
-            }
+        val requestBuilder = Request.Builder()
+            .url(baseUrl + path)
+            .header("Accept", "application/json")
+        if (!bearer.isNullOrBlank()) requestBuilder.header("Authorization", "Bearer $bearer")
+        headers.forEach { (name, value) -> requestBuilder.header(name, value) }
+        val requestBody = if (method == "GET" || method == "HEAD") {
+            null
+        } else {
+            body?.toString()?.toRequestBody(JSON_MEDIA_TYPE) ?: EMPTY_REQUEST_BODY
         }
-        return try {
-            bodyBytes?.let { bytes ->
-                connection.outputStream.use { stream ->
-                    stream.write(bytes)
-                    stream.flush()
-                }
-            }
-            val status = connection.responseCode
-            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val raw = stream?.let { readResponseBody(it, connection.contentLengthLong) }.orEmpty()
+        val request = requestBuilder.method(method, requestBody).build()
+        return httpClient.newCall(request).execute().use { response ->
+            val status = response.code
+            val raw = response.body?.string().orEmpty()
             val json = if (raw.isBlank()) JSONObject() else JSONObject(raw)
             if (status !in 200..299) {
                 val error = json.optJSONObject("error")
@@ -816,32 +813,12 @@ class HttpIdentityGateway(
                 )
             }
             json
-        } finally {
-            connection.disconnect()
         }
     }
 
-    /**
-     * Read bounded JSON responses without waiting for an EOF that some vendor
-     * HttpURLConnection implementations do not surface on keep-alive sockets.
-     */
-    private fun readResponseBody(stream: InputStream, contentLength: Long): String {
-        stream.use { input ->
-            val output = ByteArrayOutputStream(contentLength.coerceIn(0L, 1_048_576L).toInt())
-            if (contentLength >= 0L) {
-                val buffer = ByteArray(8 * 1024)
-                var remaining = contentLength
-                while (remaining > 0L) {
-                    val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
-                    if (count < 0) break
-                    output.write(buffer, 0, count)
-                    remaining -= count
-                }
-            } else {
-                input.copyTo(output)
-            }
-            return output.toString(Charsets.UTF_8.name())
-        }
+    private companion object {
+        val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        val EMPTY_REQUEST_BODY = ByteArray(0).toRequestBody(null)
     }
 
     private fun JSONObject.toSession(email: String) = AuthSession(
