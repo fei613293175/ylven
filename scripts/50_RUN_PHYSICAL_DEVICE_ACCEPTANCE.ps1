@@ -440,19 +440,20 @@ try {
         $existingVersionMatch = [regex]::Match($existingDump, '(?m)^\s*versionName=([^\s]+)')
         if (-not $existingVersionMatch.Success) { throw 'Could not determine the installed YLVEN version before rebuilding the P02 migration baseline.' }
         $existingVersion = $existingVersionMatch.Groups[1].Value
-        if ([version]$existingVersion -gt [version]$upgradeFrom) {
-            $resetRows = @("installed_version=$existingVersion", "required_baseline=$upgradeFrom")
-            $existingTestPackage = (Get-PackagePath -Package $TestPackageId) -join "`n"
-            if ($existingTestPackage -match '^package:') {
-                $testReset = (Invoke-Adb uninstall $TestPackageId) -join "`n"
-                if ($testReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 instrumentation package before rebuilding the P02 baseline.' }
-                $resetRows += 'instrumentation_package_removed=true'
-            }
-            $appReset = (Invoke-Adb uninstall $PackageId) -join "`n"
-            if ($appReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 app before rebuilding the P02 baseline.' }
-            $resetRows += 'current_app_removed=true'
-            $resetRows | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-baseline-reset.txt') -Encoding UTF8
+        # The P02 baseline may be blocked by any older YLVEN signing key, not only
+        # a version newer than P02. Reset the known app/test package pair before
+        # verifying the required P02 -> P03 migration path.
+        $resetRows = @("installed_version=$existingVersion", "required_baseline=$upgradeFrom")
+        $existingTestPackage = (Get-PackagePath -Package $TestPackageId) -join "`n"
+        if ($existingTestPackage -match '^package:') {
+            $testReset = (Invoke-Adb uninstall $TestPackageId) -join "`n"
+            if ($testReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 instrumentation package before rebuilding the P02 baseline.' }
+            $resetRows += 'instrumentation_package_removed=true'
         }
+        $appReset = (Invoke-Adb uninstall $PackageId) -join "`n"
+        if ($appReset -notmatch '(?m)^Success\s*$') { throw 'Could not remove the residual P03 app before rebuilding the P02 baseline.' }
+        $resetRows += 'current_app_removed=true'
+        $resetRows | Set-Content -LiteralPath (Join-Path $testResults 'signing-migration-baseline-reset.txt') -Encoding UTF8
     }
 
     Invoke-AdbInstall `
