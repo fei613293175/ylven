@@ -2,6 +2,7 @@
     [Parameter(Mandatory=$true)][ValidatePattern('^P\d{2}$')][string]$Phase,
     [Parameter(Mandatory=$true)][string]$Version,
     [Parameter(Mandatory=$true)][string]$ServerBuildDir,
+    [ValidatePattern('^P\d{2}-W\d{2}$')][string]$Packet,
     [string]$Serial,
     [string]$AdbPath,
     [string]$PreviousApk,
@@ -10,6 +11,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+if ($Packet -and -not $Packet.StartsWith("$Phase-")) { throw "Packet $Packet does not belong to phase $Phase." }
 $PackageId = 'cc.orbexa.ylven'
 $TestPackageId = 'cc.orbexa.ylven.test'
 $QueueOwned = $false
@@ -544,19 +546,25 @@ try {
         $loginAfterProvision = $loginAfter
     }
     if ($Phase -eq 'P04') {
-        $liveFlowClass = "$PackageId.P04LiveStagingFlowTest"
-        $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 600 -ResultPath (Join-Path $testResults 'P04LiveStagingFlowTest.txt')) -join "`n"
+        $isP04W01 = $Packet -eq 'P04-W01'
+        $liveFlowClass = if ($isP04W01) { "$PackageId.P04W01LiveStagingFlowTest" } else { "$PackageId.P04LiveStagingFlowTest" }
+        $liveFlowFile = "$($liveFlowClass.Split('.')[-1]).txt"
+        $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 600 -ResultPath (Join-Path $testResults $liveFlowFile)) -join "`n"
         if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P04 real staging flow failed on the physical device.' }
 
-        $fallbackFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04FallbackUiTest" -TimeoutSeconds 180 -ResultPath (Join-Path $testResults 'P04FallbackUiTest.txt')) -join "`n"
-        if ($fallbackFlow -notmatch '(?m)^OK \(' -or $fallbackFlow -match '(?m)^FAILURES!!!') { throw 'P04 fallback interaction flow failed on the physical device.' }
+        if (-not $isP04W01) {
+            $fallbackFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04FallbackUiTest" -TimeoutSeconds 180 -ResultPath (Join-Path $testResults 'P04FallbackUiTest.txt')) -join "`n"
+            if ($fallbackFlow -notmatch '(?m)^OK \(' -or $fallbackFlow -match '(?m)^FAILURES!!!') { throw 'P04 fallback interaction flow failed on the physical device.' }
+        }
 
-        $stateFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04StateUiTest" -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults 'P04StateUiTest.txt')) -join "`n"
+        $stateFlowClass = if ($isP04W01) { "$PackageId.P04W01StateUiTest" } else { "$PackageId.P04StateUiTest" }
+        $stateFlowFile = "$($stateFlowClass.Split('.')[-1]).txt"
+        $stateFlow = (Invoke-Instrumentation -ClassName $stateFlowClass -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults $stateFlowFile)) -join "`n"
         if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P04 physical-device state capture failed.' }
-        $uiFlowName = 'P04FallbackUiTest'
-        $stateFlowName = 'P04StateUiTest'
-        $stateFlowDescription = '物理设备 77 个有效状态截图'
-        $stagingFlowName = 'P04LiveStagingFlowTest'
+        $uiFlowName = if ($isP04W01) { 'P04W01LiveStagingFlowTest' } else { 'P04FallbackUiTest' }
+        $stateFlowName = $stateFlowClass.Split('.')[-1]
+        $stateFlowDescription = if ($isP04W01) { '物理设备 12 个 P04-W01 生产选择器状态截图' } else { '物理设备 77 个有效状态截图' }
+        $stagingFlowName = $liveFlowClass.Split('.')[-1]
     } else {
         $liveFlowClass = "$PackageId.P03LiveStagingFlowTest"
         $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 300 -ResultPath (Join-Path $testResults 'P03LiveStagingFlowTest.txt')) -join "`n"
@@ -577,6 +585,7 @@ try {
     $stateRows = Import-Csv -LiteralPath (Join-Path $Root 'contracts\ui-state-catalog.csv') | Where-Object {
         if ($_.surface -ne 'ANDROID') { return $false }
         $rowPhases = $_.phases -split '\|'
+        if ($Packet) { return ($rowPhases -contains $Phase) -and (($_.work_packets -split '\|') -contains $Packet) }
         if ($Phase -ne 'P03') { return $rowPhases -contains $Phase }
         $rowWorkPackets = $_.work_packets -split '\|'
         return $_.page_id -notin $deprecatedP03Pages -and (
@@ -584,7 +593,8 @@ try {
         )
     }
     if ($Phase -eq 'P03' -and @($stateRows).Count -ne 89) { throw "Expected 89 effective P03 Android states, got $(@($stateRows).Count)." }
-    if ($Phase -eq 'P04' -and @($stateRows).Count -ne 77) { throw "Expected 77 effective P04 Android states, got $(@($stateRows).Count)." }
+    if ($Phase -eq 'P04' -and $Packet -eq 'P04-W01' -and @($stateRows).Count -ne 12) { throw "Expected 12 P04-W01 Android states, got $(@($stateRows).Count)." }
+    if ($Phase -eq 'P04' -and -not $Packet -and @($stateRows).Count -ne 77) { throw "Expected 77 effective P04 Android states, got $(@($stateRows).Count)." }
     $indexRows = @()
     foreach ($row in $stateRows) {
         $remote = "$remoteStateScreenshotDirectory/$($row.state_id).png"
@@ -599,7 +609,12 @@ try {
     }
     $indexRows | Export-Csv -LiteralPath (Join-Path $output '截图索引.csv') -NoTypeInformation -Encoding UTF8
 
-    $productionPages = if ($Phase -eq 'P04') {
+    $productionPages = if ($Phase -eq 'P04' -and $Packet -eq 'P04-W01') {
+        [ordered]@{
+            'YL-A-033'=@{ state='YL-A-033-S01_POPULATED'; file='P04-MODEL-SELECTOR.png' }
+            'YL-A-034'=@{ state='YL-A-034-S01_POPULATED'; file='P04-REASONING-PROFILE.png' }
+        }
+    } elseif ($Phase -eq 'P04') {
         [ordered]@{
             'YL-A-030'=@{ state='YL-A-030-S01_DEFAULT'; file='P04-RERUN-PRESERVES-ANSWER.png' }
             'YL-A-033'=@{ state='YL-A-033-S01_POPULATED'; file='P04-MODEL-SELECTOR.png' }
