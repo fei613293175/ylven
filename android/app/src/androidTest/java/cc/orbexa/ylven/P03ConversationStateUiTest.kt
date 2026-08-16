@@ -10,6 +10,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.ui.P03ProductionContractState
 import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
+import java.nio.ByteBuffer
+import java.security.MessageDigest
 import org.junit.Rule
 import org.junit.Test
 
@@ -43,6 +45,7 @@ class P03ConversationStateUiTest {
             }
         }
         check(P03_W07_STATE_IDS.size == 54) { "P03-W07 state catalog changed; update the production state renderer." }
+        val screenshotDigests = mutableMapOf<String, String>()
         P03_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
@@ -52,11 +55,12 @@ class P03ConversationStateUiTest {
                 "acceptance-state-$stateId"
             }
             composeRule.onNodeWithTag(rootTag).assertExists()
-            capture(stateId, rootTag)
+            screenshotDigests[stateId] = capture(stateId, rootTag)
         }
+        assertDistinctComponentBoardScreenshots(screenshotDigests)
     }
 
-    private fun capture(name: String, rootTag: String) {
+    private fun capture(name: String, rootTag: String): String {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         composeRule.waitForIdle()
@@ -73,6 +77,14 @@ class P03ConversationStateUiTest {
             "P03 physical-device screenshot is empty for $name"
         }
         try {
+            val pixels = IntArray(bitmap.width * bitmap.height)
+            bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+            val pixelBytes = ByteBuffer.allocate(pixels.size * Int.SIZE_BYTES)
+                .apply { asIntBuffer().put(pixels) }
+                .array()
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(pixelBytes)
+                .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
             P03ScreenshotStorage.writePng(
                 context = context,
                 bitmap = bitmap,
@@ -81,8 +93,23 @@ class P03ConversationStateUiTest {
                 fileName = "$name.png",
                 subject = "P03 acceptance screenshot",
             )
+            return digest
         } finally {
             bitmap.recycle()
+        }
+    }
+
+    private fun assertDistinctComponentBoardScreenshots(digests: Map<String, String>) {
+        val pairs = listOf(
+            "YL-A-023-S01_DEFAULT" to "YL-A-024-S01_DEFAULT",
+            "YL-A-023-S02_INPUT_FOCUSED" to "YL-A-024-S02_INPUT_FOCUSED",
+            "YL-A-023-S03_UPLOADING" to "YL-A-024-S03_UPLOADING",
+            "YL-A-023-S10_OFFLINE" to "YL-A-024-S05_OFFLINE",
+        )
+        pairs.forEach { (parentState, componentState) ->
+            check(digests.getValue(parentState) != digests.getValue(componentState)) {
+                "Component board $componentState collapsed into parent conversation $parentState"
+            }
         }
     }
 }

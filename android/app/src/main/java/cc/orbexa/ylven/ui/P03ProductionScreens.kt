@@ -744,6 +744,10 @@ private data class P03ContractChatSpec(
     val attachments: List<String> = emptyList(),
     val showActions: Boolean = false,
     val replyBoard: Boolean = false,
+    val componentBoard: Boolean = false,
+    val componentMutedHero: Boolean = false,
+    val emptyStateTitle: String = "有什么想一起完成的？",
+    val emptyStateSubtitle: String? = "直接提问，YLVEN 会自动选择合适的模型。",
 ) {
     companion object {
         fun forState(code: P03ContractStateCode, replyBoard: Boolean = false): P03ContractChatSpec {
@@ -846,6 +850,10 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
                 onRecoveryAction = {},
                 onRecoveryAlternative = {},
                 visualContract = true,
+                componentBoard = spec.componentBoard,
+                componentMutedHero = spec.componentMutedHero,
+                emptyStateTitle = spec.emptyStateTitle,
+                emptyStateSubtitle = spec.emptyStateSubtitle,
             ) {
                 if (spec.showActions) {
                     P03MessageActionRow(
@@ -920,10 +928,48 @@ private fun P03ContractChat(spec: P03ContractChatSpec, showToolTray: Boolean = f
 
 @Composable
 private fun P03ContractComposer(code: P03ContractStateCode) {
-    when (code) {
-        P03ContractStateCode.TOOL_TRAY_OPEN -> P03ContractChat(P03ContractChatSpec.forState(P03ContractStateCode.DEFAULT), showToolTray = true)
-        P03ContractStateCode.DISABLED -> P03ContractChat(P03ContractChatSpec(emptyList(), draft = "等待当前任务完成", composerEnabled = false))
-        else -> P03ContractChat(P03ContractChatSpec.forState(code))
+    val spec = P03ContractComposerSpec.forState(code)
+    P03ContractChat(spec, showToolTray = code == P03ContractStateCode.TOOL_TRAY_OPEN)
+}
+
+/** Keeps the input component contract distinct from the parent chat-page contract. */
+private object P03ContractComposerSpec {
+    fun forState(code: P03ContractStateCode): P03ContractChatSpec {
+        val base = P03ContractChatSpec(
+            messages = emptyList(),
+            componentBoard = true,
+            componentMutedHero = true,
+            composerPlaceholder = "问问 YLVEN…",
+        )
+        return when (code) {
+            P03ContractStateCode.DEFAULT -> base
+            P03ContractStateCode.INPUT_FOCUSED -> base.copy(
+                draft = "从一个问题开始",
+                composerFocused = true,
+                emptyStateTitle = "从一个问题开始",
+                emptyStateSubtitle = null,
+            )
+            P03ContractStateCode.UPLOADING -> base.copy(
+                draft = "请基于资料给出方案",
+                composerFocused = true,
+                attachments = listOf("架构说明.pdf", "部署清单.md"),
+                emptyStateTitle = "资料已加入本次对话",
+                emptyStateSubtitle = null,
+            )
+            P03ContractStateCode.DISABLED -> base.copy(
+                draft = "当前不可发送",
+                composerEnabled = false,
+                componentMutedHero = false,
+            )
+            P03ContractStateCode.OFFLINE -> base.copy(
+                composerEnabled = false,
+                composerPlaceholder = "恢复网络后即可发送",
+                notice = "当前离线，输入内容会保留",
+                componentMutedHero = false,
+            )
+            P03ContractStateCode.TOOL_TRAY_OPEN -> base.copy(componentMutedHero = false)
+            else -> error("Unsupported composer contract state: $code")
+        }
     }
 }
 
@@ -2043,6 +2089,10 @@ private fun P03ChatContent(
     onRecoveryAction: () -> Unit = {},
     onRecoveryAlternative: () -> Unit = {},
     visualContract: Boolean = false,
+    componentBoard: Boolean = false,
+    componentMutedHero: Boolean = false,
+    emptyStateTitle: String = "有什么想一起完成的？",
+    emptyStateSubtitle: String? = "直接提问，YLVEN 会自动选择合适的模型。",
     messageActions: @Composable (MessageRecord) -> Unit,
 ) {
     LazyColumn(
@@ -2056,8 +2106,21 @@ private fun P03ChatContent(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (visualContract) P03Sparkle(34.dp) else Text("✦", color = YlvenLightColors.Primary, fontSize = 34.sp, lineHeight = 40.sp)
                         Spacer(Modifier.height(14.dp))
-                        Text("有什么想一起完成的？", fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
-                        Text("直接提问，YLVEN 会自动选择合适的模型。", fontSize = 14.sp, lineHeight = 20.sp, color = YlvenLightColors.TextSecondary)
+                        Text(
+                            emptyStateTitle,
+                            fontSize = 28.sp,
+                            lineHeight = 36.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (componentMutedHero) YlvenLightColors.TextSecondary else YlvenLightColors.TextPrimary,
+                        )
+                        if (emptyStateSubtitle != null) {
+                            Text(
+                                emptyStateSubtitle,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
+                                color = if (componentMutedHero) YlvenLightColors.TextTertiary else YlvenLightColors.TextSecondary,
+                            )
+                        }
                     }
                 }
             }
