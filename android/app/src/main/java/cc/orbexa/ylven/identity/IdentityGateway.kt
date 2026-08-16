@@ -15,6 +15,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ConnectionPool
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -341,6 +342,7 @@ class HttpIdentityGateway(
         .writeTimeout(15, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(false)
+        .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
         .protocols(listOf(Protocol.HTTP_1_1))
         .build()
 
@@ -792,6 +794,7 @@ class HttpIdentityGateway(
         val requestBuilder = Request.Builder()
             .url(baseUrl + path)
             .header("Accept", "application/json")
+            .header("Connection", "close")
         if (!bearer.isNullOrBlank()) requestBuilder.header("Authorization", "Bearer $bearer")
         headers.forEach { (name, value) -> requestBuilder.header(name, value) }
         val requestBody = if (method == "GET" || method == "HEAD") {
