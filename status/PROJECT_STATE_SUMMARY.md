@@ -1,21 +1,21 @@
 # Project State Summary
 
-- Generated: `2026-08-17T02:23:34+08:00`
+- Generated: `2026-08-17T02:30:23+08:00`
 - Current phase: `P04`
-- Phase status: `TODO`
+- Phase status: `DOING`
 - Current Work Packet: `P04-W01`
-- Work Packet status: `TODO`
+- Work Packet status: `DOING`
 - Last closed Work Packet: `P03-W08`
 - Last closed phase: `P03`
 - Last closed version: `1.3.0`
 - Closed/deferred Work Packets recorded: `23`
 - Closed releases recorded: `4`
-- Git branch: `not initialized`
-- Git HEAD: `e6fbc446e721be15a1065fec9d9fb1af573ea66f`
+- Git branch: `phase/p04-multi-model-routing-and-comparison`
+- Git HEAD: `e6e9c3be42b2b175bbf078e60588effb379e84c7`
 
 ## Exact next action
 
-Release `1.3.0` is closed. The exact next work is `P04-W01` in `P04`.
+Implement `P04-W01` (供应商、模型目录与模型选择器). Commit code, tests and Feature evidence before running close-packet.
 
 ## New-conversation rule
 
