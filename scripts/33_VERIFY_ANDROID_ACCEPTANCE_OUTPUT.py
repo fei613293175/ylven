@@ -45,6 +45,19 @@ def production_duplicate_is_allowed(phase: str, first: str, second: str) -> bool
     )
 
 
+def matches_android_scope(row: dict[str, str], phase: str, packet: str | None) -> bool:
+    phases = row.get("phases", "").split("|")
+    work_packets = row.get("work_packets", "").split("|")
+    if packet is not None:
+        return phase in phases and packet in work_packets
+    if phase != "P03":
+        return phase in phases
+    return (
+        row.get("page_id") not in P03_DEPRECATED_PAGES
+        and ("P03" in phases or "P03-W07" in work_packets)
+    )
+
+
 def phase_android_screenshots(phase: str, packet: str | None) -> list[str]:
     with (ROOT / "contracts" / "ui-state-catalog.csv").open(
         encoding="utf-8-sig", newline=""
@@ -53,21 +66,7 @@ def phase_android_screenshots(phase: str, packet: str | None) -> list[str]:
             f"{row['state_id']}.png"
             for row in csv.DictReader(source)
             if row.get("surface") == "ANDROID"
-            and (
-                packet is not None
-                and phase in row.get("phases", "").split("|")
-                and packet in row.get("work_packets", "").split("|")
-                or packet is None
-                and phase != "P03"
-                and phase in row.get("phases", "").split("|")
-                or packet is None
-                and phase == "P03"
-                and row.get("page_id") not in P03_DEPRECATED_PAGES
-                and (
-                    "P03" in row.get("phases", "").split("|")
-                    or "P03-W07" in row.get("work_packets", "").split("|")
-                )
-            )
+            and matches_android_scope(row, phase, packet)
         ]
 
 

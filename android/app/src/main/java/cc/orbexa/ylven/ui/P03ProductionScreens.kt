@@ -3059,20 +3059,41 @@ private fun P03TopBar(
         ) {
             if (onBack != null) {
                 IconButton(onClick = onBack, modifier = Modifier.size(48.dp).testTag("p03-page-back")) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        "返回",
+                        modifier = Modifier.size(if (visualContract) 20.dp else 24.dp),
+                    )
                 }
             } else {
                 Spacer(Modifier.width(12.dp))
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text(title, fontSize = if (visualContract) 22.sp else 20.sp, lineHeight = if (visualContract) 28.sp else 26.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, fontSize = if (visualContract) 13.sp else 14.sp, lineHeight = if (visualContract) 18.sp else 20.sp, color = YlvenLightColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Column(
+                Modifier.weight(1f).then(if (visualContract) Modifier.fillMaxHeight() else Modifier),
+                verticalArrangement = if (visualContract) Arrangement.Bottom else Arrangement.Center,
+            ) {
+                Text(
+                    title,
+                    fontSize = if (visualContract) 24.sp else 20.sp,
+                    lineHeight = if (visualContract) 24.sp else 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    subtitle,
+                    fontSize = 14.sp,
+                    lineHeight = if (visualContract) 16.sp else 20.sp,
+                    color = YlvenLightColors.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             if (actionIcon != null && onAction != null) {
                 IconButton(
                     onClick = onAction,
                     modifier = Modifier.size(48.dp).then(if (actionTag == null) Modifier else Modifier.testTag(actionTag)),
-                ) { Icon(actionIcon, actionDescription, tint = YlvenLightColors.TextSecondary, modifier = Modifier.size(if (visualContract) 20.dp else 24.dp)) }
+                ) { Icon(actionIcon, actionDescription, tint = YlvenLightColors.TextSecondary, modifier = Modifier.size(24.dp)) }
             } else {
                 Spacer(Modifier.width(48.dp))
             }
