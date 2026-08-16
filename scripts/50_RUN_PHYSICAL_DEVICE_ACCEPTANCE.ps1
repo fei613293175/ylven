@@ -697,7 +697,7 @@ try {
 "@
     $logReview | Set-Content -LiteralPath (Join-Path $output '真机日志审查.md') -Encoding UTF8
 
-    $stagingSessionNote = if ($sessionProvisioned) { "P03ProvisionStagingSessionTest + $stagingFlowName: PASS（真实 staging 注册、Android Keystore 会话与 MainActivity 真实 API）" } else { "$stagingFlowName: PASS（MainActivity、已有加密登录态和真实 staging API）" }
+    $stagingSessionNote = if ($sessionProvisioned) { "P03ProvisionStagingSessionTest + ${stagingFlowName}: PASS（真实 staging 注册、Android Keystore 会话与 MainActivity 真实 API）" } else { "${stagingFlowName}: PASS（MainActivity、已有加密登录态和真实 staging API）" }
     $automationReport = @"
 # 自动化测试报告
 
@@ -705,8 +705,8 @@ try {
 - Version: $Version
 - Device: $manufacturer $model ($Serial)
 - $stagingSessionNote
-- $uiFlowName: PASS（物理设备 UI 交互；确定性网关仅验证可恢复状态，不替代 staging）
-- $stateFlowName: PASS（$stateFlowDescription）
+- ${uiFlowName}: PASS（物理设备 UI 交互；确定性网关仅验证可恢复状态，不替代 staging）
+- ${stateFlowName}: PASS（$stateFlowDescription）
 - Interaction coverage: PASS
 - Crash/ANR/log review: PASS
 - Result: PENDING_CODEX_PRODUCTION_VISUAL_REVIEW
