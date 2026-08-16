@@ -56,6 +56,11 @@ class VisualComparePacketScopeTest(unittest.TestCase):
         self.assertEqual("P04-W01", exception["packet"])
         self.assertIsNone(self.compare.packet_semantic_state_exception("P04", "P04-W02"))
         self.assertIsNone(self.compare.packet_semantic_state_exception("P03", "P03-W07"))
+        self.assertIsNone(self.compare.packet_semantic_state_exception("P04", None))
+
+    def test_p03_semantic_exception_remains_p03_only(self):
+        self.assertIsNotNone(self.compare.semantic_state_exception("P03"))
+        self.assertIsNone(self.compare.semantic_state_exception("P04"))
 
 
 if __name__ == "__main__":
