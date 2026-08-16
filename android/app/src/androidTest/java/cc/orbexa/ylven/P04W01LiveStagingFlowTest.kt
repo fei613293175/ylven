@@ -47,9 +47,23 @@ class P04W01LiveStagingFlowTest {
         composeRule.onNodeWithTag("p03-model-ylven-default").performScrollTo().performClick()
 
         composeRule.onNodeWithTag("CO-P03-001-CHAT-REASONING").performClick()
-        waitForTag("p03-response-mode-auto", 20_000)
-        capture("P04-REASONING-PROFILE")
-        composeRule.onNodeWithTag("p03-response-mode-auto").performClick()
+        when (waitForResponseModeTerminalState(20_000)) {
+            "p03-response-mode-auto" -> {
+                capture("P04-REASONING-PROFILE")
+                composeRule.onNodeWithTag("p03-response-mode-auto").performClick()
+            }
+            "p03-response-mode-degraded" -> {
+                // The catalog currently exposes only automatic mode for this model.
+                // This is a valid server-backed state, not a selector load failure.
+                capture("P04-REASONING-PROFILE")
+                Espresso.pressBack()
+                waitForTagGone("YL-A-034-root", 10_000)
+            }
+            "p03-response-mode-error" -> error(
+                "Staging could not load the selected model's reasoning profiles",
+            )
+            else -> error("Unexpected response mode selector state")
+        }
 
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01")
             .performTextInput("请说明模型目录和推理档位应如何协同工作。")
@@ -89,6 +103,20 @@ class P04W01LiveStagingFlowTest {
     private fun waitForTagGone(tag: String, timeout: Long) {
         composeRule.waitUntil(timeoutMillis = timeout) {
             composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    private fun waitForResponseModeTerminalState(timeout: Long): String {
+        val tags = listOf(
+            "p03-response-mode-auto",
+            "p03-response-mode-degraded",
+            "p03-response-mode-error",
+        )
+        composeRule.waitUntil(timeoutMillis = timeout) {
+            tags.any { tag -> composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+        }
+        return tags.first { tag ->
+            composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
