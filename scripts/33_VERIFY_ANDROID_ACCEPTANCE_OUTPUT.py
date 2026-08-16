@@ -19,6 +19,10 @@ P03_PRODUCTION_PAGES = {
     "YL-A-026", "YL-A-033", "YL-A-034",
 }
 P03_COMPONENT_BOARD_PARENT = {"YL-A-026": "YL-A-023"}
+P04_W01_PRODUCTION_PAGES = {
+    "YL-A-033": "P04-MODEL-SELECTOR.png",
+    "YL-A-034": "P04-REASONING-PROFILE.png",
+}
 
 
 def sha256(path: Path) -> str:
@@ -41,7 +45,7 @@ def production_duplicate_is_allowed(phase: str, first: str, second: str) -> bool
     )
 
 
-def phase_android_screenshots(phase: str) -> list[str]:
+def phase_android_screenshots(phase: str, packet: str | None) -> list[str]:
     with (ROOT / "contracts" / "ui-state-catalog.csv").open(
         encoding="utf-8-sig", newline=""
     ) as source:
@@ -50,8 +54,14 @@ def phase_android_screenshots(phase: str) -> list[str]:
             for row in csv.DictReader(source)
             if row.get("surface") == "ANDROID"
             and (
-                phase != "P03" and phase in row.get("phases", "").split("|")
-                or phase == "P03"
+                packet is not None
+                and phase in row.get("phases", "").split("|")
+                and packet in row.get("work_packets", "").split("|")
+                or packet is None
+                and phase != "P03"
+                and phase in row.get("phases", "").split("|")
+                or packet is None
+                and phase == "P03"
                 and row.get("page_id") not in P03_DEPRECATED_PAGES
                 and (
                     "P03" in row.get("phases", "").split("|")
@@ -59,6 +69,14 @@ def phase_android_screenshots(phase: str) -> list[str]:
                 )
             )
         ]
+
+
+def expected_production_pages(phase: str, packet: str | None) -> dict[str, str]:
+    if phase == "P03" and packet is None:
+        return {page_id: f"{page_id}-PRODUCTION.png" for page_id in P03_PRODUCTION_PAGES}
+    if phase == "P04" and packet == "P04-W01":
+        return P04_W01_PRODUCTION_PAGES
+    return {}
 
 
 def load_json(path: Path, errors: list[str]) -> dict:
@@ -93,10 +111,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-dir", default="build/owner-release")
     parser.add_argument("--phase", required=True)
+    parser.add_argument("--packet")
     parser.add_argument("--version", required=True)
     parser.add_argument("--commit", required=True)
     args = parser.parse_args()
     phase = args.phase.upper()
+    packet = args.packet.upper() if args.packet else None
+    if packet is not None and not re.fullmatch(r"P\d{2}-W\d{2}", packet):
+        parser.error("--packet must use the Pxx-Wyy format")
+    if packet is not None and not packet.startswith(f"{phase}-"):
+        parser.error("--packet must belong to --phase")
     root = Path(args.artifact_dir).resolve()
     errors: list[str] = []
 
@@ -191,10 +215,17 @@ def main() -> int:
     if phase == "P03":
         if transition.get("mode") != "one_time_uninstall_then_install" or transition.get("data_preserved") is not False:
             errors.append("P03 device evidence does not prove the approved destructive signing migration")
-    elif transition and (transition.get("mode") != "adb_install_r" or transition.get("data_preserved") is not True):
-        errors.append("non-P03 device evidence does not prove same-signature adb install -r")
+    elif transition:
+        same_version_regression = (
+            phase == "P04"
+            and packet == "P04-W01"
+            and device.get("same_version_targeted_regression") is True
+        )
+        valid_modes = {"adb_install_r_same_version_targeted_regression"} if same_version_regression else {"adb_install_r"}
+        if transition.get("mode") not in valid_modes or transition.get("data_preserved") is not True:
+            errors.append("non-P03 device evidence does not prove the required adb install -r transition")
 
-    expected = phase_android_screenshots(phase)
+    expected = phase_android_screenshots(phase, packet)
     actual = {path.name for path in (root / "截图").glob("*.png")}
     if actual != set(expected):
         missing = sorted(set(expected) - actual)
@@ -227,12 +258,14 @@ def main() -> int:
         else:
             digests[digest] = name
 
-    expected_production_pages = P03_PRODUCTION_PAGES if phase == "P03" else set()
+    production_pages = expected_production_pages(phase, packet)
+    if not production_pages:
+        errors.append("no production-page acceptance contract exists for this phase/packet")
     production_dir = root / "真实页面截图"
     production_files = {path.name for path in production_dir.glob("*.png")}
-    expected_production_files = {f"{page_id}-PRODUCTION.png" for page_id in expected_production_pages}
+    expected_production_files = set(production_pages.values())
     if production_files != expected_production_files:
-        errors.append("production-page screenshot set differs from the seven required P03 pages/overlay")
+        errors.append("production-page screenshot set differs from the phase/packet contract")
     production_digests: dict[str, str] = {}
     for name in sorted(expected_production_files):
         path = production_dir / name
@@ -261,7 +294,7 @@ def main() -> int:
     if production_review.get("reviewer") != "codex" or production_review.get("result") != "PASS":
         errors.append("production-page screenshots lack a direct PASS review by Codex")
     reviewed_pages = production_review.get("pages") if isinstance(production_review.get("pages"), list) else []
-    if {str(row.get("page_id")) for row in reviewed_pages} != expected_production_pages:
+    if {str(row.get("page_id")) for row in reviewed_pages} != set(production_pages):
         errors.append("production-page visual review page set is incomplete")
     if (root / "真实页面视觉审查.json").is_file() and device.get("visual_review_sha256") != sha256(root / "真实页面视觉审查.json"):
         errors.append("device evidence visual-review hash mismatch")

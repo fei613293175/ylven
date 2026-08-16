@@ -9,11 +9,26 @@ import re
 from pathlib import Path
 
 
-EXPECTED_PAGES = {
-    "YL-A-018", "YL-A-020", "YL-A-023", "YL-A-024",
-    "YL-A-026", "YL-A-033", "YL-A-034",
-}
 CHECKS = {"layout", "font", "color", "spacing", "icons", "interaction_state"}
+
+
+def expected_pages(phase: str, packet: str | None) -> dict[str, str]:
+    if phase == "P03" and packet is None:
+        return {
+            "YL-A-018": "YL-A-018-PRODUCTION.png",
+            "YL-A-020": "YL-A-020-PRODUCTION.png",
+            "YL-A-023": "YL-A-023-PRODUCTION.png",
+            "YL-A-024": "YL-A-024-PRODUCTION.png",
+            "YL-A-026": "YL-A-026-PRODUCTION.png",
+            "YL-A-033": "YL-A-033-PRODUCTION.png",
+            "YL-A-034": "YL-A-034-PRODUCTION.png",
+        }
+    if phase == "P04" and packet == "P04-W01":
+        return {
+            "YL-A-033": "P04-MODEL-SELECTOR.png",
+            "YL-A-034": "P04-REASONING-PROFILE.png",
+        }
+    return {}
 
 
 def sha256(path: Path) -> str:
@@ -28,9 +43,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-dir", required=True)
     parser.add_argument("--review-file", required=True)
+    parser.add_argument("--packet")
     args = parser.parse_args()
     root = Path(args.artifact_dir).resolve()
     source_review = Path(args.review_file).resolve()
+    packet = args.packet.upper() if args.packet else None
     errors: list[str] = []
     try:
         review = json.loads(source_review.read_text(encoding="utf-8-sig"))
@@ -41,6 +58,8 @@ def main() -> int:
 
     if review.get("phase") != device.get("phase") or review.get("version") != device.get("version"):
         errors.append("visual review phase/version differs from device evidence")
+    if packet is not None and review.get("packet") != packet:
+        errors.append("visual review packet differs from finalization packet")
     if review.get("reviewer") != "codex":
         errors.append("production visual review must be performed directly by Codex")
     if review.get("result") != "PASS":
@@ -52,13 +71,16 @@ def main() -> int:
     ):
         errors.append("server state-matrix visual comparison is not PASS")
     pages = review.get("pages") if isinstance(review.get("pages"), list) else []
-    if {str(row.get("page_id")) for row in pages} != EXPECTED_PAGES:
-        errors.append("production visual review does not cover the seven P03 production pages/overlay")
+    expected = expected_pages(str(device.get("phase", "")), packet)
+    if not expected:
+        errors.append("no production-page finalization contract exists for this phase/packet")
+    if {str(row.get("page_id")) for row in pages} != set(expected):
+        errors.append("production visual review page set is incomplete")
     for row in pages:
         page_id = str(row.get("page_id", ""))
         screenshot_name = str(row.get("screenshot", ""))
-        expected_name = f"{page_id}-PRODUCTION.png"
-        if screenshot_name != f"真实页面截图/{expected_name}":
+        expected_name = expected.get(page_id)
+        if expected_name is None or screenshot_name != f"真实页面截图/{expected_name}":
             errors.append(f"{page_id}: unexpected production screenshot path")
             continue
         screenshot = root / "真实页面截图" / expected_name
@@ -97,7 +119,7 @@ def main() -> int:
         "- Production-page visual review: PASS（Codex 逐页核对布局、字体、颜色、间距、图标和交互状态）\n- Result: PASS",
     )
     report.write_text(text, encoding="utf-8")
-    print("PASS: direct Codex review finalized all seven P03 production-page screenshots")
+    print(f"PASS: direct Codex review finalized {len(expected)} {device.get('phase')} production-page screenshots")
     return 0
 
 

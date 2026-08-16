@@ -412,7 +412,9 @@ private fun P03ContractChrome(showGesture: Boolean, content: @Composable () -> U
                 canvas.save()
                 canvas.scale(scale, scale)
                 val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.SUBPIXEL_TEXT_FLAG)
-                paint.color = android.graphics.Color.rgb(247, 248, 252)
+                // The approved Android captures reserve a #FAFBFD status strip.
+                // Keep it separate from the #F7F8FC app background below.
+                paint.color = android.graphics.Color.rgb(250, 251, 253)
                 paint.style = android.graphics.Paint.Style.FILL
                 canvas.drawRect(0f, 0f, 1080f, 72f, paint)
                 paint.color = android.graphics.Color.rgb(16, 24, 40)
@@ -503,7 +505,9 @@ private fun P03SheetContainer(
                     .fillMaxWidth()
                     .height(contractHeight)
                     .testTag(tag),
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                // Fixed contract captures include the bottom system-reference area.
+                // The approved sheet has the same 24dp curve at all four corners.
+                shape = RoundedCornerShape(24.dp),
                 color = YlvenLightColors.Surface,
             ) {
                 Column(Modifier.fillMaxSize()) {
@@ -2634,8 +2638,8 @@ private fun P03ModelSelector(
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
-            Text("选择模型", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-            Text("默认由 YLVEN 自动匹配适合的模型。", color = YlvenLightColors.TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
+            Text("选择模型", fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+            Text("默认由 YLVEN 自动匹配适合的模型。", color = YlvenLightColors.TextSecondary, fontSize = 14.sp, lineHeight = 20.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf("全部", "推理", "视觉", "快速").forEach { label ->
                     P03SelectorChip(label, label == category, visualContract) { category = label }
@@ -2749,8 +2753,8 @@ private fun P03ResponseModeSelector(
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             if (statusMessage != null) P03SelectorStatusBanner(statusMessage)
-            Text("回答方式", fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-            Text("无需每次设置，默认由模型自动判断。", color = YlvenLightColors.TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
+            Text("回答方式", fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+            Text("无需每次设置，默认由模型自动判断。", color = YlvenLightColors.TextSecondary, fontSize = 14.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(if (visualContract) 11.dp else 8.dp))
             if (loading) {
                 Box(Modifier.fillMaxWidth().weight(1f).testTag("p03-response-mode-loading"), contentAlignment = Alignment.Center) {
@@ -2832,9 +2836,21 @@ private fun P03SelectorRow(
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(title, color = if (enabled) YlvenLightColors.TextPrimary else YlvenLightColors.TextDisabled, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    title,
+                    color = if (enabled) YlvenLightColors.TextPrimary else YlvenLightColors.TextDisabled,
+                    fontSize = 17.sp,
+                    lineHeight = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
                 if (description.isNotBlank()) {
-                    Text(description, color = if (enabled) YlvenLightColors.TextSecondary else YlvenLightColors.TextDisabled, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2)
+                    Text(
+                        description,
+                        color = if (enabled) YlvenLightColors.TextSecondary else YlvenLightColors.TextDisabled,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        maxLines = 2,
+                    )
                 }
             }
             if (trailingLabel != null) {
@@ -2889,8 +2905,8 @@ private fun P03SelectorChip(
             Text(
                 label,
                 color = if (selected) YlvenLightColors.Primary else YlvenLightColors.TextSecondary,
-                fontSize = if (visualContract) 10.sp else MaterialTheme.typography.labelMedium.fontSize,
-                lineHeight = if (visualContract) 14.sp else MaterialTheme.typography.labelMedium.lineHeight,
+                fontSize = if (visualContract) 12.sp else MaterialTheme.typography.labelMedium.fontSize,
+                lineHeight = if (visualContract) 16.sp else MaterialTheme.typography.labelMedium.lineHeight,
                 fontWeight = if (visualContract) FontWeight.Bold else MaterialTheme.typography.labelMedium.fontWeight,
             )
         }
@@ -3038,7 +3054,7 @@ private fun P03TopBar(
 ) {
     Surface(color = YlvenLightColors.Surface, shadowElevation = 0.dp) {
         Row(
-            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(if (visualContract) 58.dp else 58.dp).padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth().p03StatusBarsPadding().height(if (visualContract) 60.dp else 58.dp).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onBack != null) {
