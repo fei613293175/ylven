@@ -7,12 +7,13 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 
 CHECKS = {"layout", "font", "color", "spacing", "icons", "interaction_state"}
 
 
-def expected_pages(phase: str, packet: str | None) -> dict[str, str]:
+def expected_pages(phase: str, packet: Optional[str]) -> dict[str, str]:
     if phase == "P03" and packet is None:
         return {
             "YL-A-018": "YL-A-018-PRODUCTION.png",

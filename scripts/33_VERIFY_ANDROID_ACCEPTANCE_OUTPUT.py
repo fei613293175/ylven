@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 from PIL import Image, ImageStat
 
@@ -45,7 +46,7 @@ def production_duplicate_is_allowed(phase: str, first: str, second: str) -> bool
     )
 
 
-def matches_android_scope(row: dict[str, str], phase: str, packet: str | None) -> bool:
+def matches_android_scope(row: dict[str, str], phase: str, packet: Optional[str]) -> bool:
     phases = row.get("phases", "").split("|")
     work_packets = row.get("work_packets", "").split("|")
     if packet is not None:
@@ -58,7 +59,7 @@ def matches_android_scope(row: dict[str, str], phase: str, packet: str | None) -
     )
 
 
-def phase_android_screenshots(phase: str, packet: str | None) -> list[str]:
+def phase_android_screenshots(phase: str, packet: Optional[str]) -> list[str]:
     with (ROOT / "contracts" / "ui-state-catalog.csv").open(
         encoding="utf-8-sig", newline=""
     ) as source:
@@ -70,7 +71,7 @@ def phase_android_screenshots(phase: str, packet: str | None) -> list[str]:
         ]
 
 
-def expected_production_pages(phase: str, packet: str | None) -> dict[str, str]:
+def expected_production_pages(phase: str, packet: Optional[str]) -> dict[str, str]:
     if phase == "P03" and packet is None:
         return {page_id: f"{page_id}-PRODUCTION.png" for page_id in P03_PRODUCTION_PAGES}
     if phase == "P04" and packet == "P04-W01":

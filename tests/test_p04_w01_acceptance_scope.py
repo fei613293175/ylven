@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERIFY = ROOT / "scripts" / "33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py
-FINALIZE = ROOT / "scripts" / "52_FINALIZE_PHYSICAL_VISUAL_REVIEW.py
+VERIFY = ROOT / "scripts" / "33_VERIFY_ANDROID_ACCEPTANCE_OUTPUT.py"
+FINALIZE = ROOT / "scripts" / "52_FINALIZE_PHYSICAL_VISUAL_REVIEW.py"
 
 
 def load_module(name: str, path: Path):
