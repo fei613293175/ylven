@@ -111,11 +111,14 @@ class P03RealDeviceFlowTest {
         waitForTag("YL-A-033-root")
         waitForModalSheetToSettle()
         captureProductionPage("YL-A-033-PRODUCTION", "YL-A-033-root")
-        composeRule.onNodeWithTag("p03-model-auto").performClick()
+        // Capture response-mode choices for a model that actually supports them.
+        // Auto-selection intentionally exposes only the automatic profile.
+        composeRule.onNodeWithTag("p03-model-gpt-5.6-sol").performClick()
 
         composeRule.onNodeWithTag("CO-P03-001-CHAT-REASONING").performClick()
         waitForTag("YL-A-034-root")
         waitForModalSheetToSettle()
+        composeRule.onNodeWithTag("p03-response-mode-quick").assertIsEnabled()
         captureProductionPage("YL-A-034-PRODUCTION", "YL-A-034-root")
         composeRule.onNodeWithTag("p03-response-mode-auto").performClick()
         Espresso.pressBack()
@@ -639,7 +642,7 @@ private class FlowGateway(private val enableAllTools: Boolean = false) : Identit
     private val beta = Conversation("beta", "对话上下文与长期记忆方案", "active", "昨天")
     private val gamma = Conversation("gamma", "首页与聊天体验重构", "active", "21:16")
     private val delta = Conversation("delta", "YLVEN 发布流程优化", "active", "昨天")
-    private val epsilon = Conversation("epsilon", "Sub2API 模型能力测试", "active", "8 月 8 日")
+    private val epsilon = Conversation("epsilon", "模型能力评估", "active", "8 月 8 日")
 
     override suspend fun startRegistration(email: String) = OtpChallenge("register", email, "123456")
     override suspend fun finishRegistration(challenge: OtpChallenge, code: String, password: String) = Unit

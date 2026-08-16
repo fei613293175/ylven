@@ -748,13 +748,13 @@ private data class P03ContractChatSpec(
     companion object {
         fun forState(code: P03ContractStateCode, replyBoard: Boolean = false): P03ContractChatSpec {
             val partial = p03ContractAssistant(
-                "可以。建议把当前系统设计为无状态 AI Runti\nme，并由 PostgreSQL 保存完整会话事实。\n\n" +
-                    "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，\n再通过 Sub2API 调用目标模型。",
+                "可以。建议让会话在不同模型之间保持连续，\n并让重要信息始终可追溯。\n\n" +
+                    "每次发送消息时，系统会整合最近对话、已有\n摘要和当前附件，再交给合适的模型继续处理。",
             )
             val completed = p03ContractAssistant(
-                "可以。建议把当前系统设计为无状态 AI Runti\nme，并由 PostgreSQL 保存完整会话事实。\n\n" +
-                    "每次发送消息时，后端根据 conversation_id\n重新组装最近对话、结构化摘要和当前附件，\n再通过 Sub2API 调用目标模型。\n\n" +
-                    "这样后续切换 GPT、Claude 或 Grok 时，仍然",
+                "可以。建议让会话在不同模型之间保持连续，\n并让重要信息始终可追溯。\n\n" +
+                    "每次发送消息时，系统会整合最近对话、已有\n摘要和当前附件，再交给合适的模型继续处理。\n\n" +
+                    "这样切换不同模型时，仍然能够保持上下文连续。",
             )
             val base = listOf(P03ContractUserMessage)
             return when (code) {

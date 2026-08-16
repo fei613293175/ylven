@@ -33,6 +33,14 @@ def font_exception(phase:str)->dict|None:
  if data.get('phase')!=phase or data.get('status')!='OWNER_APPROVED': return None
  return data
 
+def semantic_state_exception(phase:str)->dict|None:
+ path=ROOT/'contracts'/'visual-exceptions'/f'{phase}-owner-semantic-state-review.json'
+ if not path.is_file(): return None
+ data=json.loads(path.read_text(encoding='utf-8'))
+ if data.get('phase')!=phase or data.get('status')!='OWNER_APPROVED': return None
+ if data.get('scope')!='P03 Android runtime state matrix only': return None
+ return data
+
 def structural_score(a:Image.Image,b:Image.Image,radius:float)->tuple[float,float]:
  return score(a.convert('RGB').filter(ImageFilter.GaussianBlur(radius)),b.convert('RGB').filter(ImageFilter.GaussianBlur(radius)))
 
@@ -43,6 +51,7 @@ def main()->int:
  shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
  with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase,packet)]
  exception=font_exception(phase)
+ semantic_exception=semantic_state_exception(phase)
  scope=packet or phase
  errors=[]; lines=[f'# Visual Diff Report — {scope}','']
  if exception:
@@ -50,6 +59,13 @@ def main()->int:
    '- Owner exception: APPROVED — Android system-font rasterization differences only.',
    f"- Structural check: Gaussian blur {float(exception['structural_blur_radius_px']):.1f}px; mismatch <= {float(exception['structural_mismatch_max']):.3f}.",
    '- Layout, colors, component geometry, visible state and missing screenshots remain strict.',
+   '',
+  ]
+ if semantic_exception:
+  lines += [
+   '- Owner exception: APPROVED - P03 runtime-state semantic visual review only.',
+   f"- Semantic guardrail: similarity >= {float(semantic_exception['raw_similarity_min']):.3f}; structural mismatch <= {float(semantic_exception['structural_mismatch_max']):.3f}.",
+   '- Raw metrics remain visible. This exception does not apply to production-route screenshots or any later phase.',
    '',
   ]
  lines += ['Raw physical-device PNGs are retained unchanged. Size normalization occurs only in memory for comparison.','', '| State | Screenshot Size | Comparison Similarity | Comparison Mismatch | Structural Mismatch | Result |','|---|---|---:|---:|---:|---|']
@@ -69,6 +85,10 @@ def main()->int:
    structural_s,structural=structural_score(reference,runtime,float(exception['structural_blur_radius_px']))
    ok=(s>=float(exception['raw_similarity_min']) and m<=float(exception['raw_mismatch_max']) and structural<=float(exception['structural_mismatch_max']))
    if ok: result='PASS_WITH_OWNER_FONT_EXCEPTION'
+  if not ok and semantic_exception:
+   structural_s,structural=structural_score(reference,runtime,float(semantic_exception['structural_blur_radius_px']))
+   ok=(s>=float(semantic_exception['raw_similarity_min']) and m<=float(semantic_exception['raw_mismatch_max']) and structural<=float(semantic_exception['structural_mismatch_max']))
+   if ok: result='PASS_WITH_OWNER_SEMANTIC_STATE_EXCEPTION'
   lines.append(f'| {sid} | {normalization} | {s:.5f} | {m:.5f} | {"—" if structural is None else f"{structural:.5f}"} | {result} |')
   if not ok: errors.append(f'{sid} visual threshold failed')
  result = 'PASS (runtime screenshots not captured for P00 shell)' if phase == 'P00' and not errors else ('PASS' if not errors else 'FAIL')

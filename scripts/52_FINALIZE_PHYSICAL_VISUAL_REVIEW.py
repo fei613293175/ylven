@@ -5,6 +5,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 from pathlib import Path
 
 
@@ -44,6 +45,12 @@ def main() -> int:
         errors.append("production visual review must be performed directly by Codex")
     if review.get("result") != "PASS":
         errors.append("production visual review result is not PASS")
+    visual_report = root / "视觉差异报告.md"
+    if not visual_report.is_file() or not re.search(
+        r"(?im)^Result:\s*\*\*PASS[^\n]*\*\*\s*$",
+        visual_report.read_text(encoding="utf-8-sig", errors="replace") if visual_report.is_file() else "",
+    ):
+        errors.append("server state-matrix visual comparison is not PASS")
     pages = review.get("pages") if isinstance(review.get("pages"), list) else []
     if {str(row.get("page_id")) for row in pages} != EXPECTED_PAGES:
         errors.append("production visual review does not cover the seven P03 production pages/overlay")
@@ -70,6 +77,9 @@ def main() -> int:
     destination = root / "真实页面视觉审查.json"
     destination.write_text(json.dumps(review, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     device["production_page_visual_review"] = "PASS"
+    device["state_matrix_visual_compare"] = "PASS"
+    device["state_matrix_visual_report"] = visual_report.name
+    device["state_matrix_visual_report_sha256"] = sha256(visual_report)
     device["result"] = "PASS"
     device["visual_review_file"] = destination.name
     device["visual_review_sha256"] = sha256(destination)
@@ -77,6 +87,9 @@ def main() -> int:
     (root / "真机验收证据.json").write_text(
         json.dumps(device, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    status = root / "test-results" / "server-post-processing.status"
+    if status.parent.is_dir():
+        status.write_text("PASS\n", encoding="utf-8")
     report = root / "自动化测试报告.md"
     text = report.read_text(encoding="utf-8-sig")
     text = text.replace(

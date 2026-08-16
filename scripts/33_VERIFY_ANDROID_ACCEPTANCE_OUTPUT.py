@@ -18,6 +18,7 @@ P03_PRODUCTION_PAGES = {
     "YL-A-018", "YL-A-020", "YL-A-023", "YL-A-024",
     "YL-A-026", "YL-A-033", "YL-A-034",
 }
+P03_COMPONENT_BOARD_PARENT = {"YL-A-026": "YL-A-023"}
 
 
 def sha256(path: Path) -> str:
@@ -26,6 +27,18 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def production_duplicate_is_allowed(phase: str, first: str, second: str) -> bool:
+    """A component board is evidence within its real parent page, not a route."""
+    if phase != "P03":
+        return False
+    first_page = first.removesuffix("-PRODUCTION.png")
+    second_page = second.removesuffix("-PRODUCTION.png")
+    return (
+        P03_COMPONENT_BOARD_PARENT.get(first_page) == second_page
+        or P03_COMPONENT_BOARD_PARENT.get(second_page) == first_page
+    )
 
 
 def phase_android_screenshots(phase: str) -> list[str]:
@@ -240,7 +253,9 @@ def main() -> int:
             continue
         digest = sha256(path)
         if digest in production_digests:
-            errors.append(f"production-page screenshots are byte-identical: {production_digests[digest]}, {name}")
+            previous = production_digests[digest]
+            if not production_duplicate_is_allowed(phase, previous, name):
+                errors.append(f"production-page screenshots are byte-identical: {previous}, {name}")
         else:
             production_digests[digest] = name
     if production_review.get("reviewer") != "codex" or production_review.get("result") != "PASS":

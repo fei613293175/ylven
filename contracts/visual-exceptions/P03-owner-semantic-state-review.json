@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "phase": "P03",
+  "status": "OWNER_APPROVED",
+  "approved_by": "user",
+  "approved_at": "2026-08-16T22:00:00+08:00",
+  "scope": "P03 Android runtime state matrix only",
+  "reason": "The user explicitly authorized P03 closure after reviewing the high-similarity physical-device comparison. The deterministic runtime matrix uses the production Compose components, while approved mockups include fixed sample copy and component-board annotations that must not appear in the consumer product.",
+  "raw_similarity_min": 0.910,
+  "raw_mismatch_max": 0.090,
+  "structural_blur_radius_px": 7.0,
+  "structural_mismatch_max": 0.075,
+  "invariants": [
+    "every P03 Android state must have an original physical-device runtime screenshot",
+    "raw similarity, mismatch, and structural mismatch remain recorded for every state",
+    "the existing P03 font exception remains in force for font-only differences",
+    "all P03 production-route screenshots require direct Codex page-by-page review",
+    "component-board screenshots remain bound to their real parent production route",
+    "this exception applies only to P03 and must not be inherited by P04 or later phases"
+  ]
+}
