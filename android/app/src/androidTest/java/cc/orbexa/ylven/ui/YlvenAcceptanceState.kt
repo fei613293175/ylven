@@ -127,6 +127,11 @@ private class AndroidContractRenderer(
     private var currentPage = ""
     private var p03ChatBaselineScale = 0f
     private var p03ChatStatusFontCalibration = false
+    // YL-A-024 is a component contract derived from the chat page, but its
+    // approved states intentionally use the lighter component typography.
+    // Keep this as renderer state so the shared chat primitives remain
+    // deterministic while the component board cannot collapse into YL-A-023.
+    private var p03ConversationComposerMode = false
 
     fun render(stateId: String) {
         val page = stateId.substringBefore("-S")
@@ -886,8 +891,10 @@ private class AndroidContractRenderer(
         rect(0f, 72f, 1080f, 246f, Pc.surface)
         line(0f, 245f, 1080f, 245f, Pc.divider, 2f)
         lineIcon(48f, 122f, "back", 60f, Pc.text, 5f)
-        text(title, 130f, 124f, 66f, Pc.text, true)
-        text(subtitle, 130f, 204f, 39f, Pc.text2)
+        val titleColor = if (p03ConversationComposerMode) Pc.text2 else Pc.text
+        val subtitleColor = if (p03ConversationComposerMode) Pc.text3 else Pc.text2
+        text(title, 130f, 124f, 66f, titleColor, true)
+        text(subtitle, 130f, 204f, 39f, subtitleColor)
         lineIcon(970f, 128f, "more", 56f, Pc.text2, 5f)
     }
 
@@ -916,8 +923,10 @@ private class AndroidContractRenderer(
             else -> listOf(700f, 50f, 775f, 58f)
         }
         p03Spark(540f, hero[0], hero[1])
-        text(title, 540f, hero[2], hero[3], Pc.text, true, Anchor.MIDDLE_ASCENDER)
-        if (subtitle != null) text(subtitle, 540f, 1015f, 40f, Pc.text2, anchor = Anchor.MIDDLE_ASCENDER)
+        val titleColor = if (p03ConversationComposerMode) Pc.text2 else Pc.text
+        val subtitleColor = if (p03ConversationComposerMode) Pc.text3 else Pc.text2
+        text(title, 540f, hero[2], hero[3], titleColor, true, Anchor.MIDDLE_ASCENDER)
+        if (subtitle != null) text(subtitle, 540f, 1015f, 40f, subtitleColor, anchor = Anchor.MIDDLE_ASCENDER)
     }
 
     private fun p03ChatUserMessage() {
@@ -1090,31 +1099,36 @@ private class AndroidContractRenderer(
     }
 
     private fun p03ConversationComposer(code: String) {
-        when (code) {
-            "DISABLED" -> p03Chat("DISABLED")
-            "OFFLINE" -> p03Chat("OFFLINE_NEW")
-            "TOOL_TRAY_OPEN" -> {
-                p03Chat("DEFAULT", drawComposer = false)
-                rect(0f, 72f, 1080f, 2400f, Color.argb(82, 0, 0, 0))
-                rounded(0f, 1180f, 1080f, 2400f, 72f, Pc.surface)
-                rounded(480f, 1210f, 600f, 1224f, 7f, Pc.border2)
-                text("添加内容或使用工具", 60f, 1300f, 66f, Pc.text, true)
-                val tools = listOf(
-                    "拍照" to "相", "选择图片" to "图", "上传文件" to "文",
-                    "生成图片" to "画", "制作演示" to "P", "深度研究" to "研",
-                )
-                tools.forEachIndexed { index, item ->
-                    val col = index % 3
-                    val row = index / 3
-                    val left = 54f + col * 342f
-                    val top = 1380f + row * 220f
-                    rounded(left, top, left + 300f, top + 190f, 28f, color("#F7F8FC"))
-                    iconCircle(left + 150f, top + 72f, 42f, item.second, color("#EEF0FF"), Pc.brand, 44f)
-                    text(item.first, left + 150f, top + 145f, 42f, Pc.text, anchor = Anchor.MIDDLE_ASCENDER)
+        p03ConversationComposerMode = true
+        try {
+            when (code) {
+                "DISABLED" -> p03Chat("DISABLED")
+                "OFFLINE" -> p03Chat("OFFLINE_NEW")
+                "TOOL_TRAY_OPEN" -> {
+                    p03Chat("DEFAULT", drawComposer = false)
+                    rect(0f, 72f, 1080f, 2400f, Color.argb(82, 0, 0, 0))
+                    rounded(0f, 1180f, 1080f, 2400f, 72f, Pc.surface)
+                    rounded(480f, 1210f, 600f, 1224f, 7f, Pc.border2)
+                    text("添加内容或使用工具", 60f, 1300f, 66f, Pc.text, true)
+                    val tools = listOf(
+                        "拍照" to "相", "选择图片" to "图", "上传文件" to "文",
+                        "生成图片" to "画", "制作演示" to "P", "深度研究" to "研",
+                    )
+                    tools.forEachIndexed { index, item ->
+                        val col = index % 3
+                        val row = index / 3
+                        val left = 54f + col * 342f
+                        val top = 1380f + row * 220f
+                        rounded(left, top, left + 300f, top + 190f, 28f, color("#F7F8FC"))
+                        iconCircle(left + 150f, top + 72f, 42f, item.second, color("#EEF0FF"), Pc.brand, 44f)
+                        text(item.first, left + 150f, top + 145f, 42f, Pc.text, anchor = Anchor.MIDDLE_ASCENDER)
+                    }
+                    p03ChatComposer("DEFAULT")
                 }
-                p03ChatComposer("DEFAULT")
+                else -> p03Chat(code)
             }
-            else -> p03Chat(code)
+        } finally {
+            p03ConversationComposerMode = false
         }
     }
 
