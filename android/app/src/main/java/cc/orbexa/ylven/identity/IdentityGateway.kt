@@ -773,12 +773,13 @@ class HttpIdentityGateway(
         headers: Map<String, String> = emptyMap(),
     ): JSONObject = withContext(Dispatchers.IO) {
         var lastFailure: Throwable? = null
-        repeat(2) { attempt ->
+        val attempts = if (method == "GET") 2 else 1
+        repeat(attempts) { attempt ->
             try {
                 return@withContext requestOnce(method, path, body, bearer, headers)
             } catch (failure: java.io.IOException) {
                 lastFailure = failure
-                if (attempt == 0 && method == "GET") Thread.sleep(250)
+                if (attempt == 0) Thread.sleep(250)
             }
         }
         throw lastFailure ?: java.io.IOException("网络请求失败")

@@ -1,5 +1,6 @@
 package cc.orbexa.ylven
 
+import android.content.Intent
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.identity.HttpIdentityGateway
@@ -18,6 +19,12 @@ class P03ProvisionStagingSessionTest {
     @Test
     fun createsAndPersistsRealStagingSession() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
+        context.startActivity(
+            Intent(context, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+            ),
+        )
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         val gateway = HttpIdentityGateway(deviceId = "p03-physical-${System.currentTimeMillis()}")
         val email = "p03.physical.${System.currentTimeMillis()}@example.com"
         val password = "P03Physical${System.nanoTime()}a1"
