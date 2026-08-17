@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -112,28 +113,35 @@ internal fun P04AISettingsPage(gateway: IdentityGateway, session: AuthSession, o
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var modelPickerOpen by rememberSaveable { mutableStateOf(false) }
+    var reasoningPickerOpen by rememberSaveable { mutableStateOf(false) }
+    var dirty by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     fun load() { scope.launch { loading = true; error = null; runCatching { models = gateway.models(session.bearer); preference = gateway.aiPreference(session.bearer) }.onFailure { error = it.message ?: "偏好加载失败" }; loading = false } }
     LaunchedEffect(session.bearer) { load() }
-    Scaffold(topBar = { TopAppBar(title = { Text("全局 AI 偏好") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } }, actions = { IconButton(onClick = ::load) { Icon(Icons.Default.Refresh, "刷新") } }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 18.dp)) {
-            item { Text("默认模型", style = MaterialTheme.typography.titleMedium) }
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Column { Text("AI 设置"); Text("默认模型、回答风格和工具偏好", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) } },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } },
+            actions = { IconButton(onClick = ::load) { Icon(Icons.Default.Refresh, "刷新") } },
+        )
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp)) {
             error?.let { message -> item { P04InlineError(message) } }
             if (loading) item { CircularProgressIndicator() }
-            items(models.filter { it.enabled }, key = { it.id }) { model ->
-                Card(Modifier.fillMaxWidth().clickable { preference = preference.copy(modelId = model.id, reasoningProfile = preference.reasoningProfile.takeIf { it in model.reasoningProfiles } ?: "auto") }.testTag("p04-ai-model-${model.id}"), border = BorderStroke(1.dp, if (preference.modelId == model.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(model.name, fontWeight = FontWeight.SemiBold); Text("${model.providerName.ifBlank { "供应商" }} · ${model.speedTier}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; if (preference.modelId == model.id) Icon(Icons.Default.Check, "已选择", tint = MaterialTheme.colorScheme.primary) }
+            item { P04SettingsRow("默认模型", models.firstOrNull { it.id == preference.modelId }?.name ?: "自动选择", Modifier.testTag("p04-ai-model-row").clickable { modelPickerOpen = !modelPickerOpen }) }
+            if (modelPickerOpen) {
+                items(models.filter { it.enabled }, key = { it.id }) { model ->
+                    Card(Modifier.fillMaxWidth().clickable { preference = preference.copy(modelId = model.id, reasoningProfile = preference.reasoningProfile.takeIf { it in model.reasoningProfiles } ?: "auto"); dirty = true; modelPickerOpen = false }.testTag("p04-ai-model-${model.id}"), border = BorderStroke(1.dp, if (preference.modelId == model.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(model.name, fontWeight = FontWeight.SemiBold); Text("${model.providerName.ifBlank { "供应商" }} · ${model.speedTier}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; if (preference.modelId == model.id) Icon(Icons.Default.Check, "已选择", tint = MaterialTheme.colorScheme.primary) }
+                    }
                 }
             }
-            item {
-                P04ReasoningProfileSelector(
-                    profiles = models.firstOrNull { it.id == preference.modelId }?.reasoningProfiles.orEmpty(),
-                    selected = preference.reasoningProfile,
-                    onSelect = { preference = preference.copy(reasoningProfile = it) },
-                    tag = "p04-ai-reasoning-profile",
-                )
-            }
-            item { Button(enabled = !saving && !loading, onClick = { scope.launch { saving = true; error = null; runCatching { preference = gateway.updateAIPreference(session.bearer, preference.modelId, preference.reasoningProfile, preference.version) }.onFailure { error = it.message ?: "保存失败" }; saving = false } }, modifier = Modifier.fillMaxWidth().testTag("p04-save-ai-preference")) { Text(if (saving) "保存中…" else "保存偏好") } }
+            item { P04SettingsRow("默认推理强度", p04ReasoningProfileLabel(preference.reasoningProfile), Modifier.testTag("p04-ai-reasoning-row").clickable { reasoningPickerOpen = !reasoningPickerOpen }) }
+            if (reasoningPickerOpen) item { P04ReasoningProfileSelector(profiles = models.firstOrNull { it.id == preference.modelId }?.reasoningProfiles.orEmpty(), selected = preference.reasoningProfile, onSelect = { preference = preference.copy(reasoningProfile = it); dirty = true }, tag = "p04-ai-reasoning-profile") }
+            item { P04SettingsRow("回答风格", "默认", Modifier.testTag("p04-ai-style-row")) }
+            item { P04SettingsToggleRow("联网搜索", checked = true, modifier = Modifier.testTag("p04-ai-web-row")) }
+            if (dirty) item { Button(enabled = !saving && !loading, onClick = { scope.launch { saving = true; error = null; runCatching { preference = gateway.updateAIPreference(session.bearer, preference.modelId, preference.reasoningProfile, preference.version); dirty = false }.onFailure { error = it.message ?: "保存失败" }; saving = false } }, modifier = Modifier.fillMaxWidth().testTag("p04-save-ai-preference")) { Text(if (saving) "保存中…" else "保存偏好") } }
         }
     }
 }
@@ -145,25 +153,50 @@ internal fun P04ConversationSettingsPage(gateway: IdentityGateway, session: Auth
     var models by remember { mutableStateOf<List<ModelOption>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var modelPickerOpen by rememberSaveable(conversation.id) { mutableStateOf(false) }
+    var reasoningPickerOpen by rememberSaveable(conversation.id) { mutableStateOf(false) }
+    var dirty by rememberSaveable(conversation.id) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(session.bearer) { runCatching { models = gateway.models(session.bearer) }.onFailure { error = it.message } }
-    Scaffold(topBar = { TopAppBar(title = { Text("会话 AI 设置") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 18.dp)) {
-            item { Text(conversation.title.ifBlank { "新对话" }, style = MaterialTheme.typography.headlineSmall) }
-            item { Text("会话设置会覆盖全局默认值。当前版本：${conversation.aiSettingsVersion}", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Column { Text("会话设置"); Text("配置当前会话的模型和指令", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) } },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } },
+        )
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp)) {
             error?.let { message -> item { P04InlineError(message) } }
-            items(models.filter { it.enabled }, key = { it.id }) { model ->
-                OutlinedButton(onClick = { modelId = model.id }, modifier = Modifier.fillMaxWidth().testTag("p04-conversation-model-${model.id}"), border = BorderStroke(1.dp, if (modelId == model.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)) { Text(if (modelId == model.id) "✓ ${model.name}" else model.name) }
+            item { P04SettingsRow("会话默认模型", models.firstOrNull { it.id == modelId }?.name ?: "自动选择", Modifier.testTag("p04-conversation-model-row").clickable { modelPickerOpen = !modelPickerOpen }) }
+            if (modelPickerOpen) items(models.filter { it.enabled }, key = { it.id }) { model ->
+                Card(Modifier.fillMaxWidth().clickable { modelId = model.id; dirty = true; modelPickerOpen = false }.testTag("p04-conversation-model-${model.id}"), border = BorderStroke(1.dp, if (modelId == model.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(model.name, fontWeight = FontWeight.SemiBold); Text(model.providerName.ifBlank { "供应商" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; if (modelId == model.id) Icon(Icons.Default.Check, "已选择", tint = MaterialTheme.colorScheme.primary) }
+                }
             }
-            item {
-                P04ReasoningProfileSelector(
-                    profiles = models.firstOrNull { it.id == modelId }?.reasoningProfiles.orEmpty(),
-                    selected = profile,
-                    onSelect = { profile = it },
-                    tag = "p04-conversation-reasoning-profile",
-                )
-            }
-            item { Button(enabled = !saving, onClick = { scope.launch { saving = true; runCatching { gateway.updateConversationAISettings(session.bearer, conversation.id, modelId, profile, conversation.aiSettingsVersion) }.onSuccess(onUpdated).onFailure { error = it.message ?: "保存失败" }; saving = false } }, modifier = Modifier.fillMaxWidth().testTag("p04-save-conversation-settings")) { Text(if (saving) "保存中…" else "保存会话设置") } }
+            item { P04SettingsRow("推理强度", p04ReasoningProfileLabel(profile), Modifier.testTag("p04-conversation-reasoning-row").clickable { reasoningPickerOpen = !reasoningPickerOpen }) }
+            if (reasoningPickerOpen) item { P04ReasoningProfileSelector(profiles = models.firstOrNull { it.id == modelId }?.reasoningProfiles.orEmpty(), selected = profile, onSelect = { profile = it; dirty = true }, tag = "p04-conversation-reasoning-profile") }
+            item { P04SettingsRow("系统指令", "未设置", Modifier.testTag("p04-conversation-instructions-row")) }
+            item { P04SettingsToggleRow("临时对话", checked = true, modifier = Modifier.testTag("p04-conversation-temporary-row")) }
+            if (dirty) item { Button(enabled = !saving, onClick = { scope.launch { saving = true; runCatching { gateway.updateConversationAISettings(session.bearer, conversation.id, modelId, profile, conversation.aiSettingsVersion) }.onSuccess { dirty = false; onUpdated(it) }.onFailure { error = it.message ?: "保存失败" }; saving = false } }, modifier = Modifier.fillMaxWidth().testTag("p04-save-conversation-settings")) { Text(if (saving) "保存中…" else "保存会话设置") } }
+        }
+    }
+}
+
+@Composable
+private fun P04SettingsRow(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) { Text(label, style = MaterialTheme.typography.titleMedium); if (value.isNotBlank() && value != "默认" && value != "未设置") Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text("›", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun P04SettingsToggleRow(label: String, checked: Boolean, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Switch(checked = checked, onCheckedChange = {}, modifier = Modifier.testTag("p04-toggle-$label"))
         }
     }
 }
