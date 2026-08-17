@@ -186,8 +186,8 @@ try {
     $download = Join-Path $localRoot 'download'
     New-Item -ItemType Directory -Path $incoming,$download -Force | Out-Null
     $archive = Join-Path $incoming 'source.tar.gz'
-    # Archive the committed Git objects with canonical LF conversion disabled. A local
-    # core.autocrlf setting must not alter append-only migration checksums on staging.
+    # Disable platform defaults; committed attributes define the deployed bytes for
+    # append-only migrations, including the legacy CRLF migration set.
     & git -c core.autocrlf=false -c core.eol=lf archive --format=tar.gz --output=$archive $Commit
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archive)) { throw 'git archive failed.' }
     $archiveSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()

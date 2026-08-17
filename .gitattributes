@@ -1,2 +1,5 @@
 *.sh text eol=lf
 *.sql text eol=lf
+# These migrations were recorded on staging before EOL attributes existed. Keep their
+# deployed bytes stable; all later migrations use canonical LF.
+backend/db/migrations/000[1-6]_*.sql text eol=crlf
