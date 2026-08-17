@@ -74,7 +74,7 @@ class P04W02LiveStagingFlowTest {
         Espresso.pressBack()
         waitForTag("p04-open-ai-settings", 20_000)
         Espresso.pressBack()
-        waitForTag("p03-open-account", 20_000)
+        waitForTag("p04-open-workbench", 20_000)
         Espresso.pressBack()
         waitForTag("CO-P03-001-HOME-SEND", 20_000)
         composeRule.onNodeWithTag("CO-P03-001-HOME-SEND").performClick()
