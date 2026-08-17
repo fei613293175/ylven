@@ -9,6 +9,12 @@ import androidx.test.runner.lifecycle.Stage
 
 internal fun launchP03TargetActivity(): MainActivity {
     val instrumentation = InstrumentationRegistry.getInstrumentation()
+    // The acceptance script performs an install/launch smoke check before it
+    // starts instrumentation. Recreate the target after ComposeTestRule has
+    // been initialized so Compose registers the hierarchy with this test.
+    instrumentation.uiAutomation.executeShellCommand(
+        "am force-stop cc.orbexa.ylven",
+    ).close()
     val descriptor = instrumentation.uiAutomation.executeShellCommand(
         "am start -W -n cc.orbexa.ylven/.MainActivity",
     )
