@@ -1,29 +1,25 @@
 package cc.orbexa.ylven
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 
 internal fun launchP03TargetActivity(): MainActivity {
     val instrumentation = InstrumentationRegistry.getInstrumentation()
-    // The acceptance script performs an install/launch smoke check before it
-    // starts instrumentation. Recreate the target after ComposeTestRule has
-    // been initialized so Compose registers the hierarchy with this test.
-    instrumentation.uiAutomation.executeShellCommand(
-        "am force-stop cc.orbexa.ylven",
-    ).close()
-    val descriptor = instrumentation.uiAutomation.executeShellCommand(
-        "am start -W -n cc.orbexa.ylven/.MainActivity",
-    )
-    val output = ParcelFileDescriptor.AutoCloseInputStream(descriptor)
-        .bufferedReader()
-        .use { it.readText() }
-    check(Regex("Status:\\s*ok").containsMatchIn(output)) {
-        "Could not launch the target APK MainActivity: $output"
+    // The acceptance script already performs the install/launch smoke check.
+    // Start the target through Instrumentation after ComposeTestRule has been
+    // initialized; shelling out to `am force-stop` from a vivo test process can
+    // tear down UiAutomation and terminate instrumentation before the hierarchy
+    // is attached.
+    val intent = Intent(instrumentation.targetContext, MainActivity::class.java).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }
+    instrumentation.startActivitySync(intent)
 
     instrumentation.waitForIdleSync()
     repeat(150) {
