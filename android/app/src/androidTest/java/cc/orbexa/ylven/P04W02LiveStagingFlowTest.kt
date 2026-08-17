@@ -22,6 +22,7 @@ import cc.orbexa.ylven.identity.HttpIdentityGateway
 import cc.orbexa.ylven.identity.SessionStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -37,8 +38,12 @@ class P04W02LiveStagingFlowTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val gateway = HttpIdentityGateway(deviceId = "p04-w02-physical-${System.currentTimeMillis()}")
+        reportStage("session_probe_start")
         val session = ensureSession(gateway, context)
+        reportStage("session_ready")
+        reportStage("models_start")
         val models = gateway.models(session.bearer)
+        reportStage("models_ready")
         val model = requireNotNull(models.firstOrNull {
             it.id == "ylven-default" && it.enabled && "auto" in it.reasoningProfiles
         }) { "Staging has no enabled default model with the automatic profile" }
@@ -173,7 +178,7 @@ class P04W02LiveStagingFlowTest {
     private suspend fun ensureSession(gateway: HttpIdentityGateway, context: android.content.Context): AuthSession {
         val store = SessionStore(context)
         store.load()?.let { existing ->
-            runCatching { gateway.models(existing.bearer) }
+            runCatching { withTimeout(45_000) { gateway.models(existing.bearer) } }
                 .onSuccess { return existing }
                 .onFailure { error ->
                     val invalid = (error as? ApiException)?.let { it.status == 401 || it.code.contains("session", ignoreCase = true) } == true
@@ -181,16 +186,25 @@ class P04W02LiveStagingFlowTest {
                     store.save(null)
                 }
         }
+        reportStage("registration_start")
         val email = "p04.w02.${System.currentTimeMillis()}@example.com"
         val registration = gateway.startRegistration(email)
+        reportStage("registration_otp_received")
         val session = gateway.finishRegistrationSession(
             registration,
             requireNotNull(registration.debugCode),
             "P04W02Physical${System.nanoTime()}a1",
         )
+        reportStage("registration_session_issued")
         gateway.initializeWorkspace(session)
+        reportStage("workspace_initialized")
         store.save(session)
+        reportStage("session_persisted")
         return session
+    }
+
+    private fun reportStage(stage: String) {
+        android.util.Log.i("YLVEN_P04_W02", stage)
     }
 
     private suspend fun awaitConversation(
