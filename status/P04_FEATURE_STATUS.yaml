@@ -108,29 +108,49 @@ features:
   - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04BranchesPage
   - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-013
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '分支创建、历史快照和当前分支切换的后端与 Android 页面已实现；真实设备 instrumentation 在启动后无阶段输出并卡死，未形成完整真机交互证据。'
+  evidence:
+  - backend/internal/identity/p04_features.go::CreateConversationBranch/ListConversationBranches/SetActiveConversationBranch
+  - backend/internal/identity/p04_features_test.go::TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04BranchesPage
+  - .ylven-local/physical-device-acceptance/p04-w03-5266a1d-device/instrumentation-logcat.txt
 - feature_id: P04-014
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '多模型比较组、每个模型独立分支和并行 run 调度已实现，并增加至少两个不同模型的服务端约束；真实设备证据受 instrumentation 阻塞。'
+  evidence:
+  - backend/internal/identity/p04_features.go::CreateComparison
+  - backend/internal/identity/p04_features_test.go::TestP04ComparisonRequiresTwoDistinctModels
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ComparisonPage
+  - .ylven-local/server-builds/p04-1.4.0-5266a1d093fa-20260817T232956Z/download/服务器构建来源证明.json
 - feature_id: P04-015
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '比较结果按候选模型标签页展示，并在 queued/running 状态自动刷新；真机页面证据因 instrumentation 卡死延期。'
+  evidence:
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ComparisonPage
+  - android/app/src/androidTest/java/cc/orbexa/ylven/P04LiveStagingFlowTest.kt::comparison tabs
+  - .ylven-local/physical-device-acceptance/p04-w03-5266a1d-device/instrumentation-logcat.txt
 - feature_id: P04-016
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '候选回答完成后可采纳并切换会话 active branch，旧候选仍保留在比较组；真实设备证据因 instrumentation 卡死延期。'
+  evidence:
+  - backend/internal/identity/p04_features.go::AdoptComparison
+  - backend/internal/identity/p04_features_test.go::TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::p04-adopt action
 - feature_id: P04-017
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '综合接口支持指定候选或全部已完成候选，并保留 synthesis run provenance；Android 已提供“综合全部已完成回答”操作。真实设备证据因 instrumentation 卡死延期。'
+  evidence:
+  - backend/internal/identity/p04_features.go::SynthesizeComparison
+  - backend/internal/identity/p04_features_test.go::TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::p04-synthesize-all
 - feature_id: P04-018
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '不可用模型会作为候选状态返回，服务状态页和回退模型投影使用普通用户可理解文案；真实设备证据因 instrumentation 卡死延期。'
+  evidence:
+  - backend/internal/identity/p04_features.go::ModelAvailability/ServiceStatus
+  - backend/internal/identity/p04_features_test.go::TestP04AvailabilityExcludesUnavailableFallbacks
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ServiceStatusPage
 - feature_id: P04-019
   status: PLANNED
   reason: ''
