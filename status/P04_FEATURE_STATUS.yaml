@@ -60,29 +60,53 @@ features:
   - backend/internal/identity/conversation_context.go::model and reasoning persistence
   - android/app/src/main/java/cc/orbexa/ylven/identity/IdentityGateway.kt::model and reasoning API contract
 - feature_id: P04-007
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '全局默认模型/推理档位的持久化、版本冲突和 Android 设置页已实现并有后端单元测试；真实设备 W02 live flow 在 instrumentation/Compose 绑定阶段超时，未形成真机页面证据。'
+  evidence:
+  - backend/internal/identity/p04_features.go::PutAIPreference
+  - backend/internal/identity/p04_features_test.go::TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04AISettingsPage
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-008
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '会话默认模型设置、单会话回读接口和版本校验已实现；真机验收仍受 W02 instrumentation 超时阻塞。'
+  evidence:
+  - backend/internal/identity/p04_http.go::conversation settings endpoints
+  - backend/internal/identity/p04_features_test.go::TestP04W02ConversationSettingsReadbackUsesTheSpecificConversationResource
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ConversationSettingsPage
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-009
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '消息级模型/推理档位覆盖和输入区状态条已实现并由后端覆盖；真实设备操作证据因 W02 instrumentation 超时延期。'
+  evidence:
+  - backend/internal/identity/p04_features.go::effectiveSelection
+  - backend/internal/identity/p04_features_test.go::TestP04W02ExplicitOverrideWinsAndBranchSnapshotsOnlyHistoryBeforeFork
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::P03ConversationPage
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-010
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '回答来源元数据 API、持久化运行 provenance 与 Android 来源标签已实现；真机截图尚未因 instrumentation 超时生成。'
+  evidence:
+  - backend/internal/identity/p04_http.go::message run metadata
+  - backend/internal/identity/p04_features_test.go::TestP04W02HTTPResolvesDefaultsBeforeRoutingAndPreservesRunProvenance
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P03ProductionScreens.kt::answer provenance
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-011
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '重新回答会创建新分支并保留旧运行/旧答案，已有内存与 PostgreSQL 回归覆盖；真实设备路径待 instrumentation 修复后补验。'
+  evidence:
+  - backend/internal/identity/p04_features.go::RerunMessage
+  - backend/internal/identity/p04_features_test.go::TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns
+  - backend/internal/identity/conversation_postgres_test.go::branch regression
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-012
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '回答分支创建、分支快照边界和切换接口已实现并有回归测试；真实设备操作/截图仍受 W02 instrumentation 超时阻塞。'
+  evidence:
+  - backend/internal/identity/p04_features.go::CreateConversationBranch
+  - backend/internal/identity/p04_features_test.go::TestP04W02ExplicitOverrideWinsAndBranchSnapshotsOnlyHistoryBeforeFork
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04BranchesPage
+  - .ylven-local/physical-device-acceptance/p04-1.4.0-20260817T223202Z/test-results/P04W02LiveStagingFlowTest.txt
 - feature_id: P04-013
   status: PLANNED
   reason: ''
