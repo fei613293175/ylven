@@ -2,9 +2,15 @@
 from __future__ import annotations
 import argparse, csv, json, math
 from pathlib import Path
-from PIL import Image, ImageChops, ImageFilter, ImageStat
 ROOT=Path(__file__).resolve().parents[1]
 P03_DEPRECATED_PAGES={"YL-A-019","YL-A-031"}
+
+def require_pillow():
+ try:
+  from PIL import Image, ImageChops, ImageFilter, ImageStat
+ except ModuleNotFoundError as exc:
+  raise RuntimeError('Pillow is required for Android screenshot comparison') from exc
+ return Image, ImageChops, ImageFilter, ImageStat
 
 def applies_to_phase(row:dict[str,str],phase:str,packet:str|None=None)->bool:
  if row.get('surface')!='ANDROID': return False
@@ -15,12 +21,14 @@ def applies_to_phase(row:dict[str,str],phase:str,packet:str|None=None)->bool:
  return row.get('page_id') not in P03_DEPRECATED_PAGES and ('P03' in phases or 'P03-W07' in work_packets)
 
 def score(a:Image.Image,b:Image.Image)->tuple[float,float]:
+ Image,ImageChops,_,ImageStat=require_pillow()
  a=a.convert('RGB'); b=b.convert('RGB')
  if a.size!=b.size: return 0.0,1.0
  diff=ImageChops.difference(a,b); stat=ImageStat.Stat(diff)
  mae=sum(stat.mean)/(3*255.0); return max(0.0,1.0-mae),mae
 
 def normalize_runtime(reference:Image.Image,runtime:Image.Image)->tuple[Image.Image,str]:
+ Image,_,_,_=require_pillow()
  if runtime.size==reference.size: return runtime,'native-size'
  original=runtime.size
  normalized=runtime.resize(reference.size,Image.Resampling.LANCZOS)
@@ -52,11 +60,13 @@ def packet_semantic_state_exception(phase:str,packet:str|None)->dict|None:
  return data
 
 def structural_score(a:Image.Image,b:Image.Image,radius:float)->tuple[float,float]:
+ _,_,ImageFilter,_=require_pillow()
  return score(a.convert('RGB').filter(ImageFilter.GaussianBlur(radius)),b.convert('RGB').filter(ImageFilter.GaussianBlur(radius)))
 
 def main()->int:
  p=argparse.ArgumentParser(); p.add_argument('--phase',required=True); p.add_argument('--packet'); p.add_argument('--screenshots',required=True); p.add_argument('--report',required=True); a=p.parse_args()
  phase=a.phase.upper(); packet=a.packet.upper() if a.packet else None
+ Image,_,_,_=require_pillow()
  if packet and not packet.startswith(f'{phase}-W'): p.error(f'--packet {packet} does not belong to --phase {phase}')
  shots=Path(a.screenshots); report=Path(a.report); report.parent.mkdir(parents=True,exist_ok=True)
  with (ROOT/'contracts/ui-state-catalog.csv').open(encoding='utf-8-sig',newline='') as f: rows=[r for r in csv.DictReader(f) if applies_to_phase(r,phase,packet)]

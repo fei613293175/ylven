@@ -11,8 +11,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from PIL import Image, ImageStat
-
 ROOT = Path(__file__).resolve().parents[1]
 P03_DEPRECATED_PAGES = {"YL-A-019", "YL-A-031"}
 P03_PRODUCTION_PAGES = {
@@ -31,6 +29,14 @@ P04_W02_PRODUCTION_PAGES = {
     "YL-A-037": "P04-W02-PER-MESSAGE-SELECTOR.png",
     "YL-A-038": "P04-W02-PER-MESSAGE-PROVENANCE.png",
 }
+
+
+def require_pillow():
+    try:
+        from PIL import Image, ImageStat
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("Pillow is required to inspect physical-device screenshots") from exc
+    return Image, ImageStat
 
 
 def sha256(path: Path) -> str:
@@ -235,6 +241,7 @@ def main() -> int:
             errors.append("non-P03 device evidence does not prove the required adb install -r transition")
 
     expected = phase_android_screenshots(phase, packet)
+    Image, ImageStat = require_pillow()
     actual = {path.name for path in (root / "截图").glob("*.png")}
     if actual != set(expected):
         missing = sorted(set(expected) - actual)
