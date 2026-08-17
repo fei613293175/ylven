@@ -29,6 +29,14 @@ def expected_pages(phase: str, packet: Optional[str]) -> dict[str, str]:
             "YL-A-033": "P04-MODEL-SELECTOR.png",
             "YL-A-034": "P04-REASONING-PROFILE.png",
         }
+    if phase == "P04" and packet == "P04-W02":
+        return {
+            "YL-A-030": "P04-W02-MESSAGE-ACTIONS.png",
+            "YL-A-035": "P04-W02-GLOBAL-DEFAULT.png",
+            "YL-A-036": "P04-W02-CONVERSATION-DEFAULT.png",
+            "YL-A-037": "P04-W02-PER-MESSAGE-SELECTOR.png",
+            "YL-A-038": "P04-W02-PER-MESSAGE-PROVENANCE.png",
+        }
     return {}
 
 

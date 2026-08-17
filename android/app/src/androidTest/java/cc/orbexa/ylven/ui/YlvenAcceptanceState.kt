@@ -172,6 +172,10 @@ private class AndroidContractRenderer(
             "YL-A-030" -> p03MessageActions(code)
             "YL-A-033" -> p03Selector(code, model = true)
             "YL-A-034" -> p03Selector(code, model = false)
+            "YL-A-035" -> p04Settings(code, conversation = false)
+            "YL-A-036" -> p04Settings(code, conversation = true)
+            "YL-A-037" -> p04ModelStrip(code)
+            "YL-A-038" -> p04ResponseLabel(code)
         }
         stateFeedback(page, code)
     }
@@ -1379,6 +1383,80 @@ private class AndroidContractRenderer(
         componentFooter()
     }
 
+    private fun p04Settings(code: String, conversation: Boolean) {
+        val title = if (conversation) "会话设置" else "AI 设置"
+        val subtitle = if (conversation) "配置当前会话的模型和指令" else "默认模型、回答风格和工具偏好"
+        val items = if (conversation) {
+            listOf("会话默认模型", "推理强度", "系统指令", "临时对话")
+        } else {
+            listOf("默认模型", "默认推理强度", "回答风格", "联网搜索")
+        }
+        topBar(title, subtitle, back = true, right = true)
+        if (code == "LOADING") {
+            skeleton(72f, 330f, 1008f, rows = 7)
+            return
+        }
+        var y = 330f
+        items.forEach { item ->
+            rounded(72f, y, 1008f, y + 150f, 32f, Pc.surface, Pc.border, 2f)
+            text(item, 120f, y + 75f, 35f, Pc.text, anchor = Anchor.LEFT_MIDDLE)
+            if (item in setOf("联网搜索", "临时对话")) {
+                rounded(830f, y + 45f, 940f, y + 105f, 30f, Pc.brand)
+                circle(912f, y + 75f, 25f, Pc.surface)
+            } else {
+                text("›", 930f, y + 75f, 40f, Pc.text3, anchor = Anchor.MIDDLE_MIDDLE)
+            }
+            y += 170f
+        }
+        if (code in setOf("EDIT_MODE", "DIRTY")) {
+            button(72f, minOf(y + 20f, 1850f), 1008f, minOf(y + 176f, 2006f), "保存设置")
+        }
+        when (code) {
+            "SAVE_SUCCESS", "SAVE_ERROR", "OFFLINE" -> statusBanner(code, 1550f, .82f)
+            "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .82f, "正在提交，请勿重复操作。")
+            "EDIT_MODE", "DIRTY" -> pill(72f, 282f, 390f, 354f, if (code == "EDIT_MODE") "编辑模式" else "存在未保存修改", Pc.warningSoft, Pc.warning, 28f, Pc.warning)
+        }
+    }
+
+    private fun p04ModelStrip(code: String) {
+        componentHeader("输入区模型条", "模型、推理、联网和临时切换提示")
+        text("当前状态", 105f, 390f, 28f, Pc.text3, true)
+        pill(270f, 376f, 600f, 438f, code, Pc.surfaceSubtle, Pc.text2, 23f, Pc.border)
+        val y = 1120f
+        text("输入框上方的当前模型状态", 120f, y - 125f, 28f, Pc.text3, true)
+        rounded(120f, y, 960f, y + 130f, 52f, Pc.brandSoft, Pc.border, 2f)
+        iconCircle(180f, y + 65f, 34f, "AI", Pc.brand, Pc.surface, 21f)
+        text("GPT-5.6 Sol", 240f, y + 38f, 34f, Pc.text, true)
+        pill(600f, y + 30f, 760f, y + 96f, "深度", Pc.surface, Pc.brand, 24f)
+        pill(780f, y + 30f, 920f, y + 96f, "联网", Pc.blueSoft, Pc.blue, 24f)
+        rounded(120f, y + 180f, 960f, y + 390f, 64f, Pc.surface, Pc.border2, 2f)
+        text("输入问题或上传文件", 180f, y + 250f, 32f, Pc.disabled)
+        iconCircle(885f, y + 285f, 40f, "➤", Pc.brand, Pc.surface, 28f)
+        if (code in setOf("SERVICE_DEGRADED", "DISABLED")) {
+            statusBanner(if (code == "SERVICE_DEGRADED") code else "PERMISSION_DENIED", 1640f, .72f)
+        }
+        componentFooter()
+    }
+
+    private fun p04ResponseLabel(code: String) {
+        componentHeader("AI 回复标签", "永久标识供应商、模型、推理和工具来源")
+        text("当前状态", 105f, 390f, 28f, Pc.text3, true)
+        pill(270f, 376f, 600f, 438f, code, Pc.surfaceSubtle, Pc.text2, 23f, Pc.border)
+        val y = 760f
+        text("AI 回答正文上方的来源标签", 120f, y, 28f, Pc.text3, true)
+        line(120f, y + 105f, 960f, y + 105f, Pc.divider, 2f)
+        iconCircle(160f, y + 165f, 28f, "AI", Pc.brand, Pc.surface, 18f)
+        text("GPT-5.6 Sol", 210f, y + 140f, 34f, Pc.text, true)
+        pill(505f, y + 130f, 665f, y + 192f, "深度", Pc.brandSoft, Pc.brand, 23f)
+        pill(685f, y + 130f, 845f, y + 192f, "已联网", Pc.blueSoft, Pc.blue, 23f)
+        text("OpenAI · 本条回答 · 12.8 秒 · 已调用 1 个工具", 120f, y + 250f, 27f, Pc.text3)
+        text("这是回答正文的起始位置。模型标签不会随会话后续切换而改变。", 120f, y + 345f, 32f, Pc.text, maxWidth = 820f)
+        if (code in setOf("SERVICE_DEGRADED", "DISABLED")) {
+            statusBanner(if (code == "SERVICE_DEGRADED") code else "PERMISSION_DENIED", 1510f, .72f)
+        }
+        componentFooter()
+    }
+
     private fun componentFooter() {
         text("视觉类型：独立组件板", 90f, 2085f, 28f, Pc.text3)
         text("示例文案仅用于视觉占位，功能以 Feature ID 为准。", 90f, 2140f, 26f, Pc.text3)
@@ -1446,7 +1524,7 @@ private class AndroidContractRenderer(
     }
 
     private fun stateFeedback(page: String, code: String) {
-        val p03ComponentFeedbackPages = setOf("YL-A-022", "YL-A-025", "YL-A-027", "YL-A-028", "YL-A-029")
+        val p03ComponentFeedbackPages = setOf("YL-A-022", "YL-A-025", "YL-A-027", "YL-A-028", "YL-A-029", "YL-A-030")
         if (page in P03_PAGE_IDS && page !in p03ComponentFeedbackPages) return
         if (code in setOf("DEFAULT", "POPULATED", "LAUNCH", "FIRST_RUN")) return
         val title = mapOf(
@@ -1479,6 +1557,10 @@ private class AndroidContractRenderer(
             "YL-A-032" to "输入框组件",
             "YL-A-033" to "模型选择器",
             "YL-A-034" to "回答方式选择器",
+            "YL-A-035" to "AI 设置",
+            "YL-A-036" to "会话设置",
+            "YL-A-037" to "输入区模型条",
+            "YL-A-038" to "AI 回复标签",
         ).getValue(page)
         val message = when (code) {
             "LOADING" -> "正在加载「$title」"

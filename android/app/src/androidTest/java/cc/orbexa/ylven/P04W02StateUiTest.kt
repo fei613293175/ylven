@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.platform.app.InstrumentationRegistry
-import cc.orbexa.ylven.ui.P04AcceptanceState
+import cc.orbexa.ylven.ui.YlvenAcceptanceState
 import cc.orbexa.ylven.ui.theme.YlvenTheme
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,7 @@ class P04W02StateUiTest {
         composeRule.runOnUiThread {
             activity.setContent {
                 YlvenTheme(darkTheme = false) {
-                    key(activeState.value) { P04AcceptanceState(activeState.value) }
+                    key(activeState.value) { YlvenAcceptanceState(activeState.value) }
                 }
             }
         }
@@ -39,7 +39,7 @@ class P04W02StateUiTest {
         P04_W02_STATE_IDS.forEach { stateId ->
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
-            composeRule.onNodeWithTag("p04-acceptance-state-$stateId").assertExists()
+            composeRule.onNodeWithTag("acceptance-state-$stateId").assertExists()
             val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
                 "Could not capture P04-W02 state $stateId"
             }
