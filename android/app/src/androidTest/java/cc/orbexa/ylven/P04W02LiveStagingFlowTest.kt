@@ -136,7 +136,9 @@ class P04W02LiveStagingFlowTest {
         composeRule.onNodeWithTag("p04-open-branches-${messageConversation.id}").performScrollTo().performClick()
         waitForTag("p04-create-branch", 20_000)
         composeRule.onNodeWithTag("p04-create-branch").performScrollTo().performClick()
-        val createdBranch = awaitBranch(gateway, session, messageConversation.id, branchesBefore)
+        val createdBranch = awaitBranch(gateway, session, messageConversation.id, branchesBefore) {
+            branchErrorText()
+        }
         assertEquals(assistantMessage.id, createdBranch.forkedFromMessageId)
         waitForTag("p04-branch-${createdBranch.id}", 20_000)
         assertTrue(
@@ -200,15 +202,25 @@ class P04W02LiveStagingFlowTest {
         session: AuthSession,
         conversationId: String,
         previousIds: Set<String>,
+        errorText: () -> String?,
     ): cc.orbexa.ylven.identity.ConversationBranch {
         repeat(75) {
             gateway.conversationBranches(session.bearer, conversationId)
                 .firstOrNull { it.id !in previousIds }
                 ?.let { return it }
+            errorText()?.let { error("Answer branch creation failed in the installed UI: $it") }
             delay(400)
         }
         error("Timed out waiting for answer branch creation")
     }
+
+    private fun branchErrorText(): String? = composeRule
+        .onAllNodesWithTag("p04-inline-error")
+        .fetchSemanticsNodes()
+        .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty() }
+        .joinToString(separator = "") { it.text }
+        .trim()
+        .takeIf(String::isNotBlank)
 
     private suspend fun awaitAssistantMessage(
         gateway: HttpIdentityGateway,
