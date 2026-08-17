@@ -152,29 +152,44 @@ features:
   - backend/internal/identity/p04_features_test.go::TestP04AvailabilityExcludesUnavailableFallbacks
   - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ServiceStatusPage
 - feature_id: P04-019
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '按会话授权和模型健康状态选择可用回退线路；真实后台配置验收仍依赖授权管理会话。'
+  evidence:
+  - backend/internal/identity/p04_operations.go::RoutingPlanForModel
+  - backend/internal/identity/p04_features.go::ModelAvailability
+  - backend/internal/identity/p04_features_test.go::TestP04RoutingPolicyUsesFallbackChannelAfterPrimaryFailure
 - feature_id: P04-020
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '供应商通道持久化使用凭据引用而非明文密钥，并带版本冲突校验；真实后台页面验收等待授权会话。'
+  evidence:
+  - backend/internal/identity/identity.go::ProviderChannel
+  - backend/internal/identity/p04_operations.go::UpsertProviderChannel
+  - backend/internal/identity/p04_operations_postgres.go::upsertProviderChannel
 - feature_id: P04-021
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '模型目录支持别名、排序、启用状态及供应商分组投影。'
+  evidence:
+  - backend/internal/identity/model_catalog.go::ModelCatalogEntry
+  - backend/internal/identity/p04_admin_http.go::adminModelCatalog
 - feature_id: P04-022
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '模型能力和上下文限制已结构化持久化并参与选择与过滤；真实能力探测仍受外部配置限制。'
+  evidence:
+  - backend/internal/identity/model_catalog.go::ModelCapabilityConfig
+  - backend/internal/identity/p04_admin.go::ListModelHealthStatuses
 - feature_id: P04-023
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '推理档位映射和上游参数校验已接入目录解析与持久化。'
+  evidence:
+  - backend/internal/identity/model_catalog.go::ReasoningMapping
+  - backend/internal/identity/p04_features.go::resolveModelSelectionLocked
 - feature_id: P04-024
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '路由策略支持主线路、回退线路、尝试次数、通道供应商一致性和版本冲突。'
+  evidence:
+  - backend/internal/identity/p04_operations.go::UpsertRoutingPolicy
+  - backend/internal/identity/p04_operations_postgres.go::upsertRoutingPolicy
+  - backend/internal/identity/p04_features_test.go::TestP04RoutingPolicyUsesFallbackChannelAfterPrimaryFailure
 - feature_id: P04-025
   status: PLANNED
   reason: ''
