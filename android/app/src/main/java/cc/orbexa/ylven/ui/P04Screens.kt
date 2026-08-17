@@ -286,6 +286,14 @@ internal fun P04ComparisonPage(gateway: IdentityGateway, session: AuthSession, c
                                     TextButton(enabled = selectedCandidate.status == "completed", onClick = { scope.launch { runCatching { group = gateway.adoptComparison(session.bearer, current.id, selectedCandidate.runId) }.onFailure { error = it.message } } }, modifier = Modifier.testTag("p04-adopt-${selectedCandidate.runId}")) { Text("采纳") }
                                     TextButton(enabled = selectedCandidate.status == "completed", onClick = { scope.launch { runCatching { group = gateway.synthesizeComparison(session.bearer, current.id, listOf(selectedCandidate.runId)) }.onFailure { error = it.message } } }, modifier = Modifier.testTag("p04-synthesize-${selectedCandidate.runId}")) { Text("以此综合") }
                                 }
+                                val completedRunIds = current.candidates.filter { it.status == "completed" }.map { it.runId }
+                                OutlinedButton(
+                                    enabled = completedRunIds.size >= 2,
+                                    onClick = { scope.launch { runCatching { group = gateway.synthesizeComparison(session.bearer, current.id, completedRunIds) }.onFailure { error = it.message ?: "综合回答暂未完成" } } },
+                                    modifier = Modifier.fillMaxWidth().testTag("p04-synthesize-all"),
+                                ) {
+                                    Text("综合全部已完成回答")
+                                }
                             }
                         }
                     }
