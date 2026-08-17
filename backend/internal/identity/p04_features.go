@@ -227,6 +227,13 @@ func (s *Store) CreateComparison(access, conversationID, prompt string, models [
 	conversation, ok := s.data.Conversations[conversationID]; if !ok || conversation.UserID != user.ID || conversation.DeletedAt != nil { return ComparisonGroup{}, errors.New("conversation_not_found") }
 	prompt = strings.TrimSpace(prompt); if prompt == "" { return ComparisonGroup{}, errors.New("message_body_required") }; if len([]rune(prompt)) > 200000 { return ComparisonGroup{}, errors.New("message_body_too_long") }
 	if len(models) == 0 { models = []string{"ylven-default"} }; if len(models) > 6 { return ComparisonGroup{}, errors.New("comparison_model_limit_exceeded") }
+	uniqueModelCount := 0
+	seenModels := map[string]bool{}
+	for _, requestedModelID := range models {
+		requestedModelID = strings.TrimSpace(requestedModelID)
+		if requestedModelID != "" && !seenModels[requestedModelID] { seenModels[requestedModelID] = true; uniqueModelCount++ }
+	}
+	if uniqueModelCount < 2 { return ComparisonGroup{}, errors.New("comparison_requires_multiple_models") }
 	id, err := randomToken(16); if err != nil { return ComparisonGroup{}, err }
 	now := time.Now().UTC(); group := ComparisonGroup{ID:id, ConversationID:conversationID, UserID:user.ID, Prompt:prompt, Status:"queued", Candidates:[]ComparisonCandidate{}, CreatedAt:now, UpdatedAt:now}
 	s.data.ComparisonGroups[id] = group

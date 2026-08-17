@@ -85,6 +85,17 @@ func TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns(t *testing.T) 
 	}
 }
 
+func TestP04ComparisonRequiresTwoDistinctModels(t *testing.T) {
+	store, err := NewStore("")
+	if err != nil { t.Fatal(err) }
+	access := seedP04ModelCatalog(t, store)
+	conversation, err := store.CreateConversation(access, "P04 comparison validation")
+	if err != nil { t.Fatal(err) }
+	if _, err = store.CreateComparison(access, conversation.ID, "比较", []string{"reasoner", "reasoner"}, "auto"); err == nil || err.Error() != "comparison_requires_multiple_models" {
+		t.Fatalf("duplicate model comparison err=%v", err)
+	}
+}
+
 func TestP04W02HTTPResolvesDefaultsBeforeRoutingAndPreservesRunProvenance(t *testing.T) {
 	store, err := NewStore("")
 	if err != nil {

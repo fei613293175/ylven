@@ -61,6 +61,7 @@ import cc.orbexa.ylven.identity.IdentityGateway
 import cc.orbexa.ylven.identity.ModelHealthStatus
 import cc.orbexa.ylven.identity.ModelOption
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun P04HubPage(
@@ -253,6 +254,12 @@ internal fun P04ComparisonPage(gateway: IdentityGateway, session: AuthSession, c
     val scope = rememberCoroutineScope()
     LaunchedEffect(session.bearer) { runCatching { models = gateway.models(session.bearer) }.onFailure { error = it.message } }
     fun refreshGroup() { val id = group?.id ?: return; scope.launch { runCatching { group = gateway.comparison(session.bearer, id) }.onFailure { error = it.message ?: "比较状态加载失败" } } }
+    LaunchedEffect(group?.id, group?.status) {
+        while (group?.id != null && group?.status in setOf("queued", "running", "synthesizing")) {
+            delay(2_000)
+            refreshGroup()
+        }
+    }
     Scaffold(topBar = { TopAppBar(title = { Text("多模型比较") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } }, actions = { IconButton(onClick = ::refreshGroup, modifier = Modifier.testTag("p04-refresh-comparison")) { Icon(Icons.Default.Refresh, "刷新") } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 18.dp)) {
             item { OutlinedTextField(value = prompt, onValueChange = { prompt = it }, label = { Text("比较问题") }, minLines = 3, modifier = Modifier.fillMaxWidth().testTag("p04-comparison-prompt")) }
