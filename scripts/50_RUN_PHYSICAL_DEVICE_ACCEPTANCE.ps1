@@ -602,23 +602,48 @@ try {
     }
     if ($Phase -eq 'P04') {
         $isP04W01 = $Packet -eq 'P04-W01'
-        $liveFlowClass = if ($isP04W01) { "$PackageId.P04W01LiveStagingFlowTest" } else { "$PackageId.P04LiveStagingFlowTest" }
+        $isP04W02 = $Packet -eq 'P04-W02'
+        $liveFlowClass = if ($isP04W01) {
+            "$PackageId.P04W01LiveStagingFlowTest"
+        } elseif ($isP04W02) {
+            "$PackageId.P04W02LiveStagingFlowTest"
+        } else {
+            "$PackageId.P04LiveStagingFlowTest"
+        }
         $liveFlowFile = "$($liveFlowClass.Split('.')[-1]).txt"
         $liveFlow = (Invoke-Instrumentation -ClassName $liveFlowClass -TimeoutSeconds 600 -ResultPath (Join-Path $testResults $liveFlowFile)) -join "`n"
         if ($liveFlow -notmatch '(?m)^OK \(' -or $liveFlow -match '(?m)^FAILURES!!!') { throw 'P04 real staging flow failed on the physical device.' }
 
-        if (-not $isP04W01) {
+        if (-not $isP04W01 -and -not $isP04W02) {
             $fallbackFlow = (Invoke-Instrumentation -ClassName "$PackageId.P04FallbackUiTest" -TimeoutSeconds 180 -ResultPath (Join-Path $testResults 'P04FallbackUiTest.txt')) -join "`n"
             if ($fallbackFlow -notmatch '(?m)^OK \(' -or $fallbackFlow -match '(?m)^FAILURES!!!') { throw 'P04 fallback interaction flow failed on the physical device.' }
         }
 
-        $stateFlowClass = if ($isP04W01) { "$PackageId.P04W01StateUiTest" } else { "$PackageId.P04StateUiTest" }
+        $stateFlowClass = if ($isP04W01) {
+            "$PackageId.P04W01StateUiTest"
+        } elseif ($isP04W02) {
+            "$PackageId.P04W02StateUiTest"
+        } else {
+            "$PackageId.P04StateUiTest"
+        }
         $stateFlowFile = "$($stateFlowClass.Split('.')[-1]).txt"
         $stateFlow = (Invoke-Instrumentation -ClassName $stateFlowClass -TimeoutSeconds 1200 -ResultPath (Join-Path $testResults $stateFlowFile)) -join "`n"
         if ($stateFlow -notmatch '(?m)^OK \(' -or $stateFlow -match '(?m)^FAILURES!!!') { throw 'P04 physical-device state capture failed.' }
-        $uiFlowName = if ($isP04W01) { 'P04W01LiveStagingFlowTest' } else { 'P04FallbackUiTest' }
+        $uiFlowName = if ($isP04W01) {
+            'P04W01LiveStagingFlowTest'
+        } elseif ($isP04W02) {
+            'P04W02LiveStagingFlowTest'
+        } else {
+            'P04FallbackUiTest'
+        }
         $stateFlowName = $stateFlowClass.Split('.')[-1]
-        $stateFlowDescription = if ($isP04W01) { '物理设备 12 个 P04-W01 生产选择器状态截图' } else { '物理设备 77 个有效状态截图' }
+        $stateFlowDescription = if ($isP04W01) {
+            '物理设备 12 个 P04-W01 生产选择器状态截图'
+        } elseif ($isP04W02) {
+            '物理设备 25 个 P04-W02 合同状态截图'
+        } else {
+            '物理设备 77 个有效状态截图'
+        }
         $stagingFlowName = $liveFlowClass.Split('.')[-1]
     } else {
         $liveFlowClass = "$PackageId.P03LiveStagingFlowTest"
@@ -649,6 +674,7 @@ try {
     }
     if ($Phase -eq 'P03' -and @($stateRows).Count -ne 89) { throw "Expected 89 effective P03 Android states, got $(@($stateRows).Count)." }
     if ($Phase -eq 'P04' -and $Packet -eq 'P04-W01' -and @($stateRows).Count -ne 12) { throw "Expected 12 P04-W01 Android states, got $(@($stateRows).Count)." }
+    if ($Phase -eq 'P04' -and $Packet -eq 'P04-W02' -and @($stateRows).Count -ne 25) { throw "Expected 25 P04-W02 Android states, got $(@($stateRows).Count)." }
     if ($Phase -eq 'P04' -and -not $Packet -and @($stateRows).Count -ne 77) { throw "Expected 77 effective P04 Android states, got $(@($stateRows).Count)." }
     $indexRows = @()
     foreach ($row in $stateRows) {
@@ -668,6 +694,14 @@ try {
         [ordered]@{
             'YL-A-033'=@{ state='YL-A-033-S01_POPULATED'; file='P04-MODEL-SELECTOR.png' }
             'YL-A-034'=@{ state='YL-A-034-S01_POPULATED'; file='P04-REASONING-PROFILE.png' }
+        }
+    } elseif ($Phase -eq 'P04' -and $Packet -eq 'P04-W02') {
+        [ordered]@{
+            'YL-A-030'=@{ state='YL-A-030-S01_DEFAULT'; file='P04-W02-MESSAGE-ACTIONS.png' }
+            'YL-A-035'=@{ state='YL-A-035-S02_POPULATED'; file='P04-W02-GLOBAL-DEFAULT.png' }
+            'YL-A-036'=@{ state='YL-A-036-S02_POPULATED'; file='P04-W02-CONVERSATION-DEFAULT.png' }
+            'YL-A-037'=@{ state='YL-A-037-S01_DEFAULT'; file='P04-W02-PER-MESSAGE-SELECTOR.png' }
+            'YL-A-038'=@{ state='YL-A-038-S01_DEFAULT'; file='P04-W02-PER-MESSAGE-PROVENANCE.png' }
         }
     } elseif ($Phase -eq 'P04') {
         [ordered]@{

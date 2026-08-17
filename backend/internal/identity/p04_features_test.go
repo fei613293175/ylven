@@ -84,6 +84,130 @@ func TestP04PreferencesBranchesComparisonsAndSynthesisUseRealRuns(t *testing.T) 
 	}
 }
 
+func TestP04W02HTTPResolvesDefaultsBeforeRoutingAndPreservesRunProvenance(t *testing.T) {
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	access := seedP04ModelCatalog(t, store)
+	conversation, err := store.CreateConversation(access, "P04 preference precedence")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.PutAIPreference(access, AIPreference{ModelID: "reasoner", ReasoningProfile: "deep", Version: 1}); err != nil {
+		t.Fatal(err)
+	}
+	channel, err := store.UpsertProviderChannel(ProviderChannel{
+		ID: "reasoner-default-route", ProviderID: "openai", Name: "Reasoner default",
+		CredentialRef: "P04_DEFAULT_ROUTE_KEY", Endpoint: "https://route.example.test", Enabled: true, Priority: 1,
+	}, "admin-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.UpsertRoutingPolicy(RoutingPolicy{ID: "reasoner-default-policy", ModelID: "reasoner", Primary: channel.ID, MaxAttempts: 1, Enabled: true}, "admin-1"); err != nil {
+		t.Fatal(err)
+	}
+
+	api := NewAPI(store)
+	api.ChatRuntimeMode = "unconfigured"
+	api.ChannelResponderFactory = func(ProviderChannel) (ChatResponder, error) {
+		return p04ChannelResponder{content: "default route answer"}, nil
+	}
+	created := requestJSON(t, api.Handler(), "POST", "/api/mobile/v1/conversations/"+conversation.ID+"/runs", map[string]any{
+		"body": "use my defaults", "idempotency_key": "p04-default-route",
+	}, access, "")
+	if created.Code != 202 {
+		t.Fatalf("default run status=%d body=%s", created.Code, created.Body.String())
+	}
+	var run MessageRun
+	if err = json.Unmarshal(created.Body.Bytes(), &run); err != nil {
+		t.Fatal(err)
+	}
+	if run.Model != "reasoner" || run.ReasoningProfile != "deep" {
+		t.Fatalf("default precedence was not exposed in run: %+v", run)
+	}
+	persisted, _, err := store.Run(access, run.ID)
+	if err != nil || persisted.ReasoningParameters["reasoning_effort"] != "high" {
+		t.Fatalf("default reasoning parameters were not persisted: run=%+v err=%v", persisted, err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		stored, _, runErr := store.Run(access, run.ID)
+		if runErr == nil && stored.Status == "completed" {
+			run = stored
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if run.Status != "completed" || run.AssistantMessageID == "" {
+		t.Fatalf("default route run did not complete: %+v", run)
+	}
+	metadata := requestJSON(t, api.Handler(), "GET", "/api/mobile/v1/messages/"+run.AssistantMessageID+"/run-metadata", nil, access, "")
+	if metadata.Code != 200 {
+		t.Fatalf("run metadata status=%d body=%s", metadata.Code, metadata.Body.String())
+	}
+	var recovered MessageRun
+	if err = json.Unmarshal(metadata.Body.Bytes(), &recovered); err != nil {
+		t.Fatal(err)
+	}
+	if recovered.ID != run.ID || recovered.Model != run.Model || recovered.ReasoningProfile != run.ReasoningProfile {
+		t.Fatalf("answer metadata diverged from persisted run: got=%+v want=%+v", recovered, run)
+	}
+}
+
+func TestP04W02ExplicitOverrideWinsAndBranchSnapshotsOnlyHistoryBeforeFork(t *testing.T) {
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	access := seedP04ModelCatalog(t, store)
+	conversation, err := store.CreateConversation(access, "P04 explicit override")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.PutAIPreference(access, AIPreference{ModelID: "reasoner", ReasoningProfile: "deep", Version: 1}); err != nil {
+		t.Fatal(err)
+	}
+	conversation, err = store.PutConversationAISettings(access, conversation.ID, "writer", "auto", conversation.AISettingsVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, created, err := store.StartRunIdempotentResultWithProfile(access, conversation.ID, "keep before fork", "reasoner", "deep", "p04-before-fork")
+	if err != nil || !created {
+		t.Fatalf("first run=%+v created=%v err=%v", first, created, err)
+	}
+	if first.Model != "reasoner" || first.ReasoningProfile != "deep" {
+		t.Fatalf("per-message override did not win: %+v", first)
+	}
+	first, err = store.CompleteRun(access, first.ID, "old answer stays on source branch")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, created, err := store.StartRunIdempotentResult(access, conversation.ID, "do not copy after fork", "", "p04-after-fork")
+	if err != nil || !created {
+		t.Fatalf("second run=%+v created=%v err=%v", second, created, err)
+	}
+	if _, err = store.CompleteRun(access, second.ID, "later answer"); err != nil {
+		t.Fatal(err)
+	}
+	branch, err := store.CreateConversationBranch(access, conversation.ID, first.AssistantMessageID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	messages, err := store.ConversationMessages(access, conversation.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(messages) != 2 || messages[0].Body != "keep before fork" || messages[1].Body != "old answer stays on source branch" {
+		t.Fatalf("branch %s did not snapshot exactly through the fork: %+v", branch.ID, messages)
+	}
+	for _, message := range messages {
+		if message.BranchID != branch.ID {
+			t.Fatalf("snapshot returned source branch message: %+v", message)
+		}
+	}
+}
+
 type p04ChannelResponder struct {
 	content string
 	err     error

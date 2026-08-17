@@ -1156,11 +1156,19 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, 400, "invalid_json", "Invalid JSON")
 			return
 		}
-		if !a.chatRuntimeAvailableForModel(in.Model) {
+		// Resolve the same precedence that will be persisted in the run before
+		// checking its route. A blank request model intentionally means use the
+		// conversation or user default, not the literal empty model identifier.
+		access := bearer(r)
+		selection, err := a.Store.effectiveSelection(access, id, in.Model, in.ReasoningProfile)
+		if err != nil {
+			a.writeConversationRunError(w, err)
+			return
+		}
+		if !a.chatRuntimeAvailableForModel(selection.CatalogModelID) {
 			writeError(w, http.StatusServiceUnavailable, "chat_runtime_unavailable", "AI provider runtime is not configured")
 			return
 		}
-		access := bearer(r)
 		key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
 		if key == "" {
 			key = strings.TrimSpace(in.IdempotencyKey)
@@ -1170,7 +1178,6 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 		}
 		var run MessageRun
 		var created bool
-		var err error
 		if strings.TrimSpace(in.ReasoningProfile) == "" {
 			run, created, err = a.Store.StartRunIdempotentResult(access, id, in.Body, in.Model, key)
 		} else {

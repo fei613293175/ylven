@@ -676,7 +676,15 @@ def start_packet(requested: str | None) -> None:
     sha = row.get("started_commit") or head_sha()
     row.update({"status": "DOING", "started_at": timestamp, "started_commit": sha, "reason": ""})
     packet_state.update({"status": "DOING", "started_at": timestamp, "started_commit": sha, "blocked_reason": None})
-    phase_state.update({"status": "DOING", "started_at": phase_state.get("started_at") or timestamp, "blocked_reason": None})
+    phase = packet_phase(definitions_by_id[current])
+    phase_state.update(
+        {
+            "phase_title": release_entry(phase).get("title"),
+            "status": "DOING",
+            "started_at": phase_state.get("started_at") or timestamp,
+            "blocked_reason": None,
+        }
+    )
     save_state(phase_state, packet_state, runtime)
     definition = definitions_by_id[current]
     write_summary(
@@ -860,7 +868,13 @@ def finalize_packet(requested: str | None, note: str, deferred_reason: str | Non
             "started_commit": next_row.get("started_commit"),
             "last_closed_work_packet": current,
         }
-        phase_state.update({"status": "DOING", "blocked_reason": None})
+        phase_state.update(
+            {
+                "phase_title": release_entry(phase).get("title"),
+                "status": "DOING",
+                "blocked_reason": None,
+            }
+        )
         action = f"`{current}` is final at `{implementation_commit}`. Continue exactly `{packet_id(next_row)}`."
     else:
         packet_state = {
@@ -872,7 +886,13 @@ def finalize_packet(requested: str | None, note: str, deferred_reason: str | Non
             "started_commit": None,
             "last_closed_work_packet": current,
         }
-        phase_state.update({"status": "READY_FOR_RELEASE", "blocked_reason": None})
+        phase_state.update(
+            {
+                "phase_title": release_entry(phase).get("title"),
+                "status": "READY_FOR_RELEASE",
+                "blocked_reason": None,
+            }
+        )
         action = f"Every Work Packet in `{phase}` is final. Run online-server build and physical-device acceptance; do not start another phase."
     save_state(phase_state, packet_state, runtime)
     write_summary(phase_state, packet_state, action)
@@ -986,7 +1006,14 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, lega
         }
     )
     if index == len(order) - 1:
-        phase_state.update({"status": "DONE", "current_phase": phase, "phase_id": phase})
+        phase_state.update(
+            {
+                "phase_title": release_entry(phase).get("title"),
+                "status": "DONE",
+                "current_phase": phase,
+                "phase_id": phase,
+            }
+        )
         packet_state = {
             "schema_version": "1.0",
             "phase_id": phase,
@@ -1009,6 +1036,7 @@ def close_release(requested_phase: str | None, no_tag: bool, no_push: bool, lega
             {
                 "current_phase": next_phase,
                 "phase_id": next_phase,
+                "phase_title": release_entry(next_phase).get("title"),
                 "status": "TODO",
                 "started_at": None,
                 "current_work_packet": packet_id(next_row),
