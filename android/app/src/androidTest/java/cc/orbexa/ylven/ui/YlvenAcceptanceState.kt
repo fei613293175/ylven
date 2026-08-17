@@ -1876,8 +1876,12 @@ private class AndroidContractRenderer(
 
     private fun iconCircle(cx: Float, cy: Float, radius: Float, symbol: String, fill: Int, fg: Int, size: Float) {
         circle(cx, cy, radius, fill)
-        val usesApprovedP03Fallback = currentPage in P03_PAGE_IDS && symbol in setOf("✓", "⌛")
-        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙") || usesApprovedP03Fallback) {
+        // The approved Android baselines use the same bundled CJK fallback
+        // for these status glyphs on P04 as on P03. Restricting it to P03
+        // renders a platform check mark in SAVE_SUCCESS/SAVE_ERROR states,
+        // creating a deterministic visual mismatch against the contract.
+        val usesApprovedFallback = symbol in setOf("✓", "⌛")
+        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙") || usesApprovedFallback) {
             missingGlyph(cx, cy, size, fg)
         } else {
             text(symbol, cx, cy, size, fg, true, Anchor.MIDDLE_MIDDLE)
