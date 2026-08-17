@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -30,7 +31,7 @@ import org.junit.Test
 /** Exercises only W02 production paths against the installed APK and staging API. */
 class P04W02LiveStagingFlowTest {
     @get:Rule
-    val composeRule = createEmptyComposeRule()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun authenticatedUserAppliesDefaultsUsesExplicitRunAndCreatesAnswerBranch() = runBlocking {
@@ -55,11 +56,6 @@ class P04W02LiveStagingFlowTest {
             scopedDownloadDirectory = "ylven-p04-live-staging",
         )
         reportStage("activity_launch_start")
-        // The acceptance runner already launched the installed production
-        // Activity with `am start -W` immediately before instrumentation.
-        // Re-launching here makes ActivityLifecycleMonitor wait for an instance
-        // owned by the test process and can time out even while the real page is
-        // visible. Continue against that already-running production surface.
         reportStage("activity_launch_ready")
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
         reportStage("home_ready")
