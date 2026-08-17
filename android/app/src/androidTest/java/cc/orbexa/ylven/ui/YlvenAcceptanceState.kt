@@ -1392,6 +1392,14 @@ private class AndroidContractRenderer(
             listOf("默认模型", "默认推理强度", "回答风格", "联网搜索")
         }
         topBar(title, subtitle, back = true, right = true)
+        // The approved settings contracts use the complete centered recovery
+        // surface for OFFLINE. A bottom warning banner is still supplied by
+        // stateFeedback(), matching the approved evidence rather than merely
+        // appending a banner to a usable settings list.
+        if (code == "OFFLINE") {
+            errorCenter(code)
+            return
+        }
         if (code == "LOADING") {
             skeleton(72f, 330f, 1008f, rows = 7)
             return
@@ -1412,7 +1420,10 @@ private class AndroidContractRenderer(
             button(72f, minOf(y + 20f, 1850f), 1008f, minOf(y + 176f, 2006f), "保存设置")
         }
         when (code) {
-            "SAVE_SUCCESS", "SAVE_ERROR", "OFFLINE" -> statusBanner(code, 1550f, .82f)
+            // Save/submit feedback is an inline top-of-content status surface
+            // in the approved settings screenshots. stateFeedback() renders
+            // the persistent bottom audit message as a second, separate row.
+            "SAVE_SUCCESS", "SAVE_ERROR" -> statusBanner(code, 270f, .82f)
             "SUBMITTING" -> statusBanner("SERVICE_DEGRADED", 270f, .82f, "正在提交，请勿重复操作。")
             "EDIT_MODE", "DIRTY" -> pill(72f, 282f, 390f, 354f, if (code == "EDIT_MODE") "编辑模式" else "存在未保存修改", Pc.warningSoft, Pc.warning, 28f, Pc.warning)
         }
