@@ -2281,7 +2281,13 @@ private fun P03MessageActionRow(
     showSecondaryActions: Boolean = true,
     visualContract: Boolean = false,
 ) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .testTag("p03-message-action-row"),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         P03TextAction("复制", "YL-A-030-C-P03_022-01", onCopy, visualContract)
         P03TextAction("朗读", "YL-A-030-C-P03_030-01", onSpeak, visualContract)
         P03TextAction("重答", "YL-A-030-C-P03_024-01", onRegenerate, visualContract)
