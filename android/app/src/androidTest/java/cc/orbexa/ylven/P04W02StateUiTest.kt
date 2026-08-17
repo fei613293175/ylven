@@ -1,6 +1,7 @@
 package cc.orbexa.ylven
 
 import androidx.activity.compose.setContent
+import android.os.SystemClock
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -40,6 +41,11 @@ class P04W02StateUiTest {
             composeRule.runOnIdle { activeState.value = stateId }
             composeRule.waitForIdle()
             composeRule.onNodeWithTag("acceptance-state-$stateId").assertExists()
+            // The target activity's splash/window transition is a separate
+            // layer from Compose; wait for the settled physical display
+            // before taking the screenshot, as the P03 state runner does.
+            SystemClock.sleep(350)
+            instrumentation.waitForIdleSync()
             val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot()) {
                 "Could not capture P04-W02 state $stateId"
             }
