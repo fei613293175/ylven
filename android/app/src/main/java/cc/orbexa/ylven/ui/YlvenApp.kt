@@ -123,6 +123,7 @@ fun YlvenApp(
     var screen by rememberSaveable { mutableStateOf(if (initialSession == null) IdentityScreen.LOGIN else IdentityScreen.RESTORING) }
     var session by remember { mutableStateOf(initialSession) }
     var activeConversation by remember { mutableStateOf<Conversation?>(null) }
+    var p04ReturnsToChat by rememberSaveable { mutableStateOf(false) }
     var challenge by remember { mutableStateOf<OtpChallenge?>(null) }
     var securityChallenge by remember { mutableStateOf<SecurityChallenge?>(null) }
     var pendingPassword by rememberSaveable { mutableStateOf("") }
@@ -164,12 +165,11 @@ fun YlvenApp(
     val backTarget = when (screen) {
         IdentityScreen.ACCOUNT -> IdentityScreen.HOME
         IdentityScreen.P04_HUB -> IdentityScreen.ACCOUNT
-        IdentityScreen.P04_AI_SETTINGS,
+        IdentityScreen.P04_AI_SETTINGS -> IdentityScreen.P04_HUB
         IdentityScreen.P04_CONVERSATION_SETTINGS,
         IdentityScreen.P04_BRANCHES,
-        IdentityScreen.P04_COMPARISON,
-        IdentityScreen.P04_SERVICE_STATUS
-        -> IdentityScreen.P04_HUB
+        IdentityScreen.P04_COMPARISON -> if (p04ReturnsToChat) IdentityScreen.CHAT else IdentityScreen.P04_HUB
+        IdentityScreen.P04_SERVICE_STATUS -> IdentityScreen.P04_HUB
         else -> null
     }
     BackHandler(enabled = !splashVisible && backTarget != null) {
@@ -279,7 +279,7 @@ fun YlvenApp(
                 onSessionUpdated = { updated -> session = updated; onSessionChange(updated) },
                 onLoggedOut = { session = null; onSessionChange(null); screen = IdentityScreen.LOGIN },
                 onBack = { screen = IdentityScreen.HOME },
-                onOpenP04 = { screen = IdentityScreen.P04_HUB },
+                onOpenP04 = { p04ReturnsToChat = false; screen = IdentityScreen.P04_HUB },
             )
             IdentityScreen.P04_HUB -> P04HubPage(
                 gateway = gateway,
@@ -287,9 +287,9 @@ fun YlvenApp(
                 onBack = { screen = IdentityScreen.ACCOUNT },
                 onAISettings = { screen = IdentityScreen.P04_AI_SETTINGS },
                 onServiceStatus = { screen = IdentityScreen.P04_SERVICE_STATUS },
-                onConversationSettings = { activeConversation = it; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
-                onBranches = { activeConversation = it; screen = IdentityScreen.P04_BRANCHES },
-                onComparison = { activeConversation = it; screen = IdentityScreen.P04_COMPARISON },
+                onConversationSettings = { activeConversation = it; p04ReturnsToChat = false; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
+                onBranches = { activeConversation = it; p04ReturnsToChat = false; screen = IdentityScreen.P04_BRANCHES },
+                onComparison = { activeConversation = it; p04ReturnsToChat = false; screen = IdentityScreen.P04_COMPARISON },
             )
             IdentityScreen.P04_AI_SETTINGS -> P04AISettingsPage(
                 gateway = gateway,
@@ -300,21 +300,21 @@ fun YlvenApp(
                 gateway = gateway,
                 session = requireNotNull(session),
                 conversation = requireNotNull(activeConversation),
-                onBack = { screen = IdentityScreen.P04_HUB },
-                onUpdated = { activeConversation = it; screen = IdentityScreen.P04_HUB },
+                onBack = { screen = if (p04ReturnsToChat) IdentityScreen.CHAT else IdentityScreen.P04_HUB },
+                onUpdated = { activeConversation = it; screen = if (p04ReturnsToChat) IdentityScreen.CHAT else IdentityScreen.P04_HUB },
             )
             IdentityScreen.P04_BRANCHES -> P04BranchesPage(
                 gateway = gateway,
                 session = requireNotNull(session),
                 conversation = requireNotNull(activeConversation),
-                onBack = { screen = IdentityScreen.P04_HUB },
+                onBack = { screen = if (p04ReturnsToChat) IdentityScreen.CHAT else IdentityScreen.P04_HUB },
                 onUpdated = { activeConversation = it },
             )
             IdentityScreen.P04_COMPARISON -> P04ComparisonPage(
                 gateway = gateway,
                 session = requireNotNull(session),
                 conversation = requireNotNull(activeConversation),
-                onBack = { screen = IdentityScreen.P04_HUB },
+                onBack = { screen = if (p04ReturnsToChat) IdentityScreen.CHAT else IdentityScreen.P04_HUB },
             )
             IdentityScreen.P04_SERVICE_STATUS -> P04ServiceStatusPage(
                 gateway = gateway,
@@ -339,9 +339,9 @@ fun YlvenApp(
                     activeConversation = conversation
                     screen = IdentityScreen.CHAT
                 },
-                onOpenConversationSettings = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
-                onOpenBranches = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_BRANCHES },
-                onOpenComparison = { conversation -> activeConversation = conversation; screen = IdentityScreen.P04_COMPARISON },
+                onOpenConversationSettings = { conversation -> activeConversation = conversation; p04ReturnsToChat = true; screen = IdentityScreen.P04_CONVERSATION_SETTINGS },
+                onOpenBranches = { conversation -> activeConversation = conversation; p04ReturnsToChat = true; screen = IdentityScreen.P04_BRANCHES },
+                onOpenComparison = { conversation -> activeConversation = conversation; p04ReturnsToChat = true; screen = IdentityScreen.P04_COMPARISON },
             )
         }
 

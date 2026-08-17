@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -152,6 +153,38 @@ func TestP04W02HTTPResolvesDefaultsBeforeRoutingAndPreservesRunProvenance(t *tes
 	}
 	if recovered.ID != run.ID || recovered.Model != run.Model || recovered.ReasoningProfile != run.ReasoningProfile {
 		t.Fatalf("answer metadata diverged from persisted run: got=%+v want=%+v", recovered, run)
+	}
+}
+
+func TestP04W02ConversationSettingsReadbackUsesTheSpecificConversationResource(t *testing.T) {
+	store, err := NewStore("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	access := seedP04ModelCatalog(t, store)
+	conversation, err := store.CreateConversation(access, "P04 settings readback")
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated, err := store.PutConversationAISettings(access, conversation.ID, "writer", "auto", conversation.AISettingsVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response := requestJSON(t, NewAPI(store).Handler(), http.MethodGet, "/api/mobile/v1/conversations/"+conversation.ID+"/settings", nil, access, "")
+	if response.Code != http.StatusOK {
+		t.Fatalf("settings readback status=%d body=%s", response.Code, response.Body.String())
+	}
+	var readback Conversation
+	if err := json.Unmarshal(response.Body.Bytes(), &readback); err != nil {
+		t.Fatal(err)
+	}
+	if readback.ID != updated.ID || readback.DefaultModelID != "writer" || readback.DefaultReasoningProfile != "auto" || readback.AISettingsVersion != updated.AISettingsVersion || !readback.AISettingsOverridden {
+		t.Fatalf("settings readback=%+v updated=%+v", readback, updated)
+	}
+	unauthorized := requestJSON(t, NewAPI(store).Handler(), http.MethodGet, "/api/mobile/v1/conversations/"+conversation.ID+"/settings", nil, "", "")
+	if unauthorized.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated settings readback status=%d body=%s", unauthorized.Code, unauthorized.Body.String())
 	}
 }
 

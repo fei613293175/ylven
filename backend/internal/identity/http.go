@@ -1070,7 +1070,17 @@ func (a *API) mobileConversationByID(w http.ResponseWriter, r *http.Request) {
 	}
 	id := parts[0]
 	if len(parts) > 1 && parts[1] == "settings" {
-		if !requireMethod(w, r, http.MethodPatch) {
+		if r.Method == http.MethodGet {
+			conversation, err := a.Store.GetConversationAISettings(bearer(r), id)
+			if err != nil {
+				writeP04MobileError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, conversation)
+			return
+		}
+		if r.Method != http.MethodPatch {
+			writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "GET or PATCH required")
 			return
 		}
 		var input struct {

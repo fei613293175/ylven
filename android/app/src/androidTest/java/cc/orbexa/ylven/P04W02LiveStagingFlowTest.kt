@@ -17,7 +17,6 @@ import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.identity.AuthSession
 import cc.orbexa.ylven.identity.ApiException
-import cc.orbexa.ylven.identity.Conversation
 import cc.orbexa.ylven.identity.HttpIdentityGateway
 import cc.orbexa.ylven.identity.SessionStore
 import kotlinx.coroutines.delay
@@ -50,8 +49,6 @@ class P04W02LiveStagingFlowTest {
         val alternateModel = requireNotNull(models.firstOrNull {
             it.id != model.id && it.enabled && "auto" in it.reasoningProfiles
         }) { "Staging exposes no second enabled model for the per-message selector" }
-        val conversationsBefore = gateway.listConversations(session.bearer).first.map { it.id }.toSet()
-
         P03ScreenshotStorage.resetDirectory(
             context = context,
             legacyDirectory = "p04-live-staging",
@@ -116,10 +113,8 @@ class P04W02LiveStagingFlowTest {
         waitForTagGone("YL-A-023-C-P03_009-01", 10_000)
         waitForTag("YL-A-023-C-P03_009-01", 110_000)
         waitForAnswerProvenance(20_000)
-        val messageConversation = awaitConversation(gateway, session, "new W02 message conversation") {
-            it.id !in conversationsBefore
-        }
-        val assistantMessage = awaitAssistantMessage(gateway, session, messageConversation.id)
+        val messageConversationId = activeConversationId()
+        val assistantMessage = awaitAssistantMessage(gateway, session, messageConversationId)
         val source = requireNotNull(gateway.messageRunMetadata(session.bearer, assistantMessage.id)) {
             "Assistant answer has no source metadata"
         }
@@ -133,17 +128,12 @@ class P04W02LiveStagingFlowTest {
             .performTouchInput { swipeLeft() }
         capture("P04-W02-MESSAGE-ACTIONS")
 
-        // P04-010: send a real message and verify both API metadata and the
-        // rendered source label. P04-008 and P04-012 then update the generated
-        // conversation through its UI and create an answer branch.
-        // settings, then create and display a branch from its answer history.
-        Espresso.pressBack()
-        waitForTag("CO-P03-001-HOME-SEND", 20_000)
-        composeRule.onNodeWithTag("p03-open-account").performClick()
-        waitForTag("p04-open-workbench", 20_000)
-        composeRule.onNodeWithTag("p04-open-workbench").performClick()
-        waitForTag("p04-open-conversation-settings-${messageConversation.id}", 30_000)
-        composeRule.onNodeWithTag("p04-open-conversation-settings-${messageConversation.id}").performScrollTo().performClick()
+        // P04-010: verify API metadata and the rendered source label. P04-008
+        // and P04-012 then use the live chat's action menu, which preserves the
+        // current conversation without a redundant history-list request.
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        waitForTag("p04-open-conversation-settings", 20_000)
+        composeRule.onNodeWithTag("p04-open-conversation-settings").performClick()
         waitForTag("p04-conversation-model-row", 20_000)
         composeRule.onNodeWithTag("p04-conversation-model-row").performClick()
         waitForTag("p04-conversation-model-${model.id}", 20_000)
@@ -151,22 +141,24 @@ class P04W02LiveStagingFlowTest {
         capture("P04-W02-CONVERSATION-DEFAULT")
         composeRule.onNodeWithTag("p04-save-conversation-settings").performScrollTo().performClick()
         await("conversation preference readback") {
-            gateway.listConversations(session.bearer).first.firstOrNull { it.id == messageConversation.id }
-                ?.let { it.defaultModelId == model.id && it.defaultReasoningProfile == "auto" } == true
+            gateway.conversationAISettings(session.bearer, messageConversationId)
+                .let { it.defaultModelId == model.id && it.defaultReasoningProfile == "auto" }
         }
-        waitForTag("p04-open-branches-${messageConversation.id}", 30_000)
-        val branchesBefore = gateway.conversationBranches(session.bearer, messageConversation.id).map { it.id }.toSet()
-        composeRule.onNodeWithTag("p04-open-branches-${messageConversation.id}").performScrollTo().performClick()
+        waitForTag("p03-open-conversation-menu", 20_000)
+        composeRule.onNodeWithTag("p03-open-conversation-menu").performClick()
+        waitForTag("p04-open-branches", 20_000)
+        val branchesBefore = gateway.conversationBranches(session.bearer, messageConversationId).map { it.id }.toSet()
+        composeRule.onNodeWithTag("p04-open-branches").performClick()
         waitForTag("p04-create-branch", 20_000)
         composeRule.onNodeWithTag("p04-create-branch").performScrollTo().performClick()
-        val createdBranch = awaitBranch(gateway, session, messageConversation.id, branchesBefore) {
+        val createdBranch = awaitBranch(gateway, session, messageConversationId, branchesBefore) {
             branchErrorText()
         }
         assertEquals(assistantMessage.id, createdBranch.forkedFromMessageId)
         waitForTag("p04-branch-${createdBranch.id}", 20_000)
         assertTrue(
             "Branch must be created from the answer conversation",
-            gateway.conversationBranches(session.bearer, messageConversation.id).any { it.id == createdBranch.id },
+            gateway.conversationBranches(session.bearer, messageConversationId).any { it.id == createdBranch.id },
         )
         assertTrue(
             "Branch list cannot be empty after branch creation",
@@ -214,19 +206,6 @@ class P04W02LiveStagingFlowTest {
 
     private fun reportStage(stage: String) {
         android.util.Log.i("YLVEN_P04_W02", stage)
-    }
-
-    private suspend fun awaitConversation(
-        gateway: HttpIdentityGateway,
-        session: AuthSession,
-        description: String,
-        predicate: (Conversation) -> Boolean,
-    ): Conversation {
-        repeat(75) {
-            gateway.listConversations(session.bearer).first.firstOrNull(predicate)?.let { return it }
-            delay(400)
-        }
-        error("Timed out waiting for $description")
     }
 
     private suspend fun awaitBranch(
@@ -296,6 +275,16 @@ class P04W02LiveStagingFlowTest {
         }
     }
 
+    private fun activeConversationId(): String {
+        val tag = composeRule.onAllNodes(activeConversationMatcher).fetchSemanticsNodes()
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.TestTag) }
+            .singleOrNull()
+            ?: error("The completed chat did not expose a single active conversation identifier")
+        return tag.removePrefix("p03-active-conversation-").also {
+            require(it.isNotBlank()) { "The active conversation identifier was blank" }
+        }
+    }
+
     private fun capture(name: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         composeRule.waitForIdle()
@@ -323,6 +312,9 @@ class P04W02LiveStagingFlowTest {
         }
         val branchMatcher = SemanticsMatcher("P04 branch") { node ->
             node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("p04-branch-") == true
+        }
+        val activeConversationMatcher = SemanticsMatcher("P04 active conversation") { node ->
+            node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("p03-active-conversation-") == true
         }
     }
 }

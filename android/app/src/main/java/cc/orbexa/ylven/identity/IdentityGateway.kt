@@ -280,6 +280,7 @@ interface IdentityGateway {
     suspend fun messageRunMetadata(bearer: String, messageId: String): MessageRun? = null
     suspend fun aiPreference(bearer: String): AIPreference = AIPreference()
     suspend fun updateAIPreference(bearer: String, modelId: String, reasoningProfile: String, version: Long): AIPreference = AIPreference(modelId, reasoningProfile, version)
+    suspend fun conversationAISettings(bearer: String, conversationId: String): Conversation = error("会话设置尚未配置")
     suspend fun updateConversationAISettings(bearer: String, conversationId: String, modelId: String, reasoningProfile: String, version: Long): Conversation = error("会话设置尚未配置")
     suspend fun conversationBranches(bearer: String, conversationId: String): List<ConversationBranch> = emptyList()
     suspend fun createConversationBranch(bearer: String, conversationId: String, forkedFromMessageId: String = ""): ConversationBranch = error("分支功能尚未配置")
@@ -629,6 +630,9 @@ class HttpIdentityGateway(
 
     override suspend fun updateAIPreference(bearer: String, modelId: String, reasoningProfile: String, version: Long): AIPreference =
         request("PUT", "/api/mobile/v1/preferences/ai", JSONObject().put("model_id", modelId).put("reasoning_profile", reasoningProfile).put("version", version), bearer).toAIPreference()
+
+    override suspend fun conversationAISettings(bearer: String, conversationId: String): Conversation =
+        request("GET", "/api/mobile/v1/conversations/$conversationId/settings", bearer = bearer).toConversation()
 
     override suspend fun updateConversationAISettings(bearer: String, conversationId: String, modelId: String, reasoningProfile: String, version: Long): Conversation =
         request("PATCH", "/api/mobile/v1/conversations/$conversationId/settings", JSONObject().put("model_id", modelId).put("reasoning_profile", reasoningProfile).put("version", version), bearer).toConversation()
