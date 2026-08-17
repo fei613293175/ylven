@@ -161,6 +161,21 @@ fun YlvenApp(
         splashVisible = false
     }
 
+    val backTarget = when (screen) {
+        IdentityScreen.ACCOUNT -> IdentityScreen.HOME
+        IdentityScreen.P04_HUB -> IdentityScreen.ACCOUNT
+        IdentityScreen.P04_AI_SETTINGS,
+        IdentityScreen.P04_CONVERSATION_SETTINGS,
+        IdentityScreen.P04_BRANCHES,
+        IdentityScreen.P04_COMPARISON,
+        IdentityScreen.P04_SERVICE_STATUS
+        -> IdentityScreen.P04_HUB
+        else -> null
+    }
+    BackHandler(enabled = !splashVisible && backTarget != null) {
+        screen = requireNotNull(backTarget)
+    }
+
     fun runRequest(block: suspend () -> Unit) {
         loading = true
         error = null

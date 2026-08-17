@@ -64,7 +64,8 @@ function Invoke-AdbInstall {
         [Parameter(Mandatory=$true)][string]$Apk,
         [Parameter(Mandatory=$true)][string]$ResultPath,
         [Parameter(Mandatory=$true)][string]$EvidenceDir,
-        [switch]$Replace
+        [switch]$Replace,
+        [switch]$AllowDowngrade
     )
     $device = @(Get-DeviceRows | Where-Object { $_.Serial -eq $script:Serial }) | Select-Object -First 1
     if (-not $device -or $device.State -ne 'device') {
@@ -73,6 +74,7 @@ function Invoke-AdbInstall {
 
     $arguments = @('-s', $script:Serial, 'install', '--no-streaming')
     if ($Replace) { $arguments += '-r' }
+    if ($AllowDowngrade) { $arguments += '-d' }
     $arguments += ('"{0}"' -f $Apk.Replace('"', '\"'))
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $script:AdbPath
@@ -507,6 +509,7 @@ try {
         Invoke-AdbInstall `
             -Apk $PreviousApk `
             -Replace `
+            -AllowDowngrade `
             -ResultPath (Join-Path $testResults 'previous-install.txt') `
             -EvidenceDir (Join-Path $testResults 'install-confirmations\previous-owner')
     }
@@ -826,7 +829,7 @@ try {
 - 当前版本：$Version
 - applicationId：$PackageId
 - 安装模式：项目所有者批准的一次性 P02 -> P03 签名迁移
-- 旧版安装：adb install --no-streaming -r $PreviousApk
+- 旧版安装：adb install --no-streaming -r -d $PreviousApk
 - 迁移安装：adb uninstall $PackageId；adb install --no-streaming $CurrentApk
 - 旧签名证书：$($provenance.previous_signing_certificate_sha256)
 - 新签名证书：$($provenance.signing_certificate_sha256)
