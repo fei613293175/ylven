@@ -2769,7 +2769,23 @@ private fun P03ResponseModeSelector(
                     )
                 }
             } else if (!hasAdjustableModes && !displayUnavailableOptions) {
-                Box(Modifier.fillMaxWidth().weight(1f).testTag("p03-response-mode-degraded"), contentAlignment = Alignment.Center) {
+                // Automatic mode is still a real selectable state when the model
+                // exposes no additional profiles; keep it visible for explicit
+                // per-message confirmation instead of hiding the only option.
+                Column(Modifier.fillMaxWidth().weight(1f)) {
+                    if (showAutoOption) {
+                        P03SelectorRow(
+                            title = modes.first { it.first == "auto" }.second,
+                            description = modes.first { it.first == "auto" }.third,
+                            selected = selectedMode == "auto",
+                            enabled = true,
+                            tag = "p03-response-mode-auto",
+                            rowHeight = if (visualContract) 53.dp else 56.dp,
+                            visualContract = visualContract,
+                            onClick = { onSelect("auto") },
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
                     P03SelectorEmptyText("当前模型没有可调整选项", "继续使用自动模式即可。")
                 }
             } else {
