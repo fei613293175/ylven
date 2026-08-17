@@ -55,7 +55,11 @@ class P04W02LiveStagingFlowTest {
             scopedDownloadDirectory = "ylven-p04-live-staging",
         )
         reportStage("activity_launch_start")
-        launchP03TargetActivity()
+        // The acceptance runner already launched the installed production
+        // Activity with `am start -W` immediately before instrumentation.
+        // Re-launching here makes ActivityLifecycleMonitor wait for an instance
+        // owned by the test process and can time out even while the real page is
+        // visible. Continue against that already-running production surface.
         reportStage("activity_launch_ready")
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
         reportStage("home_ready")
