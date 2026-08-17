@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import cc.orbexa.ylven.identity.AuthSession
+import cc.orbexa.ylven.identity.ApiException
 import cc.orbexa.ylven.identity.Conversation
 import cc.orbexa.ylven.identity.HttpIdentityGateway
 import cc.orbexa.ylven.identity.SessionStore
@@ -158,7 +159,16 @@ class P04W02LiveStagingFlowTest {
     }
 
     private suspend fun ensureSession(gateway: HttpIdentityGateway, context: android.content.Context): AuthSession {
-        SessionStore(context).load()?.let { return it }
+        val store = SessionStore(context)
+        store.load()?.let { existing ->
+            runCatching { gateway.models(existing.bearer) }
+                .onSuccess { return existing }
+                .onFailure { error ->
+                    val invalid = (error as? ApiException)?.let { it.status == 401 || it.code.contains("session", ignoreCase = true) } == true
+                    if (!invalid) throw error
+                    store.save(null)
+                }
+        }
         val email = "p04.w02.${System.currentTimeMillis()}@example.com"
         val registration = gateway.startRegistration(email)
         val session = gateway.finishRegistrationSession(
@@ -167,7 +177,7 @@ class P04W02LiveStagingFlowTest {
             "P04W02Physical${System.nanoTime()}a1",
         )
         gateway.initializeWorkspace(session)
-        SessionStore(context).save(session)
+        store.save(session)
         return session
     }
 
