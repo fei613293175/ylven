@@ -19,7 +19,13 @@ internal fun launchP03TargetActivity(): MainActivity {
         addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }
-    instrumentation.startActivitySync(intent)
+    // startActivitySync waits for the main looper to become idle. The production
+    // shell intentionally starts a splash timer and session/network effects, so
+    // that idle barrier can time out even when the Activity is healthy. Start it
+    // directly and use the lifecycle poll below as the synchronization point.
+    instrumentation.runOnMainSync {
+        instrumentation.targetContext.startActivity(intent)
+    }
 
     instrumentation.waitForIdleSync()
     repeat(150) {
