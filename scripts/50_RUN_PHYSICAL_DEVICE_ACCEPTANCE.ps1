@@ -220,13 +220,16 @@ function Test-AppPath {
     $savedErrorActionPreference = $ErrorActionPreference
     try {
         # Some vendor Android builds reject `run-as <package> test ...` even though
-        # run-as itself works. Reading through run-as proves existence without relying
-        # on the vendor's executable allow-list. Keep the content only in memory.
+        # run-as itself works. Use `ls -d` to prove existence because a valid zero-byte
+        # marker cannot be detected by reading it with `cat`. Keep file content only in memory.
         $ErrorActionPreference = 'Continue'
-        $content = @(& $script:AdbPath -s $script:Serial shell run-as $Package cat $Path 2>$null)
-        $readSucceeded = $LASTEXITCODE -eq 0
-        if (-not $readSucceeded) { return $false }
-        if ($NonEmpty) { return (($content -join "`n").Length -gt 0) }
+        $entry = @(& $script:AdbPath -s $script:Serial shell run-as $Package ls '-d' $Path 2>$null)
+        if ($LASTEXITCODE -ne 0 -or $entry.Count -eq 0) { return $false }
+        if ($NonEmpty) {
+            $content = @(& $script:AdbPath -s $script:Serial shell run-as $Package cat $Path 2>$null)
+            if ($LASTEXITCODE -ne 0) { return $false }
+            return (($content -join "`n").Length -gt 0)
+        }
         return $true
     } finally {
         $ErrorActionPreference = $savedErrorActionPreference
