@@ -57,17 +57,26 @@ class P04W02LiveStagingFlowTest {
             legacyDirectory = "p04-live-staging",
             scopedDownloadDirectory = "ylven-p04-live-staging",
         )
+        reportStage("activity_launch_start")
         launchP03TargetActivity()
+        reportStage("activity_launch_ready")
         waitForTag("YL-A-018-C-P03_001-01", 30_000)
+        reportStage("home_ready")
 
         // P04-007: select and save the global default through the installed UI, then
         // read it back through the real service before continuing.
         composeRule.onNodeWithTag("p03-open-account").performClick()
+        reportStage("account_click")
         waitForTag("p04-open-workbench", 20_000)
+        reportStage("account_ready")
         composeRule.onNodeWithTag("p04-open-workbench").performClick()
+        reportStage("workbench_click")
         waitForTag("p04-open-ai-settings", 20_000)
+        reportStage("workbench_ready")
         composeRule.onNodeWithTag("p04-open-ai-settings").performClick()
+        reportStage("ai_settings_click")
         waitForTag("p04-ai-model-row", 20_000)
+        reportStage("ai_settings_ready")
         composeRule.onNodeWithTag("p04-ai-model-row").performClick()
         waitForTag("p04-ai-model-${model.id}", 20_000)
         composeRule.onNodeWithTag("p04-ai-model-${model.id}").performScrollTo().performClick()
