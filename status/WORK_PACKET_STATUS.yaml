@@ -316,18 +316,21 @@ work_packets:
 - work_packet_id: P04-W02
   phase: P04
   sequence: 2
-  status: DOING
+  status: DEFERRED_WITH_REASON
   started_at: '2026-08-17T07:43:47+08:00'
-  closed_at: null
+  closed_at: '2026-08-18T06:51:40+08:00'
   started_commit: b9fb5f4b082b51992b185f97bd81510c772634e5
-  closed_commit: null
-  result: null
-  reason: ''
-  evidence: []
+  closed_commit: 3b279b96d50b6a0f6c86e587e1c9492737683e4c
+  result: DEFERRED_WITH_REASON
+  reason: 外部测试基础设施阻塞：线上 staging 已部署并健康；真实设备 APK 安装、启动与设备状态均正常，但 P04W02LiveStagingFlowTest 在标准 Compose Activity 绑定后仍于 600 秒内无阶段输出并超时，无法形成真实业务、截图、日志与视觉验收证据。保留最终失败记录；不将 W02 记为通过，待后续修复设备
+    instrumentation/Compose 绑定后补验。
+  evidence:
+  - git:3b279b96d50b6a0f6c86e587e1c9492737683e4c
+  - history:421331d8e9ab86f396e897819d0a1588375b7d464905466cc891b2c7d1d7def4
 - work_packet_id: P04-W03
   phase: P04
   sequence: 3
-  status: PLANNED
+  status: TODO
   started_at: null
   closed_at: null
   started_commit: null
@@ -796,4 +799,4 @@ allowed_statuses:
 - BLOCKED
 - CLOSED
 - DEFERRED_WITH_REASON
-updated_at: '2026-08-17T08:30:36+08:00'
+updated_at: '2026-08-18T06:51:40+08:00'
