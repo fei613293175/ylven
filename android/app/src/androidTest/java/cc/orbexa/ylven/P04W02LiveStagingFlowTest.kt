@@ -1,5 +1,6 @@
 package cc.orbexa.ylven
 
+import android.view.KeyEvent
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -96,7 +97,10 @@ class P04W02LiveStagingFlowTest {
         composeRule.onNodeWithTag("p03-response-mode-auto").performClick()
         composeRule.onNodeWithTag("YL-A-032-C-P03_032-01")
             .performTextInput("请说明本次回答的模型和推理档位。")
-        Espresso.closeSoftKeyboard()
+        // MIUI can leave Espresso waiting on vendor IME animations despite the
+        // keyboard being visible. Send the normal BACK event through the real
+        // device instrumentation instead of waiting for Espresso's idle signal.
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithTag("YL-A-023-C-P03_009-01").performClick()
         waitForTagGone("YL-A-023-C-P03_009-01", 10_000)
         waitForTag("YL-A-023-C-P03_009-01", 110_000)
