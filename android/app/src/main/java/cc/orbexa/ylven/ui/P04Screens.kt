@@ -173,12 +173,30 @@ internal fun P04BranchesPage(gateway: IdentityGateway, session: AuthSession, con
     var branches by remember { mutableStateOf<List<ConversationBranch>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
+    var creating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     fun load() { scope.launch { loading = true; runCatching { branches = gateway.conversationBranches(session.bearer, conversation.id) }.onFailure { error = it.message ?: "分支加载失败" }; loading = false } }
+    fun createBranch() {
+        scope.launch {
+            creating = true
+            error = null
+            runCatching {
+                val messages = gateway.conversationMessages(session.bearer, conversation.id)
+                val forkedFromMessageId = (messages.lastOrNull { it.role == "assistant" } ?: messages.lastOrNull())
+                    ?.id
+                    .orEmpty()
+                gateway.createConversationBranch(session.bearer, conversation.id, forkedFromMessageId)
+            }.onSuccess { branch ->
+                onUpdated(conversation.copy(activeBranchId = branch.id, updatedAt = branch.updatedAt))
+                load()
+            }.onFailure { error = it.message ?: "创建分支失败" }
+            creating = false
+        }
+    }
     LaunchedEffect(conversation.id) { load() }
     Scaffold(topBar = { TopAppBar(title = { Text("会话分支") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } }, actions = { IconButton(onClick = ::load) { Icon(Icons.Default.Refresh, "刷新") } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 18.dp)) {
-            item { Button(onClick = { scope.launch { runCatching { gateway.createConversationBranch(session.bearer, conversation.id) }.onSuccess { load() }.onFailure { error = it.message ?: "创建分支失败" } } }, modifier = Modifier.fillMaxWidth().testTag("p04-create-branch")) { Text("从当前上下文创建分支") } }
+            item { Button(enabled = !creating, onClick = ::createBranch, modifier = Modifier.fillMaxWidth().testTag("p04-create-branch")) { Text(if (creating) "创建中…" else "从当前上下文创建分支") } }
             error?.let { message -> item { P04InlineError(message) } }
             if (loading) item { CircularProgressIndicator() }
             items(branches, key = { it.id }) { branch ->

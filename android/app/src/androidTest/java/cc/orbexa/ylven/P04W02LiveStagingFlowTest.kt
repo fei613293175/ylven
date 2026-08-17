@@ -137,6 +137,7 @@ class P04W02LiveStagingFlowTest {
         waitForTag("p04-create-branch", 20_000)
         composeRule.onNodeWithTag("p04-create-branch").performScrollTo().performClick()
         val createdBranch = awaitBranch(gateway, session, messageConversation.id, branchesBefore)
+        assertEquals(assistantMessage.id, createdBranch.forkedFromMessageId)
         waitForTag("p04-branch-${createdBranch.id}", 20_000)
         assertTrue(
             "Branch must be created from the answer conversation",
