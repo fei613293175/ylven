@@ -147,6 +147,41 @@ sha256sum '$remoteArchive' | cut -d ' ' -f 1
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path (Split-Path -Path $LocalDirectory -Parent) '线上产物归档下载校验证明.json') -Encoding UTF8
 }
 
+function Remove-StaleLocalServerBuilds {
+    param(
+        [Parameter(Mandatory=$true)][string]$BuildRoot,
+        [int]$KeepCompletedBuilds = 1
+    )
+
+    if ($KeepCompletedBuilds -lt 0) { throw 'KeepCompletedBuilds must not be negative.' }
+    if (-not (Test-Path -LiteralPath $BuildRoot -PathType Container)) { return }
+    $resolvedRoot = (Resolve-Path -LiteralPath $BuildRoot).Path.TrimEnd('\') + '\'
+    $candidates = Get-ChildItem -LiteralPath $resolvedRoot -Directory -ErrorAction Stop |
+        Where-Object { $_.Name -match '^p\d{2}-' }
+    foreach ($candidate in $candidates) {
+        $resolvedCandidate = (Resolve-Path -LiteralPath $candidate.FullName).Path
+        if (-not $resolvedCandidate.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Refusing to remove a build outside ${resolvedRoot}: $resolvedCandidate"
+        }
+        # A partial upload or a scheduler-rejected build has no verified source
+        # record and must never consume one of the two retained artifact slots.
+        if (-not (Test-Path -LiteralPath (Join-Path $resolvedCandidate 'download\服务器构建来源证明.json') -PathType Leaf)) {
+            Remove-Item -LiteralPath $resolvedCandidate -Recurse -Force
+        }
+    }
+    Get-ChildItem -LiteralPath $resolvedRoot -Directory -ErrorAction Stop |
+        Where-Object { $_.Name -match '^p\d{2}-' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'download\服务器构建来源证明.json') -PathType Leaf) } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -Skip $KeepCompletedBuilds |
+        ForEach-Object {
+            $resolvedCandidate = (Resolve-Path -LiteralPath $_.FullName).Path
+            if (-not $resolvedCandidate.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Refusing to remove a build outside ${resolvedRoot}: $resolvedCandidate"
+            }
+            Remove-Item -LiteralPath $resolvedCandidate -Recurse -Force
+        }
+}
+
 Push-Location $Root
 try {
     if (-not $SshTarget) { $SshTarget = $env:YLVEN_SSH_TARGET }
@@ -181,7 +216,11 @@ try {
     $PreviousApk = (Resolve-Path -LiteralPath $PreviousApk).Path
 
     $buildId = ('{0}-{1}-{2}-{3}' -f $Phase.ToLowerInvariant(), $Version, $Commit.Substring(0,12), (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
-    $localRoot = Join-Path $Root ".ylven-local\server-builds\$buildId"
+    $localBuildHistory = Join-Path $Root '.ylven-local\server-builds'
+    # Keep one verified predecessor before starting; the candidate created below
+    # is the second and final retained local server-build artifact.
+    Remove-StaleLocalServerBuilds -BuildRoot $localBuildHistory -KeepCompletedBuilds 1
+    $localRoot = Join-Path $localBuildHistory $buildId
     $incoming = Join-Path $localRoot 'incoming'
     $download = Join-Path $localRoot 'download'
     New-Item -ItemType Directory -Path $incoming,$download -Force | Out-Null
