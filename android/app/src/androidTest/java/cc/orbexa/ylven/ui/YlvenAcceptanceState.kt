@@ -1881,7 +1881,13 @@ private class AndroidContractRenderer(
         // renders a platform check mark in SAVE_SUCCESS/SAVE_ERROR states,
         // creating a deterministic visual mismatch against the contract.
         val usesApprovedFallback = symbol in setOf("✓", "⌛")
-        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙") || usesApprovedFallback) {
+        // The approved YL-A-030 board was rasterized with the bundled CJK
+        // fallback for the first three text actions. Android's symbol font
+        // otherwise resolves these characters to a copy glyph, play triangle
+        // or circular arrow, producing a large deterministic diff even though
+        // the action labels and geometry are correct.
+        val approvedActionFallback = symbol in setOf("⧉", "▶", "↻")
+        if (symbol in setOf("➤", "↻", "↯", "🔒", "🎙") || usesApprovedFallback || approvedActionFallback) {
             missingGlyph(cx, cy, size, fg)
         } else {
             text(symbol, cx, cy, size, fg, true, Anchor.MIDDLE_MIDDLE)
