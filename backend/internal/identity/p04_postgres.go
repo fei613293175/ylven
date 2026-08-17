@@ -232,15 +232,28 @@ func (p *postgresConversationStore) cloneBranchHistoryTx(ctx context.Context, tx
 		if err != nil { return err }
 		partRows, partErr := tx.QueryContext(ctx, `SELECT ordinal,kind,text_content,object_key,metadata,created_at FROM message_parts WHERE message_id=$1 ORDER BY ordinal`, message.ID)
 		if partErr != nil { return partErr }
+		type sourcePart struct {
+			ordinal int
+			kind string
+			textContent sql.NullString
+			objectKey sql.NullString
+			metadata []byte
+			createdAt time.Time
+		}
+		// pgx permits the inserts only after the active result set is closed.
+		parts := []sourcePart{}
 		for partRows.Next() {
 			var ordinal int; var kind string; var textContent, objectKey sql.NullString; var metadata []byte; var createdAt time.Time
 			if partErr = partRows.Scan(&ordinal,&kind,&textContent,&objectKey,&metadata,&createdAt); partErr != nil { partRows.Close(); return partErr }
-			partID, idErr := newDatabaseUUID(); if idErr != nil { partRows.Close(); return idErr }
-			_, partErr = tx.ExecContext(ctx, `INSERT INTO message_parts(id,message_id,ordinal,kind,text_content,object_key,metadata,created_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8)`, partID,newMessageID,ordinal,kind,textContent,objectKey,string(metadata),createdAt)
-			if partErr != nil { partRows.Close(); return partErr }
+			parts = append(parts, sourcePart{ordinal: ordinal, kind: kind, textContent: textContent, objectKey: objectKey, metadata: append([]byte(nil), metadata...), createdAt: createdAt})
 		}
 		if partErr = partRows.Err(); partErr != nil { partRows.Close(); return partErr }
 		if partErr = partRows.Close(); partErr != nil { return partErr }
+		for _, part := range parts {
+			partID, idErr := newDatabaseUUID(); if idErr != nil { return idErr }
+			_, partErr = tx.ExecContext(ctx, `INSERT INTO message_parts(id,message_id,ordinal,kind,text_content,object_key,metadata,created_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8)`, partID,newMessageID,part.ordinal,part.kind,part.textContent,part.objectKey,string(part.metadata),part.createdAt)
+			if partErr != nil { return partErr }
+		}
 		messageIDs[message.ID] = newMessageID
 	}
 	return nil

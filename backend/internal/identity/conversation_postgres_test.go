@@ -166,3 +166,68 @@ func TestP03W06PostgresFirstMessageTransactionAndIdempotency(t *testing.T) {
 		t.Fatal("postgres home config read failure was hidden by the in-memory snapshot")
 	}
 }
+
+func TestP04W02PostgresBranchCopiesMessagesAndParts(t *testing.T) {
+	dsn := os.Getenv("YLVEN_TEST_DATABASE_URL")
+	if dsn == "" {
+		t.Skip("YLVEN_TEST_DATABASE_URL is required for PostgreSQL integration coverage")
+	}
+	admin, err := sql.Open("pgx", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer admin.Close()
+	schema := fmt.Sprintf("ylven_p04_w02_branch_%d", time.Now().UnixNano())
+	if _, err := admin.ExecContext(context.Background(), `CREATE SCHEMA `+schema); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if _, err := admin.ExecContext(context.Background(), `DROP SCHEMA `+schema+` CASCADE`); err != nil {
+			t.Errorf("drop test schema: %v", err)
+		}
+	}()
+	parsed, err := url.Parse(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	query := parsed.Query()
+	query.Set("search_path", schema)
+	parsed.RawQuery = query.Encode()
+	store, _ := NewStore("")
+	createTestUser(t, store, "p04-branch-postgres@example.com")
+	access := createAuthenticatedTestSession(t, store, "p04-branch-postgres@example.com")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := store.EnablePostgres(ctx, parsed.String()); err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	first, err := store.StartConversationFromFirstMessage(access, "p04-branch-draft", "copy this user message", "gpt-5.6", "p04-branch-first", false)
+	if err != nil || !first.Created {
+		t.Fatalf("first=%+v err=%v", first, err)
+	}
+	completed, err := store.CompleteRun(access, first.Run.ID, "copy this assistant answer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	branch, err := store.CreateConversationBranch(access, first.Conversation.ID, completed.AssistantMessageID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	messages, err := store.ConversationMessages(access, first.Conversation.ID)
+	if err != nil || len(messages) != 2 {
+		t.Fatalf("messages=%+v err=%v", messages, err)
+	}
+	for _, message := range messages {
+		if message.BranchID != branch.ID {
+			t.Fatalf("message escaped copied branch: %+v", message)
+		}
+	}
+	var parts int
+	if err := store.conversationSQL.db.QueryRowContext(context.Background(), `SELECT COUNT(*) FROM message_parts p JOIN messages m ON m.id=p.message_id WHERE m.branch_id=$1`, branch.ID).Scan(&parts); err != nil {
+		t.Fatal(err)
+	}
+	if parts != 2 {
+		t.Fatalf("copied parts=%d want 2", parts)
+	}
+}
