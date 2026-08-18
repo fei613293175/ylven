@@ -191,26 +191,39 @@ features:
   - backend/internal/identity/p04_operations_postgres.go::upsertRoutingPolicy
   - backend/internal/identity/p04_features_test.go::TestP04RoutingPolicyUsesFallbackChannelAfterPrimaryFailure
 - feature_id: P04-025
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '模型健康状态探测、记录和服务状态投影已实现；真实上游探测受 staging 凭据/授权限制。'
+  evidence:
+  - backend/internal/identity/p04_admin_http.go::probeModel
+  - backend/internal/identity/p04_features_test.go::TestP04PublicServiceStatusIsAnonymousAndDoesNotExposeRuntimeErrors
 - feature_id: P04-026
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '文本、流式、视觉和工具能力使用结构化 capabilities 持久化和过滤。'
+  evidence:
+  - backend/internal/identity/model_catalog.go::ModelCapabilityConfig
+  - backend/internal/identity/model_catalog_test.go::capability detection and filtering tests
 - feature_id: P04-027
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '供应商并发上限、超时策略和熔断状态已由 ProviderRuntimePolicy 与运行时 reserve/release 实现。'
+  evidence:
+  - backend/internal/identity/p04_http.go::reserveProviderRun
+  - backend/internal/identity/p04_admin.go::ListProviderRuntimePolicies
 - feature_id: P04-028
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '运行用量事件支持输入、输出和推理 Token，并按 run 幂等写入。'
+  evidence:
+  - backend/internal/identity/p04_features.go::RecordUsage
+  - backend/internal/identity/p04_features_test.go::TestP04AvailabilityExcludesUnavailableFallbacks
 - feature_id: P04-029
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: '模型价格版本快照支持版本校验和生效时间。'
+  evidence:
+  - backend/internal/identity/p04_features.go::UpsertPriceSnapshot
+  - backend/internal/identity/p04_admin.go::UpsertPriceSnapshotAdmin
 - feature_id: P04-030
-  status: PLANNED
-  reason: ''
-  evidence: []
+  status: IMPLEMENTED
+  reason: 'Android 服务状态页和匿名公开简化状态接口已实现，不暴露运行时错误细节。'
+  evidence:
+  - backend/internal/identity/p04_http.go::publicModelServiceStatus/mobileModelServiceStatus
+  - android/app/src/main/java/cc/orbexa/ylven/ui/P04Screens.kt::P04ServiceStatusPage
+  - backend/internal/identity/p04_features_test.go::TestP04PublicServiceStatusIsAnonymousAndDoesNotExposeRuntimeErrors
